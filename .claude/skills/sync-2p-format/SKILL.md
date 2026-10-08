@@ -24,7 +24,12 @@ Fetch with WebFetch. If a page cannot be reached, stop and say so; do not recons
      "cards": [{"name": "As written by VEKN", "type": "Crypt|Library", "krcg_id": 123456}]
    }
    ```
-3. Match each name to KRCG. Unmatched names go in a `"unmatched"` array and in the report; do not guess the intended card.
+3. Match each name to KRCG using `scripts/krcg_match.py` (run with the project's Python, not a one-off inline snippet — keeps matching reproducible across syncs):
+   ```
+   python scripts/krcg_match.py <flat name/type list>.json -o <result>.json
+   ```
+   **Crypt group rule**: every vampire on the 2-player allowed list is printed at group >= 5 (confirmed by the user 2026-10-08, not from a VEKN source page — it governs matching, not legality text). The script enforces this via `--crypt-min-group` (default 5): when a crypt name matches several krcg printings across groups, only the one at group >= 5 is auto-selected; if none or more than one qualify, it is left unmatched with every candidate (krcg_id, group) listed. Never override this by picking a candidate yourself — surface it for user confirmation instead.
+   Names the script leaves in `"unmatched"` go in a `"unmatched"` array of the output file and in the report; do not guess the intended card, even when the script's `suggested_krcg_id` looks obviously right — confirm with the user first (see `data/formats/2p/CHANGELOG.md`, 2026-10-08 entry, for the precedent: typos, singular/plural drift and missing subtitles have all previously been confirmed this way).
 4. Diff against the previous file; cross-check the diff with the updates-log entry. Any discrepancy between the two VEKN pages is reported to the user.
 5. Re-read the variant rules page. Any rule change (not only cards) → summarise it and flag it for `rules-engineer`.
 6. Update decklist fixtures in `data/decks/vekn-2p/` if the log lists decklist changes; validate each with the `deck-validation` skill.

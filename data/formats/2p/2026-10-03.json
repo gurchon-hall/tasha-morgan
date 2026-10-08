@@ -1,0 +1,1568 @@
+{
+  "source": "https://www.vekn.net/two-player-format/657-list-of-allowed-cards-in-2-player-vtes",
+  "vekn_last_updated": "2026-10-03",
+  "fetched_on": "2026-10-08",
+  "cards": [
+    {
+      "name": "Aaradhya, The Callous Tyrant",
+      "type": "Crypt",
+      "krcg_id": 201733
+    },
+    {
+      "name": "Abraham Mellon",
+      "type": "Crypt",
+      "krcg_id": 201634
+    },
+    {
+      "name": "Aelswith, The Irresistible",
+      "type": "Crypt",
+      "krcg_id": 201735
+    },
+    {
+      "name": "Aintzane Arriaga",
+      "type": "Crypt",
+      "krcg_id": 201708
+    },
+    {
+      "name": "Aitana, The Unholy",
+      "type": "Crypt",
+      "krcg_id": 201737
+    },
+    {
+      "name": "Alexa Draper",
+      "type": "Crypt",
+      "krcg_id": 201529
+    },
+    {
+      "name": "Alexander Silverson",
+      "type": "Crypt",
+      "krcg_id": 201530
+    },
+    {
+      "name": "Algirdas, The Solar Prophet",
+      "type": "Crypt",
+      "krcg_id": 201738
+    },
+    {
+      "name": "Alice Chen",
+      "type": "Crypt",
+      "krcg_id": 201531
+    },
+    {
+      "name": "Andi Liu",
+      "type": "Crypt",
+      "krcg_id": 201532
+    },
+    {
+      "name": "André the Manipulator",
+      "type": "Crypt",
+      "krcg_id": 200081
+    },
+    {
+      "name": "Ángel Guerrero",
+      "type": "Crypt",
+      "krcg_id": 201665
+    },
+    {
+      "name": "Aniel",
+      "type": "Crypt",
+      "krcg_id": 201666
+    },
+    {
+      "name": "Anxo Vilela",
+      "type": "Crypt",
+      "krcg_id": 201740
+    },
+    {
+      "name": "Ashur-uballit, Son of the Abyss",
+      "type": "Crypt",
+      "krcg_id": 201741
+    },
+    {
+      "name": "Atiena",
+      "type": "Crypt",
+      "krcg_id": 201579
+    },
+    {
+      "name": "Ayelech",
+      "type": "Crypt",
+      "krcg_id": 201535
+    },
+    {
+      "name": "Azucena",
+      "type": "Crypt",
+      "krcg_id": 201710
+    },
+    {
+      "name": "Belinde",
+      "type": "Crypt",
+      "krcg_id": 201537
+    },
+    {
+      "name": "Berenguela, The Vicious",
+      "type": "Crypt",
+      "krcg_id": 201742
+    },
+    {
+      "name": "Branimira",
+      "type": "Crypt",
+      "krcg_id": 201667
+    },
+    {
+      "name": "Carmelita Neillson",
+      "type": "Crypt",
+      "krcg_id": 201625
+    },
+    {
+      "name": "Casey Snyder",
+      "type": "Crypt",
+      "krcg_id": 201521
+    },
+    {
+      "name": "Chrysanthemum",
+      "type": "Crypt",
+      "krcg_id": 201542
+    },
+    {
+      "name": "Clara Hjortshøj",
+      "type": "Crypt",
+      "krcg_id": 201669
+    },
+    {
+      "name": "Concordia",
+      "type": "Crypt",
+      "krcg_id": 201744
+    },
+    {
+      "name": "Crystal Lynn",
+      "type": "Crypt",
+      "krcg_id": 201582
+    },
+    {
+      "name": "Dario Ziggler",
+      "type": "Crypt",
+      "krcg_id": 201583
+    },
+    {
+      "name": "Devorah",
+      "type": "Crypt",
+      "krcg_id": 201748
+    },
+    {
+      "name": "Diana Iadanza",
+      "type": "Crypt",
+      "krcg_id": 201694
+    },
+    {
+      "name": "Djeneba",
+      "type": "Crypt",
+      "krcg_id": 201782
+    },
+    {
+      "name": "Doc Martina",
+      "type": "Crypt",
+      "krcg_id": 201670
+    },
+    {
+      "name": "Donny Kowalczyk",
+      "type": "Crypt",
+      "krcg_id": 201544
+    },
+    {
+      "name": "Dowager, The",
+      "type": "Crypt",
+      "krcg_id": 201545
+    },
+    {
+      "name": "Elisha Tucker",
+      "type": "Crypt",
+      "krcg_id": 201586
+    },
+    {
+      "name": "Farah Sarroub",
+      "type": "Crypt",
+      "krcg_id": 201587
+    },
+    {
+      "name": "Fiorenza Savona",
+      "type": "Crypt",
+      "krcg_id": 201616
+    },
+    {
+      "name": "Fotini Katsikaris",
+      "type": "Crypt",
+      "krcg_id": 201751
+    },
+    {
+      "name": "Frau Schädel",
+      "type": "Crypt",
+      "krcg_id": 201752
+    },
+    {
+      "name": "Gathii",
+      "type": "Crypt",
+      "krcg_id": 201672
+    },
+    {
+      "name": "Gebeyehu Abdu",
+      "type": "Crypt",
+      "krcg_id": 201718
+    },
+    {
+      "name": "Gelasia Fotiou",
+      "type": "Crypt",
+      "krcg_id": 201548
+    },
+    {
+      "name": "Glissando",
+      "type": "Crypt",
+      "krcg_id": 201753
+    },
+    {
+      "name": "Gnaeus Aemilius Augustinus",
+      "type": "Crypt",
+      "krcg_id": 201712
+    },
+    {
+      "name": "Gostoso",
+      "type": "Crypt",
+      "krcg_id": 201754
+    },
+    {
+      "name": "Grażyna \"Butcher\" Olesińska",
+      "type": "Crypt",
+      "krcg_id": 201755
+    },
+    {
+      "name": "Hekla \"Bonecrusher\" Jónasdóttir",
+      "type": "Crypt",
+      "krcg_id": 201756
+    },
+    {
+      "name": "Hel-Blá",
+      "type": "Crypt",
+      "krcg_id": 201731
+    },
+    {
+      "name": "Hesha Ruhadze",
+      "type": "Crypt",
+      "krcg_id": 201591
+    },
+    {
+      "name": "Holliday \"Burgundy\" Hall",
+      "type": "Crypt",
+      "krcg_id": 201720
+    },
+    {
+      "name": "Horace Radcliffe",
+      "type": "Crypt",
+      "krcg_id": 201549
+    },
+    {
+      "name": "Horst von Brühl",
+      "type": "Crypt",
+      "krcg_id": 201550
+    },
+    {
+      "name": "Huldu, The Desecrator",
+      "type": "Crypt",
+      "krcg_id": 201757
+    },
+    {
+      "name": "Ian Carfax",
+      "type": "Crypt",
+      "krcg_id": 201697
+    },
+    {
+      "name": "Inês Tristão",
+      "type": "Crypt",
+      "krcg_id": 201551
+    },
+    {
+      "name": "Jenny Silver",
+      "type": "Crypt",
+      "krcg_id": 201593
+    },
+    {
+      "name": "Juliet Parr",
+      "type": "Crypt",
+      "krcg_id": 201698
+    },
+    {
+      "name": "Jürgen, The Libertine",
+      "type": "Crypt",
+      "krcg_id": 201758
+    },
+    {
+      "name": "Kalinda",
+      "type": "Crypt",
+      "krcg_id": 201596
+    },
+    {
+      "name": "Kamaluddin",
+      "type": "Crypt",
+      "krcg_id": 201713
+    },
+    {
+      "name": "Karl Schrekt",
+      "type": "Crypt",
+      "krcg_id": 201621
+    },
+    {
+      "name": "Kasim Bayar",
+      "type": "Crypt",
+      "krcg_id": 201598
+    },
+    {
+      "name": "Kassandra Tassaki",
+      "type": "Crypt",
+      "krcg_id": 201604
+    },
+    {
+      "name": "Kevin Jackson",
+      "type": "Crypt",
+      "krcg_id": 201629
+    },
+    {
+      "name": "Khadija Al-Kindi",
+      "type": "Crypt",
+      "krcg_id": 201599
+    },
+    {
+      "name": "Khin Aye",
+      "type": "Crypt",
+      "krcg_id": 201760
+    },
+    {
+      "name": "Kuyén",
+      "type": "Crypt",
+      "krcg_id": 201574
+    },
+    {
+      "name": "Larissa Moreira",
+      "type": "Crypt",
+      "krcg_id": 201553
+    },
+    {
+      "name": "Leumeah",
+      "type": "Crypt",
+      "krcg_id": 201526
+    },
+    {
+      "name": "Lloyd Brooks",
+      "type": "Crypt",
+      "krcg_id": 201556
+    },
+    {
+      "name": "Luciano Carvalho",
+      "type": "Crypt",
+      "krcg_id": 201675
+    },
+    {
+      "name": "Lucinde, Alastor",
+      "type": "Crypt",
+      "krcg_id": 201700
+    },
+    {
+      "name": "Lyyli Yösydän",
+      "type": "Crypt",
+      "krcg_id": 201764
+    },
+    {
+      "name": "Máddji, Mistress of Szlachtas",
+      "type": "Crypt",
+      "krcg_id": 201784
+    },
+    {
+      "name": "Madison",
+      "type": "Crypt",
+      "krcg_id": 201557
+    },
+    {
+      "name": "Maila",
+      "type": "Crypt",
+      "krcg_id": 201633
+    },
+    {
+      "name": "Malachi",
+      "type": "Crypt",
+      "krcg_id": 201676
+    },
+    {
+      "name": "Marcos Belegrad",
+      "type": "Crypt",
+      "krcg_id": 201702
+    },
+    {
+      "name": "María del Toro",
+      "type": "Crypt",
+      "krcg_id": 201714
+    },
+    {
+      "name": "Massimiliano",
+      "type": "Crypt",
+      "krcg_id": 201602
+    },
+    {
+      "name": "Mkhokheli",
+      "type": "Crypt",
+      "krcg_id": 201561
+    },
+    {
+      "name": "Modius",
+      "type": "Crypt",
+      "krcg_id": 201703
+    },
+    {
+      "name": "Molly MacDonald",
+      "type": "Crypt",
+      "krcg_id": 201704
+    },
+    {
+      "name": "Monica Giovanni",
+      "type": "Crypt",
+      "krcg_id": 201723
+    },
+    {
+      "name": "Neserian",
+      "type": "Crypt",
+      "krcg_id": 201678
+    },
+    {
+      "name": "Nikolaus Vermeulen",
+      "type": "Crypt",
+      "krcg_id": 201705
+    },
+    {
+      "name": "Noluthando",
+      "type": "Crypt",
+      "krcg_id": 201785
+    },
+    {
+      "name": "Octane",
+      "type": "Crypt",
+      "krcg_id": 201609
+    },
+    {
+      "name": "Oluwafunmilayo",
+      "type": "Crypt",
+      "krcg_id": 201656
+    },
+    {
+      "name": "Opikun",
+      "type": "Crypt",
+      "krcg_id": 201680
+    },
+    {
+      "name": "Osvaldo Kühnemann",
+      "type": "Crypt",
+      "krcg_id": 201767
+    },
+    {
+      "name": "Parijat, The Dark Oracle",
+      "type": "Crypt",
+      "krcg_id": 201726
+    },
+    {
+      "name": "Przemysław, War Beast",
+      "type": "Crypt",
+      "krcg_id": 201768
+    },
+    {
+      "name": "Queen Anne",
+      "type": "Crypt",
+      "krcg_id": 201647
+    },
+    {
+      "name": "Ragnar Nordstrom",
+      "type": "Crypt",
+      "krcg_id": 201660
+    },
+    {
+      "name": "Rasha Tarabzouni",
+      "type": "Crypt",
+      "krcg_id": 201769
+    },
+    {
+      "name": "Roberto Rivamonte",
+      "type": "Crypt",
+      "krcg_id": 201683
+    },
+    {
+      "name": "Roger de Camden",
+      "type": "Crypt",
+      "krcg_id": 201732
+    },
+    {
+      "name": "Sakhar",
+      "type": "Crypt",
+      "krcg_id": 201685
+    },
+    {
+      "name": "Saku Pihlajamäki",
+      "type": "Crypt",
+      "krcg_id": 201658
+    },
+    {
+      "name": "Seraphina",
+      "type": "Crypt",
+      "krcg_id": 201686
+    },
+    {
+      "name": "Sergio Bueno",
+      "type": "Crypt",
+      "krcg_id": 201662
+    },
+    {
+      "name": "Siarhei Levchenko",
+      "type": "Crypt",
+      "krcg_id": 201612
+    },
+    {
+      "name": "Sreelekha",
+      "type": "Crypt",
+      "krcg_id": 201687
+    },
+    {
+      "name": "Tegyrius, Vizier g6",
+      "type": "Crypt",
+      "krcg_id": 201654,
+      "note": "VEKN allowed-list name writes the group as a bare 'g6' suffix (no parentheses), which the strict matcher doesn't auto-resolve; confirmed by user 2026-10-08 as krcg id 201654 ('Tegyrius, Vizier (G6)')."
+    },
+    {
+      "name": "Üresség",
+      "type": "Crypt",
+      "krcg_id": 201775
+    },
+    {
+      "name": "Valeriya Zinovieva",
+      "type": "Crypt",
+      "krcg_id": 201614
+    },
+    {
+      "name": "Věnceslava, The Implacable",
+      "type": "Crypt",
+      "krcg_id": 201776
+    },
+    {
+      "name": "Vivian VI",
+      "type": "Crypt",
+      "krcg_id": 201615
+    },
+    {
+      "name": "Warmaksan",
+      "type": "Crypt",
+      "krcg_id": 201594
+    },
+    {
+      "name": "Whisper",
+      "type": "Crypt",
+      "krcg_id": 201690
+    },
+    {
+      "name": "Yewon Ong",
+      "type": "Crypt",
+      "krcg_id": 201716
+    },
+    {
+      "name": "Zbigniew, Hunter of Mekhet",
+      "type": "Crypt",
+      "krcg_id": 201780
+    },
+    {
+      "name": "47th Street Royals",
+      "type": "Library",
+      "krcg_id": 102217
+    },
+    {
+      "name": "Absolute Tyranny",
+      "type": "Library",
+      "krcg_id": 102308
+    },
+    {
+      "name": "Abuse of Power",
+      "type": "Library",
+      "krcg_id": 102309
+    },
+    {
+      "name": "Ambush",
+      "type": "Library",
+      "krcg_id": 100046
+    },
+    {
+      "name": "Amici Noctis",
+      "type": "Library",
+      "krcg_id": 102274
+    },
+    {
+      "name": "Anarch Salon",
+      "type": "Library",
+      "krcg_id": 100056
+    },
+    {
+      "name": "Arms of Ahriman",
+      "type": "Library",
+      "krcg_id": 102275
+    },
+    {
+      "name": "Army of Rats",
+      "type": "Library",
+      "krcg_id": 100093
+    },
+    {
+      "name": "Augury of Doom",
+      "type": "Library",
+      "krcg_id": 102310
+    },
+    {
+      "name": "Auspex",
+      "type": "Library",
+      "krcg_id": 100114
+    },
+    {
+      "name": "Barrens, The",
+      "type": "Library",
+      "krcg_id": 100135
+    },
+    {
+      "name": "Beast Meld",
+      "type": "Library",
+      "krcg_id": 100146
+    },
+    {
+      "name": "Bewitching Oration",
+      "type": "Library",
+      "krcg_id": 100157
+    },
+    {
+      "name": "Blood Fury",
+      "type": "Library",
+      "krcg_id": 100201
+    },
+    {
+      "name": "Body Flare",
+      "type": "Library",
+      "krcg_id": 100230
+    },
+    {
+      "name": "Bonding",
+      "type": "Library",
+      "krcg_id": 100236
+    },
+    {
+      "name": "Bone Shamblers",
+      "type": "Library",
+      "krcg_id": 102293,
+      "note": "VEKN allowed-list name is plural; krcg card is singular ('Bone Shambler'). Confirmed by user 2026-10-08 as krcg id 102293."
+    },
+    {
+      "name": "Break the Bonds",
+      "type": "Library",
+      "krcg_id": 102247
+    },
+    {
+      "name": "Bum's Rush",
+      "type": "Library",
+      "krcg_id": 100266
+    },
+    {
+      "name": "Cardinal Benediction",
+      "type": "Library",
+      "krcg_id": 100294
+    },
+    {
+      "name": "Carrion Crows",
+      "type": "Library",
+      "krcg_id": 100301
+    },
+    {
+      "name": "Cats' Guidance",
+      "type": "Library",
+      "krcg_id": 100308
+    },
+    {
+      "name": "Celerity",
+      "type": "Library",
+      "krcg_id": 100312
+    },
+    {
+      "name": "Change of Target",
+      "type": "Library",
+      "krcg_id": 100323
+    },
+    {
+      "name": "Chantry",
+      "type": "Library",
+      "krcg_id": 100329
+    },
+    {
+      "name": "Charisma",
+      "type": "Library",
+      "krcg_id": 100332
+    },
+    {
+      "name": "City Star Taxi",
+      "type": "Library",
+      "krcg_id": 102234
+    },
+    {
+      "name": "Cloak the Gathering",
+      "type": "Library",
+      "krcg_id": 100362
+    },
+    {
+      "name": "Cold War",
+      "type": "Library",
+      "krcg_id": 102312
+    },
+    {
+      "name": "Contraband",
+      "type": "Library",
+      "krcg_id": 102352
+    },
+    {
+      "name": "Creeping Sabotage",
+      "type": "Library",
+      "krcg_id": 102213
+    },
+    {
+      "name": "Cursed Abattoir",
+      "type": "Library",
+      "krcg_id": 102313
+    },
+    {
+      "name": "Dance with the Devil",
+      "type": "Library",
+      "krcg_id": 102315
+    },
+    {
+      "name": "Dawn Operation",
+      "type": "Library",
+      "krcg_id": 100501
+    },
+    {
+      "name": "Deep Ecology",
+      "type": "Library",
+      "krcg_id": 102219
+    },
+    {
+      "name": "Deep Song",
+      "type": "Library",
+      "krcg_id": 100515
+    },
+    {
+      "name": "Disputed Territory",
+      "type": "Library",
+      "krcg_id": 100557
+    },
+    {
+      "name": "Diversion",
+      "type": "Library",
+      "krcg_id": 100563
+    },
+    {
+      "name": "Dogged Pursuit",
+      "type": "Library",
+      "krcg_id": 102353
+    },
+    {
+      "name": "Domain Challenge",
+      "type": "Library",
+      "krcg_id": 100570
+    },
+    {
+      "name": "Dominant Personality",
+      "type": "Library",
+      "krcg_id": 102316
+    },
+    {
+      "name": "Dominate",
+      "type": "Library",
+      "krcg_id": 100572
+    },
+    {
+      "name": "Dominate Kine",
+      "type": "Library",
+      "krcg_id": 100573
+    },
+    {
+      "name": "Double Deuce",
+      "type": "Library",
+      "krcg_id": 102220
+    },
+    {
+      "name": "Dummy Corporation",
+      "type": "Library",
+      "krcg_id": 100594
+    },
+    {
+      "name": "Dust Up",
+      "type": "Library",
+      "krcg_id": 100597
+    },
+    {
+      "name": "Earth Control",
+      "type": "Library",
+      "krcg_id": 100600
+    },
+    {
+      "name": "Elder Intervention",
+      "type": "Library",
+      "krcg_id": 100618
+    },
+    {
+      "name": "Elder Library",
+      "type": "Library",
+      "krcg_id": 100620
+    },
+    {
+      "name": "Empires Fall",
+      "type": "Library",
+      "krcg_id": 102318
+    },
+    {
+      "name": "Enchant Kindred",
+      "type": "Library",
+      "krcg_id": 100640
+    },
+    {
+      "name": "Enhanced Coagulant",
+      "type": "Library",
+      "krcg_id": 102238
+    },
+    {
+      "name": "Enhanced Senses",
+      "type": "Library",
+      "krcg_id": 100644
+    },
+    {
+      "name": "Ensnare a Beast",
+      "type": "Library",
+      "krcg_id": 102319
+    },
+    {
+      "name": "Enthrall",
+      "type": "Library",
+      "krcg_id": 102320
+    },
+    {
+      "name": "Entrancement",
+      "type": "Library",
+      "krcg_id": 100652
+    },
+    {
+      "name": "Eyes of Argus",
+      "type": "Library",
+      "krcg_id": 100680
+    },
+    {
+      "name": "Eyes of the Wild",
+      "type": "Library",
+      "krcg_id": 102222
+    },
+    {
+      "name": "Faceless Night",
+      "type": "Library",
+      "krcg_id": 100687
+    },
+    {
+      "name": "Fame",
+      "type": "Library",
+      "krcg_id": 100698
+    },
+    {
+      "name": "Family Gathering",
+      "type": "Library",
+      "krcg_id": 102289
+    },
+    {
+      "name": "Far Mastery",
+      "type": "Library",
+      "krcg_id": 100703
+    },
+    {
+      "name": "Fee Stake: Corte",
+      "type": "Library",
+      "krcg_id": 100713
+    },
+    {
+      "name": "Fee Stake: Los Angeles",
+      "type": "Library",
+      "krcg_id": 100714
+    },
+    {
+      "name": "Fee Stake: Perth",
+      "type": "Library",
+      "krcg_id": 100716
+    },
+    {
+      "name": "Fever Pitch",
+      "type": "Library",
+      "krcg_id": 102321
+    },
+    {
+      "name": "Fiendish Tongue",
+      "type": "Library",
+      "krcg_id": 100726
+    },
+    {
+      "name": "Fifth Tradition: Hospitality",
+      "type": "Library",
+      "krcg_id": 100727
+    },
+    {
+      "name": "Fleetness",
+      "type": "Library",
+      "krcg_id": 100747
+    },
+    {
+      "name": "Fleshforge Chamber",
+      "type": "Library",
+      "krcg_id": 102354
+    },
+    {
+      "name": "Forced Awakening",
+      "type": "Library",
+      "krcg_id": 100760
+    },
+    {
+      "name": "Forced Confessional",
+      "type": "Library",
+      "krcg_id": 102250
+    },
+    {
+      "name": "Forced Vigilance",
+      "type": "Library",
+      "krcg_id": 100762
+    },
+    {
+      "name": "Form of the Bat",
+      "type": "Library",
+      "krcg_id": 102223
+    },
+    {
+      "name": "Form of the Cobra",
+      "type": "Library",
+      "krcg_id": 102224
+    },
+    {
+      "name": "Forward Momentum",
+      "type": "Library",
+      "krcg_id": 102323
+    },
+    {
+      "name": "Fourth Tradition: Accounting",
+      "type": "Library",
+      "krcg_id": 100782,
+      "note": "VEKN allowed-list name omits 'The'; krcg card is 'Fourth Tradition: The Accounting'. Confirmed by user 2026-10-08 as krcg id 100782."
+    },
+    {
+      "name": "Fragment of the Book of Nod",
+      "type": "Library",
+      "krcg_id": 100785
+    },
+    {
+      "name": "Glancing Blow",
+      "type": "Library",
+      "krcg_id": 100834
+    },
+    {
+      "name": "Go-getter",
+      "type": "Library",
+      "krcg_id": 102355
+    },
+    {
+      "name": "Golconda",
+      "type": "Library",
+      "krcg_id": 100842,
+      "note": "VEKN allowed-list name omits the subtitle; krcg card is 'Golconda: Inner Peace'. Confirmed by user 2026-10-08 as krcg id 100842."
+    },
+    {
+      "name": "Grooming the Protégé",
+      "type": "Library",
+      "krcg_id": 100860
+    },
+    {
+      "name": "Guard Dogs",
+      "type": "Library",
+      "krcg_id": 100863
+    },
+    {
+      "name": "Heartrender",
+      "type": "Library",
+      "krcg_id": 102327
+    },
+    {
+      "name": "Hedonism",
+      "type": "Library",
+      "krcg_id": 102328
+    },
+    {
+      "name": "Hunger of Marduk",
+      "type": "Library",
+      "krcg_id": 102227
+    },
+    {
+      "name": "Hunting the Beast",
+      "type": "Library",
+      "krcg_id": 102356
+    },
+    {
+      "name": "Instinctive Reaction",
+      "type": "Library",
+      "krcg_id": 100995
+    },
+    {
+      "name": "Iron Glare",
+      "type": "Library",
+      "krcg_id": 101008
+    },
+    {
+      "name": "Kine Resources Contested",
+      "type": "Library",
+      "krcg_id": 101056
+    },
+    {
+      "name": "Life in the City",
+      "type": "Library",
+      "krcg_id": 101104
+    },
+    {
+      "name": "Line Brawl",
+      "type": "Library",
+      "krcg_id": 102229
+    },
+    {
+      "name": "Line, The",
+      "type": "Library",
+      "krcg_id": 101110
+    },
+    {
+      "name": "Lost in Crowds",
+      "type": "Library",
+      "krcg_id": 101125
+    },
+    {
+      "name": "Loup",
+      "type": "Library",
+      "krcg_id": 102273
+    },
+    {
+      "name": "Magnetic Authority",
+      "type": "Library",
+      "krcg_id": 102331
+    },
+    {
+      "name": "Malkavian Rider Clause",
+      "type": "Library",
+      "krcg_id": 101156
+    },
+    {
+      "name": "Martyr's Resilience",
+      "type": "Library",
+      "krcg_id": 101175
+    },
+    {
+      "name": "Melange",
+      "type": "Library",
+      "krcg_id": 101195
+    },
+    {
+      "name": "Mirror Walk",
+      "type": "Library",
+      "krcg_id": 101223
+    },
+    {
+      "name": "Misdirection",
+      "type": "Library",
+      "krcg_id": 101225
+    },
+    {
+      "name": "Monster",
+      "type": "Library",
+      "krcg_id": 101242
+    },
+    {
+      "name": "Morbidity",
+      "type": "Library",
+      "krcg_id": 102332
+    },
+    {
+      "name": "Mythic Form",
+      "type": "Library",
+      "krcg_id": 101262
+    },
+    {
+      "name": "Obedient Flesh",
+      "type": "Library",
+      "krcg_id": 102255
+    },
+    {
+      "name": "Obfuscate",
+      "type": "Library",
+      "krcg_id": 101310
+    },
+    {
+      "name": "Oblivion",
+      "type": "Library",
+      "krcg_id": 102277
+    },
+    {
+      "name": "Old Friends",
+      "type": "Library",
+      "krcg_id": 101318
+    },
+    {
+      "name": "Ominous Chorus",
+      "type": "Library",
+      "krcg_id": 102278
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Library",
+      "krcg_id": 101321
+    },
+    {
+      "name": "One With the Land",
+      "type": "Library",
+      "krcg_id": 102256
+    },
+    {
+      "name": "Organized Resistance",
+      "type": "Library",
+      "krcg_id": 102230
+    },
+    {
+      "name": "Owl Companion",
+      "type": "Library",
+      "krcg_id": 101340
+    },
+    {
+      "name": "Oxford University, England",
+      "type": "Library",
+      "krcg_id": 101341
+    },
+    {
+      "name": "Parity Shift",
+      "type": "Library",
+      "krcg_id": 101353
+    },
+    {
+      "name": "Party Out Of Bounds",
+      "type": "Library",
+      "krcg_id": 102231
+    },
+    {
+      "name": "Perfect Paragon",
+      "type": "Library",
+      "krcg_id": 101387
+    },
+    {
+      "name": "Perfectionist",
+      "type": "Library",
+      "krcg_id": 101388
+    },
+    {
+      "name": "Phantasmagoria",
+      "type": "Library",
+      "krcg_id": 102358
+    },
+    {
+      "name": "Pillars Fall",
+      "type": "Library",
+      "krcg_id": 102333
+    },
+    {
+      "name": "Platinum Protocol, The",
+      "type": "Library",
+      "krcg_id": 102232
+    },
+    {
+      "name": "Political Ally",
+      "type": "Library",
+      "krcg_id": 101411
+    },
+    {
+      "name": "Potence",
+      "type": "Library",
+      "krcg_id": 101424
+    },
+    {
+      "name": "Powerbase: Munich",
+      "type": "Library",
+      "krcg_id": 102301
+    },
+    {
+      "name": "Precognition",
+      "type": "Library",
+      "krcg_id": 101475
+    },
+    {
+      "name": "Propaganda",
+      "type": "Library",
+      "krcg_id": 101495
+    },
+    {
+      "name": "Protean",
+      "type": "Library",
+      "krcg_id": 101498
+    },
+    {
+      "name": "Protected District",
+      "type": "Library",
+      "krcg_id": 102214
+    },
+    {
+      "name": "Protection Racket",
+      "type": "Library",
+      "krcg_id": 101501
+    },
+    {
+      "name": "Pulled Fangs",
+      "type": "Library",
+      "krcg_id": 101515
+    },
+    {
+      "name": "Pursuit",
+      "type": "Library",
+      "krcg_id": 101523
+    },
+    {
+      "name": "Putrescent Sustenance",
+      "type": "Library",
+      "krcg_id": 102335
+    },
+    {
+      "name": "Rage of Apedemak",
+      "type": "Library",
+      "krcg_id": 102336
+    },
+    {
+      "name": "Ravnos Cache",
+      "type": "Library",
+      "krcg_id": 101552
+    },
+    {
+      "name": "Ravnos Carnival",
+      "type": "Library",
+      "krcg_id": 101553
+    },
+    {
+      "name": "Rego Motum",
+      "type": "Library",
+      "krcg_id": 101588
+    },
+    {
+      "name": "Relentlessness",
+      "type": "Library",
+      "krcg_id": 102337
+    },
+    {
+      "name": "Restoration",
+      "type": "Library",
+      "krcg_id": 101613
+    },
+    {
+      "name": "Revolutionary Council",
+      "type": "Library",
+      "krcg_id": 101631
+    },
+    {
+      "name": "Rewilding",
+      "type": "Library",
+      "krcg_id": 101632
+    },
+    {
+      "name": "Rolling with the Punches",
+      "type": "Library",
+      "krcg_id": 101649
+    },
+    {
+      "name": "Rumor Mill, Tabloid Newspaper, The",
+      "type": "Library",
+      "krcg_id": 101662
+    },
+    {
+      "name": "Scalpel Tongue",
+      "type": "Library",
+      "krcg_id": 101686
+    },
+    {
+      "name": "Scouting Mission",
+      "type": "Library",
+      "krcg_id": 101698
+    },
+    {
+      "name": "Second Tradition: Domain",
+      "type": "Library",
+      "krcg_id": 101706
+    },
+    {
+      "name": "Seduction",
+      "type": "Library",
+      "krcg_id": 101712
+    },
+    {
+      "name": "Seeds of Terror",
+      "type": "Library",
+      "krcg_id": 102338
+    },
+    {
+      "name": "Sense the Savage Way",
+      "type": "Library",
+      "krcg_id": 101717
+    },
+    {
+      "name": "Sentry Signal",
+      "type": "Library",
+      "krcg_id": 102339
+    },
+    {
+      "name": "Shadow Cast",
+      "type": "Library",
+      "krcg_id": 102280
+    },
+    {
+      "name": "Shadow Cloak",
+      "type": "Library",
+      "krcg_id": 102281
+    },
+    {
+      "name": "Shadow Sentinel",
+      "type": "Library",
+      "krcg_id": 102294
+    },
+    {
+      "name": "Shadow Shift",
+      "type": "Library",
+      "krcg_id": 102305
+    },
+    {
+      "name": "Shilmulo Tarot",
+      "type": "Library",
+      "krcg_id": 101767
+    },
+    {
+      "name": "Shroud of Decay",
+      "type": "Library",
+      "krcg_id": 102295
+    },
+    {
+      "name": "Side Strike",
+      "type": "Library",
+      "krcg_id": 101778
+    },
+    {
+      "name": "Slam",
+      "type": "Library",
+      "krcg_id": 101798
+    },
+    {
+      "name": "Sleeping Mind, The",
+      "type": "Library",
+      "krcg_id": 101805
+    },
+    {
+      "name": "Soak",
+      "type": "Library",
+      "krcg_id": 101817
+    },
+    {
+      "name": "Social Charm",
+      "type": "Library",
+      "krcg_id": 101819
+    },
+    {
+      "name": "Soul Burn",
+      "type": "Library",
+      "krcg_id": 101829
+    },
+    {
+      "name": "Spirit's Thouch, The",
+      "type": "Library",
+      "krcg_id": 101850,
+      "note": "VEKN allowed-list name has a typo (`Spirit's Thouch, The`); confirmed by user 2026-10-08 as krcg id 101850 ('Spirit's Touch', Reaction). Name kept as VEKN wrote it."
+    },
+    {
+      "name": "Spying Mission",
+      "type": "Library",
+      "krcg_id": 101857
+    },
+    {
+      "name": "Subversion",
+      "type": "Library",
+      "krcg_id": 102341
+    },
+    {
+      "name": "Swallowed by the Night",
+      "type": "Library",
+      "krcg_id": 101913
+    },
+    {
+      "name": "Swift Cover",
+      "type": "Library",
+      "krcg_id": 102342
+    },
+    {
+      "name": "Szlachta Assistant",
+      "type": "Library",
+      "krcg_id": 102360
+    },
+    {
+      "name": "Szlachta Bodyguard",
+      "type": "Library",
+      "krcg_id": 102361
+    },
+    {
+      "name": "Taste of Vitae",
+      "type": "Library",
+      "krcg_id": 101945
+    },
+    {
+      "name": "Telepathic Counter",
+      "type": "Library",
+      "krcg_id": 101948
+    },
+    {
+      "name": "Telepathic Vote Counting",
+      "type": "Library",
+      "krcg_id": 101951
+    },
+    {
+      "name": "Tension in the Ranks",
+      "type": "Library",
+      "krcg_id": 101958
+    },
+    {
+      "name": "Theft of Vitae",
+      "type": "Library",
+      "krcg_id": 101966
+    },
+    {
+      "name": "Thing",
+      "type": "Library",
+      "krcg_id": 101972
+    },
+    {
+      "name": "Threats",
+      "type": "Library",
+      "krcg_id": 101978
+    },
+    {
+      "name": "Tier of Souls",
+      "type": "Library",
+      "krcg_id": 101984
+    },
+    {
+      "name": "Touch of Valeren",
+      "type": "Library",
+      "krcg_id": 102262
+    },
+    {
+      "name": "Tranquility Shield",
+      "type": "Library",
+      "krcg_id": 102362
+    },
+    {
+      "name": "True Love's Face",
+      "type": "Library",
+      "krcg_id": 102041
+    },
+    {
+      "name": "Truth in Darkness",
+      "type": "Library",
+      "krcg_id": 102284
+    },
+    {
+      "name": "Umbrous Clutch",
+      "type": "Library",
+      "krcg_id": 102306
+    },
+    {
+      "name": "Unlicensed Taxicab",
+      "type": "Library",
+      "krcg_id": 102078
+    },
+    {
+      "name": "Unthinkable Humiliation",
+      "type": "Library",
+      "krcg_id": 102346
+    },
+    {
+      "name": "Vagabond Mystic",
+      "type": "Library",
+      "krcg_id": 102087
+    },
+    {
+      "name": "Visions of Zapathasura",
+      "type": "Library",
+      "krcg_id": 102265
+    },
+    {
+      "name": "Voracious Vermin",
+      "type": "Library",
+      "krcg_id": 102266
+    },
+    {
+      "name": "Voter Captivation",
+      "type": "Library",
+      "krcg_id": 102131
+    },
+    {
+      "name": "Vozhd of Juiz de Fora, The",
+      "type": "Library",
+      "krcg_id": 102364
+    },
+    {
+      "name": "Vozhd of Sofia, The",
+      "type": "Library",
+      "krcg_id": 102267
+    },
+    {
+      "name": "Wake with Evening's Freshness",
+      "type": "Library",
+      "krcg_id": 102137
+    },
+    {
+      "name": "Wall of Filth",
+      "type": "Library",
+      "krcg_id": 102347
+    },
+    {
+      "name": "Warrens, The",
+      "type": "Library",
+      "krcg_id": 102216
+    },
+    {
+      "name": "Wasserschloss Anif, Austria",
+      "type": "Library",
+      "krcg_id": 102152
+    },
+    {
+      "name": "Weighted Walking Stick",
+      "type": "Library",
+      "krcg_id": 102169
+    },
+    {
+      "name": "Where the Veil Thins",
+      "type": "Library",
+      "krcg_id": 102285
+    },
+    {
+      "name": "Wider View",
+      "type": "Library",
+      "krcg_id": 102180
+    },
+    {
+      "name": "Wind Dance",
+      "type": "Library",
+      "krcg_id": 102185
+    },
+    {
+      "name": "WMRH Talk Radio",
+      "type": "Library",
+      "krcg_id": 102189
+    }
+  ],
+  "unmatched": []
+}

@@ -23,6 +23,17 @@ Resolve every name through KRCG (`VTES[...]`, `VTES.complete(...)` for suggestio
 
 Note: the rulebook places no limit on copies; do not invent one.
 
+Run the checks with `scripts/validate_deck.py` (not a one-off inline script —
+keeps the checks reproducible across decks and syncs):
+```
+python scripts/validate_deck.py <deck.json> --format data/formats/2p/<date>.json
+```
+It covers crypt size/groups, library size, and allowed-list membership + type
+per section; it does not check "Implementation status" (that comes from the
+project's card registry, which doesn't exist yet) — report that part by hand.
+Any name left in the deck fixture's own `"unmatched"` array (from
+`scripts/krcg_match.py`) is reported as a violation, never guessed.
+
 ## Output
 ```
 Deck: <name>   Format: 2p @ <list date>

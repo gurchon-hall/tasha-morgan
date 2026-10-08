@@ -1,0 +1,155 @@
+{
+  "source": "https://www.vekn.net/two-player-format/659-2-player-decklist-brujah",
+  "vekn_last_updated": "2025-05-17",
+  "fetched_on": "2026-10-08",
+  "name": "2-player decklist: Brujah",
+  "crypt": [
+    {
+      "name": "Saku Pihlajamäki",
+      "count": 3,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201658
+    },
+    {
+      "name": "Valeriya Zinovieva",
+      "count": 3,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201614
+    },
+    {
+      "name": "Atiena",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201579
+    },
+    {
+      "name": "Leumeah",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201526
+    },
+    {
+      "name": "Octane",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201609
+    },
+    {
+      "name": "Siarhei Levchenko",
+      "count": 1,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201612
+    }
+  ],
+  "library": [
+    {
+      "name": "Celerity",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100312
+    },
+    {
+      "name": "Fame",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100698
+    },
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860
+    },
+    {
+      "name": "Oxford University, England",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101341
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180
+    },
+    {
+      "name": "Enchant Kindred",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 100640
+    },
+    {
+      "name": "Fleetness",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 100747
+    },
+    {
+      "name": "Line Brawl",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 102229
+    },
+    {
+      "name": "Kine Resources Contested",
+      "type": "Political Action",
+      "count": 2,
+      "krcg_id": 101056
+    },
+    {
+      "name": "47th Street Royals",
+      "type": "Ally",
+      "count": 1,
+      "krcg_id": 102217
+    },
+    {
+      "name": "Organized Resistance",
+      "type": "Reaction",
+      "count": 4,
+      "krcg_id": 102230
+    },
+    {
+      "name": "Protection Racket",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101501
+    },
+    {
+      "name": "Dust Up",
+      "type": "Combat",
+      "count": 6,
+      "krcg_id": 100597
+    },
+    {
+      "name": "Pursuit",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 101523
+    },
+    {
+      "name": "Side Strike",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101778
+    },
+    {
+      "name": "Slam",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 101798
+    },
+    {
+      "name": "Taste of Vitae",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101945
+    }
+  ],
+  "unmatched": []
+}
