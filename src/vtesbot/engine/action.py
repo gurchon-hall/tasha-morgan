@@ -19,27 +19,116 @@ the sole opponent is simultaneously prey and predator. The rulebook's
 by the same single Methuselah there is only one decision-maker and no new
 information arrives between a hypothetical "as prey" and "as predator" ask,
 so this implementation collapses both directed and undirected actions to a
-single block-attempt decision offered to that one opponent. No stealth or
-intercept cards are implemented this milestone, so the "only when needed"
-addition windows never have anything legal to add (Rulebook SS4 Minion
-Phase): stealth stays at the action's baseline value, intercept stays 0, and
-no decision is raised for those steps (nothing legal to offer).
-"""
+single block-attempt decision offered to that one opponent.
 
-from __future__ import annotations
+Stealth/intercept hook wiring (`engine/hooks.py`): "Stealth may be added
+only when needed (an ongoing block would succeed); intercept only when
+needed (acting stealth exceeds it)" (Rulebook SS4 Minion Phase, per the
+`vtes-rules-reference` skill condensed mapping) is a strict ping-pong, not
+the general "both sides get a turn" impulse window: the *blocking*
+Methuselah may add intercept only while the attempt is currently failing
+(stealth > intercept); the *acting* Methuselah may add stealth only while
+the attempt is currently succeeding (intercept >= stealth). `_duel_stealth_
+intercept` below implements exactly that alternation via the
+`"stealth_modifier"` / `"intercept_modifier"` hooks; with no providers
+registered for either hook (no stealth/intercept library cards implemented
+yet), each offer is empty and the loop terminates immediately at
+(stealth=base_stealth, intercept=0) -- byte-for-byte the milestone-2 result,
+so this wiring is pure scaffolding until a card registers against one of
+these hooks.
+"""
 
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+from . import hooks
 from .combat import run_combat
 from .decision import Choice, Decision
 
 if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
 
+STEALTH_MODIFIER_HOOK = "stealth_modifier"
+INTERCEPT_MODIFIER_HOOK = "intercept_modifier"
+
+
+def _duel_stealth_intercept(
+    state: GameState,
+    actor: str,
+    defender: str,
+    base_stealth: int,
+    acting_vampire: VampireInPlay | None,
+    blocker: VampireInPlay,
+) -> tuple[int, int]:
+    """Resolve the "only when needed" stealth/intercept ping-pong for one
+    block attempt against `blocker` (see module docstring)."""
+    stealth = base_stealth
+    intercept = 0
+    context = {
+        "actor": actor,
+        "defender": defender,
+        "acting_vampire": acting_vampire.instance_id if acting_vampire is not None else None,
+        "blocking_vampire": blocker.instance_id,
+    }
+    while True:
+        if stealth > intercept:
+            # Block currently fails: intercept may be added, only now needed.
+            options = hooks.offer(
+                INTERCEPT_MODIFIER_HOOK,
+                state,
+                player=defender,
+                stealth=stealth,
+                intercept=intercept,
+                **context,
+            )
+            if not options:
+                return stealth, intercept
+            delta = _ask_modifier(state, defender, INTERCEPT_MODIFIER_HOOK, options, context)
+            if delta is None:
+                return stealth, intercept
+            intercept += delta
+        else:
+            # Block currently succeeds: stealth may be added, only now needed.
+            options = hooks.offer(
+                STEALTH_MODIFIER_HOOK,
+                state,
+                player=actor,
+                stealth=stealth,
+                intercept=intercept,
+                **context,
+            )
+            if not options:
+                return stealth, intercept
+            delta = _ask_modifier(state, actor, STEALTH_MODIFIER_HOOK, options, context)
+            if delta is None:
+                return stealth, intercept
+            stealth += delta
+
+
+def _ask_modifier(
+    state: GameState,
+    player: str,
+    hook_name: str,
+    options: list[hooks.HookOption],
+    context: dict,
+) -> int | None:
+    """Offer `options` plus a decline choice; return the applied delta, or
+    None if the player declines (the hook's `apply` must return an `int`)."""
+    by_value = {o.choice.value: o for o in options}
+    choices = tuple(o.choice for o in options) + (Choice("decline", "Decline"),)
+    decision = Decision(player=player, kind=hook_name, choices=choices, context=dict(context))
+    answer = state.ask(decision)
+    if answer.value == "decline":
+        return None
+    return by_value[answer.value].apply(state)
+
 
 def attempt_block(
-    state: GameState, actor: str, defender: str, base_stealth: int
+    state: GameState,
+    actor: str,
+    defender: str,
+    base_stealth: int,
+    acting_vampire: VampireInPlay | None = None,
 ) -> VampireInPlay | None:
     """Offer `defender` the chance to block with a ready, unlocked vampire.
 
@@ -75,10 +164,9 @@ def attempt_block(
         instance_id = choice.value.split(":", 1)[1]
         blocker = state.players[defender].vampires[instance_id]
 
-        # "only when needed" stealth/intercept additions: no stealth/intercept
-        # cards are implemented this milestone, so neither can change here.
-        stealth = base_stealth
-        intercept = 0
+        stealth, intercept = _duel_stealth_intercept(
+            state, actor, defender, base_stealth, acting_vampire, blocker
+        )
         if intercept >= stealth:
             return blocker
         # Failed attempt: does not lock the blocker, does not end the
@@ -99,7 +187,7 @@ def perform_minion_action(
     evaded); it must perform the action's own effect (e.g. bleed/hunt).
     """
     vampire.locked = True
-    blocker = attempt_block(state, actor_player, defender_player, base_stealth)
+    blocker = attempt_block(state, actor_player, defender_player, base_stealth, vampire)
     if blocker is not None:
         blocker.locked = True
         run_combat(state, actor_player, vampire, defender_player, blocker)

@@ -116,10 +116,15 @@ class _PlayerBuilder:
         wounded: bool = False,
         locked: bool = False,
         name: str | None = None,
+        disciplines: tuple[str, ...] = (),
     ) -> _PlayerBuilder:
         instance_id = self._instance_id(label)
         card = CryptCard(
-            krcg_id=_next_crypt_id(), name=name or instance_id, capacity=capacity, group=5
+            krcg_id=_next_crypt_id(),
+            name=name or instance_id,
+            capacity=capacity,
+            group=5,
+            disciplines=disciplines,
         )
         self.vampires.append(
             VampireInPlay(

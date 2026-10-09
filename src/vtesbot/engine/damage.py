@@ -26,16 +26,26 @@ this fix and is covered by `test_aggravated_damage_burns_an_already_wounded_vamp
 Vampire blood capacity cap (a vampire may never hold more blood than its
 printed capacity) is a foundational, uncontested VTES rule (Rulebook SS1
 Vampires) and is enforced here via `add_blood`.
-"""
 
-from __future__ import annotations
+Damage-prevention hook wiring (`engine/hooks.py`, CLAUDE.md milestone-3
+scaffolding pass): the "Prevent step" named above is a single-sided window
+(only the damaged vampire's controller may play a prevention effect, e.g.
+Rolling with the Punches / Soak), so it is wired with
+`hooks.offer_until_pass` against the `"damage_prevention"` hook. With no
+providers registered (no prevention cards implemented yet) the offer is
+always empty and no decision is raised -- byte-for-byte the milestone-2
+result.
+"""
 
 from typing import TYPE_CHECKING
 
+from . import hooks
 from .decision import Choice, Decision
 
 if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
+
+DAMAGE_PREVENTION_HOOK = "damage_prevention"
 
 
 def add_blood(vampire: VampireInPlay, amount: int) -> int:
@@ -81,8 +91,20 @@ def apply_damage(
     if normal == 0 and aggravated == 0:
         return
 
-    # --- Prevent step: no prevention effects are implemented this milestone. ---
-    # (hook point for cards/ modules in a later milestone)
+    # --- Prevent step: single-sided window for the damaged vampire's own
+    # controller (see module docstring); a "damage_box" is threaded through
+    # so a registered prevention provider's `apply` can reduce it in place. ---
+    damage_box = {"normal": normal, "aggravated": aggravated}
+    hooks.offer_until_pass(
+        state,
+        DAMAGE_PREVENTION_HOOK,
+        player,
+        context={"vampire": vampire.instance_id, "damage": damage_box},
+    )
+    normal = max(0, damage_box["normal"])
+    aggravated = max(0, damage_box["aggravated"])
+    if normal == 0 and aggravated == 0:
+        return
 
     # --- Mend step (normal damage only; aggravated cannot be mended). ---
     remaining_normal = normal

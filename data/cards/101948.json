@@ -1,0 +1,280 @@
+{
+  "id": 101948,
+  "printed_name": "Telepathic Counter",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Telepathic Counter"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300001,
+        "code": "Jyhad"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/jyhad/telepathiccounter.jpg"
+    },
+    {
+      "set": {
+        "id": 300002,
+        "code": "VTES"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/telepathiccounter.jpg"
+    },
+    {
+      "set": {
+        "id": 300005,
+        "code": "Sabbat"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat/telepathiccounter.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/telepathiccounter.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/telepathiccounter.jpg"
+    },
+    {
+      "set": {
+        "id": 300010,
+        "code": "Anarchs"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAB",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAG",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anarchs/telepathiccounter.jpg"
+    },
+    {
+      "set": {
+        "id": 300011,
+        "code": "BH"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/black-hand/telepathiccounter.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "SKM",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/telepathiccounter.jpg"
+    },
+    {
+      "set": {
+        "id": 300024,
+        "code": "HttB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/heirs-to-the-blood/telepathiccounter.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/telepathiccounter.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/telepathiccounter.jpg",
+  "types": [
+    "Reaction"
+  ],
+  "formats": [],
+  "artists": [
+    "Susan Van Camp",
+    "Darryl Elliott",
+    "Joe Slucher"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "Must be played before the bleed can be considered successful (eg. before [OBF] {101857|Spying Mission}), but can be played before or after block attempts. [TOM 19960303] [LSJ 20061212]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[TOM 19960303]",
+          "label": "TOM 19960303",
+          "url": "https://usenet.krcg.org/t/SEU6ztVpR94/#m2"
+        },
+        {
+          "text": "[LSJ 20061212]",
+          "label": "LSJ 20061212",
+          "url": "https://usenet.krcg.org/t/h3onVZ1NqpQ/#m46"
+        }
+      ],
+      "cards": [
+        {
+          "id": 101857,
+          "printed_name": "Spying Mission",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": [
+        {
+          "text": "[OBF]",
+          "symbol": "O",
+          "count": ""
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "text": "[aus] Reduce a bleed against you by 1.\n[AUS] Reduce a bleed against you by 2.",
+  "draft": "",
+  "flavor": "",
+  "legal": "1994-09-15",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "aus"
+    ]
+  }
+}

@@ -53,3 +53,37 @@ No prior version to diff against. This is the first snapshot of the VEKN
 - Net effect: 311 cards, 0 unmatched, same as before — only the krcg_id of
   the 5 crypt fixes actually changed; the other 4 gained a confirmation
   note with the id unchanged.
+
+## 2026-10-09 — two more VEKN suggested decklist fixtures imported
+
+Milestone 3 (card pool for 2-3 VEKN suggested decks): imported 2 more
+decklist fixtures alongside the existing `brujah.json`, bringing the total
+to 3. No allowed-list card changes in this entry (format file unchanged,
+still `data/formats/2p/2026-10-03.json`).
+
+- Picked Toreador and Ventrue (over the other 12 clan decks and 4 "Path"
+  decks listed on the format hub) because they share the most library
+  cards with Brujah and with each other, keeping milestone 3's card pool
+  manageable: Brujah/Toreador share 7 library names, Brujah/Ventrue share
+  4, Toreador/Ventrue share 9. No crypt vampires are shared across any
+  pair (expected: clan-specific crypts).
+- `data/decks/vekn-2p/toreador.json` — source
+  [2-player decklist: Toreador](https://www.vekn.net/two-player-format/666-2-player-decklist-toreador),
+  VEKN "Last updated on" May 17, 2025. 12 crypt (groups 6-7), 42 library.
+  All 23 distinct names matched to a krcg_id via `scripts/krcg_match.py`
+  (`--crypt-min-group 5` default), 0 unmatched. Validated LEGAL against
+  `2026-10-03.json`.
+- `data/decks/vekn-2p/ventrue.json` — source
+  [2-player decklist: Ventrue](https://www.vekn.net/two-player-format/668-2-player-decklist-ventrue),
+  VEKN "Last updated on" July 8, 2025. 12 crypt (groups 6-7), 42 library.
+  All 28 distinct names matched to a krcg_id, 0 unmatched. Crypt matching
+  confirmed the 2026-10-08 group->=5 disambiguation fixes still resolve
+  correctly for this deck's own copies of Lucinde, Alastor (krcg_id
+  201700, G7) and Queen Anne (krcg_id 201647, G6). Validated LEGAL against
+  `2026-10-03.json`.
+- Combined distinct card pool across all 3 fixtures (brujah, toreador,
+  ventrue): 20 distinct crypt vampires, 38 distinct library cards (58
+  total) — this is the pool milestone 3's card-by-card implementation
+  work should target next.
+- 16 VEKN suggested-decklist pages (10 remaining clan decks + 4 "Path"
+  decks) are still not imported as fixtures.

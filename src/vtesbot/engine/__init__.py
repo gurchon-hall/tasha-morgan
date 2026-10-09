@@ -5,8 +5,9 @@ No I/O, no printing, no network; all randomness via `GameState.rng`
 (CLAUDE.md engine invariants).
 """
 
+from . import hooks
 from .agent import Agent
-from .cards import CryptCard, LibraryCard
+from .cards import CardAttachment, CryptCard, LibraryCard
 from .decision import Choice, Decision
 from .errors import IllegalChoiceError, UnresolvedRulingError
 from .format import FormatConfig
@@ -19,6 +20,7 @@ from .state import GameState, PlayerState, VampireInPlay
 
 __all__ = [
     "Agent",
+    "CardAttachment",
     "CryptCard",
     "LibraryCard",
     "Choice",
@@ -37,4 +39,5 @@ __all__ = [
     "GameState",
     "PlayerState",
     "VampireInPlay",
+    "hooks",
 ]

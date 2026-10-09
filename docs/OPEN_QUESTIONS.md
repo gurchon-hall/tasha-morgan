@@ -9,6 +9,12 @@ Rules or card interactions that the official sources do not settle. Nothing list
 - Candidate readings: to be listed per card when encountered.
 - Impacted cards: to be listed.
 
+## OQ-2: Interface target   (status: resolved — digital first)
+
+- Decision: digital-first. The engine owns the full game state and exposes explicit legal choices; the first implementation target is a CLI interface.
+- Rationale: the project is built around deterministic state tracking, legal-action decision points, and engine-driven play, which are natural to a digital interface and easier to validate than a physical-table workflow.
+- Scope: the physical-table workflow remains out of scope unless a concrete requirement appears. The project will proceed with digital play and CLI-first tooling by default.
+
 ## OQ-3: Combat "press" step — exact turn order   (status: resolved)
 
 - Situation: Rulebook SS4 Combat describes each round ending with a "press"
@@ -64,8 +70,71 @@ Rules or card interactions that the official sources do not settle. Nothing list
   correctly.
 - Impacted code: `src/vtesbot/engine/action.py` (`attempt_block`).
 
-## OQ-2: Interface target   (status: resolved — digital first)
+## OQ-6: Referendum polling/vote-tally/pass-fail procedure for exactly two Methuselahs   (status: resolved)
 
-- Decision: digital-first. The engine owns the full game state and exposes explicit legal choices; the first implementation target is a CLI interface.
-- Rationale: the project is built around deterministic state tracking, legal-action decision points, and engine-driven play, which are natural to a digital interface and easier to validate than a physical-table workflow.
-- Scope: the physical-table workflow remains out of scope unless a concrete requirement appears. The project will proceed with digital play and CLI-first tooling by default.
+- Situation: the `vtes-rules-reference` skill's condensed mapping of
+  Rulebook §4 Politics gives *where votes come from* ("1 from a political
+  action card (max 1 per Methuselah), titles (primogen 1, prince/baron 2,
+  justicar 3, Inner Circle 4; Sabbat and other sects per §6–7), burning the
+  Edge = 1. Only ready minions vote. Ties fail.") and *when terms are
+  chosen* ("Terms chosen only after success"), but does not state what a
+  referendum's cast votes are compared against to decide pass/fail, nor what
+  "ties fail" is relative to. This pool's own three Political Action cards
+  additionally surfaced a related, unexplained state: card rulings for
+  Perfect Paragon and Scalpel Tongue both read "[c]annot be used during a
+  referendum that is automatically passing" [PIB 20150105] [LSJ 19980107],
+  raising the question of whether that's a duel-specific mechanic (only one
+  possible opposing voter).
+- Resolution: `rules-auditor` re-fetched both primary sources directly
+  (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>, Politics/
+  Referendum subsection, and the 2P variant page) and settled all three
+  bundled questions:
+  1. **What are votes compared against, what does "ties fail" mean?**
+     Quoted verbatim: "all Methuselahs may now cast any votes and ballots
+     they have... in any order... there is no obligation to cast"; "Each
+     vote or ballot cast is cast either 'for' or 'against' the referendum";
+     "If there are more votes for the referendum than against, it passes...
+     Otherwise, the referendum fails... Tied referendums fail." Votes are a
+     straight for/against tally across whatever sources each Methuselah
+     chooses to use (political-action card, titled ready vampires,
+     burning the Edge, other cards — "Methuselahs have no inherent votes or
+     ballots") — not "Methuselah vs Methuselah". This degrades cleanly to
+     two players: an uncontested referendum is simply 0-for/0-against,
+     which ties, which fails, same as with any player count. **Reading A
+     confirmed.**
+  2. **Does the 2P variant override this?** No — re-fetched directly;
+     confirmed no referendum-procedure override exists, only the
+     already-known title-contest exception.
+  3. **Is "automatically passing" a duel-specific mechanic?** No —
+     **reading B was wrong.** The actual General Ruling [PIB 20150105],
+     fetched from the forum post krcg cites
+     (<https://www.vekn.net/forum/rules-questions/68465-voting-is-complicated#68493>):
+     "If a referendum will pass automatically (e.g., Cryptic Rider,
+     Charming Lobby, Malkavian Rider Clause, Día de los Muertos), then no
+     casting votes or ballots occurs during the automatic referendum." This
+     is a card-text-triggered category (specific cards whose own printed
+     text declares their called referendum passes automatically), entirely
+     unrelated to player count. Confirmed via krcg that none of this
+     pool's three Political Action cards (Disputed Territory, Kine
+     Resources Contested, Parity Shift) carry this text themselves, so the
+     mechanic does not apply to any card in the current pool.
+- Remaining work is engineering, not a ruling: `political_action` should
+  gain a real polling step (enumerate each Methuselah's available vote
+  sources, let each commit for/against, tally, apply ties-fail) to replace
+  the current `UnresolvedRulingError("OQ-6")`; once built, the cards below
+  can move from `blocked` to implementation.
+- Note for later: if a card entering the 2P pool ever prints its own
+  "this referendum passes automatically" text (none currently do), that
+  card's own text is authoritative per the Golden Rule for Cards (CLAUDE.md
+  §2) and needs no new Open Question — it's a plain card-text clause, not
+  an unsettled ruling.
+- Impacted code: `src/vtesbot/engine/politics.py::political_action` raises
+  `UnresolvedRulingError("OQ-6")` immediately once a political action goes
+  unblocked, rather than guessing. Impacted cards (all registered `blocked`,
+  reason `OQ-6`): Disputed Territory, Kine Resources Contested, Parity Shift
+  (call a referendum); Perfect Paragon, Scalpel Tongue, Voter Captivation,
+  Oxford University, England (only usable during/after a referendum's
+  polling step or resolution); crypt-vampire printed abilities Alexa
+  Draper, Diana Iadanza, Fiorenza Savona, Marcos Belegrad, Modius, Queen
+  Anne (each reads or modifies a referendum's polling step or who called
+  it).

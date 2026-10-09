@@ -1,0 +1,155 @@
+{
+  "source": "https://www.vekn.net/two-player-format/666-2-player-decklist-toreador",
+  "vekn_last_updated": "2025-05-17",
+  "fetched_on": "2026-10-09",
+  "name": "2-player decklist: Toreador",
+  "crypt": [
+    {
+      "name": "Diana Iadanza",
+      "count": 4,
+      "capacity": 9,
+      "group": 7,
+      "krcg_id": 201694
+    },
+    {
+      "name": "Marcos Belegrad",
+      "count": 2,
+      "capacity": 8,
+      "group": 7,
+      "krcg_id": 201702
+    },
+    {
+      "name": "Modius",
+      "count": 2,
+      "capacity": 8,
+      "group": 7,
+      "krcg_id": 201703
+    },
+    {
+      "name": "Mkhokheli",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201561
+    },
+    {
+      "name": "Maila",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201633
+    },
+    {
+      "name": "Carmelita Neillson",
+      "count": 1,
+      "capacity": 5,
+      "group": 7,
+      "krcg_id": 201625
+    }
+  ],
+  "library": [
+    {
+      "name": "Celerity",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100312
+    },
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180
+    },
+    {
+      "name": "Enchant Kindred",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 100640
+    },
+    {
+      "name": "Disputed Territory",
+      "type": "Political Action",
+      "count": 1,
+      "krcg_id": 100557
+    },
+    {
+      "name": "Kine Resources Contested",
+      "type": "Political Action",
+      "count": 4,
+      "krcg_id": 101056
+    },
+    {
+      "name": "Parity Shift",
+      "type": "Political Action",
+      "count": 2,
+      "krcg_id": 101353
+    },
+    {
+      "name": "Loup",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 102273
+    },
+    {
+      "name": "Perfect Paragon",
+      "type": "Action Modifier",
+      "count": 4,
+      "krcg_id": 101387
+    },
+    {
+      "name": "Voter Captivation",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102131
+    },
+    {
+      "name": "Scalpel Tongue",
+      "type": "Action Modifier/Reaction",
+      "count": 1,
+      "krcg_id": 101686
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101321
+    },
+    {
+      "name": "Second Tradition: Domain",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101706
+    },
+    {
+      "name": "Telepathic Counter",
+      "type": "Reaction",
+      "count": 4,
+      "krcg_id": 101948
+    },
+    {
+      "name": "Pursuit",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101523
+    },
+    {
+      "name": "Side Strike",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 101778
+    },
+    {
+      "name": "Weighted Walking Stick",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 102169
+    }
+  ],
+  "unmatched": []
+}

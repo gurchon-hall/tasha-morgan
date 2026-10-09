@@ -1,0 +1,187 @@
+{
+  "source": "https://www.vekn.net/two-player-format/668-2-player-decklist-ventrue",
+  "vekn_last_updated": "2025-07-08",
+  "fetched_on": "2026-10-09",
+  "name": "2-player decklist: Ventrue",
+  "crypt": [
+    {
+      "name": "Lucinde, Alastor",
+      "count": 2,
+      "capacity": 10,
+      "group": 7,
+      "krcg_id": 201700
+    },
+    {
+      "name": "Queen Anne",
+      "count": 1,
+      "capacity": 10,
+      "group": 6,
+      "krcg_id": 201647
+    },
+    {
+      "name": "Alexa Draper",
+      "count": 3,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201529
+    },
+    {
+      "name": "Alice Chen",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201531
+    },
+    {
+      "name": "Kevin Jackson",
+      "count": 1,
+      "capacity": 7,
+      "group": 7,
+      "krcg_id": 201629
+    },
+    {
+      "name": "Fiorenza Savona",
+      "count": 1,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201616
+    },
+    {
+      "name": "Horst von Brühl",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201550
+    },
+    {
+      "name": "Madison",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201557
+    }
+  ],
+  "library": [
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860
+    },
+    {
+      "name": "Life in the City",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 101104
+    },
+    {
+      "name": "Perfectionist",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101388
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180
+    },
+    {
+      "name": "Dominate Kine",
+      "type": "Action",
+      "count": 1,
+      "krcg_id": 100573
+    },
+    {
+      "name": "Enchant Kindred",
+      "type": "Action",
+      "count": 3,
+      "krcg_id": 100640
+    },
+    {
+      "name": "Propaganda",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 101495
+    },
+    {
+      "name": "Kine Resources Contested",
+      "type": "Political Action",
+      "count": 3,
+      "krcg_id": 101056
+    },
+    {
+      "name": "Parity Shift",
+      "type": "Political Action",
+      "count": 2,
+      "krcg_id": 101353
+    },
+    {
+      "name": "Bonding",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 100236
+    },
+    {
+      "name": "Perfect Paragon",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 101387
+    },
+    {
+      "name": "Seduction",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101712
+    },
+    {
+      "name": "Sleeping Mind, The",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101805
+    },
+    {
+      "name": "Threats",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101978
+    },
+    {
+      "name": "Voter Captivation",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102131
+    },
+    {
+      "name": "Second Tradition: Domain",
+      "type": "Reaction",
+      "count": 4,
+      "krcg_id": 101706
+    },
+    {
+      "name": "Pulled Fangs",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 101515
+    },
+    {
+      "name": "Rolling with the Punches",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 101649
+    },
+    {
+      "name": "Soak",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101817
+    },
+    {
+      "name": "Weighted Walking Stick",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 102169
+    }
+  ],
+  "unmatched": []
+}

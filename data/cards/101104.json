@@ -1,0 +1,184 @@
+{
+  "id": 101104,
+  "printed_name": "Life in the City",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Life in the City"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Vida en la ciudad"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Vivre en ville"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300010,
+        "code": "Anarchs"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 2.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anarchs/lifeinthecity.jpg"
+    },
+    {
+      "set": {
+        "id": 300014,
+        "code": "KMW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAn",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/kindred-most-wanted/lifeinthecity.jpg"
+    },
+    {
+      "set": {
+        "id": 300015,
+        "code": "LoB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PA",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PI",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/legacies-of-blood/lifeinthecity.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/lifeinthecity.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/lifeinthecity.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/lifeinthecity.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Vida en la ciudad",
+      "text": "Nimiedad.\nAñade 1 de sangre a un vampiro preparado.",
+      "flavor": "Evito pagar a clientes que puedan echar en falta, pero los solitarios son un buen blanco. Los contrabandistas creen que, además, trafico con esclavos.\nIngrid Galt, anarquista.",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/lifeinthecity.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Vivre en ville",
+      "text": "Triviale.\nAjoutez 1 point de sang à un vampire disponible.",
+      "flavor": "Je ne touche pas aux clients qui pourraient leur manquer, mais les solitaires font des proies idéales. Les trafiquants pensent que je pratique l'esclavage en dilettante.\nIngrid Galt, Anarch",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/lifeinthecity.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/lifeinthecity.jpg",
+  "types": [
+    "Master"
+  ],
+  "formats": [],
+  "artists": [
+    "Fred Hooper"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Trifle.\nAdd 1 blood to a ready vampire.",
+  "draft": "",
+  "flavor": "I steer clear of paying customers who might be missed, but solos are fair game. The black marketers think I'm doing a little slave trade on the side.\nIngrid Galt, Anarch",
+  "legal": "2003-06-18",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": true,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}

@@ -7,13 +7,11 @@ the player's `Agent`, and rejects any answer not in `decision.choices`
 (CLAUDE.md "legality by construction").
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from .agent import Agent
-from .cards import CryptCard, LibraryCard
+from .cards import CardAttachment, CryptCard, LibraryCard
 from .errors import IllegalChoiceError
 from .format import FormatConfig
 from .log import ReplayLog
@@ -38,6 +36,10 @@ class VampireInPlay:
     locked: bool = False
     wounded: bool = False
     contested_with: str | None = None  # instance_id of the opposing copy, if 2P-contested
+    attachments: list[CardAttachment] = field(default_factory=list)
+    """Cards physically on this vampire (discipline/archetype master cards,
+    equipment, retainers -- CLAUDE.md SS5/SS6 "equipment"/"retainer" hook
+    categories; see `engine/cards.py::CardAttachment`)."""
 
     @property
     def is_ready_unlocked(self) -> bool:
