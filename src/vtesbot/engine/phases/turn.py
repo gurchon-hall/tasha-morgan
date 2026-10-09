@@ -9,8 +9,6 @@ as soon as `state.game_over` becomes true (Rulebook SS5 Ending the Game:
 the game ends immediately on an oust in a 2-player duel).
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from .discard import discard_phase

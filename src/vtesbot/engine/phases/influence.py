@@ -16,8 +16,6 @@ fourth action type the Influence phase enumerates, even though it does not
 itself cost a transfer).
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from ..damage import add_blood

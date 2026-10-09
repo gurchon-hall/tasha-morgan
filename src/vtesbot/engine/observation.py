@@ -6,8 +6,6 @@ or face-down uncontrolled vampires." This module is the single place that
 converts the full `GameState` into the restricted view handed to an agent.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 

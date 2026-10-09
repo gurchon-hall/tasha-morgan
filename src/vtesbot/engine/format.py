@@ -6,8 +6,6 @@ SS1 Scope), so `FormatConfig.two_player` defaults to True, but every 2P-only
 rule in the engine still reads this flag rather than being unconditional.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 

@@ -7,8 +7,6 @@ only "discard a hand card and draw its replacement" (Rulebook SS2: "replace
 from library after play") or passing are offered.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from ..decision import Choice, Decision

@@ -5,8 +5,6 @@ every pool-loss site (bleed, influence refunds, contests, future cards)
 triggers ousting consistently.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from .ousting import check_oust

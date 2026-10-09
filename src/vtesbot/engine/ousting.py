@@ -13,8 +13,6 @@ remaining, so both bonuses apply to that one player: 1 VP (ousting prey) + 1
 VP (last Methuselah) + 6 pool, and the game ends immediately.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

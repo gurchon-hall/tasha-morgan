@@ -7,8 +7,6 @@ pick from that list." This module defines the data shapes; `GameState.ask`
 that its answer is one of `decision.choices`.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import Any
 

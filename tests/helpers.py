@@ -6,8 +6,6 @@ and fail loudly if the engine asks something unscripted or offers an
 illegal choice, or if the script has leftover unused answers.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 from vtesbot.engine import (

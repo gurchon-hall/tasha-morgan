@@ -6,8 +6,6 @@ engine-internal record (unlike `Observation`, it is not shown to agents and
 does not need to hide hidden information -- it exists for debugging/replay).
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 

@@ -8,8 +8,6 @@ Protocol. The one concrete implementation introduced by this pass,
 `ScriptedAgent`, is a test helper (see `tests/helpers.py`), not a real agent.
 """
 
-from __future__ import annotations
-
 from typing import Protocol
 
 from .decision import Choice, Decision

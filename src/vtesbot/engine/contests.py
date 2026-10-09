@@ -19,8 +19,6 @@ while both copies sit face down, uncontrolled. See OQ-4 for the citation gap
 and the alternative reading (contest on simultaneous uncontrolled presence).
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from .decision import Choice, Decision

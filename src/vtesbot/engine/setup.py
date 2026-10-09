@@ -10,8 +10,6 @@ library 40-60) is checked by `scripts/validate_deck.py` / the
 assumes it is handed an already-legal `DeckSpec`.
 """
 
-from __future__ import annotations
-
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 

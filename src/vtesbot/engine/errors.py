@@ -7,8 +7,6 @@ instead, and the situation is recorded in `docs/OPEN_QUESTIONS.md` under an
 `OQ-<n>` id referenced by the error message.
 """
 
-from __future__ import annotations
-
 
 class UnresolvedRulingError(Exception):
     """Raised instead of guessing a rule or card interaction the sources do not settle.

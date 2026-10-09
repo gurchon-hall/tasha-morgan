@@ -6,14 +6,9 @@ the game state. Same seed + same decisions => same game." Nothing under
 `GameRNG` so it is both deterministic and recorded in the replay log.
 """
 
-from __future__ import annotations
-
 import random
-from typing import TypeVar
 
 from .log import ReplayLog
-
-T = TypeVar("T")
 
 
 class GameRNG:
@@ -24,12 +19,12 @@ class GameRNG:
         self._log = log
         self.seed = seed
 
-    def shuffle(self, items: list[T], description: str) -> None:
+    def shuffle[T](self, items: list[T], description: str) -> None:
         """Shuffle `items` in place (Fisher-Yates via `random.Random.shuffle`)."""
         self._random.shuffle(items)
         self._log.record_random(description, [getattr(i, "name", repr(i)) for i in items])
 
-    def cut(self, items: list[T], description: str) -> None:
+    def cut[T](self, items: list[T], description: str) -> None:
         """Cut `items` at a random point (move the bottom portion to the top).
 
         2P variant SS3 Game Setup: "predator cuts" the shuffled deck. With a

@@ -13,8 +13,6 @@ nothing to "choose the order" of, so no vacuous ordering decision is raised
 (the rules-scenario-test skill's "only when needed" principle).
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from ..contests import resolve_one_contest
