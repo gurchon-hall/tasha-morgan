@@ -18,10 +18,13 @@ def test_aggravated_damage_burns_wounded_vampire():
     Worked example: a ready vampire with 1 blood takes 2 normal + 1 aggravated
     damage; burns 1 blood to mend, is wounded by the 2nd point, and the
     aggravated point burns him."""
-    game = ScenarioBuilder(seed=1, format="2p") \
-        .player("A").ready_vampire("V1", capacity=3, blood=1) \
-        .player("B") \
+    game = (
+        ScenarioBuilder(seed=1, format="2p")
+        .player("A")
+        .ready_vampire("V1", capacity=3, blood=1)
+        .player("B")
         .build()
+    )
 
     game.apply_damage(target="V1", normal=2, aggravated=1, source=None)
     game.run_until_decision_or_end()

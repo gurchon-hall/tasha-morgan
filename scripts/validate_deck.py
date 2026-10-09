@@ -53,9 +53,7 @@ def validate(deck: dict, fmt: dict) -> list[str]:
 
     groups = sorted({c["group"] for c in deck["crypt"]})
     if not _consecutive(groups):
-        violations.append(
-            f"Crypt groups {groups} are not one group or two consecutive groups"
-        )
+        violations.append(f"Crypt groups {groups} are not one group or two consecutive groups")
 
     library_total = sum(c["count"] for c in deck["library"])
     if not (40 <= library_total <= 60):
@@ -66,8 +64,7 @@ def validate(deck: dict, fmt: dict) -> list[str]:
             allowed = allowed_by_id.get(c["krcg_id"])
             if allowed is None:
                 violations.append(
-                    f"{expected_type} card not on 2P allowed list: "
-                    f"{c['name']} ({c['krcg_id']})"
+                    f"{expected_type} card not on 2P allowed list: {c['name']} ({c['krcg_id']})"
                 )
             elif allowed["type"] != expected_type:
                 violations.append(
@@ -102,8 +99,10 @@ def main() -> None:
     library_total = sum(c["count"] for c in deck["library"])
 
     print(f"Deck: {deck.get('name', args.deck)}   Format: 2p @ {fmt['vekn_last_updated']}")
-    print(f"Crypt: {crypt_total} cards, groups {{{', '.join(map(str, groups))}}}   "
-          f"Library: {library_total} cards")
+    print(
+        f"Crypt: {crypt_total} cards, groups {{{', '.join(map(str, groups))}}}   "
+        f"Library: {library_total} cards"
+    )
     print("LEGAL" if not violations else "ILLEGAL")
     print("Violations:")
     if violations:

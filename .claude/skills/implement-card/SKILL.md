@@ -12,9 +12,10 @@ Look the card up in the active list `data/formats/2p/<date>.json`. Not listed �
 Use KRCG. The README shows this usage; confirm it against the installed version (`python -c "import krcg; help(krcg.vtes)"`) before relying on any other attribute:
 ```python
 from krcg.vtes import VTES
+
 VTES.load()
 card = VTES["Card Name"]
-data = card.to_json()   # inspect keys: text, rulings, types, disciplines, costs…
+data = card.to_json()  # inspect keys: text, rulings, types, disciplines, costs…
 ```
 Save the raw JSON to `data/cards/<card_id>.json` so the implementation is tied to a fixed text. If KRCG and the VEKN site disagree, report it.
 
