@@ -14,9 +14,10 @@ No prior version to diff against. This is the first snapshot of the VEKN
     on the VEKN page for "Spirit's Touch". User confirmed 2026-10-08:
     matched to KRCG id 101850 ("Spirit's Touch", Reaction).
 - Sources:
-  - Allowed list: [2P card list](https://www.vekn.net/two-player-format/657-list-of-allowed-cards-in-2-player-vtes) (VEKN page, 2026-10-03)
-  - Updates log: [2P updates log](https://www.vekn.net/two-player-format/675-two-player-format-updates) (VEKN page, 2026-10-03)
-  - Variant rules: [2P variant rules](https://www.vekn.net/two-player-format/655-two-player-variant-for-vampire-the-eternal-struggle) (VEKN page, 2026-10-03)
+  - Allowed list: [2P card list][2p-card-list] (VEKN page, 2026-10-03)
+  - Updates log: [2P updates log][2p-updates-log] (VEKN page, 2026-10-03)
+  - Variant rules: [2P variant rules][2p-variant-rules] (VEKN page,
+    2026-10-03)
 - KRCG library version used for matching: 4.18 (4149 cards loaded)
 - No active format version was configured anywhere in the project before
   this import, so nothing was switched.
@@ -87,3 +88,7 @@ still `data/formats/2p/2026-10-03.json`).
   work should target next.
 - 16 VEKN suggested-decklist pages (10 remaining clan decks + 4 "Path"
   decks) are still not imported as fixtures.
+
+[2p-card-list]: https://www.vekn.net/two-player-format/657-list-of-allowed-cards-in-2-player-vtes
+[2p-updates-log]: https://www.vekn.net/two-player-format/675-two-player-format-updates
+[2p-variant-rules]: https://www.vekn.net/two-player-format/655-two-player-variant-for-vampire-the-eternal-struggle

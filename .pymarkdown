@@ -1,0 +1,7 @@
+{
+  "extensions": {
+    "front-matter": {
+      "enabled": true
+    }
+  }
+}

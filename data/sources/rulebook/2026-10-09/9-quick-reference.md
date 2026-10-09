@@ -1,16 +1,17 @@
 <!--
-Archived snapshot for local reference (CLAUDE.md SS2 sources-of-truth rule: this is a cache, not a replacement for the source; re-fetch if it may be stale).
+Archived snapshot for local reference (CLAUDE.md §2 sources-of-truth rule:
+this is a cache, not a replacement for the source; re-fetch if it may be
+stale).
 Source: https://www.vekn.net/rulebook/9-quick-reference
 VEKN dateModified (from page metadata): 2021-02-08T17:13:27+0000
 Fetched: 2026-10-09
 -->
 
-## 9. Quick Reference
-- Print
-# **DISCIPLINES**
-| | | | |
+# 9. Quick Reference
 
-Animalism |
+## DISCIPLINES
+
+| | | | |Animalism |
 | | | | |Auspex |
 | | | | |Blood Sorcery (Thaumaturgy) |
 | | | | |Celerity |
@@ -21,7 +22,8 @@ Animalism |
 | | | | |Presence |
 | | | | |Protean |
 
-# CLANS
+## CLANS
+
 | | |Banu Haqim (Assamite) |
 | | |Brujah |
 | | |Caitiff |
@@ -38,7 +40,8 @@ Animalism |
 | | |Ventrue |
 | | | |
 
-# CARD TYPES
+## CARD TYPES
+
 | | |Action |
 | | |Action Modifier |
 | | |Ally |
@@ -47,12 +50,11 @@ Animalism |
 | | |Event |
 | | |Political |
 | | |Reaction |
-| | |
-
-Reflex |
+| | |Reflex |
 | | |Retainer |
 
-# OTHER SYMBOLS
+## OTHER SYMBOLS
+
 | | |Advanced |
 | | |Blood Cost |
 | | |Burn option |
@@ -60,5 +62,3 @@ Reflex |
 | | |Directed Action |
 | | |Merged |
 | | |Pool Cost |
-
-- Next

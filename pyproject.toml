@@ -10,6 +10,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "pymarkdownlnt>=0.9.40",
     "pytest>=8.0",
     "ruff>=0.6",
 ]
