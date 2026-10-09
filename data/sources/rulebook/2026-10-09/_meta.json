@@ -1,0 +1,55 @@
+{
+  "fetched": "2026-10-09",
+  "pages": {
+    "1-introduction": {
+      "title": "1. Introduction",
+      "source_url": "https://www.vekn.net/rulebook/1-introduction",
+      "vekn_date_modified": "2024-02-29T13:27:57+0000"
+    },
+    "2-card-types": {
+      "title": "2. Card Types",
+      "source_url": "https://www.vekn.net/rulebook/2-card-types",
+      "vekn_date_modified": "2024-04-05T07:19:23+0000"
+    },
+    "3-playing-the-game": {
+      "title": "3. Playing the Game",
+      "source_url": "https://www.vekn.net/rulebook/3-playing-the-game",
+      "vekn_date_modified": "2024-02-29T12:54:28+0000"
+    },
+    "4-detailed-turn-sequence": {
+      "title": "4. Detailed Turn Sequence",
+      "source_url": "https://www.vekn.net/rulebook/4-detailed-turn-sequence",
+      "vekn_date_modified": "2025-12-13T15:29:02+0000"
+    },
+    "5-ending-the-game": {
+      "title": "5. Ending the Game",
+      "source_url": "https://www.vekn.net/rulebook/5-ending-the-game",
+      "vekn_date_modified": "2021-02-08T17:10:06+0000"
+    },
+    "6-vampire-sects": {
+      "title": "6. Vampire Sects",
+      "source_url": "https://www.vekn.net/rulebook/6-vampire-sects",
+      "vekn_date_modified": "2025-11-16T21:48:36+0000"
+    },
+    "7-legacy-sets": {
+      "title": "7. Legacy Sets",
+      "source_url": "https://www.vekn.net/rulebook/7-legacy-sets",
+      "vekn_date_modified": "2025-11-16T16:28:41+0000"
+    },
+    "8-glossaries": {
+      "title": "8. Glossaries",
+      "source_url": "https://www.vekn.net/rulebook/8-glossaries",
+      "vekn_date_modified": "2024-02-29T13:25:22+0000"
+    },
+    "9-quick-reference": {
+      "title": "9. Quick Reference",
+      "source_url": "https://www.vekn.net/rulebook/9-quick-reference",
+      "vekn_date_modified": "2021-02-08T17:13:27+0000"
+    },
+    "appendix-imbued-rules": {
+      "title": "Appendix: Imbued Rules",
+      "source_url": "https://www.vekn.net/rulebook/appendix-imbued-rules",
+      "vekn_date_modified": "2021-02-08T17:14:21+0000"
+    }
+  }
+}

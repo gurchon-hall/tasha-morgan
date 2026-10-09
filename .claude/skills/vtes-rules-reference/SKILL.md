@@ -7,6 +7,8 @@ description: Condensed VtES rules (VEKN rulebook v1.1 + two-player variant) with
 
 This is a **map**, not a substitute for the sources. Before implementing a mechanism, open the cited section and read it in full.
 
+A local, versioned cache of the rulebook and 2P-variant pages (verbatim text, fetched directly — not paraphrased) lives at `data/sources/rulebook/<date>/<n>-<slug>.md` and `data/sources/2p-variant/<date>/{variant,updates}.md`; read the cache first for routine implementation/testing work instead of fetching live every time. **`rules-auditor` must still re-fetch the live page** — its value is independent verification, and a cache it trusted could hide the exact drift it exists to catch. Anyone resolving an Open Question should also re-fetch live rather than trust the cache, since the question is precisely about precision. See `data/sources/rulebook/CHANGELOG.md` for a caveat: individual rulebook sections get edited without the cover "v1.1" label changing, so the cache's per-page `dateModified` header is the real freshness signal, not the v1.1 date.
+
 - Rulebook v1.1 (October 2023): https://www.vekn.net/rulebook (sections 1–9 + Imbued appendix)
 - Detailed play summary: https://www.vekn.net/detailed-play-summary
 - General rulings: https://www.vekn.net/general-rulings — Card rulings: https://www.vekn.net/card-rulings

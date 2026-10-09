@@ -67,6 +67,7 @@ The format is a **living playtest** (cards are added/removed; last observed upda
 - Card texts and rulings: **KRCG** (`pip install krcg`, Python library by Lionel Panhaleux; also an online API). Verify the API against the installed version before relying on it.
 - 2P allowed list: stored as `data/formats/2p/<YYYY-MM-DD>.json` (one file per VEKN update) + `data/formats/2p/CHANGELOG.md`. The active version is selected by config, never implicit.
 - Suggested 2P decklists from VEKN: stored in `data/decks/vekn-2p/` as regression fixtures.
+- Rulebook + 2P variant pages: a versioned, verbatim local cache lives in `data/sources/rulebook/<date>/` and `data/sources/2p-variant/<date>/` (+ their own `CHANGELOG.md`), to cut down on repeated live fetches for routine work. It is a cache, not a source of truth — `rules-auditor` and anyone resolving an Open Question still re-fetch the live page (see `vtes-rules-reference` skill).
 
 ---
 
