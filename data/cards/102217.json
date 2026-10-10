@@ -1,0 +1,101 @@
+{
+  "id": 102217,
+  "printed_name": "47th Street Royals",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "47th Street Royals"
+    },
+    {
+      "type": "Vernacular",
+      "name": "La Realeza de la calle 47"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Realeza de la calle 47, La"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Realeza de la calle 47"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Les Royaux de la 47e rue"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Royaux de la 47e rue, Les"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Royaux de la 47e rue"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/47thstreetroyals.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "La Realeza de la calle 47",
+      "text": "Mortal único con 2 de vida. 1 de fuerza, 0 de sangrado.\nPuedes quemar esta carta para reducir un sangrado contra ti en 3.",
+      "flavor": "¿Las calles de quién? Pues las nuestras.\nBilly Navajas, líder de la Realeza de la calle 47",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/47thstreetroyals.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Les Royaux de la 47e rue",
+      "text": "Mortel unique avec 2 points de vie. 1 en force, 0 en morsure.\nVous pouvez brûler ce serviteur pour réduire de 3 une morsure contre vous.",
+      "flavor": "Quelles rues ? Nos rues.\nBill Schlass, chef des Royaux de la 47e rue",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/47thstreetroyals.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/47thstreetroyals.jpg",
+  "types": [
+    "Ally"
+  ],
+  "formats": [],
+  "artists": [
+    "Peter Bergting"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Unique mortal with 2 life. 1 strength, 0 bleed.\nYou can burn 47th Street Royals to reduce a bleed against you by 3.",
+  "draft": "",
+  "flavor": "Whose streets? Our streets.\nBilly Knives, leader of the 47th Street Royals",
+  "legal": "2021-12-31",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [
+    "Brujah"
+  ],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}
