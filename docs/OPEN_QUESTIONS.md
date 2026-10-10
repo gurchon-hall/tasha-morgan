@@ -2064,3 +2064,178 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   correct round-2 re-availability, only the same-round restriction the
   ruling actually describes. Full suite green (277 passed, up from 259;
   `ruff check`/`ruff format --check` clean).
+
+## OQ-19: Cross-card "(limited)" additional-strike cap not pooled (status: resolved)
+
+- Situation: found by the orchestrating session auditing `engine/combat.py`
+  plus `cards/dust_up.py`/`cards/side_strike.py` (the two cards using its
+  additional-strike machinery) and the bleed-side equivalent
+  (`cards/_shared.py::bleed_bookkeeping`, `cards/threats.py`,
+  `cards/bonding.py`). Not a ruling ambiguity -- the SS8 glossary rule is
+  plain and was already quoted verbatim in `engine/combat.py`'s own module
+  docstring (re-fetched live by the OQ-18 `rules-engineer` pass, 2026-10-10,
+  from <https://www.vekn.net/rulebook/4-detailed-turn-sequence>, matching
+  the local cache `data/sources/rulebook/2026-10-09/
+  4-detailed-turn-sequence.md`; not re-fetched again here, since this pass
+  settles no new ruling, only closes an engineering gap): "A minion cannot
+  use more than one card or effect to gain additional strikes per round of
+  combat." Dust Up's own ruling on exactly where the check belongs is
+  likewise already on file (`data/cards/100597.json`, `card-implementer`'s
+  OQ-18 follow-up): "[cel] The additional strike is not optional: you
+  cannot play it for the dodge only if you already played it for a
+  (limited) additional strike this round." [ANK 20220204].
+- The block was a missing engine capability, exactly as OQ-18's own
+  `card-implementer` note flagged when it landed Dust Up: "`engine/
+  combat.py`'s three combat hooks carry no round-boundary (or even
+  combat-boundary) signal in their context ... Flagged as a candidate for a
+  future `rules-engineer` pass (a round-scoped scratch container threaded
+  through `run_combat`'s three hook contexts, mirroring `pending`'s role
+  for minion actions) if exact per-round fidelity is ever wanted." Both
+  `dust_up.py` and `side_strike.py` had each built their own private,
+  per-card, per-vampire-*instance* (`id(vampire)` + `weakref.finalize`)
+  bookkeeping instead -- strictly more restrictive than the rule (never
+  re-granting within one round), but with two real consequences flagged in
+  this entry's opening brief: (1) **illegal-play risk**: each card's
+  tracking only ever disabled *that card's own* clause, so nothing stopped
+  a single vampire holding both Dust Up and Side Strike from using *both*
+  cards' "(limited)" grants in the same round -- a genuine milestone-1
+  "always legal" violation, not merely an over-restriction; and (2) no
+  round reset at all (a vampire's `[cel]`/`[CEL]` clause, once played, was
+  blocked for the rest of the game, never just the rest of that round).
+- Resolution (`rules-engineer` pass, 2026-10-10): `src/vtesbot/engine/
+  combat.py` now creates one fresh, shared `round_state: dict[str, Any]` at
+  the top of every round of `run_combat`'s outer loop (reset every round,
+  never carried into the next, matching `pending`'s own per-action lifetime
+  precedent for OQ-11), threaded under the new `ROUND_STATE_CONTEXT_KEY`
+  context key into both `COMBAT_DODGE_OPTION_HOOK`'s offer (inside
+  `_ask_strike`) and `COMBAT_ADDITIONAL_STRIKE_HOOK`'s offer (inside `_ask_
+  additional_strike`) -- the two, and only two, hooks where a "(limited)"
+  additional-strike grant can originate; `COMBAT_STRIKE_OPTION_HOOK`'s own
+  plain alternate-strike grants never grant an *additional* strike, so
+  `_ask_strike` does not thread it into that offer. Two new module-level
+  helpers, `additional_strike_limit_used(context)` / `mark_additional_
+  strike_limit_used(context)`, read/write a shared `ADDITIONAL_STRIKE_
+  LIMIT_KEY` flag inside that dict and degrade gracefully (treat a missing
+  `round_state` -- a hook offered directly, bypassing `run_combat`, as
+  several scenario tests do to probe one hook in isolation -- as "not used
+  yet"/a no-op, rather than raising), exactly mirroring `cards/_shared.py::
+  bleed_bookkeeping`'s existing opt-in convention for the bleed-side cap. A
+  card module implementing a "(limited)" clause calls both from its own
+  grant's own `offer`/`apply`; a card implementing an *exempt* clause (per
+  its own printed text, e.g. a future Quickness 101532/Hell-for-Leather
+  100910 "additional strike that does not count against the limit" --
+  neither implemented, `card-implementer` scope, not built by this pass)
+  simply never calls either, by design -- the cap remains the granting
+  card's own choice to consult/record, same as before, just now backed by a
+  real shared container instead of nothing.
+  `cards/dust_up.py`'s `[cel]` clause and `cards/side_strike.py`'s `[CEL]`
+  clause were both migrated off their private `_CEL_BOOKKEEPING`-style
+  per-vampire-instance dicts onto these two helpers, closing the
+  illegal-play gap directly (migration detail: Dust Up's own clause still
+  needs one small piece of genuinely private, per-vampire state beyond the
+  shared flag -- *which* vampire currently has an unclaimed dodge-bundled
+  grant to claim via its own second provider -- now stored correctly keyed
+  by vampire instance id *inside* the same shared `round_state` dict, since
+  that dict is one single object offered to *both* combatants' hook calls
+  each round and a flat, un-keyed boolean would have wrongly conflated one
+  vampire's grant with the other's; Side Strike's `[CEL]` clause needed no
+  such extra state, since its one provider *is* the `COMBAT_ADDITIONAL_
+  STRIKE_HOOK` offer itself, with no separate claim step). Both modules'
+  docstrings were corrected: the "deliberately more restrictive, per-
+  instance-forever" caveats are removed (no longer true) and replaced with
+  a description of the shared, round-scoped, cross-card mechanism they now
+  use.
+  Also built, bleed side (secondary, per this pass's own task scope):
+  `cards/_shared.py::bleed_bookkeeping`'s docstring now documents the
+  already-latent "exempt clause" convention explicitly (a provider that
+  wants to contribute to the bleed amount while opting out of the shared
+  `LIMITED_USED_KEY` check/set simply never touches that key in the dict
+  the function returns -- no code change to the function itself was needed,
+  since this was already structurally possible, just undocumented).
+  Command of the Beast (100381), Power of One (101429) and Leverage
+  (101098) are deliberately **not** implemented by this pass (named only as
+  the motivating, not-yet-built examples of an exempt bleed clause --
+  `card-implementer` scope).
+  Tests: `src/vtesbot/engine/combat.py`'s new mechanism is proven generically
+  with fake providers in `tests/rules/test_combat_dodge_and_additional_
+  strike.py` (`test_additional_strike_limit_resets_every_round_of_the_same_
+  combat`, `test_additional_strike_limit_is_shared_across_two_unrelated_
+  providers`); the real-card cross-card closure is proven with the two
+  actual implemented cards in the new `tests/cards/
+  test_dust_up_side_strike_interaction.py`; `tests/cards/test_dust_up.py`'s
+  and `tests/cards/test_side_strike.py`'s own pre-existing direct-`hooks.
+  offer` "(limited)" tests were updated to thread an explicit shared
+  `round_state` dict across both calls (a zero-regression, mechanical
+  update: these tests probe the hook directly, bypassing `run_combat`, so
+  they must now supply the round-scoped container `run_combat` would
+  otherwise supply); the `run_combat`-driven end-to-end tests in both files
+  needed no change (the mechanism is transparent to them). The bleed-side
+  exemption convention is proven with fake stand-in providers in
+  `tests/rules/test_pending_modifier.py::
+  test_bleed_bookkeeping_lets_an_exempt_provider_skip_the_shared_limited_flag`.
+- Impacted code: `src/vtesbot/engine/combat.py`, `src/vtesbot/cards/
+  dust_up.py`, `src/vtesbot/cards/side_strike.py`, `src/vtesbot/cards/
+  _shared.py` (docstring only). Card registration is unchanged for both
+  cards (both remain `implemented`); this pass only replaced their internal
+  "(limited)" bookkeeping mechanism, not their card text/rulings coverage.
+  Flags for a future `card-implementer` pass: Quickness (101532),
+  Hell-for-Leather (100910), Command of the Beast (100381), Power of One
+  (101429), Leverage (101098) -- the engine mechanism they will each need
+  (a limited clause, and, for the first two, an exempt clause alongside it)
+  is now ready and documented, but none of the five cards themselves are
+  implemented by this pass.
+- `rules-auditor` review (independent, read-only; found a real regression,
+  fixed same pass): the first landing of this fix stored
+  `ADDITIONAL_STRIKE_LIMIT_KEY` as a single flat boolean inside the shared
+  `round_state` dict. Since `round_state` is one object `run_combat` passes
+  to *both* combatants' hook calls each round, that flat flag wrongly
+  pooled the cap jointly across the whole fight: once *either* combatant
+  used *any* "(limited)" additional-strike grant, the engine silently
+  stopped offering the *other*, completely unrelated combatant's own
+  "(limited)" card for the rest of that round. This directly contradicted
+  SS8's own per-*minion* wording ("a minion cannot use more than one card
+  or effect ... per round of combat", not "the combatants") and the
+  Wauneka/Flávio Gonçalves worked example already quoted in `engine/
+  combat.py`'s own module docstring two paragraphs above the fix (two
+  different minions, same round, each using their own additional-strike
+  card) -- confirmed by the auditor via a reproduction script and a
+  worktree diff against pre-fix code, with no existing test (old or new)
+  having exercised two different vampires each holding a different
+  "(limited)" card in the same round. This was a regression introduced by
+  this fix, not a pre-existing gap: before it, each card's own private
+  per-vampire-instance tracking never let two different vampires interfere
+  with each other at all; the fix correctly closed the within-one-vampire
+  cross-card pooling gap but newly broke the cross-combatant case.
+  Fixed by partitioning the flag by `context["vampire"]` inside
+  `round_state` (`round_state.setdefault(ADDITIONAL_STRIKE_LIMIT_KEY,
+  {})[context["vampire"]]`, the same per-vampire-id-keyed pattern `cards/
+  dust_up.py`'s own `CEL_GRANTS_KEY` already used for its own, narrower,
+  per-card state) -- so `additional_strike_limit_used`/`mark_additional_
+  strike_limit_used` are now correctly per-minion, not joint. `engine/
+  combat.py`'s module docstring and both helpers' own docstrings were
+  corrected to state this explicitly, including a one-line warning at
+  `additional_strike_limit_used`'s own docstring that calling either helper
+  for an *exempt* clause out of copy-paste habit would silently defeat that
+  clause's own printed exemption, with no test failure to catch it (flagged
+  by the auditor as a minor, non-blocking note for whoever implements
+  Quickness/Hell-for-Leather next).
+  New regression tests: `tests/rules/test_combat_dodge_and_additional_
+  strike.py::test_additional_strike_limit_is_independent_per_combatant`
+  (two fake providers, one per combatant, both legally get their own grant
+  in the same round -- the auditor's own repro shape) and `tests/cards/
+  test_dust_up_side_strike_interaction.py::test_side_strike_cel_grant_
+  blocks_dust_up_cel_grant_in_the_same_round` (the reverse play order of
+  the existing Dust-Up-then-Side-Strike test, confirming the cap gates
+  symmetrically regardless of which card is played first -- a minor gap
+  the auditor also flagged). Full suite green (296 passed, up from 294;
+  `ruff check`/`ruff format --check`/`pymarkdown` clean). The pre-existing
+  `hooks.clear()` autouse-fixture fragility in `tests/rules/test_combat_
+  dodge_and_additional_strike.py` (wipes *every* registered hook provider,
+  including real card modules', not just this file's own fakes) was
+  confirmed by the auditor to be pre-existing and out of scope for this
+  pass -- left untouched, not silently fixed on the side.
+- This entry is left at `status: resolved` per the fix (and now its
+  regression fix) having been built and tested; a further independent
+  `rules-auditor` pass remains welcome per CLAUDE.md's standing "high-stakes
+  changes are reviewed by `rules-auditor`" policy, as with any core-engine
+  change.
