@@ -1,0 +1,368 @@
+{
+  "id": 101353,
+  "printed_name": "Parity Shift",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Vernacular",
+      "name": "Parity Shit"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Parity Shift"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Cambio de paridad"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Changement de parité"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300001,
+        "code": "Jyhad"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "V",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/jyhad/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 300002,
+        "code": "VTES"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "V",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 300031,
+        "code": "25th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 5,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/twenty-fifth-anniversary/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 0,
+        "code": "Promo"
+      },
+      "occurrences": [
+        {
+          "type": "Single",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 0,
+          "date": "2020-05-11"
+        }
+      ],
+      "url": ""
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PL",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 5,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBh",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 320005,
+        "code": "PP2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/promo-pack-2/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBH",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/parityshift.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PL",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/parityshift.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Cambio de paridad",
+      "text": "Requiere a un príncipe o justicar.\nElige a un Matusalén que tenga más reserva sanguínea que tú, y asigna 3 de su reserva sanguínea entre 1 o más de los demás Matusalenes (incluyéndote a ti). Si el referéndum prospera, el Matusalén elegido pierde esa reserva sanguínea, que es asignada como hayas elegido.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/parityshift.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Changement de parité",
+      "text": "Requiert un prince ou justicar.\nChoisissez un Mathusalem qui a plus de points de réserve que vous et allouez 3 points de sa réserve entre 1 et plus parmi les autres Mathusalems (vous compris). Si le référendum passe, le Mathusalem choisi perd ces points de réserve et ceux-ci sont alloués comme choisi.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/parityshift.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/parityshift.jpg",
+  "types": [
+    "Political Action"
+  ],
+  "formats": [],
+  "artists": [
+    "L. A. Williams",
+    "Mark Kelly"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "The pool awarded can be used to play {101103|Life Boon} to save the target from an oust. [LSJ 20100527]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20100527]",
+          "label": "LSJ 20100527",
+          "url": "https://usenet.krcg.org/t/Tr3X4DsZr-8/#m1"
+        }
+      ],
+      "cards": [
+        {
+          "id": 101103,
+          "printed_name": "Life Boon",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": []
+    },
+    {
+      "text": "If the target has less than 3 pool when referendum passes, the Methuselah calling the referendum chooses how to distribute within the bounds of the terms. [LSJ 20010606]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20010606]",
+          "label": "LSJ 20010606",
+          "url": "https://usenet.krcg.org/t/2Dj_N6wtifI/#m2"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "Changes in pool during the referendum (after terms are chosen) do not affect the outcome. [LSJ 20041004]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20041004]",
+          "label": "LSJ 20041004",
+          "url": "https://usenet.krcg.org/t/UZbyxuVsTJE/#m10"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "Cannot be used or played if the conditions for the terms of the referendum cannot be met (e.g. no legal selection, insufficient cards/players to choose from, prohibited by card text, uniqueness, etc). [LSJ 20100129] [ANK 20191228]",
+      "group": "Political action with illegal terms",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20100129]",
+          "label": "LSJ 20100129",
+          "url": "https://usenet.krcg.org/t/X8Uu7Sk56P4/#m8"
+        },
+        {
+          "text": "[ANK 20191228]",
+          "label": "ANK 20191228",
+          "url": "https://www.vekn.net/forum/rules-questions/78262-parity-shift-without-target#98358"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Requires a prince or justicar.\nChoose a Methuselah who has more pool than you do and allocate 3 of their pool among 1 or more other Methuselahs (including you). Successful referendum means the pool is distributed as you chose.",
+  "draft": "",
+  "flavor": "",
+  "legal": "1994-09-15",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}
