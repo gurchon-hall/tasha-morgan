@@ -109,6 +109,31 @@ is never a meaningful choice (the rule is explicit the card is burned "without
 regard to the text on the cards"), so no extra `Decision` is raised for it;
 the engine picks the first matching card in hand order, deterministically.
 
+`User Ruling` (OQ-6, settled by the project's user, fourth politics.py fix
+round): a third `rules-auditor` pass found that the paragraph above, while
+correctly implemented, overstated its own closure -- the rules text's only
+textual tie between clause 1 (the calling card's automatic vote) and clause
+2 (burning a different political-action-card from hand) is the shared cap
+sentence ("Each Methuselah can gain no more than 1 vote from political
+action cards"), not an explicit "the caller may only ever use clause 1"
+statement, leaving open whether a caller who *declines* their clause-1 vote
+(legal -- "no obligation to cast") could then use clause 2 instead, still
+capped at 1 total. The user has settled this: **no** -- the calling card
+consumes the Methuselah's one political-action-card-vote slot the moment it
+is used to call the referendum, regardless of whether the automatic vote it
+grants is subsequently cast or declined. Declining the clause-1 vote does
+not free up access to clause 2; the caller's only political-action-card vote
+path is clause 1, full stop. Reasoning: it is the calling card's own use to
+call the referendum that consumes the slot, independent of whether its
+automatic vote is subsequently cast or declined -- the vote and the slot are
+not the same event. This confirms the existing code (gating
+`political_action_card_hand:{other_player}` to `other_player` only, never
+`caller_player`, unconditionally) is correct as-is; no behaviour change was
+made for this ruling. See `docs/OPEN_QUESTIONS.md` OQ-6's addendum and
+`tests/rules/test_politics.py::
+test_the_calling_methuselah_is_never_offered_the_burn_from_hand_political_
+action_card_source` (pre-existing, unchanged, already pins this behaviour).
+
 Polling-step hook wiring (`POLLING_STEP_HOOK`, `cards/registry.py::
 Hook.POLLING_STEP`): "Cards that are usable 'during the polling step' but
 'before votes and ballots are cast' are used at this time" names a window
@@ -199,14 +224,24 @@ oversight:
   hook provider in the engine already does; none does today (no card module
   registers against `POLLING_STEP_HOOK` yet).
 
-Vote/ballot *casting order* for exactly two Methuselahs is its own, still
-open question (`docs/OPEN_QUESTIONS.md` OQ-20): the quoted rule above only
-says casting happens "in any order," with no turn structure specified, and
-Rulebook SS2 Sequencing's impulse-return rule is written for the course of
-an action, not confirmed to extend to vote casting. `_cast_votes` below
-keeps a strict two-sided alternating-impulse procedure as this project's own
-deliberate implementation choice pending OQ-20 -- not a sourced mirroring of
-the impulse model, see its own docstring.
+Vote/ballot *casting order* for exactly two Methuselahs was an open question
+(`docs/OPEN_QUESTIONS.md` OQ-20, now resolved): the quoted rule above only
+says casting happens "in any order," with no turn structure specified by the
+rulebook itself. `User Ruling` (OQ-20, settled by the project's user from
+real-table play experience, fourth politics.py fix round): votes are cast in
+table order (seating order) -- each Methuselah decides, on their turn in
+that fixed rotation, which vampire(s)/source(s) contribute votes for/against,
+or passes, and the table goes around for a second and (if needed) third lap,
+continuing until a full lap completes with nobody casting anything. In this
+2P engine that is simply strict alternation, `caller_player` first each lap
+(they are the one who called the referendum) then `other_player`, repeating
+laps until one full lap passes with no casts from either side. `_cast_votes`
+below implements exactly that now -- see its own docstring for the mechanics
+of the rewritten loop. This replaced the former strict "impulse always
+returns to `caller_player` after any cast" procedure (which gave the caller
+a real, unsourced tactical edge: the caller could cast every one of their
+own sources back-to-back before the other Methuselah ever got a look), which
+was this project's own interim placeholder, never a sourced reading.
 """
 
 from dataclasses import dataclass
@@ -577,28 +612,36 @@ def _cast_votes(
     for/against/hold-back unit, never split); "[i]f there are more votes for
     the referendum than against, it passes [...] Tied referendums fail."
 
-    Casting order for exactly two Methuselahs is not itself settled by any
-    source read so far -- the quoted text only says casting happens "in any
-    order," with no turn structure specified (`docs/OPEN_QUESTIONS.md`
-    OQ-20, open). This function implements a strict two-sided alternating-
-    impulse procedure as this project's own deliberate choice pending that
-    question, *not* as a sourced extension of Rulebook SS2 Sequencing's
-    impulse-return rule (that rule is written for the course of an action,
-    not confirmed to govern vote-casting order): `caller_player` gets the
-    impulse first; whenever either side casts a source, the impulse returns
-    to `caller_player`; the window (and the polling step) closes once both
-    players pass in immediate succession or have no sources left to cast.
-    This lets either side see the running tally and react, matching real
-    play's "hold back a reserve vote unless it's needed" tactic, rather than
-    a fixed blind order, and is a legal procedure under the "in any order"
-    text (every source is still cast, for or against, or declined, only by
-    its own controller) -- but another procedure consistent with "in any
-    order" could give a materially different tactical result, which is
-    exactly OQ-20's open question. Structurally mirrors (but does not reuse)
-    `hooks.resolve_impulse_window`'s alternation algorithm: vote sources are
-    per-call dynamic game data, not `engine/hooks.py`'s static, process-wide
-    provider catalogue (CLAUDE.md SS5 "no global state" / `docs/
-    DECISIONS.md` D-5).
+    Casting order for exactly two Methuselahs: `User Ruling` (OQ-20, settled
+    by the project's user from real-table play experience): "votes are cast
+    in table order (seating order) -- each Methuselah decides, on their turn
+    in that fixed rotation, which vampire(s)/source(s) contribute votes
+    for/against, or passes, and the table goes around for a second and (if
+    needed) third lap, continuing until a full lap completes with nobody
+    casting anything" -- "the caller goes first each lap since they're the
+    one who called the referendum, then it's the other player's turn, and
+    that completes one lap; repeat laps until a full lap passes with zero
+    casts by either player or no sources remain for anyone."
+
+    Implemented as strict two-player alternation: `turn` flips between
+    `caller_player` and `other_player` after *every* step, whether that step
+    was a cast or a pass/no-sources-available skip -- unlike the project's
+    former interim placeholder, the impulse never "returns to" whichever
+    player just acted. Each player's own turn offers every `VoteSource` they
+    still control, as one `Decision` (a player may cast at most one source
+    per turn; casting a second source of theirs requires waiting for a full
+    extra lap, exactly matching "repeat laps" above -- within a lap, each
+    side gets exactly one opportunity, same as going around a table once).
+    `consecutive_passes` counts consecutive turns (by either player) with no
+    cast; because `turn` always alternates, any two consecutive turns are
+    always one from each player, i.e. exactly one full lap -- so
+    `consecutive_passes reaching 2` is precisely "a full lap completes with
+    nobody casting anything," the quoted closing condition, regardless of
+    which player the count happens to start on. A cast resets the counter to
+    0, so a fresh full lap (both players, in order) is required to close the
+    window after any cast. The loop also ends immediately once `remaining`
+    is empty (no sources left for anyone to cast), without waiting out a
+    final idle lap.
     """
     votes_for = 0
     votes_against = 0
@@ -614,47 +657,45 @@ def _cast_votes(
         )
         if not mine:
             consecutive_passes += 1
-            turn = other_player if turn == caller_player else caller_player
-            continue
-        choices: tuple[Choice, ...] = ()
-        for source in mine:
-            choices += (
-                Choice(
-                    f"for:{source.source_id}",
-                    f"Cast {source.votes} vote(s) for ({source.label})",
-                ),
-                Choice(
-                    f"against:{source.source_id}",
-                    f"Cast {source.votes} vote(s) against ({source.label})",
-                ),
-            )
-        choices += (Choice("pass", "Pass (hold back remaining votes for now)"),)
-        decision = Decision(
-            player=turn,
-            kind="polling_step_cast",
-            choices=choices,
-            context={
-                "caller": caller_player,
-                "votes_for": votes_for,
-                "votes_against": votes_against,
-            },
-        )
-        answer = state.ask(decision).value
-        if answer == "pass":
-            consecutive_passes += 1
-            turn = other_player if turn == caller_player else caller_player
-            continue
-        consecutive_passes = 0
-        direction, source_id = answer.split(":", 1)
-        source = remaining.pop(source_id)
-        if source.burns_edge:
-            state.edge_holder = None
-        if source.burns_pac_from_hand:
-            _burn_one_political_action_card_from_hand(state, source.player)
-        if direction == "for":
-            votes_for += source.votes
         else:
-            votes_against += source.votes
-        casts.append((source.player, source.source_id, source.votes, direction))
-        turn = caller_player  # impulse returns to the acting (calling) Methuselah.
+            choices: tuple[Choice, ...] = ()
+            for source in mine:
+                choices += (
+                    Choice(
+                        f"for:{source.source_id}",
+                        f"Cast {source.votes} vote(s) for ({source.label})",
+                    ),
+                    Choice(
+                        f"against:{source.source_id}",
+                        f"Cast {source.votes} vote(s) against ({source.label})",
+                    ),
+                )
+            choices += (Choice("pass", "Pass (hold back remaining votes for now)"),)
+            decision = Decision(
+                player=turn,
+                kind="polling_step_cast",
+                choices=choices,
+                context={
+                    "caller": caller_player,
+                    "votes_for": votes_for,
+                    "votes_against": votes_against,
+                },
+            )
+            answer = state.ask(decision).value
+            if answer == "pass":
+                consecutive_passes += 1
+            else:
+                consecutive_passes = 0
+                direction, source_id = answer.split(":", 1)
+                source = remaining.pop(source_id)
+                if source.burns_edge:
+                    state.edge_holder = None
+                if source.burns_pac_from_hand:
+                    _burn_one_political_action_card_from_hand(state, source.player)
+                if direction == "for":
+                    votes_for += source.votes
+                else:
+                    votes_against += source.votes
+                casts.append((source.player, source.source_id, source.votes, direction))
+        turn = other_player if turn == caller_player else caller_player
     return votes_for, votes_against, casts

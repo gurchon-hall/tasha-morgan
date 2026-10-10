@@ -468,6 +468,65 @@ def test_a_forced_abstain_source_is_excluded_from_casting_end_to_end():
     defender.assert_exhausted()
 
 
+def test_a_player_no_longer_gets_to_cast_two_sources_back_to_back_ahead_of_the_other_players_turn():
+    """OQ-20 resolution proof: votes are cast in strict table-order
+    alternation (`User Ruling`, settled by the project's user from
+    real-table play experience, quoted in full in `engine/politics.py::
+    _cast_votes`'s own docstring) -- caller first each lap, then the other
+    player, repeating laps until a full lap passes with no casts. This
+    replaced the project's former interim placeholder, under which the
+    impulse always "returned to" the caller after *any* cast (including the
+    other player's), letting the caller cast every one of their own sources
+    back-to-back before the other Methuselah ever got a turn.
+
+    Scenario: the caller (P1) controls two live vote sources at once -- their
+    own political-action-card vote (clause 1) and their acting vampire's own
+    title vote (V1 is also a ready Primogen); the other player (P2) controls
+    one (B1, also a ready Primogen, left unlocked by declining the block).
+    Casting two sources back-to-back in a single lap is impossible under
+    either the old or the new rule (each player gets only one cast per lap
+    either way) -- the actual difference this fix makes is *whose* turn
+    falls between the caller's two separate laps. Under the new rule, P2
+    gets a real turn between P1's two casts (global order
+    P1, P2, P1); under the old rule, P1 would have cast both of their
+    sources back-to-back, with P2 consulted only afterward (P1, P1, P2).
+
+    This is proven by recording the actual global, cross-agent call order
+    (each `ScriptedAgent`'s own script can only see its own local sequence,
+    not whether the other agent was asked in between), which is exactly
+    the behaviour the fix changes.
+    """
+    call_order: list[str] = []
+
+    class OrderRecordingAgent(ScriptedAgent):
+        def decide(self, observation, decision):
+            if decision.kind == "polling_step_cast":
+                call_order.append(self.player_id)
+            return super().decide(observation, decision)
+
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, title="Primogen")
+    builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=1, title="Primogen")
+    game = builder.build()
+    actor = OrderRecordingAgent("P1")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    actor.expect("polling_step_cast", "for:title:V1")
+    defender = OrderRecordingAgent("P2")
+    defender.expect("block_attempt", "decline")
+    defender.expect("polling_step_cast", "against:title:B1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    result = political_action(game.state, "P1", game.vampire("V1"))
+
+    # 1 (political action card) + 1 (V1's own Primogen title) for vs 1
+    # (B1's Primogen title) against: 2-1, passes.
+    assert result is True
+    assert call_order == ["P1", "P2", "P1"], call_order
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
 def test_referendum_tallied_hook_fires_with_no_providers_registered():
     """`REFERENDUM_TALLIED_HOOK` (OQ-6, Marcos Belegrad's future trigger
     moment) has no provider registered in this pass: `hooks.run_effects`

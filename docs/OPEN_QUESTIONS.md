@@ -282,6 +282,25 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
      at all, since calling a referendum always means playing a political
      action card, which always triggers clause 1 for them. Proven by new
      scenario tests in `tests/rules/test_politics.py`.
+- Addendum (`User Ruling`, fourth politics.py fix round, settled by the
+  project's user): a third `rules-auditor` round raised a potential gap in
+  finding 5's own closure above -- the rules text's only textual link
+  between clause 1 and clause 2 is the shared "no more than 1 vote from
+  political action cards" cap, not an explicit statement that the caller may
+  only ever use clause 1; concretely, does declining the clause-1 vote (legal
+  -- "no obligation to cast") free the caller to use clause 2 instead,
+  reachable today with existing test machinery via
+  `tests/rules/test_politics.py::
+  test_the_calling_methuselah_is_never_offered_the_burn_from_hand_political_
+  action_card_source`? This has been settled by the user, not left open and
+  not spawning a new OQ: **no** -- the calling card consumes the Methuselah's
+  one political-action-card-vote slot the moment it is used to call the
+  referendum, regardless of whether the automatic vote it grants is
+  subsequently cast or declined. Declining clause 1 does not unlock clause 2
+  for the caller. No code change was needed: `_collect_vote_sources`'s
+  existing unconditional caller-exclusion already implements this correctly.
+  See `src/vtesbot/engine/politics.py`'s module docstring for the same
+  ruling, documented alongside the clause-2 discussion it corrects.
 - Impacted code: `src/vtesbot/engine/politics.py` (`political_action`,
   `resolve_referendum`, `_run_pre_cast_hook_window`,
   `_dispatch_referendum_tallied` (new), `_collect_vote_sources`,
@@ -2388,7 +2407,7 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   changes are reviewed by `rules-auditor`" policy, as with any core-engine
   change.
 
-## OQ-20: Vote/ballot casting order for exactly two Methuselahs (status: open)
+## OQ-20: Vote/ballot casting order for exactly two Methuselahs (status: resolved)
 
 - Situation: found by `rules-auditor` reviewing OQ-6's `engine/politics.py::
   _cast_votes` implementation. Rulebook SS4 "The Referendum" step 2 (quoted
@@ -2413,34 +2432,71 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   (the non-caller can never cast two sources back-to-back without the caller
   getting an intervening look at the running tally) that nothing in the
   quoted text supports or rules out.
-- Resolution: none yet. `_cast_votes` keeps its existing strict two-sided
-  alternating-impulse procedure as this project's own deliberate
-  implementation choice, not a sourced mirroring of Rulebook SS2 Sequencing
-  -- its own docstring has been corrected to say so plainly (no longer
-  claiming the alternation is sourced). This produces only legal outcomes
-  (every source is still cast, for or against, or declined, only by its own
-  controller) and does not misresolve any card's text, so it does not block
-  any card; it is tracked here because the exact casting-order procedure for
-  exactly two Methuselahs is not itself settled by the sources consulted so
-  far, only the *fact* that casting happens "in any order" with no
-  obligation to cast.
-- Candidate readings: (a) keep the current strict impulse-alternation
-  procedure as a documented project convention (simplest, already built,
-  and a legal order under the unconstrained "in any order" text -- just not
-  the *only* one); (b) collect all of one side's casts in one `Decision`,
-  then the other side's, with the order between the two sides chosen by some
-  as-yet-unsourced rule (e.g. the caller going last, so the non-caller
-  cannot be out-bid blindly; or the caller going first, loosely matching the
-  impulse model's own "acting Methuselah first" convention) -- no primary
-  source read so far settles which, if either; (c) something else not yet
-  considered. None of these has been confirmed against a primary source
-  describing two-player (or even general multiplayer) vote-casting order
-  specifically, as opposed to the mere for/against tally mechanism itself
-  (which OQ-6 already settled).
+- Resolution (`User Ruling`, settled by the project's user from real-table
+  play experience, fourth politics.py fix round): votes are cast in table
+  order (seating order) -- each Methuselah decides, on their turn in that
+  fixed rotation, which vampire(s)/source(s) contribute votes for/against,
+  or passes, and the table goes around for a second and (if needed) third
+  lap, continuing until a full lap completes with nobody casting anything.
+  In this 2P engine, that is a fixed rotation of exactly two seats: the
+  caller goes first each lap (they are the one who called the referendum),
+  then the other player, which completes one lap; laps repeat until one
+  full lap passes with no casts by either player (or no sources remain for
+  anyone).
+  - Engineering follow-up (done): `_cast_votes`
+    (`src/vtesbot/engine/politics.py`) was rewritten to implement this as a
+    genuine procedure change, not a docstring-only fix. The former
+    "`turn = caller_player` after any cast" rule (which returned the
+    impulse to the caller even after the *other* player cast, giving the
+    caller the ability to cast every one of their own sources back-to-back
+    before the other Methuselah ever got a look -- the exact unsourced
+    tactical edge this entry originally flagged) is gone; `turn` now simply
+    alternates between `caller_player` and `other_player` after *every*
+    step, cast or pass, with no special-casing of who just acted.
+    `consecutive_passes` (unchanged mechanism, reused) still counts
+    consecutive no-cast turns and still closes the window at 2 -- and this
+    is still correct under the new alternation specifically *because*
+    `turn` always strictly alternates: any two consecutive turns are always
+    one from each player, i.e. exactly one full lap, so "`consecutive_passes`
+    reaches 2" is exactly "a full lap completes with nobody casting
+    anything," regardless of which player happens to start the count. A
+    cast resets the counter to 0, requiring a fresh full lap to close the
+    window afterward. The loop still also exits immediately once no sources
+    remain for anyone, without waiting out one final idle lap.
+  - Tests: the existing scenario tests in `tests/rules/test_politics.py`
+    were re-checked one by one against the new alternation, not just run
+    and left to pass; every pre-existing scenario has at most one vote
+    source per player still live at any point where the other player also
+    still has one (either one side has zero sources, or both sides are each
+    down to a single source before the other casts), so the old
+    "return-to-caller" and the new "strict alternation" rules happen to
+    produce the identical decision sequence in all of them -- confirmed by
+    re-deriving each test's trace, not merely by the suite being green.
+    `test_a_polling_step_hook_provider_adds_a_vote_source_and_it_is_cast`
+    is the one pre-existing test with two sources for the same player, but
+    the other player has zero sources in that scenario, so the opponent's
+    turns are silent, no-decision skips under both rules alike and the
+    visible sequence is unaffected.
+    A new test,
+    `test_a_player_no_longer_gets_to_cast_two_sources_back_to_back_ahead_of_
+    the_other_players_turn`, was added specifically to prove the new
+    behaviour where it actually differs from the old one: the caller
+    controls *two* live vote sources (their own political-action-card vote
+    and a titled acting vampire's vote) while the other player controls one
+    (a titled vampire). Under the new rule the global decision order is
+    caller, other, caller (the other player gets an intervening turn between
+    the caller's two casts); under the old rule it would have been caller,
+    caller, other (the caller exhausts both sources before the other player
+    is ever consulted). The test records the actual player-by-player call
+    order (not just each agent's own local script, which cannot observe
+    interleaving) and asserts it is `["P1", "P2", "P1"]`, which would fail
+    under the old rule -- a real behavioural difference, not a cosmetic one
+    (casting *two* sources back-to-back in one lap is still impossible under
+    either rule; what changed is whether the *other* player gets a turn
+    between the caller's two separate laps).
 - Impacted code: `src/vtesbot/engine/politics.py` (`_cast_votes`). Impacted
   cards: none directly blocked by this (the alternation choice does not
-  prevent any card's own text from being correctly applied), but any future
+  prevent any card's own text from being correctly applied); any future
   card whose own printed text depends on vote-casting *order* specifically
-  (not merely the final for/against tally) should be checked against this
-  entry before being implemented, rather than assumed to work correctly
-  under whichever order the engine happens to use today.
+  (not merely the final for/against tally) should be implemented against
+  this resolved procedure.
