@@ -6,11 +6,19 @@ round, resolved via the *same* full strike-choice machinery as a normal
 strike -- never a fixed/hardcoded hand strike).
 
 These two mechanics are deliberately exercised independently of each other
-and with fake, test-only providers (no card module is implemented against
-either hook yet) -- per the [LSJ 20030902-2]/[LSJ 20060808-1] rulings on
-Dust Up quoted in OQ-18 ("[ani] Does not prevent the opponent from dodging,
-the dodge just has no effect"), dodge is its own real mechanic with a real
-effect in the general case, independent of any one card's wording.
+and with fake, test-only providers (`cards/dust_up.py`/`cards/side_strike.py`
+now wire real cards against both, but this file proves the *generic*
+mechanism, independent of any one card's wording) -- per the [LSJ
+20030902-2]/[LSJ 20060808-1] rulings on Dust Up quoted in OQ-18 ("[ani]
+Does not prevent the opponent from dodging, the dodge just has no effect"),
+dodge is its own real mechanic with a real effect in the general case.
+
+The cross-card "(limited)" additional-strike cap (`docs/OPEN_QUESTIONS.md`
+OQ-19, `engine/combat.py`'s own module docstring "Cross-card '(limited)'
+cap" section) is proven here too, with fake providers standing in for two
+unrelated cards' own "(limited)" clauses -- a real-card version (Dust Up +
+Side Strike actually combined in one round) lives in
+`tests/cards/test_dust_up_side_strike_interaction.py`.
 """
 
 import pytest
@@ -22,6 +30,8 @@ from vtesbot.engine.combat import (
     COMBAT_DODGE_OPTION_HOOK,
     COMBAT_STRIKE_OPTION_HOOK,
     StrikeDamage,
+    additional_strike_limit_used,
+    mark_additional_strike_limit_used,
     run_combat,
 )
 from vtesbot.engine.decision import Choice
@@ -227,6 +237,60 @@ def test_same_round_additional_strike_reuses_the_full_strike_choice_machinery():
     actor.assert_exhausted()
 
 
+def test_additional_strike_limit_resets_every_round_of_the_same_combat():
+    """Module docstring's "Cross-card '(limited)' cap" section (`engine/
+    combat.py`, resolving `docs/OPEN_QUESTIONS.md` OQ-19): `run_combat`
+    creates `round_state` fresh at the top of *every* round, so a
+    "(limited)" additional-strike grant used in round 1 must not block a
+    fresh, otherwise-legal grant in round 2 of the *same* combat (distinct
+    from the within-one-round cap `test_additional_strike_pair_only_asks_
+    combatants_with_an_available_grant` below already proves). All strikes
+    here are `"no_strike"` so no damage is ever dealt and neither combatant
+    can be sent to torpor mid-test -- the only thing under test is whether
+    the fake "(limited)" grant is offered again each round."""
+    uses: list[int] = []
+
+    def fake_limited_additional_strike(state, context):
+        if context.get("player") != "P1" or additional_strike_limit_used(context):
+            return []
+
+        def consume(s):
+            mark_additional_strike_limit_used(context)
+            uses.append(len(uses) + 1)
+
+        return [
+            hooks.HookOption(choice=Choice("use_extra", "Use additional strike"), apply=consume)
+        ]
+
+    hooks.register(COMBAT_ADDITIONAL_STRIKE_HOOK, fake_limited_additional_strike)
+    game = _combat_game()
+
+    actor = ScriptedAgent("P1")
+    # Round 1: normal pair, use the grant once, then press to continue.
+    actor.expect("strike_choice", "no_strike")
+    actor.expect("additional_strike_choice", "use_extra")
+    actor.expect("strike_choice", "no_strike")  # the additional strike itself
+    actor.expect("press", "press")
+    # Round 2: round_state was recreated fresh -- the same grant is offered
+    # and usable again, proving it is round-scoped, not combat-scoped.
+    actor.expect("strike_choice", "no_strike")
+    actor.expect("additional_strike_choice", "use_extra")
+    actor.expect("strike_choice", "no_strike")
+    actor.expect("press", "end_combat")
+    defender = ScriptedAgent("P2")
+    defender.expect("strike_choice", "no_strike")  # round 1 normal pair
+    defender.expect("strike_choice", "no_strike")  # round 2 normal pair
+    defender.expect("press", "end_combat")  # only asked because P1 declined to press in round 2
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    run_combat(game.state, "P1", game.vampire("V1"), "P2", game.vampire("B1"))
+
+    assert uses == [1, 2]  # the grant was legitimately used once per round, twice total
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
 def test_additional_strike_pair_only_asks_combatants_with_an_available_grant():
     """Rulebook SS4 Combat > Additional Strikes: "another choose strike step
     and resolve strike step in which only the minions with additional
@@ -270,5 +334,136 @@ def test_additional_strike_pair_only_asks_combatants_with_an_available_grant():
     # then wounded -> torpor) -- combat ends at once, with no press step for
     # either side, confirming the additional strike's damage really landed.
     assert game.zone_of("B1") == "torpor"
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
+def test_additional_strike_limit_is_shared_across_two_unrelated_providers():
+    """Module docstring's "Cross-card '(limited)' cap" section (`docs/
+    OPEN_QUESTIONS.md` OQ-19): SS8 glossary's "A minion cannot use more than
+    one card or effect to gain additional strikes per round of combat" is a
+    *cross-card* cap. Two fake providers stand in for two unrelated cards'
+    own "(limited)" clauses -- "Card A" grants via the dodge-bundled hook
+    (`COMBAT_DODGE_OPTION_HOOK`, Dust Up's own `[cel]` shape), "Card B"
+    grants directly via `COMBAT_ADDITIONAL_STRIKE_HOOK` (Side Strike's own
+    `[CEL]` shape). Using Card A's grant must make Card B's own offer
+    disappear in the *same* round, even though Card B's own provider has
+    never been played or consulted before -- the real-card version of this
+    (Dust Up + Side Strike actually combined) is proven in `tests/cards/
+    test_dust_up_side_strike_interaction.py`."""
+
+    def fake_card_a_dodge(state, context):
+        if context.get("player") != "P1" or additional_strike_limit_used(context):
+            return []
+
+        def consume(s):
+            mark_additional_strike_limit_used(context)
+
+        return [
+            hooks.HookOption(choice=Choice("card_a_dodge", "Card A dodge+grant"), apply=consume)
+        ]
+
+    def fake_card_b_additional_strike(state, context):
+        if context.get("player") != "P1" or additional_strike_limit_used(context):
+            return []
+        return [
+            hooks.HookOption(
+                choice=Choice("card_b_extra", "Card B additional strike"), apply=lambda s: None
+            )
+        ]
+
+    hooks.register(COMBAT_DODGE_OPTION_HOOK, fake_card_a_dodge)
+    hooks.register(COMBAT_ADDITIONAL_STRIKE_HOOK, fake_card_b_additional_strike)
+    game = _combat_game()
+
+    # Before Card A is played, Card B's own "(limited)" grant is legal.
+    before = hooks.offer(
+        COMBAT_ADDITIONAL_STRIKE_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
+    )
+    assert {o.choice.value for o in before} == {"card_b_extra"}
+
+    # Playing Card A's grant, within one shared round_state, consumes the
+    # cross-card cap for the rest of this round.
+    round_state: dict = {}
+    dodge_options = hooks.offer(
+        COMBAT_DODGE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state=round_state,
+    )
+    assert {o.choice.value for o in dodge_options} == {"card_a_dodge"}
+    dodge_options[0].apply(game.state)
+
+    after = hooks.offer(
+        COMBAT_ADDITIONAL_STRIKE_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state=round_state,
+    )
+    assert after == []  # Card B's own grant is now blocked by Card A's play this round.
+
+
+def test_additional_strike_limit_is_independent_per_combatant():
+    """`rules-auditor` regression finding on the OQ-19 fix's first landing:
+    `ADDITIONAL_STRIKE_LIMIT_KEY` must be keyed by `context["vampire"]`
+    inside the shared `round_state`, not a single flat boolean -- `round_
+    state` is one object offered to *both* combatants' hook calls each
+    round, so a flat flag would wrongly let one combatant's own "(limited)"
+    play block the *other*, completely unrelated combatant's own grant for
+    the rest of that round. SS8 glossary phrases the cap per-*minion* ("a
+    minion cannot use more than one card or effect ... per round of
+    combat"), not jointly across the whole fight -- and the Wauneka/Flávio
+    Gonçalves worked example quoted in the module docstring is itself two
+    different minions each legally using their own additional-strike grant
+    in the same round. Two fake providers here stand in for two unrelated
+    cards, one held by each combatant; both must legally get their own
+    grant in the same round, each independent of the other's use."""
+
+    def fake_p1_extra(state, context):
+        if context.get("player") != "P1" or additional_strike_limit_used(context):
+            return []
+
+        def consume(s):
+            mark_additional_strike_limit_used(context)
+
+        return [hooks.HookOption(choice=Choice("p1_extra", "P1's own grant"), apply=consume)]
+
+    def fake_p2_extra(state, context):
+        if context.get("player") != "P2" or additional_strike_limit_used(context):
+            return []
+
+        def consume(s):
+            mark_additional_strike_limit_used(context)
+
+        return [hooks.HookOption(choice=Choice("p2_extra", "P2's own grant"), apply=consume)]
+
+    hooks.register(COMBAT_ADDITIONAL_STRIKE_HOOK, fake_p1_extra)
+    hooks.register(COMBAT_ADDITIONAL_STRIKE_HOOK, fake_p2_extra)
+    game = _combat_game()
+
+    actor = ScriptedAgent("P1")
+    actor.expect("strike_choice", "no_strike")  # normal pair
+    actor.expect("additional_strike_choice", "p1_extra")  # P1's own grant, unaffected by P2's
+    actor.expect("strike_choice", "no_strike")  # the additional strike itself
+    actor.expect("press", "end_combat")
+    defender = ScriptedAgent("P2")
+    defender.expect("strike_choice", "no_strike")  # normal pair
+    defender.expect("additional_strike_choice", "p2_extra")  # P2's own grant, unaffected by P1's
+    defender.expect("strike_choice", "no_strike")  # the additional strike itself
+    defender.expect("press", "end_combat")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    run_combat(game.state, "P1", game.vampire("V1"), "P2", game.vampire("B1"))
+
     actor.assert_exhausted()
     defender.assert_exhausted()

@@ -87,11 +87,55 @@ the local cache `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`:
   the same way, including dodge. The loop repeats "as necessary" (while
   either combatant still has an unused grant), matching the worked example
   (Wauneka 1 additional strike, Flávio Gonçalves 2: two more strike pairs,
-  the second with only Flávio striking). The "(limited)"/"one card or effect
-  per round" cap itself is the *granting* card's own business (e.g. Dust
-  Up's own future module would need to track that it only grants once per
-  round), not this generic mechanism's -- the hook simply stops being
-  offered once a provider's own grant is exhausted.
+  the second with only Flávio striking).
+
+  Cross-card, per-minion "(limited)" cap (resolves `docs/OPEN_QUESTIONS.md`
+  OQ-19, closing a gap `cards/dust_up.py`/`cards/side_strike.py` previously
+  flagged as "a candidate for a future `rules-engineer` pass": both tracked
+  their own clause's "(limited)" use in a private, per-vampire-*instance*,
+  effectively-forever dict, since no round-boundary signal existed anywhere
+  in this module for a hook provider to see). The SS8 rule quoted above is a
+  *cross-card*, round-scoped cap ("a minion cannot use more than one card or
+  effect ... per round of combat") -- cross-*card* (not per-card), but still
+  strictly per-*minion*: the Wauneka/Flávio Gonçalves worked example two
+  paragraphs above is itself two different minions each legally using their
+  own additional-strike grant in the *same* round, so the cap must never be
+  pooled jointly across both combatants, only within each one's own. `run_
+  combat` now creates one fresh, shared `round_state: dict[str, Any]` at the
+  top of every round (reset every round, never carried into the next) and
+  threads it, under the context key `ROUND_STATE_CONTEXT_KEY`, into both
+  `COMBAT_DODGE_OPTION_HOOK`'s and `COMBAT_ADDITIONAL_STRIKE_HOOK`'s own hook
+  context -- the two, and only two, hooks where a "(limited)" additional-
+  strike grant can originate (`COMBAT_STRIKE_OPTION_HOOK`'s plain alternate-
+  strike grants never grant an *additional* strike, so they need no access
+  to this cap). `additional_strike_limit_used`/`mark_additional_strike_
+  limit_used` (below) read/write a flag *keyed by vampire instance id*
+  inside that shared dict (never a single flat boolean, since `round_state`
+  is the same object offered to both combatants each round -- a flat
+  boolean would wrongly let one combatant's own play block the *other*,
+  unrelated combatant's own grant); a card module implementing a "(limited)"
+  additional-strike clause (e.g. Dust Up's `[cel]`, Side Strike's `[CEL]`)
+  must consult/record it from its own grant -- this is what actually
+  enforces the cap *across* different cards (or a second physical copy of
+  the same card) held by the *same* vampire in the same round, closing a
+  real illegal-play gap the previous per-card-only tracking left open
+  (nothing previously stopped a vampire holding both Dust Up and Side Strike
+  from using *both* cards' grants in one round), while still correctly
+  leaving each combatant's own cap independent of the other's. Per Dust
+  Up's own ruling on exactly where the check belongs ("[cel] The additional
+  strike is not optional: you cannot play it for the dodge only if you
+  already played it for a (limited) additional strike this round" [ANK
+  20220204]), the check gates the *granting* clause itself (a dodge-bundled
+  grant counts identically to a direct one) -- not the later act of
+  claiming an already-recorded grant, which needs no re-check (nothing in
+  the rules revokes a legitimately granted strike mid-round). A card
+  implementing an *exempt* clause per its own printed text (e.g. a future
+  Quickness `[CEL]`/Hell-for-Leather `[cel]` "additional strike that does
+  not count against the limit") simply never calls either helper for that
+  clause -- the cap remains, as before, the granting card's own choice to
+  consult, not something this generic mechanism imposes unconditionally;
+  see `additional_strike_limit_used`'s own docstring for a warning about
+  this convention-only (not enforced) exemption boundary.
 
 With no providers registered for either hook, no dodge/additional-strike
 choice is ever offered and the additional-strike loop exits immediately --
@@ -127,8 +171,9 @@ effect for a dodging combatant. A future combat card needing this will need
 to extend `COMBAT_STRIKE_OPTION_HOOK`'s contract again.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from . import hooks
 from .damage import apply_damage
@@ -142,6 +187,87 @@ COMBAT_STRIKE_OPTION_HOOK = "combat_strike_option"
 COMBAT_STRENGTH_MODIFIER_HOOK = "combat_strength_modifier"
 COMBAT_DODGE_OPTION_HOOK = "combat_dodge_option"
 COMBAT_ADDITIONAL_STRIKE_HOOK = "combat_additional_strike"
+
+ROUND_STATE_CONTEXT_KEY = "round_state"
+"""Context key, under `COMBAT_DODGE_OPTION_HOOK`/`COMBAT_ADDITIONAL_STRIKE_
+HOOK`, for the shared, round-scoped scratch `dict[str, Any]` `run_combat`
+creates fresh at the top of every round (see module docstring's "Cross-card
+'(limited)' cap" section). A hook offered directly, bypassing `run_combat`
+(as several scenario tests do, to probe one hook in isolation), simply has
+no entry under this key; `additional_strike_limit_used`/`mark_additional_
+strike_limit_used` below both treat that as "no shared state available" and
+degrade gracefully (see their own docstrings) rather than raising."""
+
+ADDITIONAL_STRIKE_LIMIT_KEY = "additional_strike_limit_used"
+"""Key inside the `ROUND_STATE_CONTEXT_KEY` dict for the "(limited)"
+additional-strike flag (SS8 glossary / module docstring: "A minion cannot
+use more than one card or effect to gain additional strikes per round of
+combat"). The cap is per-*minion*, not joint across the whole fight (SS8's
+own wording: "a minion cannot ... per round of combat", not "the
+combatants"; the Wauneka/Flávio Gonçalves worked example quoted earlier in
+this module's own docstring has *two different minions* each legally using
+their own additional-strike grant in the *same* round) -- so the value
+stored under this key is a `dict[str, bool]` keyed by vampire instance id
+(`context["vampire"]`), one independent flag per combatant, *not* a single
+shared boolean. `round_state` itself is still one object shared by both
+combatants' hook calls each round (`run_combat` passes the identical dict
+regardless of which combatant is being asked), so a flat, un-keyed boolean
+here would wrongly let one combatant's own "(limited)" play block the
+*other*, unrelated combatant's own, independent grant for the rest of the
+round -- exactly the per-vampire-id-keyed pattern `cards/dust_up.py`'s own
+`CEL_GRANTS_KEY` already uses for its own, narrower, per-card state."""
+
+
+def additional_strike_limit_used(context: Mapping[str, Any]) -> bool:
+    """Whether *this combatant* (`context["vampire"]`) has already used a
+    non-exempt "(limited)" additional-strike grant this round (see module
+    docstring's "Cross-card '(limited)' cap" section; SS8 glossary quoted
+    there, and `ADDITIONAL_STRIKE_LIMIT_KEY`'s own docstring on why this is
+    per-vampire, not joint across both combatants). A card module
+    implementing a "(limited)" clause (e.g. Dust Up's `[cel]`, Side Strike's
+    `[CEL]`) must call this from its own grant's `offer`-time gate, before
+    adding itself to the choices a hook call returns -- per Dust Up's own
+    ruling ("you cannot play it for the dodge only if you already played it
+    for a (limited) additional strike this round" [ANK 20220204]), the check
+    belongs at the *granting* clause, not at the later act of claiming an
+    already-recorded grant.
+
+    A card module implementing an *exempt* clause per its own printed text
+    (e.g. a future Quickness `[CEL]`/Hell-for-Leather `[cel]` "additional
+    strike that does not count against the limit") must never call this (or
+    `mark_additional_strike_limit_used`) for that clause -- calling either
+    out of copy-paste habit from a "(limited)" clause would silently defeat
+    the card's own printed exemption, with no test failure to catch it; the
+    exemption is convention-only, not enforced by this function.
+
+    A missing `ROUND_STATE_CONTEXT_KEY` entry (no shared container threaded
+    in -- e.g. a hook offered directly in a unit test that only probes one
+    call in isolation) is treated as "not used yet": there is nothing to
+    persist across separate calls in that case, so the only correct answer
+    for a single, isolated offer is the common not-yet-played case. A test
+    that needs to prove the cap persists *across* separate calls must
+    construct its own shared dict and pass it as
+    `round_state=...` to each call, exactly as `run_combat` does across a
+    real round.
+    """
+    round_state = context.get(ROUND_STATE_CONTEXT_KEY)
+    if round_state is None:
+        return False
+    return bool(round_state.get(ADDITIONAL_STRIKE_LIMIT_KEY, {}).get(context["vampire"]))
+
+
+def mark_additional_strike_limit_used(context: Mapping[str, Any]) -> None:
+    """Record that *this combatant* (`context["vampire"]`) has used a
+    non-exempt "(limited)" additional-strike grant this round -- see
+    `additional_strike_limit_used`, including its warning that an *exempt*
+    clause must never call this (calling it anyway would silently defeat
+    that clause's own printed exemption, with no test to catch it). A
+    missing `ROUND_STATE_CONTEXT_KEY` entry is a no-op (nothing to persist
+    to, same degrade-gracefully reasoning as `additional_strike_limit_
+    used`)."""
+    round_state = context.get(ROUND_STATE_CONTEXT_KEY)
+    if round_state is not None:
+        round_state.setdefault(ADDITIONAL_STRIKE_LIMIT_KEY, {})[context["vampire"]] = True
 
 
 @dataclass(frozen=True)
@@ -176,13 +302,25 @@ def _strike_strength(
 
 
 def _ask_strike(
-    state: GameState, player: str, vampire: VampireInPlay, opponent: VampireInPlay
+    state: GameState,
+    player: str,
+    vampire: VampireInPlay,
+    opponent: VampireInPlay,
+    round_state: dict[str, Any],
 ) -> tuple[str, dict[str, hooks.HookOption], frozenset[str]]:
     """Offer every strike choice legal right now: the two built-ins, every
     registered `combat_strike_option` (a card-granted alternate strike that
     deals its own damage), and every registered `combat_dodge_option` (a
     card-granted dodge -- see module docstring; dodge is never a built-in
     choice, only ever card/ability-granted).
+
+    `round_state` is the current round's shared "(limited)"-additional-
+    strike scratch dict (module docstring's "Cross-card '(limited)' cap"
+    section); threaded only into the `combat_dodge_option` offer, since a
+    dodge-bundled grant is the only one of the two hooks this function calls
+    that can originate a "(limited)" additional-strike grant
+    (`combat_strike_option` grants a plain alternate strike, never an
+    *additional* one).
 
     Returns `(chosen_value, options_by_value, dodge_values)`: `dodge_values`
     is the subset of `options_by_value`'s keys that came from
@@ -203,6 +341,7 @@ def _ask_strike(
         player=player,
         vampire=vampire.instance_id,
         opponent=opponent.instance_id,
+        round_state=round_state,
     )
     by_value = {o.choice.value: o for o in strike_options}
     by_value.update({o.choice.value: o for o in dodge_options})
@@ -229,10 +368,15 @@ def _resolve_one_strike(
     player: str,
     vampire: VampireInPlay,
     opponent: VampireInPlay,
+    round_state: dict[str, Any],
     *,
     participates: bool,
 ) -> tuple[int, bool, bool]:
     """Resolve one combatant's strike for one strike-pair step.
+
+    `round_state` is forwarded unchanged to `_ask_strike` (see its own
+    docstring and the module docstring's "Cross-card '(limited)' cap"
+    section).
 
     `participates=False` means this combatant has no strike to make in this
     particular pair -- e.g. an additional-strike pair they did not opt into
@@ -260,7 +404,7 @@ def _resolve_one_strike(
     """
     if not participates:
         return 0, False, False
-    choice, by_value, dodge_values = _ask_strike(state, player, vampire, opponent)
+    choice, by_value, dodge_values = _ask_strike(state, player, vampire, opponent, round_state)
     if choice in dodge_values:
         by_value[choice].apply(state)  # dodge's own side effect, if any
         return 0, True, False
@@ -280,6 +424,7 @@ def _resolve_strike_pair(
     acting_vampire: VampireInPlay,
     blocking_player: str,
     blocking_vampire: VampireInPlay,
+    round_state: dict[str, Any],
     *,
     acting_participates: bool = True,
     blocking_participates: bool = True,
@@ -293,12 +438,29 @@ def _resolve_strike_pair(
     section). Used both for the normal pair and for each additional-strike
     pair (`acting_participates`/`blocking_participates` = False for a
     combatant not striking in this particular pair).
+
+    `round_state` is the current round's shared "(limited)"-additional-
+    strike scratch dict, forwarded unchanged to both `_resolve_one_strike`
+    calls (and, through them, to `_ask_strike`'s `combat_dodge_option`
+    offer) -- the *same* object every time this function is called within
+    one round, per `run_combat`'s own round-scoped lifetime for it (module
+    docstring's "Cross-card '(limited)' cap" section).
     """
     damage_to_blocking, acting_dodges, acting_ignore_dodge = _resolve_one_strike(
-        state, acting_player, acting_vampire, blocking_vampire, participates=acting_participates
+        state,
+        acting_player,
+        acting_vampire,
+        blocking_vampire,
+        round_state,
+        participates=acting_participates,
     )
     damage_to_acting, blocking_dodges, blocking_ignore_dodge = _resolve_one_strike(
-        state, blocking_player, blocking_vampire, acting_vampire, participates=blocking_participates
+        state,
+        blocking_player,
+        blocking_vampire,
+        acting_vampire,
+        round_state,
+        participates=blocking_participates,
     )
     if acting_dodges and not blocking_ignore_dodge:
         damage_to_acting = 0
@@ -314,12 +476,24 @@ def _resolve_strike_pair(
 
 
 def _ask_additional_strike(
-    state: GameState, player: str, vampire: VampireInPlay, opponent: VampireInPlay
+    state: GameState,
+    player: str,
+    vampire: VampireInPlay,
+    opponent: VampireInPlay,
+    round_state: dict[str, Any],
 ) -> bool:
     """Offer every currently-available `combat_additional_strike` grant
     (Rulebook SS4 Combat > Additional Strikes -- see module docstring). No
     options registered/currently available => no decision raised at all
     (CLAUDE.md "only when needed").
+
+    `round_state` is the current round's shared "(limited)"-additional-
+    strike scratch dict, threaded into the `combat_additional_strike`
+    context (module docstring's "Cross-card '(limited)' cap" section) --
+    this is the *direct*-grant hook (as opposed to `_ask_strike`'s
+    dodge-bundled one), so a provider implementing a "(limited)" clause
+    reads it to decide whether to offer its own grant at all, and a provider
+    implementing an *exempt* clause simply never consults it.
 
     Returns whether this combatant uses one now. If so, the chosen option's
     `apply(state)` has already consumed the grant (e.g. decrementing a
@@ -334,6 +508,7 @@ def _ask_additional_strike(
         player=player,
         vampire=vampire.instance_id,
         opponent=opponent.instance_id,
+        round_state=round_state,
     )
     if not options:
         return False
@@ -375,9 +550,17 @@ def run_combat(
         if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
             break  # Rulebook SS4: combat ends at once if a combatant is no longer ready.
 
+        # One fresh, shared "(limited)"-additional-strike scratch dict per
+        # round (module docstring's "Cross-card '(limited)' cap" section):
+        # created here, at the top of every iteration of this loop, so it
+        # never carries a flag over into a later round of the *same* combat,
+        # and threaded unchanged into every hook offer below for this round
+        # only.
+        round_state: dict[str, Any] = {}
+
         # --- Strike step: acting minion's controller chooses first; simultaneous resolution. ---
         _resolve_strike_pair(
-            state, acting_player, acting_vampire, blocking_player, blocking_vampire
+            state, acting_player, acting_vampire, blocking_player, blocking_vampire, round_state
         )
 
         if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
@@ -390,10 +573,10 @@ def run_combat(
         # necessary" while either combatant still has an unused grant. ---
         while True:
             acting_extra = _ask_additional_strike(
-                state, acting_player, acting_vampire, blocking_vampire
+                state, acting_player, acting_vampire, blocking_vampire, round_state
             )
             blocking_extra = _ask_additional_strike(
-                state, blocking_player, blocking_vampire, acting_vampire
+                state, blocking_player, blocking_vampire, acting_vampire, round_state
             )
             if not acting_extra and not blocking_extra:
                 break
@@ -403,6 +586,7 @@ def run_combat(
                 acting_vampire,
                 blocking_player,
                 blocking_vampire,
+                round_state,
                 acting_participates=acting_extra,
                 blocking_participates=blocking_extra,
             )

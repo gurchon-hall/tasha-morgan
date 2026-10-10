@@ -74,38 +74,36 @@ strike" -- `engine/combat.py` module docstring), exactly like Dust Up's own
 "(limited)" (SS8 glossary; `engine/combat.py` module docstring's own
 general restatement of the rule this card text invokes: "A minion cannot
 use more than one card or effect to gain additional strikes per round of
-combat"): tracked the same way, and with the same deliberately-documented
-granularity simplification, as Dust Up's own `[cel]` clause (see
-`dust_up.py`'s module docstring for the full reasoning -- repeated here only
-in summary, not re-derived): `engine/combat.py`'s three combat hooks carry
-no round-boundary (or even combat-boundary) scratch container a hook
-provider can see (confirmed by re-reading `_ask_strike`/`_resolve_strike_
-pair`/`_ask_additional_strike`/`run_combat` again for this card: still true,
-unchanged since Dust Up's own pass), so this module tracks the cap itself,
-per *vampire instance*, for as long as that instance exists -- strictly
-*more* restrictive than "once per round" (it also forbids a legitimate
-replay in a later round or later combat that the rules would in fact
-allow), never less. Scoped to this card's own clause only, the same
-granularity Dust Up's own module uses (not pooled with any other,
-hypothetical additional-strike-granting card's own separate tracking --
-that cross-card pooling gap, if it ever matters, pre-exists this card and
-is Dust Up's own module's gap too, not something this card introduces or is
-asked to fix). Uses the identical `id(vampire)` + `weakref.finalize`
-mechanism as `dust_up.py` (`VampireInPlay` is unhashable, see that module's
-own docstring for the full footgun explanation) rather than importing Dust
-Up's private `_CEL_BOOKKEEPING` -- a different card's own private per-card
-state, keyed only by instance and not by which card played it, would be
-wrong to share across two unrelated physical cards.
+combat"): tracked via `engine/combat.py`'s shared, round-scoped
+`additional_strike_limit_used`/`mark_additional_strike_limit_used` helpers
+(`docs/OPEN_QUESTIONS.md` OQ-19), the same mechanism `dust_up.py`'s own
+`[cel]` clause now uses -- a card module implementing a "(limited)"
+additional-strike clause gates its own offer on `not additional_strike_
+limit_used(context)` and records the use from its own grant's `apply()` via
+`mark_additional_strike_limit_used(context)`. Because the flag lives in the
+shared, round-scoped `round_state` dict `run_combat` threads into both
+`COMBAT_DODGE_OPTION_HOOK`'s and `COMBAT_ADDITIONAL_STRIKE_HOOK`'s own hook
+context (reset fresh every round, not per-card), this correctly pools
+*across* different cards -- e.g. a vampire holding both Dust Up and Side
+Strike cannot use both cards' "(limited)" grants in the same round, closing
+a real illegal-play gap this module's own previous private, per-vampire-
+*instance*, effectively-forever tracking left open. The `[cel]` dodge
+clause above carries no such check (the restriction is printed only on the
+`[CEL]` additional-strike line).
 """
 
-import weakref
 from collections.abc import Mapping
 from typing import Any
 
 from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
-from vtesbot.engine.combat import COMBAT_ADDITIONAL_STRIKE_HOOK, COMBAT_DODGE_OPTION_HOOK
+from vtesbot.engine.combat import (
+    COMBAT_ADDITIONAL_STRIKE_HOOK,
+    COMBAT_DODGE_OPTION_HOOK,
+    additional_strike_limit_used,
+    mark_additional_strike_limit_used,
+)
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.state import GameState, VampireInPlay
@@ -113,38 +111,6 @@ from vtesbot.engine.state import GameState, VampireInPlay
 KRCG_ID = 101778
 CEL_BASIC = "cel"
 CEL_SUPERIOR = "CEL"
-
-ADDITIONAL_STRIKE_USED_KEY = "additional_strike_used"
-
-# Per-vampire "(limited)" bookkeeping for the `[CEL]` additional-strike
-# clause -- see module docstring for why this cannot use the shared
-# `_shared.bleed_bookkeeping`/`pending` convention (no equivalent scratch
-# object exists in `engine/combat.py`'s hook contexts), why the chosen
-# granularity is "once per vampire instance" rather than "once per round"
-# (strictly more restrictive, matching `dust_up.py`'s own precedent), and
-# why this is a module-private dict rather than a shared pool with any
-# other additional-strike-granting card.
-#
-# `VampireInPlay` (`engine/state.py`) is a plain `@dataclass` with no
-# `frozen=True`/`unsafe_hash=True`, so it is unhashable and cannot be used
-# as a `dict`/`WeakKeyDictionary` key directly. Keyed instead by
-# `id(vampire)` in a plain module-level `dict`, paired with a
-# `weakref.finalize` callback that pops the entry the instant this specific
-# vampire object is garbage-collected -- this prevents the "`id()` gets
-# reused after garbage-collection" footgun from leaking a stale flag into
-# an unrelated, later vampire object that happens to receive the same
-# `id()`.
-_CEL_BOOKKEEPING: dict[int, dict[str, bool]] = {}
-
-
-def _cel_book(vampire: VampireInPlay) -> dict[str, bool]:
-    key = id(vampire)
-    book = _CEL_BOOKKEEPING.get(key)
-    if book is None:
-        book = {}
-        _CEL_BOOKKEEPING[key] = book
-        weakref.finalize(vampire, _CEL_BOOKKEEPING.pop, key, None)
-    return book
 
 
 def _controllers_vampire(state: GameState, context: Mapping[str, Any]) -> VampireInPlay | None:
@@ -188,8 +154,13 @@ def _provide_dodge(state: GameState, context: Mapping[str, Any]) -> list[HookOpt
 def _provide_additional_strike(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
     """ "[CEL] Additional strike (limited)." -- requires superior Celerity
     only; using it grants one additional strike through the engine's own
-    full strike-choice machinery. See module docstring for the "(limited)"
-    granularity this module enforces."""
+    full strike-choice machinery. Unlike Dust Up's `[cel]` clause, this
+    provider *is* the `COMBAT_ADDITIONAL_STRIKE_HOOK` offer itself (there is
+    no separate dodge-bundled "grant" step to record and later claim), so
+    the cross-card "(limited)" cap (see module docstring) is gated and
+    recorded directly here: `additional_strike_limit_used(context)` must be
+    False to offer this choice at all, and choosing it immediately calls
+    `mark_additional_strike_limit_used(context)`."""
     vampire = _controllers_vampire(state, context)
     if vampire is None:
         return []
@@ -199,13 +170,12 @@ def _provide_additional_strike(state: GameState, context: Mapping[str, Any]) -> 
     player = context["player"]
     if not _has_card_in_hand(state, player):
         return []
-    book = _cel_book(vampire)
-    if book.get(ADDITIONAL_STRIKE_USED_KEY):
-        return []  # "(limited)": already played this card's [CEL] clause.
+    if additional_strike_limit_used(context):
+        return []  # "(limited)": a grant (this card's or another's) was already used this round.
 
     def _apply(s: GameState) -> None:
         play_from_hand(s, player, KRCG_ID)
-        book[ADDITIONAL_STRIKE_USED_KEY] = True
+        mark_additional_strike_limit_used(context)
 
     return [
         HookOption(

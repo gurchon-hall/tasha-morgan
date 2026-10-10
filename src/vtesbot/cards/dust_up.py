@@ -96,53 +96,25 @@ two paired hook registrations:
 
 "(limited)" / "The additional strike is not optional: you cannot play it for
 the dodge only if you already played it for a (limited) additional strike
-this round" [ANK 20220204]: per `engine/combat.py`'s own module docstring
-("The '(limited)'/'one card or effect per round' cap itself is the
-*granting* card's own business ... not this generic mechanism's"), this
-card's own module tracks it, the same "card module owns its own '(limited)'
-bookkeeping" convention `_shared.py::bleed_bookkeeping` already established
-for Threats/Bonding -- but that specific helper is keyed off `pending`, the
-per-*minion-action* scratch container `engine/action.py::
-perform_minion_action` threads through *bleed* actions (OQ-11); `engine/
-combat.py`'s three combat hooks (`"combat_strike_option"`/
-`"combat_dodge_option"`/`"combat_additional_strike"`) carry no equivalent
-object in their context (confirmed by re-reading `_ask_strike`/
-`_resolve_strike_pair`/`_ask_additional_strike`/`run_combat` in full: no
-round counter, no scratch dict, nothing distinguishing "this is the normal
-strike pair" from "this is an additional-strike pair" is threaded anywhere
-a hook provider can see), so `bleed_bookkeeping` itself does not apply here
-and a different, self-contained mechanism is used instead (`_cel_book`,
-below).
-
-Deliberate, documented granularity simplification (not a guess): with no
-round-boundary (or even combat-boundary) signal exposed by `engine/
-combat.py` to a hook provider, this module cannot distinguish "a new round
-has started" from "this is still the same round" purely from the context a
-provider receives (`player`/`vampire`/`opponent`, identical shape on every
-call). Enforcing the ruling exactly ("per round of combat") would need a
-small, round-scoped scratch container threaded through `run_combat`'s three
-hook contexts, mirroring `pending`'s role for minion actions (OQ-11) --
-genuinely new `engine/combat.py` scope, out of bounds for a card module
-(CLAUDE.md "No engine patches ... hand off to rules-engineer"). Instead,
-`_cel_book` tracks the "(limited)" grant per *vampire instance*, for as long
-as that instance exists (i.e. "once per game" rather than precisely "once
-per round"): once this vampire has played `[cel]` once, the clause is never
-offered to it again, for the rest of the game, regardless of how many
-further rounds or separate combats follow. This is strictly *more*
-restrictive than the sourced ruling, never less -- it can never produce the
-rules-forbidden outcome (re-granting an additional strike in the same round,
-or replaying `[cel]` "for the dodge only" after the grant was already used
-this round), only the safe-direction cost of also disallowing a later,
-separate, legitimate replay (a different physical copy, a later round or a
-later combat) that the rules would in fact allow. Flagged here, and in the
-hand-off report, as a candidate for a future `rules-engineer` pass (a
-round-scoped scratch container for `engine/combat.py`, parallel to `pending`)
-if exact per-round fidelity is ever needed; no test below exercises (or
-claims) correct round-2 re-availability, only the same-round restriction the
-ruling actually describes.
+this round" [ANK 20220204]: tracked via `engine/combat.py`'s shared,
+round-scoped `additional_strike_limit_used`/`mark_additional_strike_limit_
+used` helpers (`docs/OPEN_QUESTIONS.md` OQ-19) -- `run_combat` threads one
+fresh scratch dict per round into both `"combat_dodge_option"`'s and
+`"combat_additional_strike"`'s own hook context, so this flag is correctly
+shared *across* different cards/physical copies (closing the gap this
+module's own private, per-vampire-*instance*, effectively-forever tracking
+previously left open: nothing stopped a vampire holding both Dust Up and a
+second "(limited)" additional-strike card, e.g. Side Strike, from using both
+grants in the same round) and correctly resets every round (unlike the
+previous tracking, which never reset at all for the life of the vampire
+object). The `[cel]` dodge provider below gates its own offer on `not
+additional_strike_limit_used(context)` and its `apply()` calls `mark_
+additional_strike_limit_used(context)` -- per the ANK ruling, the check
+belongs at the *granting* clause (the dodge-bundled grant here), not at the
+later act of claiming an already-recorded grant via `_provide_cel_
+additional_strike`, which needs no re-check of its own.
 """
 
-import weakref
 from collections.abc import Mapping
 from typing import Any
 
@@ -157,6 +129,8 @@ from vtesbot.engine.combat import (
     COMBAT_STRIKE_OPTION_HOOK,
     HAND_STRIKE_STRENGTH,
     StrikeDamage,
+    additional_strike_limit_used,
+    mark_additional_strike_limit_used,
 )
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
@@ -167,39 +141,56 @@ ANI = "ani"
 CEL = "cel"
 POT = "pot"
 
-CEL_PLAYED_KEY = "played"
-CEL_GRANT_AVAILABLE_KEY = "grant_available"
-
-# Per-vampire "(limited)" bookkeeping for the `[cel]` clause -- see module
-# docstring for why this cannot use the shared `_shared.bleed_bookkeeping`/
-# `pending` convention (no equivalent scratch object exists in
-# `engine/combat.py`'s hook contexts), and why the chosen granularity is
-# "once per vampire instance" rather than "once per round".
-#
-# `VampireInPlay` (`engine/state.py`) is a plain `@dataclass` with no
-# `frozen=True`/`unsafe_hash=True`, so (per Python's own dataclass rules:
-# `eq=True` + `frozen=False` => `__hash__ = None`) it is unhashable and
-# cannot be used as a `dict`/`WeakKeyDictionary` key directly (a
-# `WeakKeyDictionary` still hashes the wrapped key internally, so it hits
-# the identical problem). Keyed instead by `id(vampire)` in a plain
-# module-level `dict`, paired with a `weakref.finalize` callback that pops
-# the entry the instant this specific vampire object is garbage-collected
-# -- this is what actually prevents the "`id()` gets reused after
-# garbage-collection" footgun from leaking a stale flag into an unrelated,
-# later vampire object that happens to receive the same `id()` (e.g. a
-# different test's own "P1-V1"): by the time any id could be reused, the
-# original object's entry is already gone.
-_CEL_BOOKKEEPING: dict[int, dict[str, bool]] = {}
+CEL_GRANTS_KEY = "dust_up_cel_grants"
+"""Context key for the one piece of state still genuinely private to this
+card's own `[cel]` clause: *which vampires* currently have a still-unclaimed
+dodge-bundled grant from this card, distinct from the cross-card "(limited)"
+cap (`additional_strike_limit_used`, above) -- a vampire's grant can be
+consumed (claimed via `_provide_cel_additional_strike`) independently of
+whether the shared cross-card cap has since been set by a *different*
+vampire's own (unrelated) "(limited)" play. Stored as a `dict[str, bool]`
+(vampire instance id -> grant available) *nested inside* the shared
+`round_state` dict `engine/combat.py` threads into this hook's context,
+under this module's own key (so it cannot collide with `engine/combat.py`'s
+own `ADDITIONAL_STRIKE_LIMIT_KEY`) -- `round_state` itself is one single
+object shared by *both* combatants' hook calls this round (`engine/
+combat.py::run_combat` passes the identical dict regardless of which
+combatant is being asked), so a flat, un-keyed boolean here would wrongly
+conflate one vampire's grant with the other's; keying by vampire instance
+id avoids that while still getting this per-card flag's round-scoped
+lifetime for free from `round_state`'s own round-scoped lifetime -- no
+separate per-vampire-instance-forever bookkeeping needed any more."""
 
 
-def _cel_book(vampire: VampireInPlay) -> dict[str, bool]:
-    key = id(vampire)
-    book = _CEL_BOOKKEEPING.get(key)
-    if book is None:
-        book = {}
-        _CEL_BOOKKEEPING[key] = book
-        weakref.finalize(vampire, _CEL_BOOKKEEPING.pop, key, None)
-    return book
+def _round_state(context: Mapping[str, Any]) -> dict[str, Any] | None:
+    """The shared `round_state` dict `engine/combat.py` threads into
+    `"combat_dodge_option"`/`"combat_additional_strike"` contexts, or `None`
+    if this hook was offered directly, bypassing `run_combat` (some scenario
+    tests do this to probe one hook in isolation) -- mirrors `engine/
+    combat.py::additional_strike_limit_used`'s own "missing key => no shared
+    state available" degrade-gracefully reasoning for this card's own
+    `CEL_GRANTS_KEY` bucket."""
+    return context.get("round_state")
+
+
+def _cel_grant_available(round_state: dict[str, Any] | None, vampire_id: str) -> bool:
+    """Whether `vampire_id` currently has an unclaimed `[cel]` grant from
+    this card. A missing `round_state` (see `_round_state`) is treated as
+    "no grant available" -- there is nothing to persist across separate
+    calls in that case, matching `additional_strike_limit_used`'s own
+    degrade-gracefully convention."""
+    if round_state is None:
+        return False
+    return bool(round_state.get(CEL_GRANTS_KEY, {}).get(vampire_id))
+
+
+def _set_cel_grant_available(
+    round_state: dict[str, Any] | None, vampire_id: str, value: bool
+) -> None:
+    """Record `vampire_id`'s `[cel]` grant as available/consumed. A missing
+    `round_state` is a no-op (nothing to persist to)."""
+    if round_state is not None:
+        round_state.setdefault(CEL_GRANTS_KEY, {})[vampire_id] = value
 
 
 def _controllers_vampire(state: GameState, context: Mapping[str, Any]) -> VampireInPlay | None:
@@ -293,8 +284,9 @@ def _provide_cel_dodge(state: GameState, context: Mapping[str, Any]) -> list[Hoo
     """ "[cel] Strike: dodge, with 1 additional strike (limited)." -- see
     module docstring for why this is split across this hook (the dodge
     itself, plus recording the grant) and `_provide_cel_additional_strike`
-    (claiming the grant), and for the "(limited)" granularity this module
-    enforces."""
+    (claiming the grant), and for the cross-card "(limited)" cap this
+    provider now consults/records via `engine/combat.py`'s shared, round-
+    scoped helpers."""
     vampire = _controllers_vampire(state, context)
     if not _requires_an_anarch(vampire):
         return []
@@ -304,14 +296,15 @@ def _provide_cel_dodge(state: GameState, context: Mapping[str, Any]) -> list[Hoo
     player = context["player"]
     if not _has_card_in_hand(state, player):
         return []
-    book = _cel_book(vampire)  # type: ignore[arg-type]
-    if book.get(CEL_PLAYED_KEY):
-        return []  # "(limited)": already played this card's [cel] clause.
+    if additional_strike_limit_used(context):
+        return []  # "(limited)": a grant (this card's or another's) was already used this round.
+    round_state = _round_state(context)
+    vampire_id = context["vampire"]
 
     def _apply(s: GameState) -> None:
         play_from_hand(s, player, KRCG_ID)
-        book[CEL_PLAYED_KEY] = True
-        book[CEL_GRANT_AVAILABLE_KEY] = True
+        mark_additional_strike_limit_used(context)
+        _set_cel_grant_available(round_state, vampire_id, True)
 
     return [
         HookOption(
@@ -327,19 +320,23 @@ def _provide_cel_additional_strike(
     state: GameState, context: Mapping[str, Any]
 ) -> list[HookOption]:
     """Claims the additional-strike grant `_provide_cel_dodge` recorded.
-    Not itself re-gated on "Requires an Anarch"/discipline/hand: those were
-    already checked at grant time, and consuming an already-legitimately-
-    granted strike needs no re-check (nothing in the rules revokes a granted
-    additional strike mid-round)."""
+    Not itself re-gated on "Requires an Anarch"/discipline/hand/the shared
+    "(limited)" cap: those were already checked at grant time, and consuming
+    an already-legitimately-granted strike needs no re-check (nothing in
+    the rules revokes a granted additional strike mid-round) -- per Dust
+    Up's own ruling ("you cannot play it for the dodge only if you already
+    played it for a (limited) additional strike this round" [ANK 20220204]),
+    the cap gates the *granting* clause only."""
     vampire = _controllers_vampire(state, context)
     if vampire is None:
         return []
-    book = _cel_book(vampire)
-    if not book.get(CEL_GRANT_AVAILABLE_KEY):
+    round_state = _round_state(context)
+    vampire_id = context["vampire"]
+    if not _cel_grant_available(round_state, vampire_id):
         return []
 
     def _apply(s: GameState) -> None:
-        book[CEL_GRANT_AVAILABLE_KEY] = False
+        _set_cel_grant_available(round_state, vampire_id, False)
 
     return [
         HookOption(

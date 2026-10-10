@@ -252,9 +252,10 @@ def test_additional_strike_grants_one_additional_strike_via_the_full_strike_mach
 
 def test_limited_blocks_a_second_copy_in_the_same_round():
     """ "(limited)": once the `[CEL]` clause has been played once, a second
-    physical copy is not offered again (this module's own "once per vampire
-    instance" granularity, strictly more restrictive than "once per round",
-    per the module docstring)."""
+    physical copy is not offered again this round. The cap now lives in
+    `engine/combat.py`'s shared, round-scoped `round_state` (OQ-19), so both
+    direct `hooks.offer` calls below are threaded through the *same* shared
+    dict, exactly as `run_combat` would within one real round."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(
         "V1", capacity=3, blood=0, disciplines=("CEL",)
@@ -264,14 +265,25 @@ def test_limited_blocks_a_second_copy_in_the_same_round():
     builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=0)
     game = builder.build()
 
+    round_state: dict = {}
     first = hooks.offer(
-        COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_ADDITIONAL_STRIKE_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state=round_state,
     )
     assert {o.choice.value for o in first} == {"side_strike:additional_strike"}
     first[0].apply(game.state)  # play the first copy.
 
     second = hooks.offer(
-        COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_ADDITIONAL_STRIKE_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state=round_state,
     )
     assert second == []  # the second copy's [CEL] clause is not offered again.
     assert len(game.state.players["P1"].hand) == 1  # second copy stayed unused in hand
@@ -290,12 +302,23 @@ def test_limited_does_not_restrict_the_dodge_clause():
     builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=0)
     game = builder.build()
 
+    round_state: dict = {}
     extra = hooks.offer(
-        COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_ADDITIONAL_STRIKE_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state=round_state,
     )
     extra[0].apply(game.state)  # consume the "(limited)" additional-strike grant.
 
     dodge = hooks.offer(
-        COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_DODGE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state=round_state,
     )
     assert {o.choice.value for o in dodge} == {"side_strike:dodge"}

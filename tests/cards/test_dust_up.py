@@ -470,7 +470,13 @@ def test_cel_limited_blocks_a_second_copy_in_the_same_round():
     """ "[cel] The additional strike is not optional: you cannot play it for
     the dodge only if you already played it for a (limited) additional
     strike this round." [ANK 20220204]: once played once, a second physical
-    copy is not offered again within the same round."""
+    copy is not offered again within the same round. The cap now lives in
+    `engine/combat.py`'s shared, round-scoped `round_state` (OQ-19), so both
+    direct `hooks.offer` calls below are threaded through the *same* shared
+    dict, exactly as `run_combat` would within one real round (a test that
+    omitted `round_state` would see each call treated as an isolated, fresh
+    round, and the "second copy" would wrongly be offered again -- see
+    `engine/combat.py::additional_strike_limit_used`'s own docstring)."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(
         "V1", capacity=3, blood=0, disciplines=("cel",)
@@ -481,14 +487,25 @@ def test_cel_limited_blocks_a_second_copy_in_the_same_round():
     builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=0)
     game = builder.build()
 
+    round_state: dict = {}
     first = hooks.offer(
-        COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_DODGE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state=round_state,
     )
     assert {o.choice.value for o in first} == {"dust_up:cel"}
     first[0].apply(game.state)  # play the first copy: dodge + grant recorded.
 
     second = hooks.offer(
-        COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_DODGE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state=round_state,
     )
     assert second == []  # the second copy is not offered again this round.
     assert len(game.state.players["P1"].hand) == 1  # second copy stayed unused in hand
