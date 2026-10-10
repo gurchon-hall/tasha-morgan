@@ -79,6 +79,30 @@ def bleed_bookkeeping(pending: dict[str, Any]) -> dict[str, Any]:
     increase the bleed if the bleed amount is already being increased by
     another action modifier card").
 
+    Exempt clauses (resolves `docs/OPEN_QUESTIONS.md` OQ-19's bleed-side
+    follow-up; mirrors `engine/combat.py`'s own `additional_strike_limit_
+    used`/`mark_additional_strike_limit_used` convention for the combat-side
+    "(limited)" additional-strike cap): some printed card texts explicitly
+    exempt their own bleed-amount bonus from this cap, e.g. Command of the
+    Beast (krcg 100381, "[DOM] +1 bleed that does not count against the
+    limit"), Power of One (101429, same wording), Leverage (101098) -- none
+    implemented yet, `card-implementer` scope, this docstring only documents
+    the convention a future module for one of them would use. This function
+    itself never enforces the cap; it only returns the shared scratch dict
+    (keyed off `pending`, so it spans the whole action, see below) -- a
+    provider implementing an *exempt* clause must simply add straight to
+    `context["amount"]` (the `amount_box`) from its own `apply()`, without
+    ever checking or setting `LIMITED_USED_KEY` (`cards/threats.py`) in the
+    dict this function returns, exactly as `cards/threats.py`'s own basic/
+    superior clauses and `cards/bonding.py`'s two clauses already do to
+    *participate* in the cap (the existing, opt-in convention this function
+    has always supported; exemption is simply the choice to opt out). An
+    exempt clause's own bonus is therefore unaffected by, and does not
+    affect, any other "(limited)" provider's own use of the flag in either
+    direction -- proven with fake stand-in providers (not a real card) by
+    `tests/rules/test_pending_modifier.py::
+    test_bleed_bookkeeping_lets_an_exempt_provider_skip_the_shared_limited_flag`.
+
     `pending` (`engine/action.py::perform_minion_action`'s per-minion-action
     `dict[str, Any]` scratch container, OQ-11 `docs/OPEN_QUESTIONS.md`) is
     freshly created once per single minion action, *before* the block-attempt

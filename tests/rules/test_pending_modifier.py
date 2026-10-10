@@ -22,6 +22,7 @@ Per the `rules-scenario-test` skill: these are scenario tests for the
 import pytest
 
 from helpers import ScenarioBuilder, ScriptedAgent
+from vtesbot.cards._shared import bleed_bookkeeping
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED, attempt_block, perform_minion_action
 from vtesbot.engine.decision import Choice
@@ -263,5 +264,73 @@ def test_hunt_resolve_accepts_but_ignores_the_pending_argument():
     minion_phase(game.state, "P1")
 
     assert game.blood_of("V1") == 1  # hunt succeeded, unaffected by the stash
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
+def test_bleed_bookkeeping_lets_an_exempt_provider_skip_the_shared_limited_flag():
+    """`_shared.py::bleed_bookkeeping`'s "(limited)" convention (SS8
+    glossary; `cards/threats.py`'s own `LIMITED_USED_KEY`) is a convention a
+    provider opts into, not something `bleed_bookkeeping` itself enforces --
+    mirrors `engine/combat.py`'s `additional_strike_limit_used`/`mark_
+    additional_strike_limit_used` convention built for the combat-side
+    "(limited)" cap (`docs/OPEN_QUESTIONS.md` OQ-19). A future card whose own
+    printed text exempts its bleed bonus from the cap (e.g. Command of the
+    Beast 100381, Power of One 101429, Leverage 101098 -- none implemented
+    yet) would simply never check or set the flag for that clause. Proven
+    here with two fake stand-in providers sharing one `pending`/
+    `bleed_bookkeeping` dict: an "exempt" provider that always offers its
+    bonus regardless of the shared flag and never sets it, and an ordinary
+    "(limited)" provider (mirroring `threats.py`'s own convention) that is
+    unaffected by the exempt provider's use in either direction (used both
+    before and after the limited provider's own play)."""
+    limited_used_key = "fake_limited_used"
+
+    def exempt_provider(state, context):
+        if context.get("player") != "P1":
+            return []
+        amount_box = context["amount"]
+
+        def _apply(s):
+            amount_box[0] += 1
+
+        return [hooks.HookOption(choice=Choice("exempt", "+1 bleed, exempt"), apply=_apply)]
+
+    def limited_provider(state, context):
+        if context.get("player") != "P1":
+            return []
+        book = bleed_bookkeeping(context["pending"])
+        if book.get(limited_used_key):
+            return []
+        amount_box = context["amount"]
+
+        def _apply(s):
+            amount_box[0] += 2
+            book[limited_used_key] = True
+
+        return [hooks.HookOption(choice=Choice("limited", "+2 bleed (limited)"), apply=_apply)]
+
+    hooks.register("bleed_amount_modifier", exempt_provider)
+    hooks.register("bleed_amount_modifier", limited_provider)
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)
+    builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=1)
+    game = builder.build()
+    actor = ScriptedAgent("P1")
+    actor.expect("minion_phase_choice", "act_with:V1")
+    actor.expect("action_choice", "bleed")
+    actor.expect("bleed_amount_modifier", "exempt")
+    actor.expect("bleed_amount_modifier", "limited")  # still offered: exempt never set the flag
+    actor.expect("bleed_amount_modifier", "exempt")  # still offered too: it never checks the flag
+    actor.expect("bleed_amount_modifier", "pass")
+    game.state.agents["P1"] = actor
+    defender = ScriptedAgent("P2")
+    defender.expect("block_attempt", "decline")  # no stealth/intercept bump: declines outright
+    game.state.agents["P2"] = defender
+
+    minion_phase(game.state, "P1")
+
+    assert game.pool_of("P2") == 25  # base 1 + exempt 1 + limited 2 + exempt 1 = 5 lost
+    assert game.state.edge_holder == "P1"
     actor.assert_exhausted()
     defender.assert_exhausted()
