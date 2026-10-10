@@ -62,6 +62,32 @@ Action-discriminator constants (rules-auditor finding, OQ-9): `ACTION_BLEED`/
 cannot silently desync this module's two producing call sites from a future
 hook provider's own `context["action"] == ...` check.
 
+Action-card entry point (OQ-17, `docs/OPEN_QUESTIONS.md`, resolved by this
+pass): a library card of printed `types == ["Action"]` (Rulebook SS2 Card
+Types; e.g. Enchant Kindred, krcg 100640) is itself the acting vampire's
+entire minion action for the turn, distinct from an "Action Modifier" card
+(which only ever decorates an already-chosen default action, the shape
+`BLEED_AMOUNT_MODIFIER_HOOK` above already covers). `ACTION_CARD_PLAY_HOOK`
+("action_card_play") generalizes `RECRUIT_ALLY_PLAY_HOOK`'s own pattern
+beyond Allies: a provider offers one option per playable Action card of its
+own it finds in `player`'s hand, and `apply(state)` must return an
+`ActionCardSpec` (below) instead of a `RecruitAllySpec`. `_perform_action_
+card` runs it through `perform_minion_action` exactly like `_perform_bleed`/
+`_perform_hunt`/`_perform_recruit_ally` already do, under
+`ActionCardSpec.action` (`engine/action.py`, OQ-9): this defaults to
+`ACTION_ACTION_CARD` (every Action-card play that is genuinely sui generis
+shares that one fallback action *type*, mirroring `ACTION_RECRUIT_ALLY`),
+but a provider whose own clause is textually a Bleed/Hunt/etc. (rules-
+auditor finding, OQ-17 follow-up -- e.g. Enchant Kindred's basic clause,
+"[pre] Ⓓ Bleed with +1 bleed") must override it to the matching constant,
+so an existing action-gated provider sharing the same hook window (e.g.
+`cards/bonding.py`'s superior clause) is not silently and wrongly
+suppressed. With no provider registered against this hook yet (Enchant
+Kindred's own card module is a separate, `card-implementer` pass), every
+call to `hooks.offer(ACTION_CARD_PLAY_HOOK, ...)` returns an empty list, so
+this is pure scaffolding -- byte-for-byte the pre-OQ-17 result -- until a
+card registers.
+
 Pending-modifier scratch container (OQ-11, `docs/OPEN_QUESTIONS.md`):
 `perform_minion_action` (`engine/action.py`) now calls `resolve` with one
 `pending: dict[str, Any]` argument -- the same object threaded into the
@@ -81,10 +107,18 @@ against it), this is pure scaffolding -- byte-for-byte the pre-OQ-11
 result -- until a card uses it.
 """
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from .. import hooks
-from ..action import ACTION_BLEED, ACTION_HUNT, ACTION_RECRUIT_ALLY, perform_minion_action
+from ..action import (
+    ACTION_ACTION_CARD,
+    ACTION_BLEED,
+    ACTION_HUNT,
+    ACTION_RECRUIT_ALLY,
+    perform_minion_action,
+)
 from ..allies import detect_contest_on_recruit, recruit_ally
 from ..damage import add_blood
 from ..decision import Choice, Decision
@@ -107,6 +141,14 @@ RECRUIT_ALLY_PLAY_HOOK = "recruit_ally_play"
 its own Ally library card(s) and offers one option per playable card it
 finds; `apply(state)` must return an `engine/allies.py::RecruitAllySpec`
 (OQ-12, `docs/OPEN_QUESTIONS.md`)."""
+ACTION_CARD_PLAY_HOOK = "action_card_play"
+"""`HookOption`-based hook (OQ-17, `docs/OPEN_QUESTIONS.md`, resolved by this
+pass): generalizes `RECRUIT_ALLY_PLAY_HOOK` above beyond Allies -- a
+provider inspects `context["player"]`'s hand for its own library card(s) of
+printed `types == ["Action"]` (Rulebook SS2 Card Types; distinct from an
+"Action Modifier," which only ever decorates an already-chosen default
+action) and offers one option per playable card it finds; `apply(state)`
+must return an `ActionCardSpec` below."""
 BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
 BLEED_AMOUNT_FIXED_MODIFIER_HOOK = "bleed_amount_fixed_modifier"
 """Passive, mandatory numeric hook (`hooks.sum_modifiers`, CLAUDE.md rule 3's
@@ -127,6 +169,89 @@ participates in that computation's single clamp-at-0/Edge-holder logic
 instead of bypassing it (OQ-11's rejected "immediate separate pool loss"
 alternative would desynchronize from that same logic -- see OQ-11's worked
 example)."""
+
+
+@dataclass(frozen=True)
+class ActionCardSpec:
+    """What an `"action_card_play"` hook option's `apply(state)` must return
+    (OQ-17, `docs/OPEN_QUESTIONS.md`, resolved by this pass).
+
+    Generalizes `engine/allies.py::RecruitAllySpec`'s own shape beyond
+    Allies: a library card of printed `types == ["Action"]` (Rulebook SS2
+    Card Types) is itself the acting vampire's entire minion action for the
+    turn, rather than merely decorating an already-chosen default Bleed/Hunt
+    (contrast `BLEED_AMOUNT_MODIFIER_HOOK`/`BLEED_AMOUNT_FIXED_MODIFIER_HOOK`
+    above, which only ever layer onto a separately-chosen, already-free
+    default bleed).
+
+    A registered provider's `apply(state)` is invoked immediately when the
+    acting player chooses this option, at announce time, before the
+    block-attempt window opens (Rulebook SS4 "Announce the Action"), and is
+    entirely responsible for its own card's removal from `player`'s hand
+    (and, per Rulebook SS2 "replace from library after play", drawing its
+    replacement) -- the hook's own contract deliberately does not dictate
+    *how*: a plain one-shot Action card whose own placement does not depend
+    on the later block outcome (e.g. Enchant Kindred -- Rulebook SS4
+    "Resolve the Action" either resolves the card's own text when unblocked
+    or burns it when blocked, both of which end the same way, in the ash
+    heap, for a card with no other printed destination) consumes it
+    immediately via `vtesbot.cards._shared.play_from_hand`. A future Action
+    card whose own placement *does* depend on the later block outcome
+    (mirroring Recruit Ally's Ally card: set aside at announce time via
+    `vtesbot.cards._shared.play_from_hand_pending`, placed in a destination
+    that differs between the unblocked and blocked branches) would instead
+    use that two-destination dance and supply its own `on_blocked` below --
+    this slot exists so the hook's own contract does not hard-code the
+    immediate-consumption assumption, without building anything further for
+    a card that does not exist yet.
+
+    `base_stealth`/`directed`: this action's own printed baseline (Rulebook
+    SS4 Minion Phase; the rulebook glossary's "Directed Action"/"Undirected
+    Action" pair -- see `engine/action.py`'s own module docstring, OQ-17).
+    2P structurally collapses both to the same single-opponent block-attempt
+    call (`engine/action.py`'s own module docstring), so `directed` changes
+    no mechanics here; it is threaded through to `perform_minion_action`
+    purely as accurate context for a future hook/decision consumer and for
+    the replay log, not because this module branches on it itself.
+
+    `resolve`: called by `perform_minion_action`, only once the action goes
+    unblocked, exactly like `_perform_bleed`/`_perform_hunt`'s own closures
+    -- must perform the card's own printed effect.
+
+    `on_blocked`: called by `perform_minion_action`, only if the action is
+    blocked, *after* combat resolves -- forwarded unchanged to
+    `perform_minion_action`'s own `on_blocked=` parameter (see
+    `_perform_recruit_ally`'s use of the same mechanism, below). `None` (the
+    default) means nothing card-specific happens on top of the block itself
+    -- correct for the immediate-consumption case, whose card's fate was
+    already decided at `apply()` time.
+
+    `action`: the OQ-9 discriminator (`engine/action.py`) threaded into the
+    block-attempt phase's own hook context in place of this module's fixed
+    `ACTION_ACTION_CARD`, for a clause whose card text *is* mechanically one
+    of the existing default actions (rules-auditor finding, OQ-17 follow-up:
+    Enchant Kindred's own basic clause, "[pre] Ⓓ Bleed with +1 bleed", prints
+    the word "Bleed" -- CLAUDE.md SS2's card-text precedence settles this
+    directly, no ruling or judgment call needed). Left unset, this defaults
+    to `ACTION_ACTION_CARD`, correct for a clause that is genuinely sui
+    generis and textually matches none of the existing default actions (e.g.
+    Enchant Kindred's own superior clause, "Add 2 blood to a younger
+    vampire," which is not a bleed/hunt/recruit-ally by its own text). A
+    provider that declares `action=ACTION_BLEED` here must make its own
+    `resolve` behave like a real bleed (lose the target's pool, set
+    `state.edge_holder`, fold in `PENDING_BLEED_AMOUNT_KEY`, etc. --
+    `engine/phases/minion.py::_perform_bleed`'s own `resolve` closure is the
+    model to mirror) so an existing bleed-gated provider (e.g. `cards/
+    bonding.py`'s superior clause, gated on `context.get("action") ==
+    ACTION_BLEED`) that fires during this window is not misled about what
+    is actually happening.
+    """
+
+    base_stealth: int
+    directed: bool
+    resolve: Callable[[dict[str, Any]], None]
+    on_blocked: Callable[[dict[str, Any]], None] | None = None
+    action: str = ACTION_ACTION_CARD
 
 
 def minion_phase(state: GameState, player: str) -> None:
@@ -187,13 +312,27 @@ def _choose_and_perform_action(
     before deciding whether to offer anything, mirroring how `_perform_bleed`
     below already threads `"vampire": vampire.instance_id` into
     `BLEED_AMOUNT_MODIFIER_HOOK`'s own context.
+
+    "Action card play" (OQ-17, `docs/OPEN_QUESTIONS.md`, resolved by this
+    pass) is folded in exactly the same way, one choice per
+    `"action_card_play"` hook option currently on offer (one per playable
+    Action-type library card found in `player`'s hand by a registered card
+    module) -- the same granularity and the same "only when needed"
+    degrade-to-bleed/hunt behaviour as recruit ally above, generalized
+    beyond Allies.
     """
     recruit_options = hooks.offer(
         RECRUIT_ALLY_PLAY_HOOK, state, player=player, vampire=vampire.instance_id
     )
-    by_value: dict[str, HookOption] = {o.choice.value: o for o in recruit_options}
-    choices = (Choice(ACTION_BLEED, "Bleed"), Choice(ACTION_HUNT, "Hunt")) + tuple(
-        o.choice for o in recruit_options
+    action_card_options = hooks.offer(
+        ACTION_CARD_PLAY_HOOK, state, player=player, vampire=vampire.instance_id
+    )
+    recruit_by_value: dict[str, HookOption] = {o.choice.value: o for o in recruit_options}
+    action_card_by_value: dict[str, HookOption] = {o.choice.value: o for o in action_card_options}
+    choices = (
+        (Choice(ACTION_BLEED, "Bleed"), Choice(ACTION_HUNT, "Hunt"))
+        + tuple(o.choice for o in recruit_options)
+        + tuple(o.choice for o in action_card_options)
     )
     decision = Decision(
         player=player,
@@ -206,8 +345,10 @@ def _choose_and_perform_action(
         _perform_bleed(state, player, other, vampire)
     elif action == ACTION_HUNT:
         _perform_hunt(state, player, other, vampire)
+    elif action in recruit_by_value:
+        _perform_recruit_ally(state, player, other, vampire, recruit_by_value[action])
     else:
-        _perform_recruit_ally(state, player, other, vampire, by_value[action])
+        _perform_action_card(state, player, other, vampire, action_card_by_value[action])
 
 
 def _perform_bleed(state: GameState, player: str, other: str, vampire: VampireInPlay) -> None:
@@ -240,7 +381,7 @@ def _perform_bleed(state: GameState, player: str, other: str, vampire: VampireIn
             state.edge_holder = player
 
     perform_minion_action(
-        state, player, other, vampire, BLEED_STEALTH, resolve, action=ACTION_BLEED
+        state, player, other, vampire, BLEED_STEALTH, resolve, action=ACTION_BLEED, directed=True
     )
 
 
@@ -256,7 +397,9 @@ def _perform_hunt(state: GameState, player: str, other: str, vampire: VampireInP
         del pending
         add_blood(state, vampire, HUNT_BLOOD_GAIN)
 
-    perform_minion_action(state, player, other, vampire, HUNT_STEALTH, resolve, action=ACTION_HUNT)
+    perform_minion_action(
+        state, player, other, vampire, HUNT_STEALTH, resolve, action=ACTION_HUNT, directed=False
+    )
 
 
 def _perform_recruit_ally(
@@ -324,5 +467,64 @@ def _perform_recruit_ally(
         RECRUIT_ALLY_STEALTH,
         resolve,
         action=ACTION_RECRUIT_ALLY,
+        directed=False,
         on_blocked=on_blocked,
+    )
+
+
+def _perform_action_card(
+    state: GameState,
+    player: str,
+    other: str,
+    vampire: VampireInPlay,
+    option: HookOption,
+) -> None:
+    """Rulebook SS2 Card Types + SS4 Minion Phase (OQ-17, `docs/
+    OPEN_QUESTIONS.md`, resolved by this pass): a library card of printed
+    `types == ["Action"]` is itself the acting vampire's entire minion
+    action for the turn, not a decoration of an already-chosen default
+    Bleed/Hunt.
+
+    `option` is the `"action_card_play"` hook option the acting player chose
+    at `_choose_and_perform_action`'s top-level `action_choice` decision.
+    `option.apply(state)` is invoked right away, *before* the block-attempt
+    window opens (Rulebook SS4 "Announce the Action", mirroring
+    `_perform_recruit_ally`'s own timing above) and must return an
+    `ActionCardSpec` describing the action's own base stealth, whether it is
+    directed or undirected, its own `resolve`/`on_blocked` callbacks, and
+    (rules-auditor finding, OQ-17 follow-up) the actual mechanical `action`
+    discriminator its own clause's card text matches -- forwarded unchanged
+    to `perform_minion_action` below, exactly like every other minion
+    action's own closures. `ActionCardSpec.action` defaults to
+    `ACTION_ACTION_CARD` (every Action-card play that is genuinely sui
+    generis shares that one fallback action *type*, mirroring how every
+    Ally recruited shares `ACTION_RECRUIT_ALLY`), but a provider whose
+    clause's own text is textually a Bleed/Hunt/etc. (e.g. Enchant Kindred's
+    basic clause, "[pre] Ⓓ Bleed with +1 bleed") must override it to the
+    matching constant (e.g. `ACTION_BLEED`) so an existing action-gated
+    provider registered against the same hook window (e.g. `cards/
+    bonding.py`'s superior clause) resolves correctly instead of being
+    silently and wrongly suppressed -- see `ActionCardSpec`'s own docstring,
+    and `tests/rules/test_action_card_play.py::test_action_card_play_can_
+    declare_itself_a_real_bleed_so_bonding_still_fires` for the worked proof.
+
+    Unlike `_perform_recruit_ally`, this function has no card-specific
+    knowledge of its own -- the provider's `ActionCardSpec` already carries
+    everything `perform_minion_action` needs (including, optionally, its own
+    `on_blocked`), since a plain one-shot Action card's hand-consumption is
+    already finished by the time `apply(state)` returns (see
+    `ActionCardSpec`'s own docstring for the future two-destination-dance
+    case this still accommodates).
+    """
+    spec: ActionCardSpec = option.apply(state)
+    perform_minion_action(
+        state,
+        player,
+        other,
+        vampire,
+        spec.base_stealth,
+        spec.resolve,
+        action=spec.action,
+        directed=spec.directed,
+        on_blocked=spec.on_blocked,
     )

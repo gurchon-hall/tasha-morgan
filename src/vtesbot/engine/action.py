@@ -40,12 +40,24 @@ these hooks.
 Action discriminator (OQ-9, `docs/OPEN_QUESTIONS.md`): `attempt_block` /
 `_duel_stealth_intercept` / `perform_minion_action` below thread an explicit
 `action: str | None` (e.g. `ACTION_BLEED`, `ACTION_HUNT`, `ACTION_
-RECRUIT_ALLY`, `ACTION_POLITICAL`) into the `"block_attempt"` decision's own
-context and into the `"stealth_modifier"`/`"intercept_modifier"` hook
-context, so a provider can gate itself on which minion action is in progress
-(e.g. Bonding's superior clause, "[DOM] Cannot be used to increase the
-stealth of a non-bleed action") instead of guessing from `base_stealth`'s
-numeric value.
+RECRUIT_ALLY`, `ACTION_POLITICAL`, `ACTION_ACTION_CARD`) into the
+`"block_attempt"` decision's own context and into the
+`"stealth_modifier"`/`"intercept_modifier"` hook context, so a provider can
+gate itself on which minion action is in progress (e.g. Bonding's superior
+clause, "[DOM] Cannot be used to increase the stealth of a non-bleed
+action") instead of guessing from `base_stealth`'s numeric value.
+
+Directed/undirected (OQ-17, `docs/OPEN_QUESTIONS.md`): the same three
+functions also thread an explicit `directed: bool | None`, the Rulebook
+glossary's "Directed Action" (targets one other Methuselah) vs "Undirected
+Action" (does not) distinction. The 2P structural collapse described above
+already means the sole opponent is simply offered the one block attempt
+either way, so `directed` changes no mechanics in this module today -- it
+exists so a card/hook built on top of `engine/phases/minion.py::
+ACTION_CARD_PLAY_HOOK` (an "Action"-type library card is itself the acting
+vampire's whole minion action, and may be either directed or undirected
+depending on its own text) can supply and a future consumer can read
+accurate context, rather than the engine silently guessing one or the other.
 
 Pending scratch container (OQ-11, `docs/OPEN_QUESTIONS.md`):
 `perform_minion_action` builds one shared, mutable `pending: dict[str, Any]`
@@ -74,11 +86,17 @@ ACTION_BLEED = "bleed"
 ACTION_HUNT = "hunt"
 ACTION_RECRUIT_ALLY = "recruit_ally"
 ACTION_POLITICAL = "political_action"
+ACTION_ACTION_CARD = "action_card"
 """Action-name discriminator constants (OQ-9, `docs/OPEN_QUESTIONS.md`): the
 single source of truth for `action=` values passed to `attempt_block`/
 `perform_minion_action`, so a producing call site (`engine/phases/minion.py`,
 `engine/politics.py`) and a consuming hook provider cannot silently desync
-over a re-typed literal."""
+over a re-typed literal. `ACTION_ACTION_CARD` (OQ-17, resolved by this pass)
+is the one fixed discriminator every `"action_card_play"` hook play shares,
+regardless of which specific library card of printed `types == ["Action"]`
+is actually being played -- mirroring how every Ally recruited shares
+`ACTION_RECRUIT_ALLY` regardless of which specific Ally card, rather than
+letting each registering card module invent its own action-name string."""
 
 
 def _duel_stealth_intercept(
@@ -89,6 +107,7 @@ def _duel_stealth_intercept(
     acting_vampire: VampireInPlay | None,
     blocker: VampireInPlay,
     action: str | None = None,
+    directed: bool | None = None,
     pending: dict[str, Any] | None = None,
 ) -> tuple[int, int]:
     """Resolve the "only when needed" stealth/intercept ping-pong for one
@@ -101,6 +120,7 @@ def _duel_stealth_intercept(
         "acting_vampire": acting_vampire.instance_id if acting_vampire is not None else None,
         "blocking_vampire": blocker.instance_id,
         "action": action,
+        "directed": directed,
         "pending": pending,
     }
     while True:
@@ -163,6 +183,7 @@ def attempt_block(
     base_stealth: int,
     acting_vampire: VampireInPlay | None = None,
     action: str | None = None,
+    directed: bool | None = None,
     pending: dict[str, Any] | None = None,
 ) -> VampireInPlay | None:
     """Offer `defender` the chance to block with a ready, unlocked vampire.
@@ -178,12 +199,18 @@ def attempt_block(
     current block attempt / ongoing block attempt / blocks declined by all"
     model named by the `vtes-rules-reference` skill.
 
-    `action` (OQ-9) and `pending` (OQ-11, `docs/OPEN_QUESTIONS.md`) are
-    forwarded into both the `"block_attempt"` decision's own context and the
-    stealth/intercept hook context built by `_duel_stealth_intercept`; a
-    caller that does not pass `pending` gets one fresh `{}`, created once
-    here (not per retry of the loop below), so every hook offer during this
-    one call shares the same mutable object.
+    `action` (OQ-9), `directed` (OQ-17, `docs/OPEN_QUESTIONS.md`: whether
+    this action is a Rulebook glossary "Directed Action" at the single 2P
+    opponent, or an "Undirected Action" -- 2P structurally collapses both to
+    this same single-opponent block-attempt call, so `directed` changes no
+    mechanics here; it is threaded through purely as accurate context for a
+    future hook/decision consumer and for the replay log) and `pending`
+    (OQ-11, `docs/OPEN_QUESTIONS.md`) are forwarded into both the
+    `"block_attempt"` decision's own context and the stealth/intercept hook
+    context built by `_duel_stealth_intercept`; a caller that does not pass
+    `pending` gets one fresh `{}`, created once here (not per retry of the
+    loop below), so every hook offer during this one call shares the same
+    mutable object.
     """
     if pending is None:
         pending = {}
@@ -199,7 +226,12 @@ def attempt_block(
             player=defender,
             kind="block_attempt",
             choices=choices,
-            context={"actor": actor, "base_stealth": base_stealth, "action": action},
+            context={
+                "actor": actor,
+                "base_stealth": base_stealth,
+                "action": action,
+                "directed": directed,
+            },
         )
         choice = state.ask(decision)
         if choice.value == "decline":
@@ -209,7 +241,15 @@ def attempt_block(
         blocker = state.players[defender].vampires[instance_id]
 
         stealth, intercept = _duel_stealth_intercept(
-            state, actor, defender, base_stealth, acting_vampire, blocker, action, pending
+            state,
+            actor,
+            defender,
+            base_stealth,
+            acting_vampire,
+            blocker,
+            action=action,
+            directed=directed,
+            pending=pending,
         )
         if intercept >= stealth:
             return blocker
@@ -225,6 +265,7 @@ def perform_minion_action(
     base_stealth: int,
     resolve: Callable[[dict[str, Any]], None],
     action: str | None = None,
+    directed: bool | None = None,
     on_blocked: Callable[[dict[str, Any]], None] | None = None,
 ) -> None:
     """Announce (lock) -> block attempt -> resolve-or-combat (Rulebook SS4).
@@ -238,17 +279,25 @@ def perform_minion_action(
     announce time); a call site that never passes it (e.g. bleed/hunt) sees
     no behaviour change on the blocked branch.
 
-    `action` (OQ-9) and the per-attempt `pending: dict[str, Any]` scratch
-    container (OQ-11, `docs/OPEN_QUESTIONS.md`) are threaded through to
-    `attempt_block` and then on to `resolve`/`on_blocked`, so a card played
-    during the earlier block-attempt phase can stash something for either
-    callback to read back -- see `engine/phases/minion.py`'s own docstring
-    for the worked example this resolves.
+    `action` (OQ-9), `directed` (OQ-17, `docs/OPEN_QUESTIONS.md`, see
+    `attempt_block`'s own docstring) and the per-attempt `pending: dict[str,
+    Any]` scratch container (OQ-11, `docs/OPEN_QUESTIONS.md`) are threaded
+    through to `attempt_block` and then on to `resolve`/`on_blocked`, so a
+    card played during the earlier block-attempt phase can stash something
+    for either callback to read back -- see `engine/phases/minion.py`'s own
+    docstring for the worked example this resolves.
     """
     vampire.locked = True
     pending: dict[str, Any] = {}
     blocker = attempt_block(
-        state, actor_player, defender_player, base_stealth, vampire, action=action, pending=pending
+        state,
+        actor_player,
+        defender_player,
+        base_stealth,
+        vampire,
+        action=action,
+        directed=directed,
+        pending=pending,
     )
     if blocker is not None:
         blocker.locked = True

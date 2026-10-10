@@ -1464,7 +1464,7 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   cards: none yet reachable (tracked ahead of need, same spirit as OQ-10's
   own original "latent, flagged before live" framing).
 
-## OQ-17: No action-card entry point -- Enchant Kindred (100640) (status: open)
+## OQ-17: No action-card entry point -- Enchant Kindred (100640) (status: resolved)
 
 - Situation: card text (verbatim, via krcg 4.18 `VTES['Enchant Kindred'].card_text`
   and cross-checked against the live `https://api.krcg.org/card/100640`,
@@ -1568,8 +1568,137 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   assumed -- but it does not change this entry's blocking reason (the
   missing engine hook blocks implementation regardless of how "younger" is
   ultimately read), so it is not filed as its own, separate Open Question.
+  Confirmed by the project owner (2026-10-10): read "a younger vampire" in
+  the superior clause as younger than the acting vampire (the vampire using
+  the [PRE] ability), consistent with the convention above. Whoever
+  unblocks this card once OQ-17's engine hook exists should implement the
+  superior clause's target filter against that reading directly, with no
+  further ruling lookup needed on this specific point.
 - Impacted code (at the time this was opened): none yet (no generic
   "Action"-card entry point exists to extend). Impacted cards: Enchant
   Kindred (registered `blocked`, reason `OQ-17`); any future 2P-legal card
   of `types == ["Action"]` (as opposed to "Action Modifier") would hit the
   same gap.
+- Resolution (`rules-engineer` pass): built the generic "Action"-card entry
+  point this entry's own "What would be needed" paragraph specified, mirroring
+  (and generalizing beyond Allies) `RECRUIT_ALLY_PLAY_HOOK`/`RecruitAllySpec`'s
+  own OQ-12 pattern.
+  - `src/vtesbot/engine/phases/minion.py`: new `ACTION_CARD_PLAY_HOOK =
+    "action_card_play"` (`HookOption`-based, same shape as
+    `RECRUIT_ALLY_PLAY_HOOK`), a new frozen `ActionCardSpec` dataclass (a
+    registered provider's `apply(state)` must return one), and a new
+    `_perform_action_card` function that runs `spec.resolve`/`spec.
+    on_blocked` through `perform_minion_action` under `spec.action`.
+    `_choose_and_perform_action` now also offers `hooks.offer(ACTION_
+    CARD_PLAY_HOOK, ...)` options at its top-level `action_choice`
+    decision, alongside `ACTION_BLEED`/`ACTION_HUNT`/the recruit-ally
+    options, threading the same `vampire=vampire.instance_id` context
+    OQ-13 already required for `RECRUIT_ALLY_PLAY_HOOK`.
+  - `ActionCardSpec`'s contract (`base_stealth: int`, `directed: bool`,
+    `resolve: Callable[[dict[str, Any]], None]`, `on_blocked:
+    Callable[[dict[str, Any]], None] | None = None`, `action: str =
+    ACTION_ACTION_CARD`) deliberately does not hard-code *how* the
+    provider's own card leaves hand: a plain one-shot Action card (e.g.
+    Enchant Kindred) consumes it immediately via `vtesbot.cards._shared.
+    play_from_hand` inside its own `apply(state)`, since both of Rulebook
+    SS4 "Resolve the Action"'s branches end the same way (ash heap) for
+    such a card; a future Action card whose own placement *does* depend on
+    the later block outcome can instead use `vtesbot.cards._shared.
+    play_from_hand_pending` and supply its own `on_blocked`, exactly like
+    `RecruitAllySpec` already does -- proven generically (not just
+    asserted, and with two genuinely distinct destinations rather than both
+    branches landing on the ash heap) by `tests/rules/
+    test_action_card_play.py::test_action_card_play_supports_the_two_
+    destination_dance_generically`.
+  - Rules-auditor finding (fixed in the same pass, before this entry was
+    marked resolved): the first draft of this hook tagged *every*
+    `ActionCardSpec` with the fixed `ACTION_ACTION_CARD` discriminator,
+    regardless of what the clause's own card text mechanically is. Enchant
+    Kindred's own basic clause prints the word "Bleed" ("[pre] Ⓓ Bleed with
+    +1 bleed" -- confirmed directly via krcg, CLAUDE.md SS2 card-text
+    precedence, no ruling needed), so tagging it `"action_card"` instead of
+    `"bleed"` would have silently and wrongly suppressed an existing
+    bleed-gated provider sharing the same hook window (e.g. `cards/
+    bonding.py`'s superior clause, gated on `context.get("action") ==
+    ACTION_BLEED`) once Enchant Kindred is wired up -- exactly the "never
+    mis-resolves a card" bar CLAUDE.md sets. Fix: `ActionCardSpec` gained
+    an `action: str = ACTION_ACTION_CARD` field so a provider can declare
+    the real mechanical action identity its own clause matches (defaulting
+    to the generic fallback for a clause that is genuinely sui generis,
+    e.g. Enchant Kindred's own superior clause, "Add 2 blood to a younger
+    vampire," which is not textually a bleed/hunt/etc.); `_perform_action_
+    card` forwards `spec.action` instead of the fixed constant. Proven by
+    `tests/rules/test_action_card_play.py::test_action_card_play_can_
+    declare_itself_a_real_bleed_so_bonding_still_fires`, which registers
+    `cards/bonding.py`'s own real, unmodified `"stealth_modifier"` provider
+    directly and shows its superior clause is correctly *not* offered when
+    `action` is left at the generic default, and correctly *is* offered
+    once a fake provider declares `action=ACTION_BLEED` for its clause.
+  - `src/vtesbot/engine/action.py`: added the `ACTION_ACTION_CARD = "action_
+    card"` discriminator (OQ-9's family) and a new `directed: bool | None =
+    None` parameter threaded through `_duel_stealth_intercept`/
+    `attempt_block`/`perform_minion_action` into both the `"block_attempt"`
+    decision's own context and the stealth/intercept hook context (mirroring
+    how `action` is already threaded) -- the Rulebook glossary's "Directed
+    Action"/"Undirected Action" distinction this entry's own "What is
+    blocked" paragraph already confirmed collapses to the same single-
+    opponent block-attempt call in 2P, so this changes no block-attempt
+    mechanics; it exists purely so a provider can supply, and a future
+    hook/decision consumer (or the replay log) can read, which of the two
+    an action-card play actually is. `_perform_bleed`/`_perform_hunt`/
+    `_perform_recruit_ally` were updated to pass their own already-sourced
+    `directed=True`/`False` values for consistency (no behaviour change: no
+    existing hook provider reads this key).
+  - `src/vtesbot/cards/registry.py`: moved `Hook.ACTION_CARD_PLAY` from the
+    "named for classification, no wiring yet" group into the "wired this
+    pass" group, now that `ACTION_CARD_PLAY_HOOK` has a real call site.
+  - Tests: `tests/rules/test_action_card_play.py` (new) -- zero-regression
+    (not offered without a registered provider, or without a matching hand
+    card), offered-and-succeeds (immediate consumption, `resolve` fires),
+    blocked (card already consumed, `resolve` does not fire, combat still
+    happens), the `action`/`directed` discriminators threaded into the
+    block-attempt hook context, the OQ-13-style `vampire` context binding,
+    and the two-destination-dance generality case above.
+  - Not done by this pass, deliberately: Enchant Kindred's own card module
+    (registering against `ACTION_CARD_PLAY_HOOK` and flipping its own
+    registry entry from `blocked` to `implemented`) -- a separate
+    `card-implementer` pass, per this entry's own "Impacted cards" line
+    above (left unchanged).
+- `card-implementer` follow-up (Enchant Kindred, krcg 100640, now wired):
+  re-verified the card text/rulings/legality against both the installed
+  `krcg` package's own cached snapshot and a fresh live fetch of
+  `https://api.krcg.org/card/100640` (2026-10-10) -- unchanged, matching
+  `data/cards/100640.json` byte-for-byte. `src/vtesbot/cards/
+  enchant_kindred.py` now registers two `ACTION_CARD_PLAY_HOOK` providers
+  (mirroring the "basic vs superior, two providers for one physical card"
+  shape already used by `bonding.py`): the basic clause ("[pre] Ⓓ Bleed
+  with +1 bleed") declares `ActionCardSpec.action=ACTION_BLEED` (the
+  rules-auditor-fixed requirement this entry's own resolution flagged, since
+  its own text literally prints "Bleed") and its `resolve()` mirrors
+  `_perform_bleed`'s own closure byte-for-byte with the base amount
+  hardcoded to 2; the superior clause ("+1 stealth action. Add 2 blood to a
+  younger vampire in your uncontrolled region") is undirected, bakes in its
+  own printed "+1 stealth" as `base_stealth=1`, and -- confirming this
+  entry's own "what would be needed" paragraph was correct, no further
+  engine change was needed -- raises a plain `Decision`/`Choice` directly
+  inside its own `resolve()` to let the acting player pick among their own
+  `zone == "uncontrolled"` vampires strictly lower in printed capacity (the
+  project owner's confirmed reading of "younger," per this entry's own
+  textual-convention note above), clamped to only those with room for at
+  least 1 of the printed 2 blood (`engine/attachments.py::
+  effective_capacity`, OQ-8), then calls `engine/damage.py::add_blood`;
+  with exactly one eligible target the amount is applied with no decision
+  raised at all (mirrors `engine/phases/unlock.py::
+  _resolve_optional_effects_in_chosen_order`'s own "only when needed"
+  len-1-auto-apply convention), confirming the "no further engine change
+  needed" claim end-to-end rather than merely asserting it. Both clauses
+  gate on basic/superior Presence (`"pre"`/`"PRE"`) the same way `bonding.py`
+  gates on Dominate. Proven by `tests/cards/test_enchant_kindred.py` (18
+  tests, one per clause/qualifier plus a worked integration proof that the
+  basic clause's `ACTION_BLEED` tagging lets Bonding's own real, unmodified
+  superior clause still fire during the same window, mirroring `tests/
+  rules/test_action_card_play.py::test_action_card_play_can_declare_itself_a_
+  real_bleed_so_bonding_still_fires`). Full suite green (238 passed, up from
+  220; zero regressions), `ruff check`/`ruff format --check` clean. No
+  engine code touched by this pass -- the hook this entry built already
+  covered everything needed.

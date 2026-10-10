@@ -51,6 +51,13 @@ class Hook(StrEnum):
     CAPACITY_MODIFIER = "capacity_modifier"
     DISCIPLINE_LEVEL_MODIFIER = "discipline_level_modifier"
     RECRUIT_ALLY_PLAY = "recruit_ally_play"
+    ACTION_CARD_PLAY = "action_card_play"
+    """A library card of type "Action" (not "Action Modifier") that itself
+    constitutes the acting minion's one action for the turn, distinct from
+    `RECRUIT_ALLY_PLAY` (Ally-specific). Wired by `engine/phases/minion.py::
+    ACTION_CARD_PLAY_HOOK` / `_perform_action_card`, generalizing the
+    `RECRUIT_ALLY_PLAY` pattern beyond Allies -- see `docs/OPEN_QUESTIONS.md`
+    OQ-17 (resolved)."""
     # Named for classification; no engine wiring exists yet (see the
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"
@@ -64,11 +71,6 @@ class Hook(StrEnum):
     CANCEL_AS_PLAYED = "cancel_as_played"
     BLOCK_CANDIDATE_INJECTION = "block_candidate_injection"
     EQUIPMENT_ATTACHMENT = "equipment_attachment"
-    ACTION_CARD_PLAY = "action_card_play"
-    """A library card of type "Action" (not "Action Modifier") that itself
-    constitutes the acting minion's one action for the turn, distinct from
-    the already-wired `RECRUIT_ALLY_PLAY` (Ally-specific). No engine call
-    site offers this yet -- see `docs/OPEN_QUESTIONS.md` OQ-17."""
 
 
 @dataclass(frozen=True)
