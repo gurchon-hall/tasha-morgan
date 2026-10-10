@@ -1,0 +1,75 @@
+{
+  "id": 100860,
+  "printed_name": "Grooming the Protégé",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Grooming the Protégé"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/groomingtheprotege.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBH",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/groomingtheprotege.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/groomingtheprotege.jpg",
+  "types": [
+    "Master"
+  ],
+  "formats": [],
+  "artists": [
+    "Heather V. Kreiter"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Move up to 3 blood from a ready vampire you control to a younger vampire of the same clan in your uncontrolled region.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2006-10-04",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}
