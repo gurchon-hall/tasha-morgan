@@ -160,8 +160,13 @@ tests/
 
 - Python ≥ 3.14, full type hints, `dataclasses` or `pydantic` for
   state.
-- Tests: `pytest`. Lint/format: `ruff`. (Adjust here once the
-  tooling is settled.)
+- Tests: `pytest`. Lint/format: `ruff`. Markdown lint:
+  `pymarkdownlnt` (`uv run pymarkdown scan docs/ CLAUDE.md`),
+  config in `.pymarkdown`. Any change touching a tracked `.md`
+  file (`docs/OPEN_QUESTIONS.md`, `docs/DECISIONS.md`,
+  `CLAUDE.md`, ...) runs this alongside `pytest`/`ruff` as part
+  of closing verification, every time, not only when something
+  already looks off.
 - A card is **implemented** only when: effect code + test(s)
   covering its text and each known ruling + registry entry + listed
   in the active 2P list.
