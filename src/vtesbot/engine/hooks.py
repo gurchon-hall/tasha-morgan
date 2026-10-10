@@ -180,6 +180,28 @@ def sum_modifiers(hook: str, state: GameState, **context: Any) -> int:
     return total
 
 
+def run_effects(hook: str, state: GameState, **context: Any) -> None:
+    """Mandatory, non-chosen, per-provider side-effect dispatch (no decision,
+    no aggregated return value): every registered provider for `hook` is
+    called once, in registration order, and may mutate `state` directly
+    (CLAUDE.md rule 3's "mandatory effects defined by the rules" exception --
+    nothing for a player to choose, so no `Decision` is raised). Sibling of
+    `sum_modifiers`/`union_modifiers`, which both aggregate a *value* the
+    caller then applies itself; `run_effects` is for a provider whose own
+    effect *is* the mutation (e.g. a printed ability that makes a Methuselah
+    automatically lose pool once some condition is met, with nothing to pick
+    among -- see `docs/OPEN_QUESTIONS.md` OQ-6, Marcos Belegrad, the motivating
+    case this helper was added for).
+
+    Providers for a `run_effects` hook are plain
+    `Callable[[GameState, Mapping], None]` functions (return value ignored),
+    registered the same way via `register`, and must simply do nothing when
+    they do not apply.
+    """
+    for provider in _PROVIDERS.get(hook, ()):
+        provider(state, context)  # type: ignore[arg-type]
+
+
 def union_modifiers(hook: str, state: GameState, **context: Any) -> tuple[Any, ...]:
     """Passive, set-valued counterpart to `sum_modifiers` (no decision):
     unions every registered provider's contribution for a mandatory,

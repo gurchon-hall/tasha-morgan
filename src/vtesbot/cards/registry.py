@@ -72,10 +72,32 @@ class Hook(StrEnum):
     ACTION_CARD_PLAY_HOOK` / `_perform_action_card`, generalizing the
     `RECRUIT_ALLY_PLAY` pattern beyond Allies -- see `docs/OPEN_QUESTIONS.md`
     OQ-17 (resolved)."""
+    REFERENDUM_TALLIED = "referendum_tallied"
+    """A mandatory, non-chosen per-provider reaction fired once a
+    referendum's votes are tallied (`engine/politics.py::resolve_referendum`,
+    dispatched via `hooks.run_effects` -- no `Decision`, since there is
+    nothing for a player to choose), *before* the referendum's own pass/fail
+    effects take place -- distinct from, and earlier than,
+    `REFERENDUM_RESOLVED` below. This is the hook site Marcos Belegrad's
+    "burn 1 pool once results are tallied" (`docs/OPEN_QUESTIONS.md` OQ-6)
+    needs; no provider is registered against it yet, so this call site
+    changes no behaviour today."""
     # Named for classification; no engine wiring exists yet (see the
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"
     POLLING_STEP = "polling_step"
+    REFERENDUM_RESOLVED = "referendum_resolved"
+    """Reserved for a moment strictly *after* a political action's referendum
+    has fully resolved -- including any pass effects and any combat from a
+    blocked attempt -- distinct from, and later than, the pre-cast
+    `POLLING_STEP` and the during-tally `REFERENDUM_TALLIED` above. Named for
+    classification only (same pattern `POLLING_STEP` used before
+    `engine/politics.py` wired it): no engine call site exists yet. This is
+    Voter Captivation's own trigger moment ("[o]nly usable after resolution
+    of a political action whose referendum passed" -- `docs/
+    OPEN_QUESTIONS.md` OQ-6); do not wire a future provider for it against
+    `POLLING_STEP` or `REFERENDUM_TALLIED` instead, since neither has a vote
+    margin or final pass/fail state available at the moment it fires."""
     MANEUVER = "maneuver"
     RANGED_STRIKE = "ranged_strike"
     ALLY_ENTITY = "ally_entity"

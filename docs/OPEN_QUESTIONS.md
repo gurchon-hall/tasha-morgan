@@ -132,26 +132,174 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
      pool's three Political Action cards (Disputed Territory, Kine
      Resources Contested, Parity Shift) carry this text themselves, so the
      mechanic does not apply to any card in the current pool.
-- Remaining work is engineering, not a ruling: `political_action` should
-  gain a real polling step (enumerate each Methuselah's available vote
-  sources, let each commit for/against, tally, apply ties-fail) to replace
-  the current `UnresolvedRulingError("OQ-6")`; once built, the cards below
-  can move from `blocked` to implementation.
+- Engineering follow-up (done): `political_action` now calls
+  `resolve_referendum` (`src/vtesbot/engine/politics.py`), which runs the
+  pre-cast `"polling_step"` hook window (CLAUDE.md rule 4 impulse model),
+  enumerates every vote source (acting Methuselah's own 1-vote
+  political-action-card vote, each ready titled vampire per
+  `TITLE_VOTES`, an Edge-burn source if held, plus whatever a
+  `"polling_step"` hook provider adds), lets each source's controller cast
+  it for/against/hold back in an impulse-style window, dispatches a
+  post-tally hook, and tallies (ties/0-0 fail). Scenario tests: `tests/
+  rules/test_politics.py`. This replaces the former
+  `UnresolvedRulingError("OQ-6")` raise entirely — `political_action` no
+  longer raises it.
+  - `rules-auditor` follow-up review (done): found, and this entry's own
+    engineering has since fixed, three issues in the first landing.
+    1. The acting Methuselah's political-action-card vote was hardcoded as
+       1 vote cast "for", never offered as a `Decision`, even though the
+       verbatim source allows declining it or casting it against one's own
+       referendum. **Fixed**: it is now an ordinary `VoteSource`
+       (`source_id` = `f"political_action_card:{caller_player}"`), offered
+       through the same cast-or-abstain `Decision` machinery as any other
+       source, in `_collect_vote_sources`/`_cast_votes`. Proven by
+       `tests/rules/test_politics.py::
+       test_the_acting_methuselah_may_decline_their_own_political_action_
+       card_vote` and
+       `test_the_acting_methuselah_may_cast_their_own_political_action_
+       card_vote_against`.
+    2. `_cast_votes`'s own docstring asserted its strict two-sided
+       alternating-impulse casting procedure "mirrors" Rulebook SS2
+       Sequencing's impulse model, overclaiming a citation the source does
+       not actually give (the rule only says casting happens "in any
+       order," with no turn structure specified). **Fixed by documentation,
+       not by behaviour change**: the procedure itself is unchanged (still
+       legal under "in any order"), but its docstring and this entry no
+       longer claim it is sourced — tracked instead as its own open
+       question, OQ-20.
+    3. `resolve_referendum`/the hook contexts it builds carried only
+       `caller_player` (a player id), not the acting `VampireInPlay` itself
+       — blocking Queen Anne's and Marcos Belegrad's actual trigger
+       condition ("a referendum called by *Anne*/*Marcos* specifically," not
+       just "any referendum called by this card's controller," who might
+       control both Marcos and some other titled vampire). **Fixed**:
+       `resolve_referendum` now takes and threads a `caller_vampire`
+       parameter into both the pre-cast `"polling_step"` hook context and
+       the new post-tally hook context (`context["caller_vampire"]`).
+       Proven by `tests/rules/test_politics.py::
+       test_the_pre_cast_and_post_tally_hook_contexts_both_carry_the_
+       calling_vampires_identity`.
+  - Post-tally dispatch (done, same `rules-auditor` follow-up): a new hook,
+    `REFERENDUM_TALLIED_HOOK` (`"referendum_tallied"`,
+    `cards/registry.py::Hook.REFERENDUM_TALLIED`), is now dispatched by
+    `resolve_referendum` immediately after `_cast_votes` returns and before
+    the tally is handed back to `political_action` — i.e. before any
+    pass/fail effect of the referendum takes place, matching Marcos
+    Belegrad's own "once results are tallied" timing. Dispatched via a new
+    `engine/hooks.py::run_effects` helper (sibling of `sum_modifiers`/
+    `union_modifiers`: every registered provider is called once with the
+    live `state` and may mutate it directly — no `Decision`, since there is
+    nothing for a player to choose). No provider is registered against it
+    yet (no behaviour change today; proven by
+    `tests/rules/test_politics.py::
+    test_referendum_tallied_hook_fires_with_no_providers_registered`), but
+    Marcos Belegrad's own reaction is now genuinely buildable by a future
+    `card-implementer` pass against `context["casts"]`/
+    `context["caller_vampire"]`, correcting the earlier, overstated claim
+    that this needed an as-yet-uninvented engine-hooks primitive — it only
+    needed this one dispatch call site reusing the existing registration
+    machinery.
+  - `REFERENDUM_RESOLVED` (`cards/registry.py::Hook.REFERENDUM_RESOLVED`) is
+    a second, newly reserved hook name for Voter Captivation's own, later,
+    fully-post-resolution trigger moment (after any combat, after the
+    referendum's pass/fail and effects) — distinct from both
+    `"polling_step"` (before any vote) and `REFERENDUM_TALLIED_HOOK` (during
+    the tally, before pass/fail effects). It is named for classification
+    only, same as `POLLING_STEP` was before this entry's own engineering
+    landed: no dispatch call site exists for it yet, and none is built by
+    this pass (no card in the current pool needs the call site itself built
+    yet, only correctly classified).
+  - Of the cards below, Disputed Territory, Kine Resources Contested,
+    Parity Shift, Alexa Draper and Diana Iadanza's "+1 bleed" clause now
+    have everything `engine/` needs (`CryptCard.title`, the `"polling_step"`
+    hook, the tally); they remain registered `blocked` until a
+    `card-implementer` pass actually implements and tests them (CLAUDE.md
+    §6: effect code + tests + registry entry, not just an unblocked engine
+    path) — this rules-engineer pass does not change any card's registry
+    status. Perfect Paragon and Queen Anne additionally need card-specific
+    work against the `"polling_step"` hook shapes noted above before they
+    can move from `blocked`. Marcos Belegrad can now be built against
+    `REFERENDUM_TALLIED_HOOK` (no further engine primitive needed); Voter
+    Captivation needs `REFERENDUM_RESOLVED`'s own dispatch call site built
+    first (not yet done, tracked above, not a ruling gap) before it can move
+    from `blocked`. Neither Marcos Belegrad nor Voter Captivation belongs in
+    the earlier "needs a new primitive" bucket any more — that framing was
+    specific to Marcos and has been corrected here.
 - Note for later: if a card entering the 2P pool ever prints its own
   "this referendum passes automatically" text (none currently do), that
   card's own text is authoritative per the Golden Rule for Cards (CLAUDE.md
   §2) and needs no new Open Question — it's a plain card-text clause, not
   an unsettled ruling.
-- Impacted code: `src/vtesbot/engine/politics.py::political_action` raises
-  `UnresolvedRulingError("OQ-6")` immediately once a political action goes
-  unblocked, rather than guessing. Impacted cards (all registered `blocked`,
-  reason `OQ-6`): Disputed Territory, Kine Resources Contested, Parity Shift
-  (call a referendum); Perfect Paragon, Scalpel Tongue, Voter Captivation,
-  Oxford University, England (only usable during/after a referendum's
-  polling step or resolution); crypt-vampire printed abilities Alexa
-  Draper, Diana Iadanza, Fiorenza Savona, Marcos Belegrad, Modius, Queen
-  Anne (each reads or modifies a referendum's polling step or who called
-  it).
+- Third `rules-auditor` follow-up (round 3, done): found two further MAJOR
+  issues in the round-2 fix above, both now fixed.
+  4. `_run_pre_cast_hook_window`'s `"polling_step"` hook context put the
+     live `caller_vampire` (a `VampireInPlay`) directly into the context
+     dict that reaches `hooks.resolve_impulse_window` → `Decision.context` →
+     `agent.decide(observation, decision)` — i.e. straight into agent-visible
+     code, violating CLAUDE.md "Information hiding" ("agents receive an
+     `Observation`... never the raw `GameState`") the same way every other
+     hook/decision context in the engine already avoids by passing an
+     `instance_id` string instead (`engine/contests.py`, `engine/combat.py`,
+     `engine/damage.py`, `engine/phases/minion.py::_perform_bleed`).
+     **Fixed**: that context now carries `caller_vampire_id` (`caller_
+     vampire.instance_id`, a plain `str`) instead. `_dispatch_referendum_
+     tallied`'s `REFERENDUM_TALLIED_HOOK` context is unchanged — it is
+     dispatched via `hooks.run_effects`, never raises a `Decision`, and only
+     ever reaches trusted provider code, the same tier as `sum_modifiers`/
+     `union_modifiers` providers — so keeping the live object there is fine.
+  5. A whole vote-source category was missing: re-fetching the rulebook's
+     "Political Action Cards" clause live
+     (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>, Politics >
+     Gaining Votes) in full (the round-1/2 engineering had only ever quoted
+     its first half) gives: *"Each Methuselah may gain 1 vote by using a
+     political action card. These cards say '1 vote' to indicate this. If a
+     political action card was used to call the referendum, that card
+     provides 1 vote for the acting vampire's controller. Other political
+     action cards used for votes are simply burned without regard to the
+     text on the cards. Each Methuselah can gain no more than 1 vote from
+     political action cards."* Two independent clauses: (1) the calling
+     card's own automatic vote for the caller (already implemented), and
+     (2) a *separate* source — any Methuselah may burn a different political
+     action card from their own hand during polling purely for 1 vote, "with
+     no regard to the text on the cards." Since the caller's only
+     political-action-card vote source is clause (1)'s automatic one (the
+     card that called the referendum already supplies it), clause (2) is, in
+     practice, a vote source for the *non-calling* Methuselah only — not a
+     shared cap the caller could fill via either clause. **Fixed**: the
+     engine already modeled the needed data (`PlayerState.hand: list[
+     LibraryCard]`, `LibraryCard.card_type`, confirmed against real 2P deck
+     data using the exact string `"Political Action"`,
+     `data/decks/vekn-2p/*.json`) — no missing data-model gap, so this was
+     built for real, not flagged as an open question. `_collect_vote_sources`
+     now also offers `other_player` a `VoteSource` (`source_id =
+     f"political_action_card_hand:{other_player}"`, `burns_pac_from_hand=
+     True`) whenever `other_player` holds at least one `"Political Action"`-
+     type card in hand; casting it burns one such card from hand to the ash
+     heap (`_cast_votes`, which specific card is irrelevant per the card text
+     itself, so no extra `Decision` is raised for that choice). `caller_
+     player` is never offered this source, unconditionally (not via a
+     shared-cap check): the rules text gives the caller no path to clause 2
+     at all, since calling a referendum always means playing a political
+     action card, which always triggers clause 1 for them. Proven by new
+     scenario tests in `tests/rules/test_politics.py`.
+- Impacted code: `src/vtesbot/engine/politics.py` (`political_action`,
+  `resolve_referendum`, `_run_pre_cast_hook_window`,
+  `_dispatch_referendum_tallied` (new), `_collect_vote_sources`,
+  `_cast_votes`, `_has_political_action_card_in_hand` (new),
+  `_burn_one_political_action_card_from_hand` (new)),
+  `src/vtesbot/engine/hooks.py` (`run_effects`, new),
+  `src/vtesbot/cards/registry.py` (`Hook.REFERENDUM_TALLIED`,
+  `Hook.REFERENDUM_RESOLVED`, both new), `src/vtesbot/cards/
+  voter_captivation.py` and `src/vtesbot/cards/marcos_belegrad.py`
+  (registration hook tags corrected/updated; neither module's `Status` or
+  `blocked_reason` changed). Impacted cards (all still registered `blocked`,
+  reason `OQ-6`, pending a `card-implementer` pass): Disputed Territory, Kine
+  Resources Contested, Parity Shift (call a referendum); Perfect Paragon,
+  Scalpel Tongue, Voter Captivation, Oxford University, England (only
+  usable during/after a referendum's polling step or resolution);
+  crypt-vampire printed abilities Alexa Draper, Diana Iadanza, Fiorenza
+  Savona, Marcos Belegrad, Modius, Queen Anne (each reads or modifies a
+  referendum's polling step or who called it).
 
 ## OQ-7: No ally-in-play entity -- 47th St. Royals (102217) (status: resolved)
 
@@ -2239,3 +2387,60 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   `rules-auditor` pass remains welcome per CLAUDE.md's standing "high-stakes
   changes are reviewed by `rules-auditor`" policy, as with any core-engine
   change.
+
+## OQ-20: Vote/ballot casting order for exactly two Methuselahs (status: open)
+
+- Situation: found by `rules-auditor` reviewing OQ-6's `engine/politics.py::
+  _cast_votes` implementation. Rulebook SS4 "The Referendum" step 2 (quoted
+  verbatim in OQ-6's own entry and in `engine/politics.py`'s module
+  docstring): "all Methuselahs may now cast any votes and ballots they have
+  ... at this time, in any order. They call out their votes and ballots
+  freely, and there is no obligation to cast votes or ballots." No turn
+  structure, priority, or alternation is specified for *which* Methuselah
+  casts next at any given moment during this one step -- only that casting
+  happens "in any order." Rulebook SS2 Sequencing's impulse-return rule
+  ("after any effect is used the impulse returns to the acting Methuselah")
+  is written for the course of an action (announce/block/resolve), and is
+  not itself stated to extend to vote-casting order during the separately
+  named polling step.
+- Why this is open: the previous `_cast_votes` pass's own docstring asserted
+  that its strict two-sided alternating-impulse procedure "mirrors" the
+  impulse model and CLAUDE.md rule 4 as though that were a sourced reading.
+  Re-checking the verbatim quote above, no such turn structure is actually
+  specified by the source -- "in any order" is explicitly looser than a
+  fixed ping-pong alternation, and the strict "impulse always returns to the
+  calling Methuselah" rule gives the calling Methuselah a real tactical edge
+  (the non-caller can never cast two sources back-to-back without the caller
+  getting an intervening look at the running tally) that nothing in the
+  quoted text supports or rules out.
+- Resolution: none yet. `_cast_votes` keeps its existing strict two-sided
+  alternating-impulse procedure as this project's own deliberate
+  implementation choice, not a sourced mirroring of Rulebook SS2 Sequencing
+  -- its own docstring has been corrected to say so plainly (no longer
+  claiming the alternation is sourced). This produces only legal outcomes
+  (every source is still cast, for or against, or declined, only by its own
+  controller) and does not misresolve any card's text, so it does not block
+  any card; it is tracked here because the exact casting-order procedure for
+  exactly two Methuselahs is not itself settled by the sources consulted so
+  far, only the *fact* that casting happens "in any order" with no
+  obligation to cast.
+- Candidate readings: (a) keep the current strict impulse-alternation
+  procedure as a documented project convention (simplest, already built,
+  and a legal order under the unconstrained "in any order" text -- just not
+  the *only* one); (b) collect all of one side's casts in one `Decision`,
+  then the other side's, with the order between the two sides chosen by some
+  as-yet-unsourced rule (e.g. the caller going last, so the non-caller
+  cannot be out-bid blindly; or the caller going first, loosely matching the
+  impulse model's own "acting Methuselah first" convention) -- no primary
+  source read so far settles which, if either; (c) something else not yet
+  considered. None of these has been confirmed against a primary source
+  describing two-player (or even general multiplayer) vote-casting order
+  specifically, as opposed to the mere for/against tally mechanism itself
+  (which OQ-6 already settled).
+- Impacted code: `src/vtesbot/engine/politics.py` (`_cast_votes`). Impacted
+  cards: none directly blocked by this (the alternation choice does not
+  prevent any card's own text from being correctly applied), but any future
+  card whose own printed text depends on vote-casting *order* specifically
+  (not merely the final for/against tally) should be checked against this
+  entry before being implemented, rather than assumed to work correctly
+  under whichever order the engine happens to use today.

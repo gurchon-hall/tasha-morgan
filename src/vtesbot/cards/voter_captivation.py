@@ -20,10 +20,22 @@ Rulings (verbatim, via krcg):
       vote is considered to have passed by 0 votes." [LSJ 19980107]
       [PIB 20150105]
 
-Status: blocked (OQ-6). Its trigger ("a political action whose referendum
-passed", "by N votes") and the "automatically passing ... by 0 votes" ruling
-both require the referendum pass/fail and vote-margin procedure OQ-6 leaves
-open (`docs/OPEN_QUESTIONS.md`, `engine/politics.py`).
+Status: blocked (OQ-6). Its trigger ("[o]nly usable after resolution of a
+political action whose referendum passed", "by N votes") and the
+"automatically passing ... by 0 votes" ruling both require a moment strictly
+*after* the whole political action resolves -- after any combat, after the
+referendum's pass/fail and effects -- which `engine/politics.py` does not
+yet dispatch any hook for. `cards/registry.py::Hook.REFERENDUM_RESOLVED` is
+reserved for exactly this moment (named for classification only, same
+pattern `Hook.POLLING_STEP` used before `engine/politics.py` wired it; no
+engine call site exists for `REFERENDUM_RESOLVED` yet). This is a materially
+later, and different, moment than `Hook.POLLING_STEP` (pre-cast, before any
+vote is known) and `Hook.REFERENDUM_TALLIED` (during/at the tally, before
+pass/fail effects -- Marcos Belegrad's own trigger moment, not this card's);
+do not wire this card's own provider against either of those once they gain
+real providers, since neither has this card's own prerequisite (a known
+pass/fail outcome and vote margin, with any pass effects already settled)
+available at the moment it fires.
 """
 
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
@@ -33,7 +45,7 @@ register(
         krcg_id=102131,
         name="Voter Captivation",
         status=Status.BLOCKED,
-        hooks=(Hook.POLLING_STEP,),
+        hooks=(Hook.REFERENDUM_RESOLVED,),
         source=__name__,
         blocked_reason="OQ-6",
     )

@@ -66,6 +66,40 @@ def test_sum_modifiers_adds_every_registered_providers_contribution():
     assert hooks.sum_modifiers("fake_strength", game.state, player="P1") == 3
 
 
+def test_run_effects_calls_every_registered_provider_with_context():
+    """Positive-path proof for `hooks.run_effects` (CLAUDE.md rule 3's
+    "mandatory effects" exception -- a provider's own effect *is* the
+    mutation, no `Decision`, no aggregated return value): every registered
+    provider actually runs, once, with the context `run_effects` was called
+    with. `run_effects` has no return value to assert on directly (unlike
+    `sum_modifiers`/`union_modifiers`), so each fake provider appends to a
+    shared, mutable list instead, mirroring `test_sum_modifiers_adds_every_
+    registered_providers_contribution`'s pattern."""
+    calls: list[tuple[str, int]] = []
+
+    def provider_a(state, context):
+        calls.append(("a", context["votes_for"]))
+
+    def provider_b(state, context):
+        calls.append(("b", context["votes_for"]))
+
+    hooks.register("fake_effects", provider_a)
+    hooks.register("fake_effects", provider_b)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+
+    hooks.run_effects("fake_effects", game.state, votes_for=3)
+
+    assert calls == [("a", 3), ("b", 3)]
+
+
+def test_run_effects_is_a_safe_no_op_with_no_providers_registered():
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+
+    hooks.run_effects("fake_effects_unused", game.state, votes_for=1)  # must not raise
+
+
 def test_union_modifiers_returns_a_sorted_tuple_not_a_frozenset():
     """Rules-auditor finding (CLAUDE.md SS5 determinism): a `frozenset[str]`
     is a latent non-reproducible-ordering footgun for any future consumer
