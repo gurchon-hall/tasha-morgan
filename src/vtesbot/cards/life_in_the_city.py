@@ -27,10 +27,11 @@ either player's (Rulebook SS8 glossary "Ready Region: Area containing a
 Methuselah's minions that are not in torpor" -- i.e. any vampire with
 `zone == "ready"`; "ready" is independent of the locked/unlocked flag, which
 only governs whether *that* vampire may currently act or block, not whether
-it is in the ready region). Effect: `add_blood(vampire, 1)`
-(`engine/damage.py`), which already caps at the target's printed capacity
-(Rulebook SS1 Vampires) -- so targeting an already-full vampire is a legal
-but effect-less play (the card is still spent; this mirrors the engine's own
+it is in the ready region). Effect: `add_blood(state, vampire, 1)`
+(`engine/damage.py`), which already caps at the target's effective capacity
+(Rulebook SS1 Vampires; OQ-8, `docs/OPEN_QUESTIONS.md`) -- so targeting an
+already-full vampire is a legal but effect-less play (the card is still
+spent; this mirrors the engine's own
 `add_blood` contract and the general "play = announce, show, resolve" rule,
 Rulebook SS2, with no exception carved out for a fizzled effect).
 
@@ -79,15 +80,14 @@ def _provide_life_in_the_city(state: GameState, context: Mapping[str, Any]) -> l
 
         def _apply(s: GameState, vampire: VampireInPlay = vampire) -> bool:
             play_from_hand(s, player, KRCG_ID)
-            add_blood(vampire, 1)
+            add_blood(s, vampire, 1)
             return True  # trifle: grants the one extra master phase action
 
         options.append(
             HookOption(
                 choice=Choice(
                     f"life_in_the_city:{vampire.instance_id}",
-                    f"Life in the City: add 1 blood to {vampire.card.name} "
-                    f"({vampire.controller})",
+                    f"Life in the City: add 1 blood to {vampire.card.name} ({vampire.controller})",
                 ),
                 apply=_apply,
             )

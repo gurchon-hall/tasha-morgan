@@ -178,3 +178,37 @@ def sum_modifiers(hook: str, state: GameState, **context: Any) -> int:
     for provider in _PROVIDERS.get(hook, ()):
         total += provider(state, context)  # type: ignore[arg-type]
     return total
+
+
+def union_modifiers(hook: str, state: GameState, **context: Any) -> tuple[Any, ...]:
+    """Passive, set-valued counterpart to `sum_modifiers` (no decision):
+    unions every registered provider's contribution for a mandatory,
+    non-chosen effect whose value is a *collection* rather than a number
+    (e.g. `engine/attachments.py::effective_disciplines` -- an attached
+    discipline/archetype master card's printed "+1 level of <X>" grants a
+    discipline-level code, not a scalar quantity, so `sum_modifiers`'s `int`
+    contract does not fit -- CLAUDE.md rule 3's "mandatory effects defined
+    by the rules" exception still applies: nothing to offer a player, so no
+    `Decision` is raised).
+
+    Providers for a `union_modifiers` hook are plain
+    `Callable[[GameState, Mapping], Iterable[Any]]` functions (not
+    `HookOption`-based), registered the same way via `register`, and must
+    return an empty iterable when they do not apply.
+
+    Returns a *sorted tuple*, not a `frozenset` (rules-auditor finding,
+    CLAUDE.md SS5 determinism: "same seed + same decisions => same game").
+    Python's string hashing is randomized per process by default, so a
+    `frozenset[str]` iterated to build `Decision.choices` -- not a need
+    today, since nothing iterates this return value yet, but a latent trap
+    for a future card module that does -- would yield a non-reproducible
+    choice ordering across process runs from the same replay log, even
+    though the legal *values* would still be correct. Sorting here, once,
+    removes the footgun at its source rather than relying on every future
+    caller to remember to sort. Values must be sortable (every current and
+    anticipated use is discipline-level string codes).
+    """
+    result: set[Any] = set()
+    for provider in _PROVIDERS.get(hook, ()):
+        result.update(provider(state, context))  # type: ignore[arg-type]
+    return tuple(sorted(result))

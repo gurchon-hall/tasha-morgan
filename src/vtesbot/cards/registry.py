@@ -48,6 +48,9 @@ class Hook(StrEnum):
     DAMAGE_PREVENTION = "damage_prevention"
     COMBAT_STRIKE_OPTION = "combat_strike_option"
     COMBAT_STRENGTH_MODIFIER = "combat_strength_modifier"
+    CAPACITY_MODIFIER = "capacity_modifier"
+    DISCIPLINE_LEVEL_MODIFIER = "discipline_level_modifier"
+    RECRUIT_ALLY_PLAY = "recruit_ally_play"
     # Named for classification; no engine wiring exists yet (see the
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"

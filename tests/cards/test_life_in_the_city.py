@@ -79,7 +79,7 @@ def test_adds_one_blood_to_own_ready_vampire_and_the_trifle_grants_an_extra_acti
 
 
 def test_can_target_the_opponents_ready_vampire():
-    """"Add 1 blood to a ready vampire" carries no "you control" qualifier
+    """ "Add 1 blood to a ready vampire" carries no "you control" qualifier
     (unlike many master cards): any ready vampire, either player's, is a
     legal target."""
     builder = ScenarioBuilder(seed=1)

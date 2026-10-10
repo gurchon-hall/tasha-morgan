@@ -40,7 +40,7 @@ Territory, Kine Resources Contested, Parity Shift) only requires writing
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from .action import attempt_block
+from .action import ACTION_POLITICAL, attempt_block
 from .combat import run_combat
 from .errors import UnresolvedRulingError
 
@@ -67,7 +67,14 @@ def political_action(
     """
     defender_player = state.other_player(actor_player)
     vampire.locked = True
-    blocker = attempt_block(state, actor_player, defender_player, POLITICAL_ACTION_STEALTH, vampire)
+    blocker = attempt_block(
+        state,
+        actor_player,
+        defender_player,
+        POLITICAL_ACTION_STEALTH,
+        vampire,
+        action=ACTION_POLITICAL,
+    )
     if blocker is not None:
         blocker.locked = True
         run_combat(state, actor_player, vampire, defender_player, blocker)

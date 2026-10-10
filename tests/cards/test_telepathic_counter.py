@@ -152,7 +152,7 @@ def test_superior_vampire_may_opt_to_use_the_basic_effect_instead():
 
 
 def test_never_offered_to_the_bleeder_even_with_auspex_and_a_copy_in_hand():
-    """"Reduce a bleed against you": never offered to the acting (bleeding)
+    """ "Reduce a bleed against you": never offered to the acting (bleeding)
     player, regardless of their own discipline/hand."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(

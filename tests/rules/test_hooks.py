@@ -66,6 +66,24 @@ def test_sum_modifiers_adds_every_registered_providers_contribution():
     assert hooks.sum_modifiers("fake_strength", game.state, player="P1") == 3
 
 
+def test_union_modifiers_returns_a_sorted_tuple_not_a_frozenset():
+    """Rules-auditor finding (CLAUDE.md SS5 determinism): a `frozenset[str]`
+    is a latent non-reproducible-ordering footgun for any future consumer
+    that iterates it to build `Decision.choices` (Python's string hashing is
+    randomized per process). `union_modifiers` must return a sorted tuple
+    instead, with duplicates across providers collapsed exactly like a set
+    union would."""
+    hooks.register("fake_union", lambda state, context: ("cel", "obf"))
+    hooks.register("fake_union", lambda state, context: ("aus", "obf"))  # "obf" duplicated
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+
+    result = hooks.union_modifiers("fake_union", game.state, player="P1")
+
+    assert result == ("aus", "cel", "obf")
+    assert isinstance(result, tuple)
+
+
 def test_offer_until_pass_loops_until_the_player_passes():
     from vtesbot.engine.decision import Choice
 

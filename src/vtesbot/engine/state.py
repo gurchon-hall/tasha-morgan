@@ -47,6 +47,35 @@ class VampireInPlay:
 
 
 @dataclass
+class AllyInPlay:
+    """One controlled ally instance (OQ-7, `docs/OPEN_QUESTIONS.md`; Rulebook
+    SS4 "Recruit Ally").
+
+    Mirrors `VampireInPlay`'s shape: `zone` takes the three values
+    `engine/allies.py` and `engine/phases/unlock.py` need -- `"ready"`
+    (played face up, usable), `"burned"` (removed from play) and
+    `"contested"` (Rulebook SS4 Advanced Rules > Contested Cards, OQ-10) --
+    and `locked`/`is_ready_unlocked` follow the same "ready and not locked"
+    convention as a vampire's.
+    """
+
+    instance_id: str
+    krcg_id: int
+    name: str
+    controller: str
+    life: int
+    strength: int = 0
+    bleed: int = 0
+    zone: str = "ready"
+    locked: bool = False
+    contested_with: str | None = None  # instance_id of the opposing copy, if contested
+
+    @property
+    def is_ready_unlocked(self) -> bool:
+        return self.zone == "ready" and not self.locked
+
+
+@dataclass
 class PlayerState:
     player_id: str
     pool: int = 0
@@ -55,11 +84,20 @@ class PlayerState:
     ash_heap: list[LibraryCard] = field(default_factory=list)
     crypt_deck: list[CryptCard] = field(default_factory=list)
     vampires: dict[str, VampireInPlay] = field(default_factory=dict)
+    allies: dict[str, AllyInPlay] = field(default_factory=dict)
     _next_instance_seq: int = 0
+    _next_ally_instance_seq: int = 0
 
     def new_instance_id(self) -> str:
         self._next_instance_seq += 1
         return f"{self.player_id}-V{self._next_instance_seq}"
+
+    def new_ally_instance_id(self) -> str:
+        """Mints an ally instance id in its own namespace, distinct from a
+        vampire's `"...-V<n>"` ids (OQ-7, `docs/OPEN_QUESTIONS.md`;
+        `engine/allies.py::recruit_ally`)."""
+        self._next_ally_instance_seq += 1
+        return f"{self.player_id}-A{self._next_ally_instance_seq}"
 
 
 @dataclass

@@ -9,8 +9,10 @@ converts the full `GameState` into the restricted view handed to an agent.
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from .attachments import effective_capacity
+
 if TYPE_CHECKING:
-    from .state import GameState, VampireInPlay
+    from .state import AllyInPlay, GameState, VampireInPlay
 
 
 @dataclass(frozen=True)
@@ -27,6 +29,49 @@ class VampireView:
     # None for an opponent's face-down (uncontrolled) vampire: identity is hidden.
     name: str | None
     capacity: int | None
+
+
+@dataclass(frozen=True)
+class AllyView:
+    """Public view of an ally in play (`engine/state.py::AllyInPlay`).
+
+    Rulebook SS4 Recruit Ally (per the `vtes-rules-reference` skill condensed
+    mapping): a recruited ally enters the ready region, played face-up, the
+    same as a ready vampire.
+
+    OQ-10 (`docs/OPEN_QUESTIONS.md`, resolved): a *unique* ally (e.g. 47th
+    Street Royals) can become contested against a same-named opposing ally
+    (`engine/allies.py::detect_contest_on_recruit`), and the unmodified
+    Rulebook SS4 Advanced Rules > Contested Cards rule then applies (not
+    overridden for allies by the 2P variant, whose own "Contested crypt
+    cards" section is scoped to crypt cards only): "turned face down and are
+    out of play" for the contest's duration -- reflected here by `zone`
+    becoming `"contested"` (`AllyInPlay.zone`'s third value, alongside
+    `"ready"`/`"burned"`) and the new `contested` flag.
+
+    Unlike `VampireView`'s `visible_identity` branch (which hides an
+    opponent's still-face-down, never-yet-revealed *uncontrolled* crypt
+    card), `name`/`life`/`strength`/`bleed` stay visible here even while
+    contested, deliberately: by construction, an ally contest can only ever
+    arise the moment a *second* same-named ally is recruited, and "Recruit
+    Ally" is itself played face up (`engine/allies.py::RecruitAllySpec`'s own
+    docstring, Rulebook SS4 "Announce the Action": "played (face up)") --
+    so both copies' identities are already mutually known to both players
+    the instant the contest is created. There is no actual secret to protect
+    here (unlike an uncontrolled vampire, genuinely unknown until revealed),
+    so "turned face down" is a zone/usability marker, not an information-
+    hiding mechanic -- no `visible_identity`-style anonymization branch is
+    sourced or needed for an ally."""
+
+    instance_id: str
+    controller: str
+    zone: str  # "ready" | "burned" | "contested"
+    locked: bool
+    contested: bool
+    name: str
+    life: int
+    strength: int
+    bleed: int
 
 
 @dataclass(frozen=True)
@@ -47,6 +92,7 @@ class Observation:
     opponent_crypt_deck_count: int
     ash_heap: dict[str, tuple[str, ...]]
     vampires: tuple[VampireView, ...]
+    allies: tuple[AllyView, ...]
 
 
 def build_observation(state: GameState, viewer: str) -> Observation:
@@ -60,6 +106,13 @@ def build_observation(state: GameState, viewer: str) -> Observation:
     are their private information and so are shown in full). Ready and
     torpor vampires are public knowledge for both players (Rulebook: the
     ready/torpor region is played face-up), so they are always shown in full.
+
+    Allies (rules-auditor finding, `docs/OPEN_QUESTIONS.md` OQ-7): an ally
+    recruited via `engine/allies.py::recruit_ally` lives in the ready region
+    exactly like a ready vampire -- so both players' allies are always shown
+    in full, unconditionally, same as a ready/torpor vampire. A *contested*
+    ally (OQ-10, resolved) keeps its identity visible too, for a sourced
+    reason distinct from the vampire case -- see `AllyView`'s own docstring.
     """
     other = [p for p in state.players if p != viewer][0]
 
@@ -74,7 +127,23 @@ def build_observation(state: GameState, viewer: str) -> Observation:
             blood=v.blood if visible_identity else 0,
             contested=v.contested_with is not None,
             name=v.card.name if visible_identity else None,
-            capacity=v.card.capacity if visible_identity else None,
+            # Effective capacity (OQ-8, `docs/OPEN_QUESTIONS.md`): printed
+            # capacity as modified by any attached card's own bonus -- see
+            # `engine/attachments.py::effective_capacity`.
+            capacity=effective_capacity(state, v) if visible_identity else None,
+        )
+
+    def ally_view(a: AllyInPlay) -> AllyView:
+        return AllyView(
+            instance_id=a.instance_id,
+            controller=a.controller,
+            zone=a.zone,
+            locked=a.locked,
+            contested=a.contested_with is not None,
+            name=a.name,
+            life=a.life,
+            strength=a.strength,
+            bleed=a.bleed,
         )
 
     viewer_state = state.players[viewer]
@@ -83,6 +152,7 @@ def build_observation(state: GameState, viewer: str) -> Observation:
     vampires = tuple(
         vampire_view(v) for p in (viewer, other) for v in state.players[p].vampires.values()
     )
+    allies = tuple(ally_view(a) for p in (viewer, other) for a in state.players[p].allies.values())
 
     return Observation(
         viewer=viewer,
@@ -99,4 +169,5 @@ def build_observation(state: GameState, viewer: str) -> Observation:
         opponent_crypt_deck_count=len(other_state.crypt_deck),
         ash_heap={p: tuple(c.name for c in s.ash_heap) for p, s in state.players.items()},
         vampires=vampires,
+        allies=allies,
     )

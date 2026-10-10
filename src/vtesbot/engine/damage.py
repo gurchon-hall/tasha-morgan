@@ -40,6 +40,7 @@ result.
 from typing import TYPE_CHECKING
 
 from . import hooks
+from .attachments import effective_capacity
 from .decision import Choice, Decision
 
 if TYPE_CHECKING:
@@ -48,14 +49,16 @@ if TYPE_CHECKING:
 DAMAGE_PREVENTION_HOOK = "damage_prevention"
 
 
-def add_blood(vampire: VampireInPlay, amount: int) -> int:
-    """Add blood to a vampire, capped at its capacity (Rulebook SS1 Vampires).
+def add_blood(state: GameState, vampire: VampireInPlay, amount: int) -> int:
+    """Add blood to a vampire, capped at its effective capacity (Rulebook
+    SS1 Vampires, printed capacity as modified by any attachment -- OQ-8,
+    `docs/OPEN_QUESTIONS.md`; see `engine/attachments.py::effective_capacity`).
 
     Returns the amount actually added.
     """
     if amount <= 0:
         return 0
-    added = min(amount, vampire.card.capacity - vampire.blood)
+    added = min(amount, effective_capacity(state, vampire) - vampire.blood)
     vampire.blood += added
     return added
 

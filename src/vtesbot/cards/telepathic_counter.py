@@ -81,9 +81,7 @@ def _eligible_vampires(state: GameState, player: str, used_by: set[str]) -> list
     ]
 
 
-def _provide_telepathic_counter(
-    state: GameState, context: Mapping[str, Any]
-) -> list[HookOption]:
+def _provide_telepathic_counter(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
     player = context["player"]
     acting_vampire_id = context["vampire"]
     if not _is_defender(state, player, acting_vampire_id):
@@ -92,7 +90,7 @@ def _provide_telepathic_counter(
         return []
 
     amount_box = context["amount"]
-    book = bleed_bookkeeping(amount_box)
+    book = bleed_bookkeeping(context["pending"])
     used_by: set[str] = book.setdefault(USED_BY_KEY, set())
 
     def _make_apply(vampire: VampireInPlay, delta: int) -> Any:

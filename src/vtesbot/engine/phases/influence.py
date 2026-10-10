@@ -14,10 +14,17 @@ scope: "all four transfer types from the rules-reference skill"): the three
 costed transfer types quoted above, plus the free reveal action (the
 fourth action type the Influence phase enumerates, even though it does not
 itself cost a transfer).
+
+"capacity" above is a vampire's *effective* capacity (OQ-8,
+`docs/OPEN_QUESTIONS.md`): printed capacity as modified by any attached
+card's own bonus (e.g. Celerity's "+1 capacity") -- see
+`engine/attachments.py::effective_capacity`, consulted below instead of a
+bare `v.card.capacity` read.
 """
 
 from typing import TYPE_CHECKING
 
+from ..attachments import effective_capacity
 from ..damage import add_blood
 from ..decision import Choice, Decision
 from ..pool import gain_pool, lose_pool
@@ -61,7 +68,7 @@ def _available_choices(state: GameState, player: str, remaining: int) -> tuple[C
 
     if remaining >= 1 and p.pool >= 1:
         for v in p.vampires.values():
-            if v.zone == "uncontrolled" and v.blood < v.card.capacity:
+            if v.zone == "uncontrolled" and v.blood < effective_capacity(state, v):
                 choices.append(
                     Choice(
                         f"add_blood:{v.instance_id}",
@@ -88,7 +95,7 @@ def _available_choices(state: GameState, player: str, remaining: int) -> tuple[C
         )
 
     for v in p.vampires.values():
-        if v.zone == "uncontrolled" and v.blood >= v.card.capacity:
+        if v.zone == "uncontrolled" and v.blood >= effective_capacity(state, v):
             choices.append(Choice(f"reveal:{v.instance_id}", f"Reveal {v.card.name} (free)"))
 
     return tuple(choices)
@@ -101,7 +108,7 @@ def _apply(state: GameState, player: str, choice: str) -> int:
 
     if kind == "add_blood":
         lose_pool(state, player, 1)
-        add_blood(p.vampires[rest], 1)
+        add_blood(state, p.vampires[rest], 1)
         return 1
 
     if kind == "remove_blood":

@@ -146,7 +146,7 @@ def test_superior_vampire_may_opt_to_use_the_basic_effect_instead():
 
 
 def test_never_offered_to_the_defender_even_with_dominate_and_a_copy_in_hand():
-    """"The acting minion can play these cards" (SS2 Action modifier cards):
+    """ "The acting minion can play these cards" (SS2 Action modifier cards):
     never offered to the defending Methuselah, regardless of their own
     discipline/hand."""
     builder = ScenarioBuilder(seed=1)
@@ -198,7 +198,7 @@ def test_limited_keyword_forbids_a_second_bleed_increase_in_the_same_action():
 
 
 def test_only_usable_during_a_bleed_action_not_a_hunt():
-    """"Only usable during a bleed action": a mandatory hunt (no blood) never
+    """ "Only usable during a bleed action": a mandatory hunt (no blood) never
     raises a `bleed_amount_modifier` decision at all."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(

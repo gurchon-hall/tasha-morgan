@@ -39,9 +39,13 @@ action modifier card more than once during a single action (even if using a
 different Discipline level)". Since there is only one acting minion per
 bleed action, both rules collapse to the same enforcement here: once
 Threats (at either level) has been played once in this action, it (and any
-future "(limited)" bleed-increase action modifier) is not offered again,
-tracked via the per-action `bleed_bookkeeping` scratch space shared with
-`telepathic_counter.py` (see `vtesbot.cards._shared`).
+future "(limited)" bleed-increase action modifier, e.g. Bonding's basic/
+superior clause, `vtesbot.cards.bonding`) is not offered again, tracked via
+the per-*action* (not merely per-window) `bleed_bookkeeping` scratch space
+keyed off `pending` (`vtesbot.cards._shared`, OQ-11 `docs/OPEN_QUESTIONS.md`)
+-- shared with `telepathic_counter.py` and `bonding.py`, so a "(limited)"
+bleed increase played by any of these, in either hook window, correctly
+excludes the others for the rest of this one action.
 """
 
 from collections.abc import Mapping
@@ -73,7 +77,7 @@ def _provide_threats(state: GameState, context: Mapping[str, Any]) -> list[HookO
         return []
 
     amount_box = context["amount"]
-    book = bleed_bookkeeping(amount_box)
+    book = bleed_bookkeeping(context["pending"])
     if book.get(LIMITED_USED_KEY):
         return []
 
