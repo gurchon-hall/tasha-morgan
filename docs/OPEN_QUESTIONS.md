@@ -1463,3 +1463,113 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   `src/vtesbot/engine/allies.py::detect_contest_on_recruit`. Impacted
   cards: none yet reachable (tracked ahead of need, same spirit as OQ-10's
   own original "latent, flagged before live" framing).
+
+## OQ-17: No action-card entry point -- Enchant Kindred (100640) (status: open)
+
+- Situation: card text (verbatim, via krcg 4.18 `VTES['Enchant Kindred'].card_text`
+  and cross-checked against the live `https://api.krcg.org/card/100640`,
+  2026-10-10, matching the raw snapshot `data/cards/100640.json`): "[pre] Ⓓ
+  Bleed with +1 bleed.\n[PRE] +1 stealth action. Add 2 blood to a younger
+  vampire in your uncontrolled region." `types == ["Action"]` (not "Action
+  Modifier"); `discipline_requirement == {"type": "Mono", "disciplines":
+  ["pre"]}`; `clan_requirement == []`; `cost is None`; `burn_option is
+  False`; `trifle is False`. Rulings: none on file (`rulings == []`, both via
+  the installed `krcg` package and the live API). Not a ruling ambiguity --
+  the text is plain (see below for the one textual-convention point this
+  entry deliberately does *not* block on). The block is a missing engine
+  representation.
+- The rulebook glossary defines the "Ⓓ" icon's referent directly:
+  "**Directed Action:** An action of one Methuselah's minion that targets
+  one or [more → only one in 2P] other Methuselah['s minions]"
+  (`data/sources/rulebook/2026-10-09/8-glossaries.md:59`), with
+  "**Undirected Action:** An action that is not directed" immediately below
+  it (same file, line 197). So the basic clause ("[pre] Ⓓ Bleed with +1
+  bleed") is a *directed* action -- mechanically a bleed, amount 2 instead of
+  the default 1 -- and the superior clause ("+1 stealth action. Add 2 blood
+  to a younger vampire in your uncontrolled region") is *undirected* (it
+  names no target Methuselah at all; its own effect only ever touches the
+  acting player's own uncontrolled region). Both already collapse cleanly to
+  the existing single-opponent block-attempt model `engine/action.py`'s own
+  module docstring documents for the 2P duel (not OQ-1 -- that structural
+  collapse is already settled), so neither clause raises a *fresh*
+  prey/predator question.
+- What is blocked: `types == ["Action"]` means this card itself constitutes
+  the acting vampire's one minion action for the turn (Rulebook SS2 Card
+  Types; distinct from an "Action Modifier," which only ever decorates an
+  *already-chosen* default action). The only place a card can inject a new,
+  self-contained minion action alongside the built-in "Bleed"/"Hunt" choices
+  is `engine/phases/minion.py::_choose_and_perform_action`'s top-level
+  `action_choice` decision, and the only hook that call site currently
+  splices options from is `RECRUIT_ALLY_PLAY_HOOK` (`"recruit_ally_play"`,
+  OQ-12) -- which is Ally-specific (its `apply()` contract returns an
+  `engine/allies.py::RecruitAllySpec`, consumed only by
+  `_perform_recruit_ally`, not a bleed/undirected-action shape at all).
+  There is no generic "this library card is itself an alternate minion
+  action" hook: confirmed by reading every entry in
+  `src/vtesbot/cards/registry.py`'s `Hook` enum (both the "wired this pass"
+  group and the "named for classification, no wiring yet" group) -- none of
+  them represent "a played Action card supplies its own base stealth,
+  directed/undirected shape, and resolve() to `perform_minion_action`,
+  spliced into the same top-level choice `_choose_and_perform_action`
+  offers." Implementing either clause today would mean either (a) misusing
+  `BLEED_AMOUNT_MODIFIER_HOOK`/`BLEED_AMOUNT_FIXED_MODIFIER_HOOK` to fake an
+  "Action" card as if it were an Action Modifier layered onto a *separately,
+  already-chosen* free default Bleed -- wrong card type, and for the basic
+  clause specifically it would also wrongly let a player bleed for free (no
+  card played, no hand cost) and *additionally* play Enchant Kindred as a
+  bonus on top, when the real card text is itself the only bleed this
+  vampire's action performs -- or (b) inventing a new top-level choice/call
+  site inside the card module by reaching into `engine/phases/minion.py`
+  directly, which is exactly the "hack around a missing engine mechanism
+  inside the card module" CLAUDE.md forbids. Neither clause can be
+  correctly wired without new, generic engine-side scope; per CLAUDE.md
+  §6's "implemented only when ... fully tested" bar (no partial
+  implementation of only one clause), the whole card is blocked.
+- What would be needed (`rules-engineer` scope, `engine/phases/minion.py`
+  and `engine/action.py`, mirroring the existing `recruit_ally_play`
+  pattern but generalized beyond Allies): a new hook (e.g.
+  `"action_card_play"`) offered at `_choose_and_perform_action`'s top level
+  alongside `ACTION_BLEED`/`ACTION_HUNT`/the recruit-ally options, whose
+  provider contract lets a registering card module supply (1) the base
+  stealth for its own action, (2) whether it is directed (at the single 2P
+  opponent) or undirected, (3) a `resolve(pending)` callback run by
+  `perform_minion_action` exactly like `_perform_bleed`/`_perform_hunt`'s
+  own closures, and (4) how/when its card is consumed from hand (for a plain
+  one-shot "Action" card such as this one, immediately via
+  `vtesbot.cards._shared.play_from_hand` at the moment the choice is made --
+  unlike Recruit Ally's Ally card, an "Action" card's own text has no
+  "put into play" destination that depends on the later block outcome, so
+  `play_from_hand_pending`'s two-destination dance is not needed here,
+  though a future, different "Action" card might need it; the new hook's
+  contract should accommodate both). Once that hook/call site exists,
+  Enchant Kindred's own two providers become straightforward: the basic
+  clause's `resolve()` mirrors `_perform_bleed`'s, with `amount = 1 + 1`
+  baked in; the superior clause's `resolve()` is undirected and, once
+  unblocked, raises a new `Decision` (the existing `Decision`/`Choice`
+  machinery already supports an arbitrary "pick one of your own eligible
+  minions" choice with no further engine change -- only the top-level
+  action-card hook itself is the actual gap) letting the acting player pick
+  one of their own `zone == "uncontrolled"` vampires, then calls the
+  already-existing `engine/damage.py::add_blood(state, chosen, 2)`.
+- Textual-convention point, deliberately *not* blocking (noted for whoever
+  unblocks this card next): the superior clause's "a younger vampire" names
+  no explicit comparison target ("younger than *what*"). The rulebook
+  glossary states capacity "is also a relative measure of the vampire's age"
+  (`data/sources/rulebook/2026-10-09/8-glossaries.md:47-48`), and a broad
+  cross-section of other printed card texts using the identical unqualified
+  "younger vampire"/"a younger vampire" phrasing (e.g. Danny Larkshill:
+  "gets +1 strength in combat with a younger vampire"; Apolonia Czarnecki:
+  "can steal 1 blood from a younger vampire as a Ⓓ action" -- both checked
+  live via `krcg.load()`, 2026-10-10) are uniformly read, by the same
+  unqualified-comparative convention, as relative to the one vampire the
+  ability belongs to (the acting/printed-ability vampire), not some other
+  unnamed reference. This is corroborating pattern evidence, not itself an
+  official ruling for *this* card, so it is flagged rather than silently
+  assumed -- but it does not change this entry's blocking reason (the
+  missing engine hook blocks implementation regardless of how "younger" is
+  ultimately read), so it is not filed as its own, separate Open Question.
+- Impacted code (at the time this was opened): none yet (no generic
+  "Action"-card entry point exists to extend). Impacted cards: Enchant
+  Kindred (registered `blocked`, reason `OQ-17`); any future 2P-legal card
+  of `types == ["Action"]` (as opposed to "Action Modifier") would hit the
+  same gap.

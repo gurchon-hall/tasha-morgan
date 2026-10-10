@@ -64,6 +64,11 @@ class Hook(StrEnum):
     CANCEL_AS_PLAYED = "cancel_as_played"
     BLOCK_CANDIDATE_INJECTION = "block_candidate_injection"
     EQUIPMENT_ATTACHMENT = "equipment_attachment"
+    ACTION_CARD_PLAY = "action_card_play"
+    """A library card of type "Action" (not "Action Modifier") that itself
+    constitutes the acting minion's one action for the turn, distinct from
+    the already-wired `RECRUIT_ALLY_PLAY` (Ally-specific). No engine call
+    site offers this yet -- see `docs/OPEN_QUESTIONS.md` OQ-17."""
 
 
 @dataclass(frozen=True)

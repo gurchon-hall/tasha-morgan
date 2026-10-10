@@ -1,0 +1,364 @@
+{
+  "id": 100640,
+  "printed_name": "Enchant Kindred",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Enchant Kindred"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Encantar a los Vástagos"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Enchanter la descendance"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300001,
+        "code": "Jyhad"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/jyhad/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300002,
+        "code": "VTES"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300007,
+        "code": "FN"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PS",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/final-nights/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 5,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300010,
+        "code": "Anarchs"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAB",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anarchs/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300014,
+        "code": "KMW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAn",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/kindred-most-wanted/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300015,
+        "code": "LoB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PI",
+          "copies": 5,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/legacies-of-blood/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300030,
+        "code": "SP"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "LB",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-preconstructed/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300032,
+        "code": "FB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/first-blood/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 6,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 8,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 6,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PMin",
+          "copies": 7,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 5,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/enchantkindred.jpg"
+    },
+    {
+      "set": {
+        "id": 300043,
+        "code": "SV5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PPower",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-v5/enchantkindred.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Encantar a los Vástagos",
+      "text": "[pre] Ⓓ Sangra con +1 de sangrado.\n[PRE] Acción con +1 de sigilo. Añade 2 de sangre a un vampiro menor de tu zona incontrolada.",
+      "flavor": "Vi pálidos reyes, y princesas también,\nPálidos guerreros, todos con la palidez de la muerte;\nEllos gritaban – \"¡La bella dama sin piedad\nTe ha esclavizado!\"\nJohn Keats, \"La bella dama sin piedad\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/enchantkindred.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Enchanter la descendance",
+      "text": "[pre] Ⓓ Mordre à +1 en morsure.\n[PRE] Action à +1 en discrétion. Ajouter 2 points de sang à un vampire plus jeune dans votre région incontrôlée.",
+      "flavor": "Je vis des rois pâles, et des princes pâles,\nDes guerriers pâles, tous pâles comme la mort ;\n— Ils me criaient : \"La Belle Dame sans merci\nT'a pris dans ses rets.\"\nJohn Keats, \"La Belle Dame Sans Merci\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/enchantkindred.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/enchantkindred.jpg",
+  "types": [
+    "Action"
+  ],
+  "formats": [],
+  "artists": [
+    "Harold Arthur McNeill",
+    "Carmen Cornet"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "[pre] Ⓓ Bleed with +1 bleed.\n[PRE] +1 stealth action. Add 2 blood to a younger vampire in your uncontrolled region.",
+  "draft": "",
+  "flavor": "I saw pale kings, and princes too,\nPale warriors, death-pale were they all;\nThey cried, \"La belle dame sans merci\nThee hath in thrall!\"\nJohn Keats, \"La Belle Dame Sans Merci\"",
+  "legal": "1994-09-15",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "pre"
+    ]
+  }
+}
