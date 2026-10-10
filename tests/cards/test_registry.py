@@ -124,9 +124,11 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
 
     # Every OQ-6-blocked card documented in the rules-engineer milestone-3
     # scaffolding report is actually registered, as blocked, with a reason.
+    # Kine Resources Contested (101056) has been implemented (OQ-6 resolved;
+    # `engine/politics.py::resolve_referendum`) and checked separately below,
+    # not here.
     for krcg_id in (
         100557,  # Disputed Territory
-        101056,  # Kine Resources Contested
         101353,  # Parity Shift
         101341,  # Oxford University, England
         101387,  # Perfect Paragon
@@ -143,3 +145,11 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
         assert reg is not None, f"expected a registry entry for krcg_id {krcg_id}"
         assert reg.status is registry.Status.BLOCKED
         assert reg.blocked_reason == "OQ-6"
+
+    for krcg_id in (
+        101056,  # Kine Resources Contested
+    ):
+        reg = registry.get(krcg_id)
+        assert reg is not None, f"expected a registry entry for krcg_id {krcg_id}"
+        assert reg.status is registry.Status.IMPLEMENTED
+        assert reg.blocked_reason is None

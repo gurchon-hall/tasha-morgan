@@ -1,0 +1,437 @@
+{
+  "id": 101056,
+  "printed_name": "Kine Resources Contested",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Kine Resources Contested"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Disputa de recursos ganaderos"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Conflit sur le bétail"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300001,
+        "code": "Jyhad"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/jyhad/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300002,
+        "code": "VTES"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300010,
+        "code": "Anarchs"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAB",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anarchs/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300011,
+        "code": "BH"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 5,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/black-hand/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300015,
+        "code": "LoB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PG",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/legacies-of-blood/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 6,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "SKB",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PT",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300030,
+        "code": "SP"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "LB",
+          "copies": 6,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PoS",
+          "copies": 8,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-preconstructed/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300031,
+        "code": "25th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/twenty-fifth-anniversary/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300032,
+        "code": "FB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 5,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/first-blood/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PL",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 8,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 7,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/kineresourcescontested.jpg"
+    },
+    {
+      "set": {
+        "id": 300043,
+        "code": "SV5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PPower",
+          "copies": 5,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-v5/kineresourcescontested.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Disputa de recursos ganaderos",
+      "text": "Asigna 4 puntos entre dos o más Matusalenes. Si el referéndum prospera, cada Matusalén quema 1 de reserva sanguínea por cada punto asignado.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/kineresourcescontested.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Conflit sur le bétail",
+      "text": "Allouez 4 points entre deux Mathusalems ou plus. Si le référendum passe, chaque Mathusalem brûle 1 point de réserve pour chaque point alloué.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/kineresourcescontested.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/kineresourcescontested.jpg",
+  "types": [
+    "Political Action"
+  ],
+  "formats": [],
+  "artists": [
+    "Heather Hudson",
+    "Brian LeBlanc"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "Cannot allocate 4 points to a single Methuselah, but you can allocate points to yourself. [LSJ 20000622]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20000622]",
+          "label": "LSJ 20000622",
+          "url": "https://usenet.krcg.org/t/znQHUWouQkw/#m4"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "If multiple ousts happen, players whose prey gets ousted get a victory point, even if they are being ousted themselves. Only the surviving ones get 6 pool from the oust of their prey (not of their grand-prey). [LSJ 20000309]",
+      "group": "Vote damaging multiple players",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20000309]",
+          "label": "LSJ 20000309",
+          "url": "https://usenet.krcg.org/t/ykAzsCzPkvg/#m2"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "Can allocate more points than a Methuselah has pool. [LSJ 20020819]",
+      "group": "Allocate points for pool damage",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20020819]",
+          "label": "LSJ 20020819",
+          "url": "https://usenet.krcg.org/t/WONdURITUdk/#m2"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Allocate 4 points among two or more Methuselahs. Successful referendum means each Methuselah burns 1 pool for each point allocated.",
+  "draft": "",
+  "flavor": "",
+  "legal": "1994-09-15",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}

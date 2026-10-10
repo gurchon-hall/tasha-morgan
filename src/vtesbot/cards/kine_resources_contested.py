@@ -1,6 +1,7 @@
 """Kine Resources Contested (Political Action). krcg id 101056.
 
-Card text (fetched via krcg 5.14+, `krcg.load()[101056].text`, 2026-10-09):
+Card text (verbatim, via the installed `krcg` package, 2026-10-11, matching
+`data/cards/101056.json`):
     "Allocate 4 points among two or more Methuselahs. Successful referendum
     means each Methuselah burns 1 pool for each point allocated."
 
@@ -13,25 +14,181 @@ Rulings (verbatim, via krcg):
       grand-prey)." [LSJ 20000309]
     - "Can allocate more points than a Methuselah has pool." [LSJ 20020819]
 
-2P note: "Allocate 4 points among two or more Methuselahs" presumes at
-least two possible allocation targets; in a duel there are only ever two
-Methuselahs total, which may interact with OQ-6 (how exactly a referendum
-resolves between exactly two Methuselahs) -- flagged, not guessed.
+Card type: Political Action (`types == ["Political Action"]`). No clan,
+discipline or title requirement (`clan_requirement == []`,
+`discipline_requirement is None`); `cost is None`.
 
-Status: blocked (OQ-6). Announcing/blocking is the generic
-`engine/politics.py::political_action` path (no card-specific engine work
-needed there); resolving the referendum needs OQ-6.
+Status: implemented (OQ-6, `docs/OPEN_QUESTIONS.md`, now resolved by
+`engine/politics.py::resolve_referendum`).
+
+Engine wiring: a political action card is the acting vampire's entire
+minion action for the turn, exactly like an "Action"-type card -- the same
+shape `engine/phases/minion.py::ACTION_CARD_PLAY_HOOK`/`ActionCardSpec`
+already generalizes (see `enchant_kindred.py`, an "Action"-type card, for
+the identical pattern this module mirrors). The hook's own mechanism is
+card-type-agnostic (a provider decides which card(s) it looks for by
+`krcg_id`; nothing in the engine filters by printed `types`), so no new
+hook or engine change is needed -- this is the first registration against
+it for a `"Political Action"`-type card, not a repurposing of anything.
+`_provide_kine_resources_contested`'s `apply()` plays the card immediately
+(`_shared.play_from_hand`, straight to the ash heap) since -- whether the
+action ends up blocked (burned) or the referendum passes or fails -- a
+political action card has no other printed destination either way (mirrors
+`enchant_kindred.py`'s one-shot immediate-consumption cards, not Recruit
+Ally's two-destination dance). `ActionCardSpec.action=ACTION_POLITICAL`,
+`directed=False` (Rulebook SS4 Minion Phase default action list: "political
+action (undirected, +1 stealth ...)"; this card's own text names no single
+target Methuselah up front, unlike Parity Shift's "Choose a Methuselah who
+has more pool than you do").
+
+`resolve()` only fires once `perform_minion_action`'s own block-attempt
+phase (run with `action=ACTION_POLITICAL`, `base_stealth=
+POLITICAL_ACTION_STEALTH`) has already gone unblocked -- so it must only
+run the *referendum itself* (`engine/politics.py::resolve_referendum`'s
+polling step + tally, Rulebook SS4 "The Referendum" steps 2-3), not
+re-announce or re-attempt a block: `engine/politics.py::political_action`
+(which duplicates the announce/block/combat steps `perform_minion_action`
+already ran) is deliberately *not* called here, to avoid running the
+block-attempt phase twice. If the referendum fails (`votes_for <=
+votes_against`, "tied referendums fail" per `resolve_referendum`'s own
+contract), there is no effect at all -- Rulebook SS4 "Resolve the
+Referendum": "Otherwise, the referendum fails and has no effect."
+
+Allocation ("Announce: all terms fixed now, *except referendum terms*" /
+"Terms chosen only after success" -- `vtes-rules-reference` skill's
+Politics section): the specific point split is the referendum's own term,
+so it is decided only *after* `resolve_referendum` reports a pass, as a
+fresh `Decision` (kind `"kine_resources_contested_allocation"`) raised
+directly inside `resolve()` -- the same "decision raised inside resolve(),
+once unblocked" shape `enchant_kindred.py`'s own target-choice decision
+uses.
+
+Legal splits in 2P (derived directly from the card's own text, not a
+guess): "Allocate 4 points **among two or more Methuselahs**" requires at
+least two distinct recipients to each receive a *nonzero* share (a
+recipient assigned 0 points is not "among" the allocation at all, by the
+plain meaning of "allocate among N recipients"). With exactly two
+Methuselahs total in a 2P duel, "two or more" can only ever mean "both of
+them", so each of the two players must receive >=1 of the 4 points --
+independently entailing the printed ruling's "cannot allocate 4 points to
+a single Methuselah" (whichever player would otherwise receive all 4, the
+other receives 0, which already violates "among two or more" on its own).
+The legal splits are therefore exactly `(1, 3)`, `(2, 2)`, `(3, 1)`
+(self points, other points) -- never `(4, 0)` or `(0, 4)`. The ruling's own
+other clause, "but you can allocate points to yourself", is not a separate
+restriction to enforce: nothing here ever prevents the caller from
+assigning points to their own side; `(1, 3)`/`(2, 2)`/`(3, 1)` all do so by
+construction. (Note: this reasoning was derived directly from the printed
+"among two or more Methuselahs" wording plus the verbatim ruling above --
+not from any external worked example -- since the two together already
+settle the question unambiguously for exactly two players; this is not
+logged as an Open Question.)
+
+"Successful referendum means each Methuselah burns 1 pool for each point
+allocated": a pure loss, not a transfer (contrast `parity_shift.py`, whose
+own text has the target's pool "distributed" to a recipient, i.e. actually
+awarded) -- both players' shares are applied via `engine.pool.lose_pool`
+only, never `gain_pool`. "Can allocate more points than a Methuselah has
+pool" needs no extra code: `lose_pool` already floors the loss at the
+player's current pool and still checks ousting (`engine/pool.py`), so
+over-allocating simply drives that player to 0 pool and triggers the
+ordinary oust path.
+
+"If multiple ousts happen, players whose prey gets ousted get a victory
+point ...": a multiplayer-only scenario (it presupposes at least a third
+Methuselah whose own prey is distinct from this card's caller/target) --
+structurally impossible in a 2-player duel, where `engine/ousting.py`
+already documents that there is only ever one oust event, which ends the
+game immediately (not a gap this card needs to fill, and not an Open
+Question -- the engine's existing 2P oust model already fully covers the
+only case that can actually arise here).
 """
 
+from collections.abc import Mapping
+from typing import Any
+
+from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
+from vtesbot.engine import hooks
+from vtesbot.engine.action import ACTION_POLITICAL
+from vtesbot.engine.decision import Choice, Decision
+from vtesbot.engine.hooks import HookOption
+from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, ActionCardSpec
+from vtesbot.engine.politics import POLITICAL_ACTION_STEALTH, resolve_referendum
+from vtesbot.engine.pool import lose_pool
+from vtesbot.engine.state import GameState
+
+KRCG_ID = 101056
+TOTAL_POINTS = 4
+"""Printed "Allocate 4 points ..."."""
+
+
+def _provide_kine_resources_contested(
+    state: GameState, context: Mapping[str, Any]
+) -> list[HookOption]:
+    player = context["player"]
+    acting_vampire_id = context["vampire"]
+    acting_vampire = state.players[player].vampires.get(acting_vampire_id)
+    if acting_vampire is None:
+        return []  # `player` is the defender this window, not the acting player.
+    if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
+        return []
+
+    other = state.other_player(player)
+
+    def _apply(s: GameState) -> ActionCardSpec:
+        play_from_hand(s, player, KRCG_ID)
+
+        def resolve(pending: dict[str, Any]) -> None:
+            del pending  # no later hook window of its own to feed.
+            votes_for, votes_against, _casts = resolve_referendum(s, player, other, acting_vampire)
+            if votes_for <= votes_against:
+                return  # referendum fails ("tied referendums fail"): no effect at all.
+
+            choices = tuple(
+                Choice(
+                    f"allocate:{self_points}",
+                    f"Allocate {self_points} point(s) to yourself, "
+                    f"{TOTAL_POINTS - self_points} to your opponent "
+                    "(each point burns 1 pool)",
+                )
+                for self_points in range(1, TOTAL_POINTS)
+            )
+            decision = Decision(
+                player=player,
+                kind="kine_resources_contested_allocation",
+                choices=choices,
+                context={"caller": player, "other": other},
+            )
+            answer = s.ask(decision).value
+            self_points = int(answer.split(":", 1)[1])
+            other_points = TOTAL_POINTS - self_points
+            lose_pool(s, player, self_points)
+            lose_pool(s, other, other_points)
+
+        return ActionCardSpec(
+            base_stealth=POLITICAL_ACTION_STEALTH,
+            directed=False,
+            action=ACTION_POLITICAL,
+            resolve=resolve,
+        )
+
+    return [
+        HookOption(
+            choice=Choice("kine_resources_contested:play", "Play Kine Resources Contested"),
+            apply=_apply,
+        )
+    ]
+
+
+hooks.register(ACTION_CARD_PLAY_HOOK, _provide_kine_resources_contested)
 
 register(
     CardRegistration(
-        krcg_id=101056,
+        krcg_id=KRCG_ID,
         name="Kine Resources Contested",
-        status=Status.BLOCKED,
-        hooks=(Hook.POLITICAL_ACTION,),
+        status=Status.IMPLEMENTED,
+        hooks=(Hook.ACTION_CARD_PLAY,),
         source=__name__,
-        blocked_reason="OQ-6",
     )
 )
