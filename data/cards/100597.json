@@ -1,0 +1,211 @@
+{
+  "id": 100597,
+  "printed_name": "Dust Up",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Dust Up"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Pelea"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Léger différend"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300027,
+        "code": "AU"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anarch-unbound/dustup.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/dustup.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/dustup.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Pelea",
+      "text": "Requiere a un Anarquista.\n[ani] Ataque: ataca con la mano con +1 de daño. Este ataque no se puede esquivar.\n[cel] Ataque: esquiva, con 1 ataque adicional (limitada).\n[pot] Ataque: ataca con la mano con +2 de daño.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/dustup.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Léger différend",
+      "text": "Requiert un Anarch.\n[ani] Frapper : frappe à mains nues à +1 point de dégâts. Cette frappe ne peut pas être esquivée.\n[cel] Frapper : esquiver, avec 1 frappe additionnelle (limité).\n[pot] Frapper : frappe à mains nues à +2 points de dégâts.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/dustup.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/dustup.jpg",
+  "types": [
+    "Combat"
+  ],
+  "formats": [],
+  "artists": [
+    "Javier Santos"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "[ani] [pot] Additional damage inherits all of the properties of the base damage. [TOM 19960225]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[TOM 19960225]",
+          "label": "TOM 19960225",
+          "url": "https://usenet.krcg.org/t/0LLTOfvyVbM/#m11"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[ani]",
+          "symbol": "i",
+          "count": ""
+        },
+        {
+          "text": "[pot]",
+          "symbol": "p",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "[cel] The additional strike is not optional: you cannot play it for the dodge only if you already played it for a (limited) additional strike this round. [ANK 20220204]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20220204]",
+          "label": "ANK 20220204",
+          "url": "https://www.vekn.net/forum/rules-questions/79634-multi-dust-up-question#104626"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[cel]",
+          "symbol": "c",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "When played, a multi-Disciplines card counts as requiring the Discipline(s) being used. In the hand, library, or ash heap, the card is considered to require any and/or all Disciplines listed on it. [LSJ 20011204-3] [PIB 20130704]",
+      "group": "Multi-discipline",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20011204-3]",
+          "label": "LSJ 20011204-3",
+          "url": "https://usenet.krcg.org/t/JhBwcZjDlaQ/#m1"
+        },
+        {
+          "text": "[PIB 20130704]",
+          "label": "PIB 20130704",
+          "url": "https://www.vekn.net/forum/rules-questions/50982-iron-heart-vs-virtuosa#50984"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "[ani]Does not prevent the opponent from dodging, the dodge just has no effect. [LSJ 20030902-2] [LSJ 20060808-1]",
+      "group": "Cannot be dodged",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20030902-2]",
+          "label": "LSJ 20030902-2",
+          "url": "https://usenet.krcg.org/t/mgZt4f2LyOg/#m6"
+        },
+        {
+          "text": "[LSJ 20060808-1]",
+          "label": "LSJ 20060808-1",
+          "url": "https://usenet.krcg.org/t/7oK-hKbOs9g/#m2"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[ani]",
+          "symbol": "i",
+          "count": ""
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "text": "Requires an Anarch.\n[ani] Strike: hand strike at +1 damage. This strike cannot be dodged.\n[cel] Strike: dodge, with 1 additional strike (limited).\n[pot] Strike: hand strike at +2 damage.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2016-02-16",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Choice",
+    "disciplines": [
+      "ani",
+      "cel",
+      "pot"
+    ]
+  }
+}

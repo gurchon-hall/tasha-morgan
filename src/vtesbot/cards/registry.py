@@ -48,6 +48,20 @@ class Hook(StrEnum):
     DAMAGE_PREVENTION = "damage_prevention"
     COMBAT_STRIKE_OPTION = "combat_strike_option"
     COMBAT_STRENGTH_MODIFIER = "combat_strength_modifier"
+    COMBAT_DODGE_OPTION = "combat_dodge_option"
+    """A card/ability-granted dodge, offered alongside `COMBAT_STRIKE_OPTION`
+    at the strike step (`engine/combat.py::_ask_strike`). Choosing it always
+    deals 0 damage and zeroes whatever damage the opponent's simultaneous
+    strike this round would otherwise deal to the dodging combatant
+    (`engine/combat.py::_resolve_one_strike`/`_resolve_strike_pair`) --
+    resolves `docs/OPEN_QUESTIONS.md` OQ-18 Gap 2."""
+    COMBAT_ADDITIONAL_STRIKE = "combat_additional_strike"
+    """A card/ability-granted extra strike this round, offered after the
+    normal strike pair (and after each additional-strike pair) via
+    `engine/combat.py::_ask_additional_strike`; using one re-enters the full
+    strike-choice machinery (`COMBAT_STRIKE_OPTION`/`COMBAT_DODGE_OPTION`
+    included) for that combatant's additional strike -- resolves
+    `docs/OPEN_QUESTIONS.md` OQ-18 Gap 2."""
     CAPACITY_MODIFIER = "capacity_modifier"
     DISCIPLINE_LEVEL_MODIFIER = "discipline_level_modifier"
     RECRUIT_ALLY_PLAY = "recruit_ally_play"

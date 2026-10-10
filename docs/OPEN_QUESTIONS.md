@@ -1702,3 +1702,365 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   220; zero regressions), `ruff check`/`ruff format --check` clean. No
   engine code touched by this pass -- the hook this entry built already
   covered everything needed.
+
+## OQ-18: No sect, no dodge/extra strike -- Dust Up (100597) (status: resolved)
+
+- Resolution (2026-10-10): both gaps closed and independently confirmed by a
+  final `rules-auditor` pass (full suite 259 passed, `ruff`/`pymarkdown`
+  clean): Gap 1 (vampire sect, `Sect`/`CryptCard.sect`/`derive_sect` in
+  `src/vtesbot/engine/cards.py`) and Gap 2 (dodge + same-round additional
+  strike in `src/vtesbot/engine/combat.py`, including the dodge-proof
+  `StrikeDamage.ignore_dodge` override needed for Dust Up's own `[ani]`
+  clause). The auditor hand-traced `_resolve_strike_pair`'s arithmetic
+  directly (not just the tests) and confirmed it correctly lets a
+  dodge-proof strike deal damage through a dodge while leaving the dodging
+  combatant's own simultaneous counter-strike unaffected. Dust Up itself is
+  ready for a `card-implementer` pass covering all three clauses
+  (`[ani]`/`[cel]`/`[pot]`) plus the "Requires an Anarch" sect gate; see the
+  Gap 1/Gap 2 sub-notes below for the full build history and sourcing.
+
+- Situation: card text (verbatim, re-verified via the installed `krcg` 4.18
+  package's own `VTES["Dust Up"].to_json()` and cross-checked live against
+  `https://api.krcg.org/card/100597`, 2026-10-10, saved to
+  `data/cards/100597.json`): "Requires an Anarch.\n[ani] Strike: hand strike
+  at +1 damage. This strike cannot be dodged.\n[cel] Strike: dodge, with 1
+  additional strike (limited).\n[pot] Strike: hand strike at +2 damage."
+  `types == ["Combat"]`; live API `discipline_requirement == {"type":
+  "Choice", "disciplines": ["ani", "cel", "pot"]}` (any *one* of the three,
+  all lowercase -- basic/inferior level satisfies the requirement to play
+  the card at all; confirmed by the installed package's own `multidisc ==
+  True` and lowercase-only `disciplines == ["ani", "cel", "pot"]`, no
+  uppercase/superior variant printed anywhere on the card); `clan_requirement
+  == []`; `path_requirement == []`; `cost is None`; `burn_option is False`;
+  `trifle is False`. Confirmed on the active 2P allowed list
+  (`data/formats/2p/2026-10-03.json`, krcg id 100597) and in the suggested
+  2P decklist `data/decks/vekn-2p/brujah.json` (6 copies; not also present in
+  `toreador.json`/`ventrue.json`, correcting the task's framing that the 6
+  copies were spread across all three -- all 6 are in the Brujah list alone).
+  Rulings (verbatim, via krcg, both the installed package and the live API
+  agree):
+  - "[ani] [pot] Additional damage inherits all of the properties of the
+    base damage." [TOM 19960225]
+  - "[cel] The additional strike is not optional: you cannot play it for the
+    dodge only if you already played it for a (limited) additional strike
+    this round." [ANK 20220204]
+  - "When played, a multi-Disciplines card counts as requiring the
+    Discipline(s) being used. In the hand, library, or ash heap, the card is
+    considered to require any and/or all Disciplines listed on it." [LSJ
+    20011204-3] [PIB 20130704]
+  - "[ani] Does not prevent the opponent from dodging, the dodge just has no
+    effect." [LSJ 20030902-2] [LSJ 20060808-1]
+  Not a ruling ambiguity -- the text and rulings are plain and mutually
+  consistent. The block is two independent missing-engine-representation
+  gaps, either one alone sufficient to block the whole card (CLAUDE.md §6: a
+  card is implemented only when *all* of its text is tested; no partial
+  implementation of only the clauses one gap happens not to touch).
+- Gap 1 -- "Requires an Anarch" (blocks the card's playability entirely,
+  regardless of discipline clause): sect (Camarilla / Anarch / Sabbat /
+  Independent / Laibon) is a genuine, persistent, rules-significant per-
+  vampire trait, not flavour text -- re-fetched the Rulebook live
+  (<https://www.vekn.net/rulebook/6-vampire-sects>, cross-checked against the
+  local cache `data/sources/rulebook/2026-10-09/6-vampire-sects.md`), quoted
+  verbatim: "A vampire always belongs to one and only one sect." / "Some
+  cards can only be played by Anarch vampires." / "An untitled non-Anarch
+  vampire can become an Anarch as a +1 stealth undirected action that costs
+  2 blood, or 1 blood if the controller controls at least 1 other ready
+  Anarch. A vampire can also be made an Anarch by certain card effects.
+  Becoming Anarch constitutes a change of sect." `src/vtesbot/engine/
+  cards.py::CryptCard` (the engine's own vampire-identity dataclass) has no
+  `sect` field at all -- only `krcg_id`, `name`, `capacity`, `group`,
+  `clan`, `title`, `disciplines`, each explicitly documented as "plain
+  printed stats"; sect is conspicuously absent from that list, and no other
+  engine module (`state.py`, `attachments.py`, `setup.py`) carries it either
+  (confirmed by grep across `engine/` for "sect"/"Anarch": zero hits besides
+  an unrelated comment naming "become Anarch" as future out-of-scope minion
+  action text in `engine/phases/minion.py`). Nor does krcg itself expose a
+  structured sect field to read from: neither the installed package's
+  `Card.to_json()` (sampled `VTES["Victoria Ash"]`, `VTES["Jeremy
+  MacNeil"]` -- no `sect` key in either) nor the live API's own structured
+  requirement fields (`clan_requirement`/`discipline_requirement`/
+  `path_requirement`, present on this very card and on Enchant Kindred's
+  cached snapshot, `data/cards/100640.json`) have a `sect_requirement` or
+  equivalent counterpart. Sect is only ever embedded as free text at the
+  very start of a vampire's own printed `card_text` (e.g. Jeremy MacNeil:
+  `"Camarilla."`; a live sample of vampires matching `"Anarch"` in their own
+  text: Aluc Romas de Leon `"Anarch."`, Anita Wainwright `"Anarch."`, Ariane
+  `"Anarch: Ariane gets -1 stealth during undirected actions."`, several
+  "Anarch Baron of \<city\>" titled vampires) -- a free-text convention, not
+  a parseable field, and reliably classifying it (distinguishing a sect
+  preamble from the rest of a vampire's own printed ability text, handling
+  vampires with no sect preamble at all = Independent) is itself a non-
+  trivial text-classification task that must be solved once, generically, in
+  the engine's own vampire-identity model -- not invented ad hoc inside this
+  one card's module (CLAUDE.md "no hacking around a missing engine
+  mechanism"). Separately, milestone 1's deck-import pipeline does not exist
+  yet at all (confirmed: no `CryptCard(` construction site anywhere in
+  production code outside `engine/cards.py`'s own definition, `engine/
+  state.py`, `engine/attachments.py`, `engine/setup.py`, and scenario-test
+  helpers), so there is currently no path, even a manual one, by which a
+  real vampire's sect would reach a `CryptCard` instance in the first place.
+- Gap 2 -- the `[cel]` clause ("dodge, with 1 additional strike (limited)")
+  needs two further combat mechanics that do not exist anywhere in
+  `engine/combat.py`, independent of Gap 1: re-read the module in full
+  (2026-10-10) and confirmed its own docstring is explicit about this scope
+  boundary: "Maneuvers, ranged strikes, and additional strikes remain out of
+  scope this pass (no combat card in the current pool's classification
+  needs them *without* also needing the maneuver/range mechanic itself...)."
+  Concretely: (a) **no dodge mechanic** -- `_ask_strike`'s only two built-in
+  choices are `"hand_strike"` and `"no_strike"`; "no_strike" means "I do not
+  attack this round" but does *not* prevent the opponent's simultaneous
+  strike from damaging me (`run_combat`'s "Simultaneous" comment, both
+  `damage_to_blocking`/`damage_to_acting` are applied unconditionally from
+  each side's own independently-chosen strike). A genuine "dodge" (avoid
+  taking damage from the opponent's strike this round, per the [ani] ruling
+  above confirming dodge is a real, distinct choice the opponent can still
+  make against a [ani] strike, "the dodge just has no effect" implying it
+  normally *does* have an effect) has no engine representation at all. (b)
+  **no same-round additional strike** -- `run_combat`'s round loop calls
+  `_ask_strike`/`_strike_damage` exactly once per combatant per round; there
+  is no mechanism for a combatant to resolve a second strike within the same
+  round (confirmed: grep across `engine/` for "additional strike"/"extra
+  strike"/"multiple strike" returns only this module's own docstring
+  sentence naming the gap). `COMBAT_STRIKE_OPTION_HOOK`'s own contract
+  (`apply(state) -> int`, consumed by `_strike_damage` as "the damage this
+  strike-substitute inflicts," module docstring: "a card-granted strike
+  option's `apply(state)` must return the damage it inflicts, so it can
+  fully stand in for a hand strike") can only ever express a single,
+  ordinary damage-dealing hand-strike substitute -- it has no way to signal
+  "no damage to me this round regardless of what the opponent strikes with"
+  or "resolve a second, independent strike within this same round." So even
+  a hypothetical sect-agnostic version of this card could only ever
+  implement its `[ani]`/`[pot]` clauses through this already-wired hook; its
+  `[cel]` clause cannot be implemented against the engine as it stands
+  today, a second, independent block.
+- **Gap 2 resolved (2026-10-10, `rules-engineer`).** Re-fetched live
+  <https://www.vekn.net/rulebook/4-detailed-turn-sequence> and cross-checked
+  against the local cache `data/sources/rulebook/2026-10-09/
+  4-detailed-turn-sequence.md` (verbatim match, no drift) before building
+  anything. `engine/combat.py` now wires two further hooks, generalized the
+  same way `COMBAT_STRIKE_OPTION_HOOK`/`COMBAT_STRENGTH_MODIFIER_HOOK`
+  already generalize "a card grants an alternate strike"/"a card grants a
+  passive strength bonus" -- not Dust-Up-specific, since any future dodge-
+  or extra-strike-granting combat card hits the identical gap:
+  - `COMBAT_DODGE_OPTION_HOOK` (`"combat_dodge_option"`, `registry.Hook.
+    COMBAT_DODGE_OPTION`): offered alongside `COMBAT_STRIKE_OPTION_HOOK` at
+    the strike step (`_ask_strike`). Per Rulebook SS4 Combat > Choose
+    Strike, dodge is only ever "from any other card providing this minion a
+    strike," never a base/default option every vampire has -- confirmed no
+    built-in dodge choice is offered without a registered provider. Per
+    Strike Effects > Dodge ("A dodge strike deals no damage, but it
+    protects the dodging minion ... from the effects of the opposing
+    strike"), the engine enforces both halves directly in
+    `_resolve_one_strike`/`_resolve_strike_pair` (not via a provider's
+    `apply` return value): choosing it always deals 0 damage from that
+    strike and always zeroes whatever damage the opponent's *simultaneous*
+    strike this round would otherwise deal to the dodging combatant.
+  - `COMBAT_ADDITIONAL_STRIKE_HOOK` (`"combat_additional_strike"`,
+    `registry.Hook.COMBAT_ADDITIONAL_STRIKE`): offered once per combatant
+    after the normal strike pair (and after each additional-strike pair,
+    acting combatant asked first) via `_ask_additional_strike`; using one
+    re-enters the *full* strike-choice machinery (`_ask_strike`, including
+    `COMBAT_STRIKE_OPTION_HOOK`/`COMBAT_DODGE_OPTION_HOOK`) for that
+    combatant's additional strike, exactly like a normal strike -- an
+    additional strike is never a fixed/hardcoded hand strike (per Rulebook
+    SS4 Combat > Additional Strikes: "another choose strike step ... in
+    which only the minions with additional strikes may play strike cards";
+    Choose Strike places no narrower restriction on what an additional
+    strike can be chosen from). A combatant with no available/unused grant
+    does not strike in that pair at all (not even offered "no_strike"),
+    matching "only the minions with additional strikes may play strike
+    cards." The loop repeats "as necessary" while either combatant still
+    has an unused grant, reproducing the Wauneka/Flávio Gonçalves worked
+    example's shape (one side runs out before the other).
+  **Amendment (2026-10-10, `rules-auditor` finding, fixed same pass):** the
+  first version of this fix enforced dodge *unconditionally* -- any dodge
+  always zeroed the opponent's damage, with no way for a specific strike to
+  override that, even though the Golden Rule for Cards (CLAUDE.md SS2 /
+  Rulebook SS3: "whenever the cards contradict the rules, the cards take
+  precedence") lets a strike's own printed text do exactly that. Dust Up's
+  own `[ani]` clause ("This strike cannot be dodged") is the sourced
+  example, confirmed by its ruling: "[ani] Does not prevent the opponent
+  from dodging, the dodge just has no effect." [LSJ 20030902-2] [LSJ
+  20060808-1] -- the opponent may still *choose* to dodge, but that dodge
+  has zero effect against this one, specifically-flagged strike (the
+  dodging combatant's own simultaneous strike against the attacker is
+  unaffected either way). Added `combat.StrikeDamage` (a small frozen
+  dataclass, `amount: int, ignore_dodge: bool = False`): a
+  `COMBAT_STRIKE_OPTION_HOOK` provider's `apply(state)` may return this
+  instead of a plain `int` to flag its strike dodge-proof; `_resolve_one_
+  strike`/`_resolve_strike_pair` now track an `ignore_opponent_dodge` flag
+  per strike and only zero a dodging combatant's incoming damage when the
+  attacking strike did *not* set it. Hand strikes, `no_strike`, and dodge
+  itself never carry this (only a card-granted strike option plausibly
+  needs it). Documented as a known future gap (not built, no current card
+  needs it): dodge here still only nullifies numeric damage, not a future
+  non-damage strike effect (e.g. a Steal Blood-style strike) -- Strike
+  Effects > Dodge protects from "effects" more broadly than just damage.
+  Scenario tests: `tests/rules/test_combat_dodge_and_additional_strike.py`
+  (5 tests) -- dodge nullifying the opponent's simultaneous strike; a
+  dodge-proof strike still damaging a dodging opponent (the amendment
+  above); no dodge choice offered without a provider (regression guard); an
+  additional strike resolving via a card-granted `combat_strike_option`
+  rather than a hand strike (proving the full choice surface, not a
+  shortcut); the defender not being asked a second `strike_choice` when it
+  has no grant. All use fake, test-only providers registered/unregistered
+  within the test (`docs/DECISIONS.md` D-5), via the named hook constants
+  (not raw hook-name strings, per OQ-9's same typo-risk fix), independent of
+  Dust Up's own wording -- per the [LSJ 20030902-2]/[LSJ 20060808-1] rulings
+  quoted above, dodge is its own real, generic mechanic, not something that
+  should only exist in service of one card. `cards/dust_up.py` is left
+  untouched (still `blocked` on Gap 1; wiring its own `[cel]` clause against
+  these two new hooks is a future `card-implementer` pass once Gap 1 also
+  closes).
+- Gap 1 remained outstanding at the time Gap 2 (above) was resolved --
+  see the separate `rules-engineer` pass's own "Gap 1 update" note below
+  (working in parallel on `engine/cards.py` sect modeling, not this pass's
+  scope) for its status. Gap 1 blocks the card outright regardless of which
+  discipline clause a controlling vampire would use, independent of Gap 2's
+  resolution above -- so Dust Up itself remains `blocked` until Gap 1 is
+  also resolved (per whichever of the two notes below is current) and a
+  future `card-implementer` pass wires its `[ani]`/`[cel]`/`[pot]` clauses
+  against both passes' results.
+- Impacted code: `src/vtesbot/engine/cards.py` (`CryptCard`), `src/vtesbot/
+  engine/combat.py`. No deck-import pipeline yet exists to extend for Gap 1.
+  Impacted cards (at the time this was opened): Dust Up (registered
+  `blocked`, reason `OQ-18`; now `implemented`, see the `card-implementer`
+  note at the end of this entry); any future
+  2P-legal card gated on a vampire's sect ("Requires a/an \<Sect\>",
+  "Camarilla only," a Sabbat-only effect, etc.) would hit Gap 1; any future
+  card granting a dodge or a same-round additional strike would hit Gap 2.
+  Not yet swept (unlike OQ-10's explicit "quick sweep" of the pool for
+  similarly-shaped cards): whether any other 2P-legal card has its own
+  sect requirement or grants a dodge/additional strike -- left for a future
+  pass, same "no guessing ahead of a sourced need" boundary this entry
+  itself is opened under.
+- **Gap 1 update (2026-10-10, `rules-engineer`): resolved.** Re-fetched
+  Rulebook SS6 "Vampire Sects" <https://www.vekn.net/rulebook/6-vampire-sects>
+  live (matches the local cache's `dateModified`, confirming Camarilla,
+  Anarch, Sabbat, Independent) and, since SS6 alone does not mention Laibon,
+  also checked Rulebook SS7 "Legacy Sets" > "Other Vampire Sects"
+  <https://www.vekn.net/rulebook/7-legacy-sets> (also live, matching cache),
+  which documents Laibon as the fifth sect verbatim: "Only Laibon can hold
+  the laibon titles kholo and magaji." -- confirming the five sects named in
+  this entry's own "what would be needed" list, just split across two
+  Rulebook sections rather than one. Built:
+  1. `Sect` (`StrEnum`, `src/vtesbot/engine/cards.py`): `CAMARILLA`,
+     `ANARCH`, `SABBAT`, `INDEPENDENT`, `LAIBON`.
+  2. `CryptCard.sect: Sect | None = None` (same file) -- a new, optional
+     field alongside the dataclass's existing `clan`/`title`/`disciplines`
+     "plain printed stats" fields, documented the same way. Defaults to
+     `None` ("not modeled for this instance," e.g. a synthetic test
+     vampire, an Imbued, or a real vampire not yet run through
+     `derive_sect`), never to a guessed `Sect` member; a future card
+     gating on sect must treat `None` as "does not qualify."
+  3. `derive_sect(card_text: str) -> Sect` (same file): the generic,
+     reusable classifier this entry called for, instead of ad hoc per-card
+     logic. krcg has no structured sect field (confirmed again on the
+     installed krcg 5.14 package, both `Card.to_json()` and the live API's
+     requirement fields), so sect is derived from the free-text preamble at
+     the very start of a vampire's own printed `card_text`. Checked against
+     *every* crypt card in the installed krcg 5.14 dataset (`krcg.load()`),
+     not just a hand sample: all 1765 vampire printings (Imbued excluded --
+     see below) match a single regex, `^(?:Advanced,\s*)?(Camarilla|Anarch|
+     Sabbat|Independent|Laibon)\b`, 100% hit rate, zero manual overrides
+     needed. This also corrects an assumption in this entry's own "Gap 1"
+     write-up above: there is currently no vampire with *no* sect preamble
+     at all -- Independent vampires are not identified by the absence of a
+     preamble, their own printed text literally starts with "Independent."
+     (374 of the 1765 do). `derive_sect` still refuses to guess: text that
+     does not match the regex (a future printing with a malformed/omitted
+     preamble, or an Imbued's own text, which never carries a sect preamble
+     since Imbued are not vampires and have no sect) raises
+     `UnresolvedRulingError("OQ-18", ...)` rather than defaulting to
+     Independent.
+  4. Deliberately **not** built (confirmed still out of scope for unblocking
+     Dust Up, which only reads an existing sect via "Requires an Anarch," a
+     static playability gate, not an effect that grants one): Rulebook SS6's
+     "become Anarch" undirected minion action, and the real krcg-to-
+     `CryptCard` deck-import pipeline itself (still doesn't exist --
+     unchanged from this entry's own finding above). `derive_sect` is built
+     as a standalone, tested unit specifically so that pipeline has a
+     ready-made sect-derivation function to call once it exists; this pass
+     does not claim deck import works end-to-end.
+  Tests: `tests/rules/test_sect.py` (new) -- `Sect`'s five members;
+  `CryptCard.sect` defaults to `None` and can carry a `Sect`;
+  `derive_sect` against real, verbatim krcg card text for all five sects
+  (including OQ-18's own three named Anarch examples, Aluc Romas de Leon,
+  Anita Wainwright, Ariane, plus an "Advanced," printing and a title-
+  qualifier case), the Imbued no-preamble case, and the generic
+  malformed/empty-text case, all raising `UnresolvedRulingError`. Full
+  suite green (254 passed; the two combat-file tests concurrently in
+  progress under Gap 2 are out of this pass's scope), `ruff check`/`ruff
+  format --check` clean.
+  **This resolves Gap 1 only.** Gap 2 (the `[cel]` clause's dodge/same-
+  round-additional-strike mechanics in `engine/combat.py`) was handled
+  separately, in parallel, by a second `rules-engineer` pass -- see its own
+  "Gap 2 resolved" note earlier in this entry, which reports it resolved as
+  well. Dust Up itself still remains `blocked`: neither pass wired
+  `cards/dust_up.py` itself against the newly-available sect field or
+  combat hooks (both left that to a future `card-implementer` pass, by
+  design -- CLAUDE.md §6's all-or-nothing bar means the card is not
+  "implemented" merely because its blocking gaps are closed). This entry's
+  overall header status is left as **open** by both passes deliberately
+  (per each pass's own instructions not to unilaterally mark the whole
+  entry resolved) pending a single reconciling pass (e.g. `rules-auditor`
+  or the user) confirming both gap-resolution notes together, then flipping
+  the header and handing the card to `card-implementer`.
+- **Note on this entry's own header vs. its last paragraph (2026-10-10,
+  `card-implementer`):** the header above already read "(status:
+  resolved)" by the time this pass started (per the task that assigned this
+  pass: "OQ-18 ... is now fully resolved and re-audited ... status:
+  resolved, confirmed closed"), even though the immediately preceding
+  paragraph still says the header was "left as open ... pending a single
+  reconciling pass." Not re-litigated or second-guessed here (this pass
+  did not itself re-audit Gap 1/Gap 2's own resolutions, only built on top
+  of them, exactly as both gap-resolution notes above anticipated); flagged
+  so a future reader does not mistake the stale "left as open" sentence for
+  this entry's current status.
+- **`card-implementer` pass (2026-10-10): Dust Up implemented**
+  (`src/vtesbot/cards/dust_up.py`, `tests/cards/test_dust_up.py`, 18 tests).
+  Re-verified the card text/rulings against the live krcg API and the
+  cached `data/cards/100597.json` snapshot -- unchanged, matching this
+  entry's own earlier quotes. All three clauses wired: `[ani]`/`[pot]` as
+  `"combat_strike_option"` providers (base hand-strike damage, i.e.
+  `HAND_STRIKE_STRENGTH` plus any live `"combat_strength_modifier"`
+  contribution, so the "additional damage inherits all of the properties of
+  the base damage" ruling holds structurally, not by coincidence; `[ani]`
+  additionally flags `StrikeDamage(ignore_dodge=True)`); `[cel]` as a paired
+  `"combat_dodge_option"` (the dodge, plus recording an additional-strike
+  grant) and `"combat_additional_strike"` (claiming that grant) provider.
+  "Requires an Anarch" gates all three clauses via `vampire.card.sect is
+  Sect.ANARCH` (treating `None` as "does not qualify," never guessing a
+  default sect, per `CryptCard`'s own docstring).
+  One deliberate, documented granularity simplification, flagged here rather
+  than guessed at silently: `engine/combat.py`'s three combat hooks carry no
+  round-boundary (or even combat-boundary) signal in their context (unlike
+  `pending`, the per-minion-action scratch container OQ-11 built for bleed
+  actions) -- re-confirmed by re-reading `_ask_strike`/`_resolve_strike_
+  pair`/`_ask_additional_strike`/`run_combat` in full before concluding this,
+  not assumed. Building one would be genuine new `engine/combat.py` scope
+  (CLAUDE.md "No engine patches ... hand off to rules-engineer"), out of
+  bounds for this pass. So the `[cel]` clause's "(limited)" restriction
+  ("you cannot play it for the dodge only if you already played it for a
+  (limited) additional strike this round" [ANK 20220204]) is enforced at
+  "once per vampire instance, for as long as that instance exists" (in
+  practice, once per game) granularity instead of precisely "once per
+  round" -- strictly *more* restrictive than the sourced ruling, never less:
+  it can never produce the rules-forbidden outcome (re-granting an
+  additional strike, or replaying `[cel]` for the dodge only, within the
+  same round), only the safe-direction cost of also disallowing a later,
+  separate, legitimate replay (a different physical copy, in a later round
+  of the same combat, or an entirely later combat) that the rules would in
+  fact allow. Tracked card-module-side only (`dust_up.py::_cel_book`, keyed
+  by `id(vampire)` with a `weakref.finalize` cleanup callback to avoid any
+  cross-test/cross-game id-reuse leak -- `VampireInPlay` itself is
+  unhashable, per its own plain `@dataclass` decorator with no
+  `frozen=True`/`unsafe_hash=True`, so it cannot be used as a `dict`/
+  `WeakKeyDictionary` key directly); no `engine/` file was touched. Flagged
+  as a candidate for a future `rules-engineer` pass (a round-scoped scratch
+  container threaded through `run_combat`'s three hook contexts, mirroring
+  `pending`'s role for minion actions) if exact per-round fidelity is ever
+  wanted; no test in `tests/cards/test_dust_up.py` exercises or claims
+  correct round-2 re-availability, only the same-round restriction the
+  ruling actually describes. Full suite green (277 passed, up from 259;
+  `ruff check`/`ruff format --check` clean).

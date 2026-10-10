@@ -9,7 +9,7 @@ from . import hooks
 from .agent import Agent
 from .allies import RecruitAllySpec, burn_ally, detect_contest_on_recruit, recruit_ally
 from .attachments import effective_capacity, effective_disciplines
-from .cards import CardAttachment, CryptCard, LibraryCard
+from .cards import CardAttachment, CryptCard, LibraryCard, Sect, derive_sect
 from .decision import Choice, Decision
 from .errors import IllegalChoiceError, UnresolvedRulingError
 from .format import FormatConfig
@@ -32,6 +32,8 @@ __all__ = [
     "CardAttachment",
     "CryptCard",
     "LibraryCard",
+    "Sect",
+    "derive_sect",
     "Choice",
     "Decision",
     "IllegalChoiceError",
