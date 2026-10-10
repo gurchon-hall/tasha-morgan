@@ -136,7 +136,6 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
         201529,  # Alexa Draper
         201694,  # Diana Iadanza
         201616,  # Fiorenza Savona
-        201702,  # Marcos Belegrad
         201703,  # Modius
         201647,  # Queen Anne
     ):

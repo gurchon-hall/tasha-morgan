@@ -1,0 +1,65 @@
+{
+  "id": 201702,
+  "printed_name": "Marcos Belegrad",
+  "unicity_suffix": "",
+  "suffix": "G7",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Marcos Belegrad"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Marcos Belegrad (G7)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/marcosbelegradg7.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/marcosbelegradg7.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Ginés Quiñonero-Santiago"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Camarilla Prince of Bogota: Methuselahs casting (including controlling a minion casting) votes or ballots against a referendum called by Marcos burn 1 pool once results are tallied.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2024-08-19",
+  "banned": null,
+  "clan": "Toreador",
+  "path": "",
+  "advanced": false,
+  "capacity": 8,
+  "group": "G7",
+  "disciplines": [
+    "ani",
+    "AUS",
+    "CEL",
+    "PRE"
+  ],
+  "title": "Prince"
+}
