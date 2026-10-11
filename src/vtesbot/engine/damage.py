@@ -47,6 +47,20 @@ if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
 
 DAMAGE_PREVENTION_HOOK = "damage_prevention"
+VAMPIRE_ENTERS_TORPOR_HOOK = "vampire_enters_torpor"
+"""Mandatory, non-chosen per-provider reaction hook (`hooks.run_effects`,
+CLAUDE.md rule 3's "mandatory effects" exception -- nothing for a player to
+choose, so no `Decision` is raised), dispatched by `send_to_torpor` itself,
+the single call site every vampire's zone flips to `"torpor"` through.
+Added resolving `docs/OPEN_QUESTIONS.md` OQ-22's own remaining clause for
+Fame (100698, krcg id, "After this vampire goes to torpor, their controller
+burns 3 pool"); `vampire` is passed as the live `VampireInPlay` object, not
+merely its `instance_id` -- safe here (unlike a hook that raises a
+`Decision`, which would reach `Observation`/agent-visible code, CLAUDE.md
+"information hiding") because a `run_effects` provider only ever runs
+trusted engine-adjacent card-module code, the same precedent
+`engine/politics.py::_dispatch_referendum_tallied` already set for
+`REFERENDUM_TALLIED_HOOK`'s own `caller_vampire` context entry."""
 
 
 def add_blood(state: GameState, vampire: VampireInPlay, amount: int) -> int:
@@ -70,9 +84,17 @@ def burn_vampire(state: GameState, player: str, vampire: VampireInPlay) -> None:
 
 
 def send_to_torpor(state: GameState, player: str, vampire: VampireInPlay) -> None:
-    """Torpor: controlled but not ready (Rulebook SS4 Torpor)."""
+    """Torpor: controlled but not ready (Rulebook SS4 Torpor).
+
+    Dispatches `VAMPIRE_ENTERS_TORPOR_HOOK` (`hooks.run_effects`) immediately
+    after the zone transition, for any card whose own text reacts to the
+    moment a vampire goes to torpor (e.g. Fame, 100698, OQ-22). No provider
+    was registered against this hook before OQ-22's own remaining clauses
+    were wired, so this call changed no behaviour the instant it landed.
+    """
     vampire.zone = "torpor"
     vampire.locked = False
+    hooks.run_effects(VAMPIRE_ENTERS_TORPOR_HOOK, state, vampire=vampire, player=player)
 
 
 def apply_damage(

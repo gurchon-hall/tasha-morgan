@@ -2615,7 +2615,7 @@ up an OQ number or the highest one used so far.
   the first place) must choose that target inside its `ActionCardSpec`
   provider's `apply()`, never inside `resolve()`.
 
-## OQ-22: Contested Cards gap beyond crypt/ally -- Fame (100698) (status: open)
+## OQ-22: Contested Cards gap beyond crypt/ally -- Fame (100698) (status: resolved)
 
 - Situation: implementing Fame (Master, krcg id 100698, in the active 2P
   Brujah suggested decklist `data/decks/vekn-2p/brujah.json`) surfaced that
@@ -2683,10 +2683,188 @@ up an OQ number or the highest one used so far.
   splitting one card across two registry statuses), Fame is registered
   `blocked` entirely rather than implementing its torpor-entry/unlock-phase
   pool burns while silently leaving its own "Unique" clause unenforced.
+- Resolution (`rules-engineer` pass): re-fetched the Rulebook SS4 "Advanced
+  Rules > Contested Cards" section live again
+  (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>, cross-checked
+  against the local cache `data/sources/rulebook/2026-10-09/
+  4-detailed-turn-sequence.md`, lines 36-56) and the 2P variant's own
+  "Contested crypt cards" section (`data/sources/2p-variant/2026-10-09/
+  variant.md`) one more time before building, to confirm this situation's
+  own framing was still accurate: it was -- no new reading needed, this is
+  the same already-settled "one unified mechanism for every unique card"
+  rule OQ-10/OQ-15 already applied to allies, now applied a third time to an
+  attached master card. Built exactly what this entry's own "what would be
+  needed" described, reusing `engine/allies.py`'s own shape (itself a mirror
+  of `engine/contests.py`'s crypt-card shape) rather than reinventing a
+  fourth variant:
+  1. `engine/cards.py::CardAttachment` is no longer `frozen` (it must now
+     mutate `zone`/`contested_with` over a contest's lifetime, exactly like
+     `VampireInPlay`/`AllyInPlay`) and gained `controller: str | None = None`,
+     `instance_id: str | None = None`, `zone: str = "attached"` and
+     `contested_with: str | None = None`. `controller` is the Methuselah who
+     *played* the card (Rulebook SS2 Card Types: "controlled by the
+     Methuselah who played it, even if it is played on a card controlled by
+     another Methuselah"), independent of the vampire it sits on -- needed
+     because a contest and its unlock-phase resolution are tracked against
+     *that* Methuselah, not against the host vampire's own controller.
+     `controller`/`instance_id` default to `None` deliberately, not made
+     mandatory fields: a non-unique attachment such as Celerity (100312) can
+     never be contested in the first place and keeps constructing
+     `CardAttachment` directly with no change at all (`src/vtesbot/cards/
+     celerity.py` and every pre-existing `tests/rules/test_attachments.py`/
+     `tests/cards/test_celerity.py` fixture are untouched, zero-regression);
+     only an attachment built through the new `attach_card` entry point
+     below (none exist in the pool yet -- Fame stays `blocked`) ever has
+     them populated.
+  2. `src/vtesbot/engine/state.py::PlayerState.new_attachment_instance_id`
+     (new), mirroring `new_ally_instance_id`'s own per-player counter and
+     namespace convention (`"<player>-AT<n>"`, distinct from a vampire's
+     `"<player>-V<n>"` and an ally's `"<player>-A<n>"`).
+  3. `src/vtesbot/engine/attachments.py` (already the home of the OQ-8
+     `effective_capacity`/`effective_disciplines` machinery) gained four new
+     functions: `attach_card` (mirrors `engine/allies.py::recruit_ally`:
+     mints an `instance_id`, sets `controller`, appends the `CardAttachment`
+     to the given vampire's `attachments` list); `detect_contest_on_attach`
+     (mirrors `detect_contest_on_recruit` exactly: matches by `name`, checks
+     only the opponent of `attachment.controller` -- not the host vampire's
+     controller -- flags `contested_with` on both sides and moves both to
+     `zone == "contested"`); `resolve_one_attachment_contest` (mirrors
+     `resolve_one_ally_contest`'s two branches exactly: "pay" costs 1 pool
+     and leaves `zone == "contested"`, since -- as OQ-15 already established
+     for an ally -- there is no 2P "stays usable" override for this card
+     type either; "yield" burns the yielding copy and clears the opponent's
+     `contested_with` immediately but deliberately leaves the opponent's own
+     `zone` at `"contested"`, per the rulebook's "unlocked and turned face up
+     during your *next* unlock phase" wording); and two lookup helpers,
+     `iter_attachments`/`find_attachment_by_instance_id`, needed because
+     (unlike `VampireInPlay`/`AllyInPlay`) a `CardAttachment` has no
+     top-level `PlayerState` dict of its own to index into directly -- it is
+     nested inside whichever vampire's own `attachments` list it was put on,
+     which may belong to either player.
+  4. `src/vtesbot/engine/phases/unlock.py` gained `_unlock_own_attachments`
+     (mirrors `_unlock_own_allies`'s own delayed-restore step exactly, run
+     once per `unlock_phase` call alongside it, before the optional
+     pay-or-yield loop) and extended both `_pending_effect_ids` (a
+     `f"contest_attachment:{a.instance_id}"` entry per the player's own
+     currently-contested attachment, found via `iter_attachments` and
+     filtered by `a.controller == player`, not by whose vampire it sits on)
+     and `_resolve_optional_effects_in_chosen_order` (a new
+     `"contest_attachment:"`-prefixed dispatch branch, checked alongside the
+     existing `"contest_ally:"` one, before the vampire-contest fallback
+     branch).
+  5. `src/vtesbot/engine/__init__.py` exports `attach_card`,
+     `detect_contest_on_attach`, `find_attachment_by_instance_id` and
+     `iter_attachments` alongside the pre-existing `effective_capacity`/
+     `effective_disciplines` (`resolve_one_attachment_contest` is not
+     exported at the top level, mirroring `resolve_one_ally_contest`'s own
+     identical choice -- callers only ever reach it indirectly through
+     `unlock_phase`).
+  Proven by `tests/rules/test_attachment_contests.py` (detection: both
+  copies get `contested_with` set to each other and `zone` moved to
+  `"contested"`; differently-named attachments and a single player's own two
+  same-named attachments are confirmed *not* to contest, mirroring
+  `detect_contest_on_reveal`/`detect_contest_on_recruit`'s identical
+  pre-existing scope boundary, OQ-16; and a dedicated test proving the
+  contest is tracked against `attachment.controller`, not the host vampire's
+  own controller, by having one Methuselah attach copies onto both their own
+  and the opponent's vampire) and `tests/rules/test_attachment_contest_
+  resolution.py` (pay keeps both copies `zone == "contested"`; yield burns
+  the yielding copy and leaves the opponent's own `zone` unrestored until
+  that opponent's own next `unlock_phase` call; a zero-regression check for
+  an uncontested attachment; and a resolution-side companion to the
+  controller-vs-host-vampire test above, proving the *correct* player's
+  unlock phase is the one offered the decision). Full suite green: 389
+  passing (11 new, 0 regressions), `ruff check`/`ruff format --check` clean.
+  Deliberately **not** built, confirmed still out of scope (CLAUDE.md "one
+  rule mechanism per change"; no card module needs either yet, same
+  boundary OQ-15 itself drew for Shilmulo Tarot on this exact
+  `CardAttachment` side): (a) any Observation-level visibility for an
+  attachment at all -- `engine/observation.py`'s `VampireView` has no
+  `attachments` field today, contested or not, a pre-existing gap this pass
+  does not widen or narrow; (b) the rulebook's own "cannot contest yourself"
+  DECK CONSTRUCTION caution box (OQ-16) -- `detect_contest_on_attach` only
+  ever checks the opponent of `attachment.controller`, the same scope
+  boundary `detect_contest_on_reveal`/`detect_contest_on_recruit` already
+  have, tracked once already by OQ-16 for all three paths alike, not a new
+  gap introduced here; (c) any filtering of a contested/burned attachment's
+  own hook contributions (e.g. `CAPACITY_MODIFIER_HOOK`) -- today's only
+  numeric-attachment card, Celerity, is never Unique and so can never reach
+  `zone != "attached"` in the first place, so this has no live consequence
+  yet, but a future `card-implementer` pass building a *Unique* numeric/
+  discipline-granting attachment on top of this mechanism must have its own
+  hook provider check `attachment.zone == "attached"` before contributing a
+  bonus, rather than assume the engine already excludes a contested copy's
+  effects for it.
 - Impacted code: `src/vtesbot/engine/cards.py::CardAttachment`,
-  `src/vtesbot/engine/phases/unlock.py` (pending-effect ordering loop), a
-  new `detect_contest_on_attach`-shaped check (exact location TBD by
-  `rules-engineer`). Impacted cards: Fame (100698, `blocked`); flag for any
-  future Unique attached master card too (the engine's own
-  `CardAttachment` docstring already names "Perfectionist" as a
-  hypothetical future example of this same category).
+  `src/vtesbot/engine/state.py` (`PlayerState.new_attachment_instance_id`),
+  `src/vtesbot/engine/attachments.py` (`attach_card`,
+  `detect_contest_on_attach`, `resolve_one_attachment_contest`,
+  `iter_attachments`, `find_attachment_by_instance_id`),
+  `src/vtesbot/engine/phases/unlock.py` (`_unlock_own_attachments`,
+  `_pending_effect_ids`, `_resolve_optional_effects_in_chosen_order`,
+  `unlock_phase`), `src/vtesbot/engine/__init__.py` (exports). Card
+  registration is unchanged: Fame stays `blocked`/`OQ-22` in the registry
+  (re-implementing it against this capability, and flagging any future
+  Unique attached master card -- the engine's own `CardAttachment` docstring
+  already names "Perfectionist" as a hypothetical future example of this
+  same category -- is `card-implementer`'s job); this change should get a
+  `rules-auditor` review (core engine/unlock-phase mechanics) before any
+  card module is wired against it, same bar OQ-15's own resolution set for
+  the ally-side mechanism it mirrors.
+- Addendum (`rules-engineer`, 2026-10-11, follow-up to a `rules-auditor`
+  MAJOR finding on the resolution above): `CardAttachment.controller`'s and
+  `attach_card`'s own docstrings cited Rulebook SS2 Card Types' "Master
+  Cards" subsection ("A master card in play is controlled by the Methuselah
+  who played it, even if it is played on a card controlled by another
+  Methuselah") as if it were the controller rule for every `CardAttachment`
+  -- but `CardAttachment`'s own class docstring names three attachment
+  categories in scope (a discipline/archetype master card, "a piece of
+  combat equipment (Weighted Walking Stick)," or "a retainer"), and the same
+  rulebook page's "Minion Cards" subsection (re-fetched live and
+  cross-checked against the local cache, `data/sources/rulebook/
+  2026-10-09/2-card-types.md`, lines 254-299) states the opposite rule for
+  that second and third category: "A minion card in play is controlled by
+  the controller of the minion it is on." (Equipment is "put into play on
+  the acting minion" and "burned when the minion they are played on ...
+  is burned"; a Retainer card is likewise "put into play on the acting
+  minion.") The Master-card citation was accurate for Fame itself (a Master
+  card, the only live user of `attach_card` today, still `blocked`/OQ-22),
+  but overclaimed it as a blanket rule reaching the Equipment/Retainer
+  categories the same docstring already names as in scope -- concretely
+  wrong for a future Equipment attachment such as Shilmulo Tarot (krcg id
+  101767, "Unique.", `types == ["Equipment"]`, confirmed live via krcg;
+  already named as a likely next unique-attachment target in OQ-10's own
+  text).
+  No behaviour changed, and no type-based branching was added to
+  `attach_card`: `controller` is, and was already, a plain caller-supplied
+  parameter (`attach_card(..., *, controller: str, ...)`) -- the function
+  never derived it from the attachment's own card type, it only stored
+  whatever the caller passed. Since no production call site exists yet
+  (Fame stays `blocked`; every real caller today is a test), there is no
+  live wrong behaviour to fix, only an overclaimed/incomplete citation and
+  contract. Fixed by documentation only: `CardAttachment.controller`'s
+  docstring (`src/vtesbot/engine/cards.py`) and `attach_card`'s own
+  docstring (`src/vtesbot/engine/attachments.py`), plus that module's own
+  top-of-file docstring, now state plainly that the Master-card rule only
+  covers a Master-type attachment, quote the Minion Cards rule for
+  Equipment/Retainer, and make explicit that a future caller wiring an
+  Equipment- or Retainer-type attachment (naming Shilmulo Tarot) is
+  responsible for passing that attachment's host vampire's own current
+  controller (`vampire.controller`) as `controller`, not whoever played the
+  card -- `attach_card` itself will not catch a caller that gets this wrong.
+  Threading real type-based branching into `attach_card` itself was
+  considered and deliberately not done: no card in the pool calls it with
+  an Equipment/Retainer card yet, so adding that branch now would be
+  speculative plumbing for a hypothetical caller (CLAUDE.md "no guessing
+  ahead of a sourced need" / "one rule mechanism per change") rather than a
+  fix driven by a live need; the correct rule for that case is settled and
+  sourced above, not an open ruling question, so it does not need its own
+  new OQ entry -- it is recorded here, against the function whose contract
+  it corrects, for whichever future `card-implementer` pass wires Shilmulo
+  Tarot or a similar Equipment/Retainer attachment to find before copying
+  the Fame pattern uncritically.
+  Impacted code (this addendum only): `src/vtesbot/engine/cards.py`
+  (`CardAttachment.controller` docstring), `src/vtesbot/engine/
+  attachments.py` (`attach_card` docstring, module docstring). No test
+  changes (no behaviour changed); `tests/rules/test_attachment_contests.py`
+  and `tests/rules/test_attachment_contest_resolution.py` are unaffected.

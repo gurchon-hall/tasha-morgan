@@ -8,7 +8,14 @@ No I/O, no printing, no network; all randomness via `GameState.rng`
 from . import hooks
 from .agent import Agent
 from .allies import RecruitAllySpec, burn_ally, detect_contest_on_recruit, recruit_ally
-from .attachments import effective_capacity, effective_disciplines
+from .attachments import (
+    attach_card,
+    detect_contest_on_attach,
+    effective_capacity,
+    effective_disciplines,
+    find_attachment_by_instance_id,
+    iter_attachments,
+)
 from .cards import CardAttachment, CryptCard, LibraryCard, Sect, derive_sect
 from .decision import Choice, Decision
 from .errors import IllegalChoiceError, UnresolvedRulingError
@@ -27,8 +34,12 @@ __all__ = [
     "burn_ally",
     "detect_contest_on_recruit",
     "recruit_ally",
+    "attach_card",
+    "detect_contest_on_attach",
     "effective_capacity",
     "effective_disciplines",
+    "find_attachment_by_instance_id",
+    "iter_attachments",
     "CardAttachment",
     "CryptCard",
     "LibraryCard",

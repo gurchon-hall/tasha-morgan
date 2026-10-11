@@ -82,6 +82,27 @@ class Hook(StrEnum):
     "burn 1 pool once results are tallied" (`docs/OPEN_QUESTIONS.md` OQ-6)
     needs; no provider is registered against it yet, so this call site
     changes no behaviour today."""
+    VAMPIRE_ENTERS_TORPOR = "vampire_enters_torpor"
+    """A mandatory, non-chosen per-provider reaction fired the instant any
+    vampire's `zone` flips to `"torpor"` (`engine/damage.py::send_to_torpor`,
+    the single call site every vampire's zone transitions through),
+    dispatched via `hooks.run_effects` -- no `Decision`, since there is
+    nothing for a player to choose. Added resolving `docs/OPEN_QUESTIONS.md`
+    OQ-22's own remaining "still needed" clause 2 for Fame (100698, "After
+    this vampire goes to torpor, their controller burns 3 pool"), the first
+    production user of this hook."""
+    UNLOCK_PHASE_MANDATORY_EFFECT = "unlock_phase_mandatory_effect"
+    """A mandatory, non-chosen per-provider reaction fired once per
+    `engine/phases/unlock.py::unlock_phase` call, for the unlocking player
+    (not necessarily the reacting card's own controller) -- dispatched via
+    `hooks.run_effects` -- no `Decision`, since there is nothing to choose.
+    Distinct from the optional pay-or-yield pending-effect loop in the same
+    phase (`"contest:"`/`"contest_ally:"`/`"contest_attachment:"`, each of
+    which *does* offer a real choice): this hook is for an effect with no
+    legal alternative at all. Added resolving `docs/OPEN_QUESTIONS.md` OQ-22's
+    own remaining "still needed" clause 3 for Fame (100698, "During each
+    Methuselah's unlock phase, if this vampire is in torpor, that Methuselah
+    burns 1 pool"), the first production user of this hook."""
     # Named for classification; no engine wiring exists yet (see the
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"

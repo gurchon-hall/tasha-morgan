@@ -87,6 +87,7 @@ class PlayerState:
     allies: dict[str, AllyInPlay] = field(default_factory=dict)
     _next_instance_seq: int = 0
     _next_ally_instance_seq: int = 0
+    _next_attachment_instance_seq: int = 0
 
     def new_instance_id(self) -> str:
         self._next_instance_seq += 1
@@ -98,6 +99,14 @@ class PlayerState:
         `engine/allies.py::recruit_ally`)."""
         self._next_ally_instance_seq += 1
         return f"{self.player_id}-A{self._next_ally_instance_seq}"
+
+    def new_attachment_instance_id(self) -> str:
+        """Mints a card-attachment instance id in its own namespace,
+        distinct from a vampire's `"...-V<n>"` and an ally's `"...-A<n>"`
+        ids (OQ-22, `docs/OPEN_QUESTIONS.md`; `engine/attachments.py::
+        attach_card`)."""
+        self._next_attachment_instance_seq += 1
+        return f"{self.player_id}-AT{self._next_attachment_instance_seq}"
 
 
 @dataclass
