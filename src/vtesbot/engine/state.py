@@ -126,6 +126,17 @@ class GameState:
     victory_points: dict[str, float] = field(default_factory=dict)
     game_over: bool = False
     winner: str | None = None
+    combat_range: str | None = None
+    """Current combat round's range ("close"/"long"), set by `engine/
+    combat.py`'s Determine Range step each round (Rulebook SS4 Combat >
+    Combat Sequence step 2) -- `None` whenever no combat is in progress.
+    Exposed on `GameState`, not just as a local variable inside `run_combat`,
+    so a future card hook that needs to gate a strike/effect by range
+    (Rulebook SS4 Combat > Determine Range: "Some effects can only be used at
+    close range, some only at long range") can read it without an engine
+    signature change -- no consumer reads it yet, building that gating is
+    deliberately out of scope for the pass that added this field (see
+    `engine/combat.py` module docstring)."""
 
     def other_player(self, player: str) -> str:
         """2P structural fact (Rulebook SS5; CLAUDE.md SS3): with exactly two

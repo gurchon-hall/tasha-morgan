@@ -103,6 +103,24 @@ class Hook(StrEnum):
     own remaining "still needed" clause 3 for Fame (100698, "During each
     Methuselah's unlock phase, if this vampire is in torpor, that Methuselah
     burns 1 pool"), the first production user of this hook."""
+    MANEUVER = "maneuver"
+    """A card/printed-ability-granted maneuver, offered during the Determine
+    Range step (`engine/combat.py::_ask_maneuver`/`_determine_range`, before
+    the strike step each round) -- acting combatant's controller offered
+    first, strictly alternating turn by turn thereafter (never "returns to
+    the acting Methuselah": Rulebook SS4 Combat > Determine Range's "A minion
+    cannot play two maneuvers in a row" is enforced by this alternation,
+    rather than by a provider-side check), closing once two consecutive
+    turns both decline/have nothing. Scope restriction (see `engine/
+    combat.py` module docstring): only an ability-granted maneuver *not*
+    bundled with choosing a strike (e.g. Saku Pihlajamäki's printed "1
+    optional maneuver each combat") is wired -- a maneuver bundled with
+    playing a strike card/weapon (Pursuit, Slam, Dance with the Devil, ...),
+    which simultaneously satisfies that combatant's strike choice for the
+    round per the same rulebook section, is a separate, larger future engine
+    change, not built by this hook. `context["combat_state"]` carries the
+    shared, *combat*-scoped (not round-scoped) scratch dict a provider needs
+    for a once-per-combat grant like Saku's."""
     # Named for classification; no engine wiring exists yet (see the
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"
@@ -119,7 +137,6 @@ class Hook(StrEnum):
     OPEN_QUESTIONS.md` OQ-6); do not wire a future provider for it against
     `POLLING_STEP` or `REFERENDUM_TALLIED` instead, since neither has a vote
     margin or final pass/fail state available at the moment it fires."""
-    MANEUVER = "maneuver"
     RANGED_STRIKE = "ranged_strike"
     ALLY_ENTITY = "ally_entity"
     LOCATION_ENTITY = "location_entity"

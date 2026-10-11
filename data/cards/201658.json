@@ -1,0 +1,83 @@
+{
+  "id": 201658,
+  "printed_name": "Saku Pihlajamäki",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Saku Pihlajamäki"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Saku Pihlajamäki (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 0,
+        "code": "Promo"
+      },
+      "occurrences": [
+        {
+          "type": "Single",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 0,
+          "date": "2023-07-29"
+        }
+      ],
+      "url": ""
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/sakupihlajamakig6.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/sakupihlajamakig6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Noora Hirvonen"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Anarch Baron of Helsinki: Saku gets 1 optional maneuver each combat.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2023-07-29",
+  "banned": null,
+  "clan": "Brujah",
+  "path": "",
+  "advanced": false,
+  "capacity": 8,
+  "group": "G6",
+  "disciplines": [
+    "for",
+    "pro",
+    "CEL",
+    "POT",
+    "PRE"
+  ],
+  "title": "Baron"
+}

@@ -33,11 +33,10 @@ hook (CLAUDE.md rule 3 exception) summed into the base hand-strike strength,
 for printed vampire abilities that are not a choice (e.g. a flat "+1
 strength" line or a clan-conditional combat bonus). With no providers
 registered for either hook, every strike is exactly a plain hand strike at
-strength 1 -- byte-for-byte the milestone-2 result. Maneuvers and ranged
-strikes remain out of scope this pass (no combat card in the current pool's
-classification needs them *without* also needing the maneuver/range
-mechanic itself, which is a separate, larger future engine change -- see the
-rules-engineer milestone-3 scaffolding report).
+strength 1 -- byte-for-byte the milestone-2 result. Ranged strikes (a strike
+usable only at long range) remain out of scope this pass; the Determine
+Range step and the maneuver mechanic that moves a round between close and
+long range are now built -- see "Determine Range and maneuvers" below.
 
 Dodge and same-round additional strikes (resolves `docs/OPEN_QUESTIONS.md`
 OQ-18 Gap 2) -- re-fetched live
@@ -161,6 +160,103 @@ plain `int` (the common case; a plain `int` behaves exactly like
 `combat_dodge_option` itself never need this (hand strike is always
 dodgeable by rule default; a dodge strike deals no damage regardless).
 
+Determine Range and maneuvers (CLAUDE.md milestone-3 follow-up pass, Saku
+Pihlajamäki (201658, "Anarch Baron of Helsinki: Saku gets 1 optional
+maneuver each combat") -- the first card in the pool needing it) -- re-
+fetched live <https://www.vekn.net/rulebook/4-detailed-turn-sequence>
+2026-10-11, matching the local cache `data/sources/rulebook/2026-10-09/
+4-detailed-turn-sequence.md`:
+
+- Combat Sequence (verbatim, step list): "1. Before Range: Play cards before
+  range is chosen. 2. Determine Range: Use maneuvers to change the range to
+  close or long. 3. Before Strikes ... 4. Strike ... 5. Damage Resolution ...
+  6. Press ... 7. End of Round ... The acting minion always gets first
+  opportunity to use cards or effects before the opposing minion at every
+  stage of combat." The last sentence is the same text OQ-3 already quotes
+  for the press step; it applies identically here, so the acting combatant's
+  controller is offered the first maneuver-or-decline turn of every round,
+  same precedent as press.
+- Determine Range (verbatim): "Each round of combat is fought at either
+  close range or long range. Close range is the default for each round. ...
+  A minion in combat can use a maneuver to get to long range, or they can
+  maneuver to get back to close range if their opponent maneuvers to long.
+  The two combatants can continue playing maneuvers to keep offsetting the
+  effects of their opponent's last maneuver for as long as they wish. A
+  minion cannot play two maneuvers in a row, which would effectively cancel
+  each other. ... If a combat card played by a minion has an 'optional
+  maneuver' as part of the effect, then the minion may decline to use the
+  maneuver." `run_combat` now runs this as its own step, `_determine_range`,
+  immediately before the strike step every round, matching the rulebook's
+  own step-2-before-step-4 ordering.
+- Turn order and termination: NOT `hooks.resolve_impulse_window`'s "impulse
+  returns to the acting Methuselah" model -- that model would offer the same
+  combatant a second, consecutive turn the instant they maneuver, directly
+  contradicting "A minion cannot play two maneuvers in a row." Instead,
+  `_determine_range` runs its own strict turn-by-turn alternation (acting
+  combatant's controller first, then strictly the other combatant every
+  single turn after, win or decline -- never the same combatant twice in a
+  row by construction, so the "no two in a row" rule is enforced by the loop
+  shape itself, with no provider-side check needed), closing once two
+  consecutive turns both decline/have nothing available (CLAUDE.md rule 4's
+  "the window closes when both pass," applied turn-by-turn here rather than
+  side-by-side since the two combatants are never offered simultaneous turns
+  in this step). `_ask_maneuver` offers every registered `"maneuver"` option
+  (`cards/registry.py::Hook.MANEUVER`) plus a decline choice; no options
+  registered => no `Decision` raised at all for that turn (CLAUDE.md "only
+  when needed"), so with no `"maneuver"` provider registered anywhere, both
+  of the two required turns are silent no-ops and `state.combat_range` stays
+  `CLOSE_RANGE` for the whole round -- byte-for-byte the previous
+  (pre-maneuver) result; no existing test's script needed a new entry.
+  Reproduces the module's own worked example verbatim (`tests/rules/
+  test_combat_maneuver.py::test_ayelech_colette_worked_example`): Colette
+  (acting) declines first; Ayelech (blocking) maneuvers to long; Colette
+  maneuvers back to close; Ayelech maneuvers again to long; Colette has
+  nothing left and declines; the implicit sixth turn (Ayelech, now also with
+  nothing left) is the second consecutive decline that closes the step with
+  the range left at long -- the worked example's own prose elides this last,
+  trivial turn, but the loop still asks it (a provider legitimately could
+  have one more grant to offer there; this combat's fake providers do not).
+- Scope restriction (CLAUDE.md "no guessing"/"small commits"): only an
+  ability-granted maneuver *not* bundled with choosing a strike is wired --
+  exactly Saku's shape (a printed vampire ability, "1 optional maneuver each
+  combat," no card played, not bundled with a strike choice). Explicitly
+  **not** built: "To use a maneuver from a strike card, the minion plays the
+  strike card during this step instead of during the choose strike step. If
+  a minion uses the maneuver from a strike card or a weapon, they are
+  effectively choosing their strike as well. As such, they cannot use a
+  second strike card or weapon to maneuver again in the same round." --
+  i.e. a maneuver source that also simultaneously satisfies that combatant's
+  strike choice for the round (Pursuit, Slam, Dance with the Devil, ...).
+  This is a separate, larger future engine change (the strike step would
+  need to know a combatant's choice was already consumed during Determine
+  Range); a future pass building it, or a `card-implementer` pass hitting
+  this gap on one of those specific cards, will need its own engine change
+  or its own Open Question -- not pre-built or anticipated here.
+- Per-combat, not per-round, scoping: Saku's own grant ("1 optional maneuver
+  each combat") spans however many rounds the whole combat lasts, unlike a
+  combat card's maneuver grant (consumed the one round it is played, same
+  round-scoped lifetime as `ROUND_STATE_CONTEXT_KEY`). `run_combat` creates
+  one fresh `combat_state: dict[str, Any]` once, *outside* the per-round
+  `while` loop (never recreated between rounds of the same combat, unlike
+  `round_state`), and threads it into `"maneuver"`'s hook context under
+  `COMBAT_STATE_CONTEXT_KEY` -- a future Saku module stores its own
+  "used this combat" flag inside it (e.g. keyed by `context["vampire"]`,
+  the same per-vampire-id convention `ADDITIONAL_STRIKE_LIMIT_KEY` already
+  uses, to stay correct if a future card grants a second, independent
+  vampire's own per-combat maneuver too), exactly mirroring `round_state`'s
+  shape but with a combat-length, not round-length, lifetime.
+- `GameState.combat_range` (`engine/state.py`) is set to `CLOSE_RANGE` at
+  the top of `_determine_range` ("Close range is the default for each
+  round") and flipped on every maneuver played, so it always reflects the
+  range as determined *so far* this round; reset to `None` once `run_combat`
+  itself returns (no combat in progress). Range-gating a strike or other
+  strike-resolution-step effect by close/long ("Some effects can only be
+  used at close range, some only at long range") is explicitly **not**
+  built this pass (point 6 of this task's scope) -- no implemented card
+  needs it yet; `GameState.combat_range` is exposed precisely so a later
+  pass can read it without an engine signature change, not to pre-build the
+  gating itself.
+
 Known future gap (deliberately not built -- no card in the current pool's
 classification needs it, milestone-2 scope is hand-strikes-only): dodge as
 implemented here only nullifies numeric *damage*. Strike Effects > Dodge
@@ -187,6 +283,15 @@ COMBAT_STRIKE_OPTION_HOOK = "combat_strike_option"
 COMBAT_STRENGTH_MODIFIER_HOOK = "combat_strength_modifier"
 COMBAT_DODGE_OPTION_HOOK = "combat_dodge_option"
 COMBAT_ADDITIONAL_STRIKE_HOOK = "combat_additional_strike"
+MANEUVER_HOOK = "maneuver"
+"""Matches `cards/registry.py::Hook.MANEUVER`'s string value -- see module
+docstring's "Determine Range and maneuvers" section."""
+
+CLOSE_RANGE = "close"
+LONG_RANGE = "long"
+"""The two legal values of `GameState.combat_range` (Rulebook SS4 Combat >
+Determine Range: "Each round of combat is fought at either close range or
+long range")."""
 
 ROUND_STATE_CONTEXT_KEY = "round_state"
 """Context key, under `COMBAT_DODGE_OPTION_HOOK`/`COMBAT_ADDITIONAL_STRIKE_
@@ -197,6 +302,22 @@ creates fresh at the top of every round (see module docstring's "Cross-card
 no entry under this key; `additional_strike_limit_used`/`mark_additional_
 strike_limit_used` below both treat that as "no shared state available" and
 degrade gracefully (see their own docstrings) rather than raising."""
+
+COMBAT_STATE_CONTEXT_KEY = "combat_state"
+"""Context key, under `MANEUVER_HOOK`, for the shared, *combat*-scoped (not
+round-scoped -- see `ROUND_STATE_CONTEXT_KEY` above and the module
+docstring's "Determine Range and maneuvers" section) scratch `dict[str, Any]`
+`run_combat` creates once, before its per-round `while` loop, and never
+recreates between rounds of the same combat -- unlike `round_state`, which is
+fresh every round. A provider for a once-per-*combat* grant (e.g. Saku
+Pihlajamäki's printed "1 optional maneuver each combat") records its own
+"used" flag inside this dict (by convention keyed by `context["vampire"]`,
+the same per-vampire-id pattern `ADDITIONAL_STRIKE_LIMIT_KEY` uses, so one
+combatant's own per-combat grant never blocks the other's); no generic
+engine-level helper is provided for this (unlike `additional_strike_limit_
+used`/`mark_additional_strike_limit_used` below), since no cross-card,
+engine-enforced cap is sourced for maneuvers -- it is a single card's own
+private bookkeeping, not a rule this module itself needs to enforce."""
 
 ADDITIONAL_STRIKE_LIMIT_KEY = "additional_strike_limit_used"
 """Key inside the `ROUND_STATE_CONTEXT_KEY` dict for the "(limited)"
@@ -527,6 +648,88 @@ def _ask_additional_strike(
     return True
 
 
+def _flip_range(range_: str) -> str:
+    return LONG_RANGE if range_ == CLOSE_RANGE else CLOSE_RANGE
+
+
+def _ask_maneuver(
+    state: GameState,
+    player: str,
+    vampire: VampireInPlay,
+    opponent: VampireInPlay,
+    combat_state: dict[str, Any],
+) -> bool:
+    """Offer this combatant's controller every currently-available
+    `MANEUVER_HOOK` grant for one turn of the Determine Range step (module
+    docstring's "Determine Range and maneuvers" section) -- only an
+    ability-granted maneuver *not* bundled with choosing a strike (e.g. Saku
+    Pihlajamäki's printed "1 optional maneuver each combat"); a maneuver
+    bundled with playing a strike card/weapon is explicitly out of scope (see
+    module docstring).
+
+    `combat_state` is the shared, *combat*-scoped (not round-scoped --
+    `COMBAT_STATE_CONTEXT_KEY`) scratch dict, threaded into the hook context
+    so a provider like Saku's own can record its one-time, whole-combat use.
+
+    No options registered/currently available => no `Decision` raised at all
+    (CLAUDE.md "only when needed"). Returns whether this combatant plays a
+    maneuver now; `_determine_range` flips the range if so.
+    """
+    options = hooks.offer(
+        MANEUVER_HOOK,
+        state,
+        player=player,
+        vampire=vampire.instance_id,
+        opponent=opponent.instance_id,
+        combat_state=combat_state,
+    )
+    if not options:
+        return False
+    by_value = {o.choice.value: o for o in options}
+    choices = tuple(o.choice for o in options) + (Choice(hooks.PASS_VALUE, "Do not maneuver"),)
+    decision = Decision(
+        player=player,
+        kind="maneuver_choice",
+        choices=choices,
+        context={"vampire": vampire.instance_id},
+    )
+    answer = state.ask(decision).value
+    if answer == hooks.PASS_VALUE:
+        return False
+    by_value[answer].apply(state)
+    return True
+
+
+def _determine_range(
+    state: GameState,
+    acting_player: str,
+    acting_vampire: VampireInPlay,
+    blocking_player: str,
+    blocking_vampire: VampireInPlay,
+    combat_state: dict[str, Any],
+) -> None:
+    """Rulebook SS4 Combat > Combat Sequence step 2, "Determine Range" (see
+    module docstring's verbatim quote and its "Turn order and termination"
+    paragraph for the sourcing of the alternation/closing rule implemented
+    here). Sets `state.combat_range` for this round.
+    """
+    state.combat_range = CLOSE_RANGE  # "Close range is the default for each round."
+    turns = (
+        (acting_player, acting_vampire, blocking_vampire),
+        (blocking_player, blocking_vampire, acting_vampire),
+    )
+    turn_index = 0
+    consecutive_declines = 0
+    while consecutive_declines < 2:
+        player, vampire, opponent = turns[turn_index]
+        if _ask_maneuver(state, player, vampire, opponent, combat_state):
+            state.combat_range = _flip_range(state.combat_range)
+            consecutive_declines = 0
+        else:
+            consecutive_declines += 1
+        turn_index = 1 - turn_index
+
+
 def _ask_press(state: GameState, player: str, vampire: VampireInPlay) -> str:
     choices = (
         Choice("press", "Press: continue combat to another round"),
@@ -546,9 +749,21 @@ def run_combat(
     blocking_vampire: VampireInPlay,
 ) -> None:
     """Resolve combat between the acting and the (successfully) blocking minion."""
+    # One combat-scoped scratch dict, created once for the whole combat (not
+    # recreated per round, unlike round_state below) -- module docstring's
+    # "Determine Range and maneuvers" section, "Per-combat, not per-round,
+    # scoping" paragraph.
+    combat_state: dict[str, Any] = {}
     while True:
         if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
             break  # Rulebook SS4: combat ends at once if a combatant is no longer ready.
+
+        # --- Determine Range step (Rulebook SS4 Combat > Combat Sequence
+        # step 2; see module docstring): resolved before the strike step
+        # every round, same ordering as the rulebook's own numbered list. ---
+        _determine_range(
+            state, acting_player, acting_vampire, blocking_player, blocking_vampire, combat_state
+        )
 
         # One fresh, shared "(limited)"-additional-strike scratch dict per
         # round (module docstring's "Cross-card '(limited)' cap" section):
@@ -606,3 +821,4 @@ def run_combat(
                 break
         if not pressed:
             break
+    state.combat_range = None  # no combat in progress once run_combat returns
