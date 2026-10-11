@@ -26,7 +26,7 @@ from vtesbot.engine.action import ACTION_ACTION_CARD
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.observation import Observation
-from vtesbot.engine.phases.minion import minion_phase
+from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, minion_phase
 
 NAME = "Enchant Kindred"
 
@@ -457,6 +457,92 @@ def test_superior_with_multiple_eligible_targets_raises_a_choice_decision():
     assert game.blood_of("U1") == 2
     assert game.blood_of("U2") == 0
     actor.assert_exhausted()
+
+
+def test_superior_target_is_chosen_at_announce_time_even_when_the_block_succeeds():
+    """Rules-auditor finding (OQ-21, 2026-10-11): the "which eligible
+    vampire" decision is raised inside `apply()`, at announce time, before
+    the block-attempt window opens -- not deferred to `resolve()`. With
+    multiple eligible targets *and* a block that goes on to succeed, the
+    choice must still happen (the `"enchant_kindred_target"` decision fires
+    between `"action_choice"` and `"block_attempt"`) even though `resolve()`
+    -- and so the actually-chosen target's blood gain -- never runs. This
+    would fail under the earlier (resolve-time) placement: there, the
+    decision is never raised at all once the action is blocked."""
+
+    def match_superior_stealth(state, context):
+        if context.get("action") != ACTION_ACTION_CARD:
+            return []
+        return [HookOption(choice=Choice("match", "+1 intercept"), apply=lambda s: 1)]
+
+    hooks.register("intercept_modifier", match_superior_stealth)
+    try:
+        builder = ScenarioBuilder(seed=1)
+        p1 = builder.player("P1", pool=30).ready_vampire(
+            "V1", capacity=5, blood=1, disciplines=("PRE",)
+        )
+        p1.hand.append(_enchant_kindred_card())
+        p1.uncontrolled_vampire("U1", capacity=4, blood=0)
+        p1.uncontrolled_vampire("U2", capacity=4, blood=0)
+        builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=1)
+        game = builder.build()
+        actor = ScriptedAgent("P1")
+        actor.expect("minion_phase_choice", "act_with:V1")
+        actor.expect("action_choice", "enchant_kindred:superior")
+        actor.expect("enchant_kindred_target", "enchant_kindred_target:U1")
+        actor.expect("strike_choice", "no_strike")
+        actor.expect("press", "end_combat")
+        defender = ScriptedAgent("P2")
+        defender.expect("block_attempt", "block_with:B1")
+        defender.expect("intercept_modifier", "match")
+        defender.expect("strike_choice", "no_strike")
+        defender.expect("press", "end_combat")
+        game.state.agents["P1"] = actor
+        game.state.agents["P2"] = defender
+
+        minion_phase(game.state, "P1")
+
+        assert game.blood_of("U1") == 0  # blocked: resolve() never ran, no blood gained
+        assert game.blood_of("U2") == 0  # never touched
+        assert game.state.players["P1"].hand == []
+        assert [c.name for c in game.state.players["P1"].ash_heap] == [NAME]
+        actor.assert_exhausted()
+        defender.assert_exhausted()
+    finally:
+        hooks.unregister("intercept_modifier", match_superior_stealth)
+
+
+def test_superior_resolve_fizzles_if_the_announced_target_stops_qualifying():
+    """OQ-21 (`docs/OPEN_QUESTIONS.md`): the target is chosen at `apply()`
+    time (announce), with `resolve()` only ever re-validating -- never
+    re-choosing -- that same target, per VTES's general "fizzles" ruling
+    (an unblocked action whose target no longer meets its condition at
+    resolve time still succeeds but has no effect). Not reachable through
+    ordinary play today (nothing in this engine's current scope changes an
+    uncontrolled vampire's blood between announce and resolve), so
+    exercised directly against the hook machinery, bypassing
+    `minion_phase`, to prove `resolve()` degrades gracefully instead of
+    crashing or picking a new target if that ever changes."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=5, blood=1, disciplines=("PRE",)
+    )
+    p1.hand.append(_enchant_kindred_card())
+    p1.uncontrolled_vampire("U1", capacity=4, blood=0)
+    builder.player("P2", pool=30)
+    game = builder.build()
+    state = game.state
+
+    options = hooks.offer(ACTION_CARD_PLAY_HOOK, state, player="P1", vampire="V1")
+    (option,) = [o for o in options if o.choice.value == "enchant_kindred:superior"]
+    spec = option.apply(state)  # single eligible target (U1): bound directly, no Decision.
+
+    game.vampire("U1").blood = 4  # simulate the target filling up to capacity post-announce.
+
+    spec.resolve({})
+
+    assert game.blood_of("U1") == 4  # fizzled: no blood added
+    assert state.players["P1"].hand == []  # the card itself was still consumed at apply() time
 
 
 def test_superior_uses_plus_one_stealth_baseline():

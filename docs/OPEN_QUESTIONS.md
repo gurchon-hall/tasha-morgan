@@ -2516,3 +2516,96 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   card whose own printed text depends on vote-casting *order* specifically
   (not merely the final for/against tally) should be implemented against
   this resolved procedure.
+
+## OQ-21: Action-card target: announce-time vs. resolve-time (status: resolved)
+
+- Situation: found by `rules-auditor` reviewing `src/vtesbot/cards/
+  line_brawl.py`'s `[pot]` clause ("Ⓓ Enter combat with a minion") right
+  after a `card-implementer` pass landed it. That landing raised the
+  "which of the opponent's ready vampires to force into combat" `Decision`
+  inside `resolve()`, which `engine/action.py::perform_minion_action` only
+  calls *after* `attempt_block` has already run to completion -- i.e. the
+  defending Methuselah was asked "do you block?" before the specific minion
+  that would be forced into combat, if they decline, was ever fixed.
+- Sources (both already fully settle the *code-contract* question, no
+  guessing involved):
+  1. Rulebook SS4 "1. Announce the Action" (`data/sources/rulebook/
+     2026-10-09/4-detailed-turn-sequence.md:468-474`), quoted verbatim by
+     `rules-auditor`: "All details of the action are defined when the
+     action is announced, including the target(s), the cost, the effects,
+     and so on."
+  2. This engine's own documented contract for the hook this card is built
+     on, `engine/phases/minion.py::ActionCardSpec`/`_perform_action_card`:
+     "`option.apply(state)` is invoked right away, *before* the
+     block-attempt window opens" -- `line_brawl.py`'s `[pot]` clause (and,
+     the same `rules-auditor` pass found, `enchant_kindred.py`'s own
+     superior clause, lower stakes there since its target is the acting
+     player's own uncontrolled vampire, never shaping an opposing block
+     decision) silently violated this already-documented contract by
+     picking its target one step later than the contract says to.
+- Resolution: both clauses now choose their target inside `apply()`, at
+  announce time, with `resolve()` simply looking up the already-chosen
+  instance id from closure (defensively treating a target that somehow
+  stopped qualifying between announce and resolve as "nothing to do,"
+  though nothing in this engine's current scope can actually cause that
+  today). Fixed together per `rules-auditor`'s own recommendation, since
+  the contract violation itself was identical in both, independent of
+  which way the narrower residual question below eventually resolves.
+  `tests/cards/test_line_brawl.py::
+  test_pot_blocked_enters_combat_with_the_blocker_instead_via_the_generic_
+  path` is the regression proof: it now asserts the `"line_brawl_combat_
+  target"` decision is raised between `"action_choice"` and
+  `"block_attempt"`, which would fail under the old (resolve-time)
+  placement (there, that decision is never raised at all when the action
+  ends up blocked, since `resolve()` never runs).
+- Narrower residual, closed: `rules-auditor`'s own pass could not find a
+  VEKN ruling specific to this exact card-text shape ("Ⓓ Enter combat with
+  a minion," or any similarly-worded directed ability) stating *when* the
+  specific enemy-minion target must be chosen, as distinct from the
+  general "Announce the Action" rule above. A follow-up krcg live-query
+  survey (2026-10-11) of every one of the 168 library/crypt cards whose
+  text contains "enter combat with" settles it anyway, via two broader
+  general rulings that are not specific to this clause shape but apply
+  across the whole card pool, not just a hand-picked precedent or two:
+  1. "An action directed at a card controlled by another Methuselah is
+     directed at that Methuselah." [RBK who-may-attempt-to-block]
+     [LSJ 20090324] -- confirms (independently of `rules-auditor`'s own
+     citation of the same general rule) that block eligibility is tied to
+     the *Methuselah*, never to the specific minion, so fixing the minion
+     target at announce time changes nothing about who may attempt to
+     block.
+  2. The general "fizzle" ruling, cross-referenced by krcg against well
+     over 100 otherwise-unrelated cards across many different Disciplines
+     and effect shapes (verbatim, one representative tagging among
+     several near-identical ones found): "If the action is unblocked when
+     it resolves and the target is unlocked, the action 'fizzles' (cost,
+     if any, is paid, and it is considered successful, but has no
+     effect)." [ANK 20210124] [LSJ 20070411] [LSJ 20090514] -- this is the
+     single general mechanism VTES uses whenever an unblocked action's
+     target no longer meets its printed condition by the time it
+     resolves: the action still "happens" (cost paid, counts as
+     successful) but produces no effect. Nowhere in this ruling, or in any
+     of the 100+ cards it is attached to, is there a "choose a new target
+     now instead" branch -- the *same* target chosen at announce is only
+     ever re-validated at resolve, never re-picked. Confirmed directly
+     against Barachiel (201781, krcg id confirmed via `krcg.load()`), one
+     of the two "Ⓓ ... enter combat with a minion" crypt-text precedents
+     this card's own module cites, and against the other "fizzle"-tagged
+     cards this search surfaced -- none carve out an exception for this
+     ability shape.
+  Together these two rulings leave no realistic alternative reading: a
+  card's target, including this ability shape's own enemy-minion target,
+  is always fixed at announce and only ever re-validated (never re-chosen)
+  at resolve, exactly matching the engine-contract fix already made.
+  `line_brawl.py`'s and `enchant_kindred.py`'s own `resolve()` closures'
+  "target no longer eligible -> do nothing" branches, originally written
+  as a defensive fallback for a case thought unreachable, are retroactively
+  confirmed to already implement the real "fizzles" rule correctly, not
+  merely to degrade gracefully.
+- Impacted code: `src/vtesbot/cards/line_brawl.py` (`_provide_line_brawl_
+  pot`), `src/vtesbot/cards/enchant_kindred.py`
+  (`_provide_enchant_kindred_superior`). Impacted cards: any future Action
+  card whose own clause targets a specific minion/vampire (not just "the
+  opponent" as a whole, which never needed a target-choice `Decision` in
+  the first place) must choose that target inside its `ActionCardSpec`
+  provider's `apply()`, never inside `resolve()`.
