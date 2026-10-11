@@ -1,0 +1,107 @@
+{
+  "id": 201526,
+  "printed_name": "Leumeah",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Leumeah"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Leumeah (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 0,
+        "code": "Promo"
+      },
+      "occurrences": [
+        {
+          "type": "Single",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 0,
+          "date": "2019-10-05"
+        },
+        {
+          "type": "Single",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 0,
+          "date": "2020-05-11"
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/promo/leumeahg6.jpg"
+    },
+    {
+      "set": {
+        "id": 320005,
+        "code": "PP2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 10,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/promo-pack-2/leumeahg6.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/leumeahg6.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/leumeahg6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Lawrence Snelly"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Anarch Baron of Canberra.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2019-10-05",
+  "banned": null,
+  "clan": "Brujah",
+  "path": "",
+  "advanced": false,
+  "capacity": 6,
+  "group": "G6",
+  "disciplines": [
+    "cel",
+    "for",
+    "pot",
+    "PRE"
+  ],
+  "title": "Baron"
+}
