@@ -124,12 +124,13 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
 
     # Every OQ-6-blocked card documented in the rules-engineer milestone-3
     # scaffolding report is actually registered, as blocked, with a reason.
-    # Kine Resources Contested (101056) and Parity Shift (101353) have since
-    # been implemented (OQ-6 resolved; `engine/politics.py::
-    # resolve_referendum`) and are checked separately below, not here.
+    # Kine Resources Contested (101056), Parity Shift (101353) and Oxford
+    # University, England (101341) have since been implemented (OQ-6 and
+    # OQ-23 both resolved; `engine/politics.py::resolve_referendum`,
+    # `src/vtesbot/cards/oxford_university_england.py`) and are checked
+    # separately below, not here.
     for krcg_id in (
         100557,  # Disputed Territory
-        101341,  # Oxford University, England
         101387,  # Perfect Paragon
         101686,  # Scalpel Tongue
         102131,  # Voter Captivation
@@ -146,6 +147,7 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
     for krcg_id in (
         101056,  # Kine Resources Contested
         101353,  # Parity Shift
+        101341,  # Oxford University, England
     ):
         reg = registry.get(krcg_id)
         assert reg is not None, f"expected a registry entry for krcg_id {krcg_id}"

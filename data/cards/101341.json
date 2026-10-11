@@ -1,0 +1,98 @@
+{
+  "id": 101341,
+  "printed_name": "Oxford University, England",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Oxford University, England"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Oxford University"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300003,
+        "code": "DS"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 2.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/dark-sovereigns/oxforduniversityengland.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/oxforduniversityengland.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/oxforduniversityengland.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/oxforduniversityengland.jpg",
+  "types": [
+    "Master"
+  ],
+  "formats": [],
+  "artists": [
+    "Michael Weaver"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Unique location.\nYou can lock this card and burn X pool during the polling step of a political action to get +2X votes.",
+  "draft": "",
+  "flavor": "",
+  "legal": "1996-01-14",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [
+    "Brujah"
+  ],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}

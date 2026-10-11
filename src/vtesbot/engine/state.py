@@ -76,6 +76,103 @@ class AllyInPlay:
 
 
 @dataclass
+class MasterCardInPlay:
+    """One controlled standalone Master card in play -- i.e. a Master-type
+    library card whose own printed text is not an attachment (contrast
+    `CardAttachment`, "put this card on a vampire") but instead keeps the
+    card itself in a player's own play area, persisting across turns (OQ-23,
+    `docs/OPEN_QUESTIONS.md`).
+
+    Originally built (and originally named `LocationInPlay`/
+    `engine/locations.py` in OQ-23's first landing, since renamed to this
+    generic name/module) for Oxford University, England ("Unique
+    location.\\nYou can lock this card and burn X pool during the polling
+    step of a political action to get +2X votes.") on the premise that
+    "location" needed its own entity. A later sweep of the full active 2P
+    pool corrected that premise and this entity's own name/scope: krcg has
+    no `Type.LOCATION` at all -- "Unique location." is free text on an
+    ordinary `Master`-type card, no different in kind from "Unique." or
+    "Trifle." on any other Master card. The real, broader gap is a
+    standalone Master card in play *at all*, Unique or not -- found to cover
+    at least 18 Master-type library cards in the active 2P allowed list
+    (`data/formats/2p/2026-10-03.json`) whose own printed text keeps the
+    card itself in play rather than attaching it to a vampire or resolving
+    once and going to the ash heap: four "Unique location." cards (Oxford
+    University England 101341, The Barrens 100135, Chantry 100329, Cursed
+    Abattoir 102313), several further "Unique." standalone Master cards
+    (e.g. Tension in the Ranks 101958), and several *non*-unique persistent
+    Master cards with no "Unique" text at all (e.g. Wider View 102180, a
+    "Trifle." with no uniqueness clause) -- all sharing exactly this same
+    `instance_id`/`krcg_id`/`name`/`controller`/`zone`/`locked`/
+    `contested_with` shape, none needing a vampire host the way
+    `CardAttachment` does.
+
+    Mirrors `AllyInPlay`'s shape as far as this card category actually needs:
+    this kind of card is not a minion -- it never acts, blocks, bleeds or
+    fights -- so unlike `AllyInPlay` it carries no `life`/`strength`/
+    `bleed`. What it does need is a `locked` flag (Rulebook SS3 "Locking and
+    Unlocking": "you will turn cards sideways... indicating the card has
+    been used for some particular purpose"; a card other than a minion can
+    be locked by its own printed "lock this card to..." ability exactly as a
+    minion can) and -- for the subset of these 18 cards that are actually
+    printed "Unique" -- the same Contested Cards tracking a unique crypt
+    card/ally/attachment already has (OQ-10/OQ-15/OQ-22): covered by the
+    identical unmodified Rulebook SS4 Advanced Rules > Contested Cards
+    mechanism those three resolutions already quote in full, not overridden
+    by the 2P variant (whose own "Contested crypt cards" section is scoped
+    to crypt cards only).
+
+    `contested_with` only ever becomes non-`None` for an instance a card
+    module actually ran through `detect_contest_on_bring_into_play`
+    (`engine/master_cards.py`) -- which only makes sense, and must only ever
+    be called, for a card printed "Unique" (the rulebook's own Contested
+    Cards mechanism is scoped to unique cards; two players independently
+    playing their own copy of the *same non-unique* card, e.g. Wider View,
+    is ordinary, unremarkable deck construction, never a contest). A
+    non-unique card's own module simply never calls that function, so its
+    `contested_with` stays `None` for the instance's whole lifetime -- no
+    extra field, branch, or "is this card unique" flag is needed on this
+    dataclass itself to support that; it falls out of which functions a
+    future card module chooses to call, exactly like `CardAttachment`
+    (OQ-22) already works the same way for an attached master card.
+
+    `zone` takes three values, mirroring `AllyInPlay.zone`'s own convention:
+    `"in_play"` (the default -- in play, usable, this entity's analogue of
+    an ally's `"ready"`), `"contested"` (Rulebook SS4: "turned face down and
+    are out of play" for the contest's duration -- reachable only via
+    `detect_contest_on_bring_into_play`, so never reached by a non-unique
+    card) and `"burned"` (yielded/removed from play, or any future card's
+    own "burn this card" cost).
+
+    Unlike a recruited `AllyInPlay` (which Rulebook SS4 "Recruit Ally"
+    explicitly enters locked, "cannot act this turn"), nothing in the
+    generic Master Phase play rule (`engine/phases/master.py`'s own module
+    docstring; no "enters locked" clause anywhere in that rule) locks a
+    newly-played Master card -- and Rulebook SS3 "Locking and Unlocking"
+    only ever describes locking as something an effect *does* to a card
+    ("you will turn cards sideways... indicating that the cards have been
+    used for some particular purpose or effect"), never as a default state a
+    card starts in. So `locked` defaults to `False`: a freshly-played
+    instance starts unlocked, available for its own "lock this card to..."
+    ability (if it has one) the moment it enters play, exactly like
+    `CardAttachment.zone` defaulting to `"attached"` (in play, usable) with
+    no analogous starting lock either.
+    """
+
+    instance_id: str
+    krcg_id: int
+    name: str
+    controller: str
+    zone: str = "in_play"
+    locked: bool = False
+    contested_with: str | None = None  # instance_id of the opposing copy, if contested
+
+    @property
+    def is_unlocked_in_play(self) -> bool:
+        return self.zone == "in_play" and not self.locked
+
+
+@dataclass
 class PlayerState:
     player_id: str
     pool: int = 0
@@ -85,9 +182,11 @@ class PlayerState:
     crypt_deck: list[CryptCard] = field(default_factory=list)
     vampires: dict[str, VampireInPlay] = field(default_factory=dict)
     allies: dict[str, AllyInPlay] = field(default_factory=dict)
+    master_cards: dict[str, MasterCardInPlay] = field(default_factory=dict)
     _next_instance_seq: int = 0
     _next_ally_instance_seq: int = 0
     _next_attachment_instance_seq: int = 0
+    _next_master_card_instance_seq: int = 0
 
     def new_instance_id(self) -> str:
         self._next_instance_seq += 1
@@ -107,6 +206,14 @@ class PlayerState:
         attach_card`)."""
         self._next_attachment_instance_seq += 1
         return f"{self.player_id}-AT{self._next_attachment_instance_seq}"
+
+    def new_master_card_instance_id(self) -> str:
+        """Mints a standalone master-card instance id in its own namespace,
+        distinct from a vampire's `"...-V<n>"`, an ally's `"...-A<n>"` and an
+        attachment's `"...-AT<n>"` ids (OQ-23, `docs/OPEN_QUESTIONS.md`;
+        `engine/master_cards.py::bring_master_card_into_play`)."""
+        self._next_master_card_instance_seq += 1
+        return f"{self.player_id}-M{self._next_master_card_instance_seq}"
 
 
 @dataclass

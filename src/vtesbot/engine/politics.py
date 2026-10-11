@@ -224,6 +224,30 @@ oversight:
   hook provider in the engine already does; none does today (no card module
   registers against `POLLING_STEP_HOOK` yet).
 
+A fourth `POLLING_STEP_HOOK` shape, found implementing OQ-23 (`docs/
+OPEN_QUESTIONS.md`): Oxford University, England ("Unique location. You can
+lock this card and burn X pool during the polling step of a political
+action to get +2X votes.") needs an `HookOption` *per legal X*, not a single
+fixed-vote option like Perfect Paragon's -- the controller picks how much
+pool to burn, and the vote count scales with that choice. This does not need
+a new kind of engine-level window (each `HookOption` already becomes one
+choice of the same `POLLING_STEP_HOOK` `Decision` `resolve_impulse_window`
+already raises; a provider offering several `HookOption`s for the same
+ability, each for a different X, already works today with no change here),
+but the enumerate-X/burn-X-pool/append-to-`pending["extra_sources"]`
+bookkeeping would otherwise be duplicated by every future card with this
+same "burn X pool for Y*X votes" shape (The Barrens and Chantry, both
+already in the pool and unimplemented, print unrelated "lock this card to
+<fixed effect>" abilities with no variable X, so they do not need this
+helper -- but nothing rules out a future card reusing exactly this shape).
+`variable_pool_burn_vote_options` below is that reusable primitive: a
+`POLLING_STEP_HOOK` provider calls it from inside its own `offer()`
+implementation and returns what it gives back (optionally chained with its
+own, unrelated `HookOption`s, e.g. for a card with more than one ability).
+X = 0 is deliberately never offered (burning 0 pool for 0 votes is not a
+meaningful choice, CLAUDE.md "only when needed"); the upper bound is
+`player`'s current pool (a Methuselah cannot burn more pool than they have).
+
 Vote/ballot *casting order* for exactly two Methuselahs was an open question
 (`docs/OPEN_QUESTIONS.md` OQ-20, now resolved): the quoted rule above only
 says casting happens "in any order," with no turn structure specified by the
@@ -244,6 +268,7 @@ own sources back-to-back before the other Methuselah ever got a look), which
 was this project's own interim placeholder, never a sourced reading.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -251,6 +276,8 @@ from . import hooks
 from .action import ACTION_POLITICAL, attempt_block
 from .combat import run_combat
 from .decision import Choice, Decision
+from .hooks import HookOption
+from .pool import lose_pool
 
 if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
@@ -332,6 +359,76 @@ class VoteSource:
     `player`'s hand to the ash heap (module docstring, "Other political
     action cards used for votes are simply burned without regard to the
     text on the cards") -- mirrors `burns_edge`'s cast-time state mutation."""
+
+
+def variable_pool_burn_vote_options(
+    state: GameState,
+    player: str,
+    *,
+    source_id_prefix: str,
+    label: str,
+    votes_per_pool: int,
+    pending: dict[str, Any],
+    on_burn: Callable[[GameState], None] | None = None,
+) -> list[HookOption]:
+    """Build one `POLLING_STEP_HOOK` `HookOption` per legal pool-burn amount
+    X (1..`player`'s current pool) for a "burn X pool during the polling
+    step of a political action to get <votes_per_pool>*X votes" ability
+    (module docstring, "A fourth `POLLING_STEP_HOOK` shape" -- Oxford
+    University, England, OQ-23 `docs/OPEN_QUESTIONS.md`: "You can lock this
+    card and burn X pool during the polling step of a political action to
+    get +2X votes").
+
+    Choosing the X-pool option burns that much pool from `player`
+    (`engine/pool.py::lose_pool`), then runs `on_burn(state)` if given --
+    for Oxford's own shape, this is where a future card module locks the
+    source card itself (`MasterCardInPlay.locked = True`), kept as a
+    caller-supplied callback rather than built in here, since locking is
+    specific to *this* ability's own cost, not a universal part of the
+    "burn X pool for Y*X votes" shape -- then appends a `{"source_id",
+    "player", "votes", "label"}` descriptor to `pending["extra_sources"]`
+    (module docstring, Perfect Paragon shape) with `votes = votes_per_pool *
+    X`. `source_id_prefix` must be unique per ability instance (e.g. a
+    specific `MasterCardInPlay.instance_id`) so two simultaneous instances
+    of this shape in the same game -- e.g. a contested-and-resolved pair of
+    the same unique card, or two different "burn X pool for votes" cards --
+    never collide on `pending["extra_sources"]` source ids; each X gets its
+    own `f"{source_id_prefix}:{x}"`.
+
+    X = 0 is deliberately never offered: burning 0 pool for 0 votes is a
+    no-op, not a meaningful choice (CLAUDE.md "only when needed" -- no
+    vacuous option). Capped at `player`'s current pool (a Methuselah cannot
+    burn pool they do not have); if `player` has 0 pool, this returns an
+    empty list.
+    """
+    pool = state.players[player].pool
+    options: list[HookOption] = []
+    for x in range(1, pool + 1):
+        votes = votes_per_pool * x
+
+        def _apply(s: GameState, x: int = x, votes: int = votes) -> None:
+            lose_pool(s, player, x)
+            if on_burn is not None:
+                on_burn(s)
+            pending["extra_sources"].append(
+                {
+                    "source_id": f"{source_id_prefix}:{x}",
+                    "player": player,
+                    "votes": votes,
+                    "label": f"{label} (burn {x} pool for {votes} votes)",
+                }
+            )
+
+        options.append(
+            HookOption(
+                choice=Choice(
+                    f"{source_id_prefix}:{x}",
+                    f"{label}: burn {x} pool for {votes} votes",
+                ),
+                apply=_apply,
+            )
+        )
+    return options
 
 
 def political_action(

@@ -80,8 +80,7 @@
       "type": "Master",
       "count": 1,
       "krcg_id": 101341,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "implementation_status": "implemented"
     },
     {
       "name": "Wider View",

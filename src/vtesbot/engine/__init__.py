@@ -21,11 +21,12 @@ from .decision import Choice, Decision
 from .errors import IllegalChoiceError, UnresolvedRulingError
 from .format import FormatConfig
 from .log import ReplayLog
-from .observation import AllyView, Observation, VampireView, build_observation
+from .master_cards import bring_master_card_into_play, detect_contest_on_bring_into_play
+from .observation import AllyView, MasterCardView, Observation, VampireView, build_observation
 from .ousting import check_oust
 from .rng import GameRNG
 from .setup import DeckSpec, setup_game
-from .state import AllyInPlay, GameState, PlayerState, VampireInPlay
+from .state import AllyInPlay, GameState, MasterCardInPlay, PlayerState, VampireInPlay
 
 __all__ = [
     "Agent",
@@ -40,6 +41,10 @@ __all__ = [
     "effective_disciplines",
     "find_attachment_by_instance_id",
     "iter_attachments",
+    "bring_master_card_into_play",
+    "detect_contest_on_bring_into_play",
+    "MasterCardInPlay",
+    "MasterCardView",
     "CardAttachment",
     "CryptCard",
     "LibraryCard",

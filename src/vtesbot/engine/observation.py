@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from .attachments import effective_capacity
 
 if TYPE_CHECKING:
-    from .state import AllyInPlay, GameState, VampireInPlay
+    from .state import AllyInPlay, GameState, MasterCardInPlay, VampireInPlay
 
 
 @dataclass(frozen=True)
@@ -75,6 +75,30 @@ class AllyView:
 
 
 @dataclass(frozen=True)
+class MasterCardView:
+    """Public view of a standalone Master card in play
+    (`engine/state.py::MasterCardInPlay`; OQ-23, `docs/OPEN_QUESTIONS.md`).
+
+    Mirrors `AllyView`'s shape minus `life`/`strength`/`bleed` (this kind of
+    card is not a minion -- `MasterCardInPlay`'s own docstring). Same
+    reasoning as `AllyView` for why no `visible_identity`-style anonymization
+    branch is needed even for a contested copy: a Master card is played face
+    up (Rulebook SS2 Card Types), so by construction a contest (reachable
+    only for a card printed "Unique") can only ever arise the instant a
+    *second* same-named instance is brought into play, already face up,
+    against a first copy brought in face up earlier -- both identities are
+    mutually known to both players from the moment the contest is created.
+    """
+
+    instance_id: str
+    controller: str
+    zone: str  # "in_play" | "burned" | "contested"
+    locked: bool
+    contested: bool
+    name: str
+
+
+@dataclass(frozen=True)
 class Observation:
     """What one Methuselah (`viewer`) is allowed to know about the game right now."""
 
@@ -93,6 +117,7 @@ class Observation:
     ash_heap: dict[str, tuple[str, ...]]
     vampires: tuple[VampireView, ...]
     allies: tuple[AllyView, ...]
+    master_cards: tuple[MasterCardView, ...]
 
 
 def build_observation(state: GameState, viewer: str) -> Observation:
@@ -113,6 +138,12 @@ def build_observation(state: GameState, viewer: str) -> Observation:
     in full, unconditionally, same as a ready/torpor vampire. A *contested*
     ally (OQ-10, resolved) keeps its identity visible too, for a sourced
     reason distinct from the vampire case -- see `AllyView`'s own docstring.
+
+    Standalone Master cards (OQ-23, `docs/OPEN_QUESTIONS.md`): one brought
+    into play via `engine/master_cards.py::bring_master_card_into_play` is a
+    Master card, played face up -- shown in full unconditionally, for both
+    players, same reasoning as `AllyView`'s own docstring (including while
+    contested).
     """
     other = [p for p in state.players if p != viewer][0]
 
@@ -146,6 +177,16 @@ def build_observation(state: GameState, viewer: str) -> Observation:
             bleed=a.bleed,
         )
 
+    def master_card_view(card: MasterCardInPlay) -> MasterCardView:
+        return MasterCardView(
+            instance_id=card.instance_id,
+            controller=card.controller,
+            zone=card.zone,
+            locked=card.locked,
+            contested=card.contested_with is not None,
+            name=card.name,
+        )
+
     viewer_state = state.players[viewer]
     other_state = state.players[other]
 
@@ -153,6 +194,11 @@ def build_observation(state: GameState, viewer: str) -> Observation:
         vampire_view(v) for p in (viewer, other) for v in state.players[p].vampires.values()
     )
     allies = tuple(ally_view(a) for p in (viewer, other) for a in state.players[p].allies.values())
+    master_cards = tuple(
+        master_card_view(card)
+        for p in (viewer, other)
+        for card in state.players[p].master_cards.values()
+    )
 
     return Observation(
         viewer=viewer,
@@ -170,4 +216,5 @@ def build_observation(state: GameState, viewer: str) -> Observation:
         ash_heap={p: tuple(c.name for c in s.ash_heap) for p, s in state.players.items()},
         vampires=vampires,
         allies=allies,
+        master_cards=master_cards,
     )

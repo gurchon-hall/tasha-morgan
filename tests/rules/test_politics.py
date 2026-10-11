@@ -11,11 +11,13 @@ import pytest
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.decision import Choice
+from vtesbot.engine.master_cards import bring_master_card_into_play
 from vtesbot.engine.politics import (
     POLLING_STEP_HOOK,
     REFERENDUM_TALLIED_HOOK,
     political_action,
     resolve_referendum,
+    variable_pool_burn_vote_options,
 )
 
 
@@ -545,4 +547,204 @@ def test_referendum_tallied_hook_fires_with_no_providers_registered():
     result = political_action(game.state, "P1", game.vampire("V1"))
 
     assert result is True
+    actor.assert_exhausted()
+
+
+# --- variable_pool_burn_vote_options (OQ-23, Oxford University, England) ----
+
+
+def test_variable_pool_burn_vote_options_offers_one_option_per_pool_amount():
+    """Oxford's own shape ("burn X pool ... to get +2X votes"): one
+    `HookOption` per legal X from 1 to the controller's current pool, never
+    X = 0 (CLAUDE.md "only when needed" -- burning 0 pool for 0 votes is not
+    a meaningful choice)."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=3)
+    builder.player("P2", pool=30)
+    game = builder.build()
+    pending = {"extra_sources": []}
+
+    options = variable_pool_burn_vote_options(
+        game.state,
+        "P1",
+        source_id_prefix="oxford:L1",
+        label="Oxford University, England",
+        votes_per_pool=2,
+        pending=pending,
+    )
+
+    assert [o.choice.value for o in options] == ["oxford:L1:1", "oxford:L1:2", "oxford:L1:3"]
+
+
+def test_choosing_an_option_burns_that_much_pool_and_adds_the_scaled_vote_source():
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=3)
+    builder.player("P2", pool=30)
+    game = builder.build()
+    pending = {"extra_sources": []}
+
+    options = variable_pool_burn_vote_options(
+        game.state,
+        "P1",
+        source_id_prefix="oxford:L1",
+        label="Oxford University, England",
+        votes_per_pool=2,
+        pending=pending,
+    )
+    by_value = {o.choice.value: o for o in options}
+    by_value["oxford:L1:2"].apply(game.state)
+
+    assert game.state.players["P1"].pool == 1  # 3 - 2 burned
+    assert pending["extra_sources"] == [
+        {
+            "source_id": "oxford:L1:2",
+            "player": "P1",
+            "votes": 4,
+            "label": "Oxford University, England (burn 2 pool for 4 votes)",
+        }
+    ]
+
+
+def test_choosing_an_option_runs_the_on_burn_callback():
+    """Oxford's own ability also locks the location itself as part of the
+    same cost -- kept as a caller-supplied callback, not built into the
+    generic helper (module docstring: locking is specific to this ability,
+    not the universal "burn X pool for Y*X votes" shape)."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=3)
+    builder.player("P2", pool=30)
+    game = builder.build()
+    location = bring_master_card_into_play(game.state, "P1", krcg_id=101341, name="Oxford")
+    pending = {"extra_sources": []}
+
+    def _lock(s):
+        location.locked = True
+
+    options = variable_pool_burn_vote_options(
+        game.state,
+        "P1",
+        source_id_prefix=f"oxford:{location.instance_id}",
+        label="Oxford University, England",
+        votes_per_pool=2,
+        pending=pending,
+        on_burn=_lock,
+    )
+    options[0].apply(game.state)
+
+    assert location.locked is True
+
+
+def test_a_player_with_no_pool_is_offered_no_options():
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=0)
+    builder.player("P2", pool=30)
+    game = builder.build()
+
+    options = variable_pool_burn_vote_options(
+        game.state,
+        "P1",
+        source_id_prefix="oxford:L1",
+        label="Oxford University, England",
+        votes_per_pool=2,
+        pending={"extra_sources": []},
+    )
+
+    assert options == []
+
+
+def test_oxford_shaped_polling_step_provider_end_to_end_adds_scaled_votes_and_locks_the_location():
+    """End-to-end stand-in for Oxford University, England's own printed
+    text ("Unique location. You can lock this card and burn X pool during
+    the polling step of a political action to get +2X votes"), registered
+    against the already-wired `POLLING_STEP_HOOK` exactly like Perfect
+    Paragon's own fixed-vote shape (`test_a_polling_step_hook_provider_adds_
+    a_vote_source_and_it_is_cast` above), but built on top of
+    `variable_pool_burn_vote_options`."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=3).ready_vampire("V1", capacity=3, blood=1)
+    builder.player("P2", pool=30)
+    game = builder.build()
+    location = bring_master_card_into_play(
+        game.state, "P1", krcg_id=101341, name="Oxford University, England"
+    )
+
+    def fake_oxford(state, context):
+        if context.get("player") != "P1" or context.get("phase") != "before_cast":
+            return []
+        if location.zone != "in_play" or location.locked:
+            return []
+        if state.players["P1"].pool < 1:
+            return []
+
+        def _lock(s):
+            location.locked = True
+
+        return variable_pool_burn_vote_options(
+            state,
+            "P1",
+            source_id_prefix=f"oxford:{location.instance_id}",
+            label="Oxford University, England",
+            votes_per_pool=2,
+            pending=context["pending"],
+            on_burn=_lock,
+        )
+
+    hooks.register(POLLING_STEP_HOOK, fake_oxford)
+    actor = ScriptedAgent("P1")
+    actor.expect(POLLING_STEP_HOOK, f"oxford:{location.instance_id}:2")
+    actor.expect("polling_step_cast", f"for:oxford:{location.instance_id}:2")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    result = political_action(game.state, "P1", game.vampire("V1"))
+
+    # 1 (political action card) + 4 (burn 2 pool * 2 votes) for vs 0 against.
+    assert result is True
+    assert game.state.players["P1"].pool == 1  # 3 - 2 burned
+    assert location.locked is True
+    actor.assert_exhausted()
+
+
+def test_an_already_locked_location_is_not_offered_the_option_again():
+    """Mirrors the de-duplication check the Perfect Paragon-shaped test
+    above makes for its own grant ("already_granted"): once Oxford's
+    location is locked (e.g. by an earlier use this same polling step, or
+    simply not yet unlocked since being used previously), a provider
+    checking `location.locked` offers nothing at all -- no `POLLING_STEP_
+    HOOK` decision is raised."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=3).ready_vampire("V1", capacity=3, blood=1)
+    builder.player("P2", pool=30)
+    game = builder.build()
+    location = bring_master_card_into_play(
+        game.state, "P1", krcg_id=101341, name="Oxford University, England"
+    )
+    location.locked = True
+
+    def fake_oxford(state, context):
+        if context.get("player") != "P1" or context.get("phase") != "before_cast":
+            return []
+        if location.zone != "in_play" or location.locked:
+            return []
+        return variable_pool_burn_vote_options(
+            state,
+            "P1",
+            source_id_prefix=f"oxford:{location.instance_id}",
+            label="Oxford University, England",
+            votes_per_pool=2,
+            pending=context["pending"],
+            on_burn=lambda s: setattr(location, "locked", True),
+        )
+
+    hooks.register(POLLING_STEP_HOOK, fake_oxford)
+    actor = ScriptedAgent("P1")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    result = political_action(game.state, "P1", game.vampire("V1"))
+
+    assert result is True
+    assert location.locked is True  # unchanged: never re-locked, never unlocked either
     actor.assert_exhausted()

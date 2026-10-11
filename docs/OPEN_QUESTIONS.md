@@ -2868,3 +2868,286 @@ up an OQ number or the highest one used so far.
   attachments.py` (`attach_card` docstring, module docstring). No test
   changes (no behaviour changed); `tests/rules/test_attachment_contests.py`
   and `tests/rules/test_attachment_contest_resolution.py` are unaffected.
+
+## OQ-23: No standalone master-card entity -- Oxford University (status: resolved)
+
+- Situation: Oxford University, England is the only `blocked` card in the
+  active 2P Brujah suggested decklist (`data/decks/vekn-2p/brujah.json`).
+  Card text (verbatim, via `krcg.load()`, krcg id 101341, re-confirmed live
+  2026-10-11): "Unique location.\n You can lock this card and burn X pool
+  during the polling step of a political action to get +2X votes." Type
+  `Master`, clan `Brujah`, `pool_cost=None`, no rulings on file. Its own
+  module (`src/vtesbot/cards/oxford_university_england.py`) registers it
+  `blocked`/`OQ-6`, citing two independent gaps: the polling-step/vote-tally
+  machinery (OQ-6, since resolved) and "a 'location' card, a generic entity
+  the engine does not model at all" (`Hook.LOCATION_ENTITY`
+  (`src/vtesbot/cards/registry.py`), "named for classification; no engine
+  wiring exists yet," confirmed by grep across `src/vtesbot/engine/`: no
+  equivalent entity existed anywhere). Not a ruling ambiguity -- the text is
+  plain. This is the same category of gap as OQ-7 (no `AllyInPlay` entity):
+  a missing engine representation, not an unsettled rule.
+- Correction to the premise, found before building anything (CLAUDE.md "no
+  guessing" -- checked rather than assumed): "location" is **not** a
+  structured krcg card type. Oxford's own `krcg.load()` entry (krcg id
+  101341) reports `types == [Type.MASTER]` (confirmed live, krcg 5.14,
+  matching this project's pinned dependency) -- there is no `Type.LOCATION`
+  value in krcg's own `Type` enum at all (every member: `ACTION, ALLY,
+  COMBAT, CONVICTION, EQUIPMENT, EVENT, IMBUED, MASTER, MODIFIER, POLITICAL,
+  POWER, REACTION, RETAINER, VAMPIRE`). "Unique location." is free text
+  within an ordinary Master card's own printed text, the same status as
+  "Unique." or "Trifle." on any other Master card -- not a distinct card
+  type the way "Ally" is.
+- Second correction, found by the project's user after this entry's first
+  landing (which had generalized only as far as "a standalone *Unique*
+  Master card," still scoped to the location-flavoured/Unique subset,
+  pointing at Wider View, krcg id 102180, as a counter-example): the real
+  gap is broader still -- any standalone Master card that stays in a
+  player's own play area rather than attaching to a vampire
+  (`CardAttachment`) or resolving once into the ash heap (ordinary Master
+  plays such as Life in the City), **whether or not it is printed
+  "Unique."** Wider View's own text ("Trifle.\nPut this card in play. You
+  can use 1 transfer to draw 1 card from your crypt and then remove a
+  crypt card in your uncontrolled region from the game. You can use 4
+  transfers to burn this card and gain 2 pool.") carries no "Unique" clause
+  at all, yet needs the exact same "a Master card the player keeps a live,
+  mutable in-play instance of" representation Oxford does. So the entity
+  built below (and the module/functions around it) is named and framed
+  generically -- `MasterCardInPlay`/`engine/master_cards.py` -- not scoped
+  to "location" or to "Unique" in either its name or its own contract; only
+  `detect_contest_on_bring_into_play` (the Contested Cards half) is
+  restricted to actually-"Unique" cards, as a documented contract on that
+  one function, not a flag on the entity itself (see "Resolution" below).
+- Quick sweep (OQ-10/OQ-22's own precedent: check for other live users
+  before building, not just the one named card -- re-run and widened after
+  the second correction above): queried every `Library`-type card in the
+  active 2P allowed list (`data/formats/2p/2026-10-03.json`, 198
+  Library-type entries out of 311 total) against `krcg.load()` for
+  `card.types == [Type.MASTER]` *and* free-text containing "put this card
+  in play" or "unique location" (case-insensitive). 18 hits, all Master
+  type, matching `MasterCardInPlay`'s own shape exactly:
+  Oxford University, England (101341), The Barrens (100135), Chantry
+  (100329), Dummy Corporation (100594), Elder Library (100620), Fragment of
+  the Book of Nod (100785), The Line (101110), Ravnos Cache (101552),
+  Ravnos Carnival (101553), The Rumor Mill (101662), Wasserschloss Anif,
+  Austria (102152), WMRH Talk Radio (102189), Powerbase: Munich (102301),
+  Forward Momentum (102323), Fleshforge Chamber (102354), Cursed Abattoir
+  (102313), Tension in the Ranks (101958), and Wider View (102180). 17 of
+  these 18 are printed "Unique location.", "Unique Nod fragment." or plain
+  "Unique." -- only Wider View carries no uniqueness clause at all,
+  confirming the user's own counter-example and that a non-unique instance
+  of this entity is a real, live case, not hypothetical.
+  Noteworthy sub-shapes, read off each card's own text, none built here
+  beyond the base entity (CLAUDE.md "one rule mechanism per change"):
+  several need a counter-bearing variant with no `counters` field on
+  `MasterCardInPlay` (Ravnos Cache, Ravnos Carnival, Wasserschloss Anif,
+  Forward Momentum, Cursed Abattoir, and Fleshforge Chamber, which hosts a
+  face-up ghoul card on itself -- a further, different attachment-like
+  shape of its own); several let the *opponent* burn or steal the card as
+  their own action (The Line, Wasserschloss Anif, Fragment of the Book of
+  Nod, Powerbase: Munich -- "Vampires/Any minion can steal/burn this card
+  as a [D] action"), needing a reaction/control-transfer primitive this
+  entry does not build; Elder Library (100620, "Unique location.\n+1 hand
+  size.") and Dummy Corporation (100594, "...burn this card if a minion is
+  bleeding you...") are the simplest fits, needing nothing beyond what is
+  built below. A further five "put this card in play" hits were found and
+  deliberately excluded as a *different* category, not this entity's scope:
+  Army of Rats (100093), Creeping Sabotage (102213), Augury of Doom
+  (102310) (all `Action`-type, played as the acting minion's own action,
+  burnable by the *opponent* as an undefined "? action", with their own
+  recurring per-unlock-phase pool-burn effect), Loup (102273, `Action
+  Modifier`, self-burns at end of turn) and Morbidity (102332, `Combat`,
+  burns at the end of one combat) -- none is a Master card, none persists
+  the way a standalone Master card does, and none is needed by any card
+  this pass unblocks; flagged here so a future sweep does not have to
+  re-discover that these five are out of scope.
+  Also re-confirmed Disputed Territory (100557, Political Action, "Choose
+  a location and a Methuselah...") and Cold War (102312, Political Action,
+  "...the chosen location is burned") from this entry's first landing:
+  both reference "a location" generically and would read/mutate a
+  `MasterCardInPlay` instance's `controller`/`zone`, but neither is itself
+  a standalone Master card, so neither is counted in the 18 above.
+- What's missing (`rules-engineer` scope, mirroring OQ-7's own "what would
+  be needed" almost exactly, a fourth time after crypt cards
+  (`engine/contests.py`), allies (`engine/allies.py`, OQ-7/10/15) and
+  attached master cards (`engine/attachments.py`, OQ-22)): a generic
+  standalone-Master-card entity (identity, `controller`, a lock flag,
+  Contested Cards tracking for the subset actually printed "Unique" --
+  Oxford is itself one such card, so the identical unmodified Rulebook SS4
+  Advanced Rules > Contested Cards mechanism OQ-10/OQ-15/OQ-22 already
+  quote in full applies here too, not overridden by the 2P variant's
+  crypt-card-only "Contested crypt cards" section), a way to bring one into
+  play from a master-phase play, Observation support, and -- the piece
+  specific to Oxford's own ability, not shared by any of the three existing
+  precedents -- a polling-step vote-source primitive whose vote count
+  scales with a controller-chosen pool-burn amount X, distinct from Perfect
+  Paragon's fixed "+3 votes" shape the `POLLING_STEP_HOOK` machinery (OQ-6)
+  was originally built to support.
+- Resolution (`rules-engineer` pass):
+  1. `src/vtesbot/engine/state.py::MasterCardInPlay` (new dataclass,
+     originally landed as `LocationInPlay`, renamed after the second
+     correction above) -- mirrors `AllyInPlay`'s shape as far as this card
+     category needs: no `life`/`strength`/`bleed` (this kind of card is not
+     a minion: it never acts, blocks, bleeds or fights), only
+     `instance_id`, `krcg_id`, `name`, `controller`, `zone` (`"in_play"` |
+     `"contested"` | `"burned"` -- `"in_play"` is the default, this
+     entity's analogue of an ally's `"ready"`), `locked` (defaults to
+     `False`: unlike Recruit Ally's own specific "cannot act this turn"
+     clause, nothing in the generic Master Phase play rule locks a
+     newly-played Master card -- Rulebook SS3 "Locking and Unlocking" only
+     ever describes locking as something an effect *does*, never a default
+     starting state) and `contested_with` (stays `None` for the whole
+     lifetime of a non-unique instance such as Wider View's, since nothing
+     ever calls `detect_contest_on_bring_into_play` for one -- see point 2;
+     no separate "is this card unique" flag was added to the dataclass
+     itself, deliberately: whether contest tracking applies falls out of
+     which functions a future card module chooses to call, exactly how
+     `CardAttachment`, OQ-22, already works). `PlayerState.master_cards:
+     dict[str, MasterCardInPlay]` and `PlayerState.new_master_card_
+     instance_id()` (own `"<player>-M<n>"` namespace, distinct from a
+     vampire's `"-V<n>"`, an ally's `"-A<n>"` and an attachment's
+     `"-AT<n>"`).
+  2. `src/vtesbot/engine/master_cards.py` (new module, originally landed as
+     `engine/locations.py`): `bring_master_card_into_play(state, player, *,
+     krcg_id, name) -> MasterCardInPlay` (the minimal "bring into play"
+     primitive, mirrors `engine/allies.py::recruit_ally`);
+     `detect_contest_on_bring_into_play(state, brought_in)` (mirrors
+     `detect_contest_on_recruit` exactly: matches by `name`, checks only the
+     opponent, moves both colliding copies' `zone` to `"contested"` --
+     documented, as this entry's own second correction requires, as only
+     ever correct to call for a card printed "Unique"; a non-unique card's
+     own future module simply never calls it); and
+     `resolve_one_master_card_contest(state, player, card)` (mirrors
+     `resolve_one_ally_contest`'s two branches exactly -- "pay" 1 pool keeps
+     `zone == "contested"`, no 2P "stays usable" override for this card
+     type either; "yield" burns the yielding copy and clears the opponent's
+     `contested_with` immediately but leaves the opponent's own `zone` at
+     `"contested"` until that opponent's own next unlock phase). Not
+     exported at the top level, mirroring `resolve_one_ally_contest`'s own
+     identical choice -- reached only through `unlock_phase`.
+  3. `src/vtesbot/engine/phases/unlock.py` gained `_unlock_own_master_
+     cards`, run once per `unlock_phase` call alongside `_unlock_own_
+     vampires`/`_unlock_own_allies`/`_unlock_own_attachments`, doing *two*
+     independent things (both sourced by the same generic Unlock Phase
+     rule, "you must unlock all of your cards," which is not restricted to
+     minions): (a) unlocking a `locked` `"in_play"` card -- genuinely
+     needed, unlike the ally/attachment cases, because nothing else ever
+     reads an ally's lock back off and an attachment is never locked at
+     all, but Oxford's whole point (and several of the 18-card sweep's own
+     "lock this card to..."/"lock this location to..." abilities, e.g. The
+     Barrens, Chantry, The Line, Wasserschloss Anif, WMRH Talk Radio,
+     Powerbase: Munich) is a *repeatable* lock ability that must become
+     usable again; and (b) the same delayed-restore-from-contest half
+     `_unlock_own_allies`/`_unlock_own_attachments` already have, reachable
+     only for a card that was actually run through `detect_contest_on_
+     bring_into_play` (so never for Wider View's own non-unique instance).
+     Extended `_pending_effect_ids`/`_resolve_optional_effects_in_chosen_
+     order` with a `"contest_master_card:"`-prefixed branch alongside the
+     existing `"contest_ally:"`/`"contest_attachment:"` ones.
+  4. `src/vtesbot/engine/observation.py` gained `MasterCardView` (mirrors
+     `AllyView` minus `life`/`strength`/`bleed`) and `Observation.master_
+     cards: tuple[MasterCardView, ...]`, populated unconditionally for both
+     players in `build_observation` -- a Master card is played face up
+     (Rulebook SS2 Card Types), so by the same reasoning `AllyView`'s own
+     docstring gives (OQ-10), a contest (for the Unique subset) can only
+     ever arise the instant a second same-named copy is brought into play,
+     already face up, against a first copy brought in face up earlier;
+     both identities are always mutually known, so no `visible_identity`-
+     style anonymization branch is needed even while contested.
+  5. `src/vtesbot/engine/politics.py` gained
+     `variable_pool_burn_vote_options(state, player, *, source_id_prefix,
+     label, votes_per_pool, pending, on_burn=None) -> list[HookOption]`: the
+     reusable primitive Oxford's own variable-X shape needs, distinct from
+     every existing `POLLING_STEP_HOOK` shape the module docstring already
+     catalogued (Perfect Paragon's fixed vote grant, Queen Anne's forced
+     abstain, Marcos Belegrad's post-tally reaction). Builds one
+     `HookOption` per legal pool-burn amount X from 1 to `player`'s current
+     pool (never X = 0: burning 0 pool for 0 votes is not a meaningful
+     choice, CLAUDE.md "only when needed" -- confirmed this is a judgement
+     call, not sourced either way by the card text, which is silent on
+     whether X = 0 is "a burn"; offering it would only ever be a no-op
+     choice for an agent, so it is excluded the same way every other hook
+     in this engine excludes a vacuous option); choosing X burns that much
+     pool (`engine/pool.py::lose_pool`), runs an `on_burn` callback if given
+     (where a future card module locks the source card itself -- kept
+     caller-supplied rather than built in, since locking is specific to
+     *this* ability's own cost, not universal to the "burn X pool for Y*X
+     votes" shape -- none of the other 17 sweep cards need this helper at
+     all, confirmed above), then appends a `{"source_id", "player", "votes",
+     "label"}` descriptor to `pending["extra_sources"]` (the existing
+     Perfect Paragon convention) with `votes = votes_per_pool * X`. No new
+     kind of engine-level window was needed: `resolve_impulse_window`
+     already turns every `HookOption` a provider returns into one choice of
+     the same `Decision`, so a provider offering several options for
+     different X values (instead of Perfect Paragon's single fixed option)
+     already worked with zero engine change -- only the enumerate-X/burn/
+     append bookkeeping was new, and is now a single reusable function
+     instead of something every future "burn X pool for Y*X votes" card
+     would duplicate.
+  6. `src/vtesbot/engine/__init__.py` exports `bring_master_card_into_play`,
+     `detect_contest_on_bring_into_play`, `MasterCardInPlay`,
+     `MasterCardView` alongside the pre-existing ally/attachment
+     equivalents.
+  Proven by `tests/rules/test_master_cards.py` (16 tests: `bring_master_
+  card_into_play`'s unlocked-by-default entry state and instance-id
+  namespacing; a dedicated non-unique case proving two players'
+  independently-played copies of the *same* non-unique card (Wider View's
+  own id, reused as a stand-in) never contest each other, by construction,
+  simply because no test code calls `detect_contest_on_bring_into_play` for
+  them; `detect_contest_on_bring_into_play`'s two-sided flagging, zone
+  move, differently-named and same-player-same-name non-contest cases
+  (Oxford's own id reused as the Unique stand-in), mirroring
+  `test_ally_contests.py`'s own structure; `Observation` visibility for
+  both a contested and an uncontested card; the unlock-phase lock/unlock
+  mechanic specific to this entity; the full pay/yield contest-resolution
+  cycle including the delayed-restore-on-next-unlock-phase case and a
+  zero-regression uncontested check, mirroring `test_ally_contest_
+  resolution.py`'s/`test_attachment_contest_resolution.py`'s own structure;
+  and a production-call-site end-to-end test through the real
+  `"master_phase_play"` hook, mirroring `test_ally_contests.py::
+  test_recruit_ally_action_end_to_end_detects_the_contest`'s own bar) and
+  by eight new tests appended to `tests/rules/test_politics.py`
+  (`variable_pool_burn_vote_options`'s own option enumeration, pool-burn/
+  vote-scaling/`on_burn`-callback behaviour, and the zero-pool empty-list
+  case; a full Oxford-shaped fake `POLLING_STEP_HOOK` provider proven
+  end-to-end through `political_action` itself -- offering the burn-X-pool
+  choice, burning the right amount of pool, locking the card, and adding
+  the right scaled vote count to the final tally; and a companion test
+  proving an already-`locked` card's own provider offers nothing at all, so
+  no `POLLING_STEP_HOOK` decision is raised a second time until that card
+  is unlocked again). Full suite green: 447 passing (22 new, 0 regressions,
+  confirmed by running the pre-existing suite both with and without this
+  pass's changes via `git stash -u`), `ruff check`/`ruff format --check`
+  clean on every touched file and on the full repository.
+- Deliberately **not** built, confirmed out of scope by the quick sweep
+  above (CLAUDE.md "one rule mechanism per change" / "no guessing ahead of
+  a sourced need"): a `counters` field on `MasterCardInPlay` (needed by at
+  least six of the 18 sweep cards); a reaction/control-transfer primitive
+  for an opponent to burn or steal a standalone master card as their own
+  action (needed by four more of the 18, and by Disputed Territory/Cold
+  War); and any card module wiring any of the 18 sweep cards, or Oxford
+  itself, against any of this entry's new primitives -- that is
+  `card-implementer`'s job, per this task's own explicit scope boundary.
+- Impacted code: `src/vtesbot/engine/state.py` (`MasterCardInPlay`,
+  `PlayerState.master_cards`/`new_master_card_instance_id`),
+  `src/vtesbot/engine/master_cards.py` (new; supersedes the first landing's
+  `engine/locations.py`, deleted/renamed in place), `src/vtesbot/engine/
+  phases/unlock.py` (`_unlock_own_master_cards`, `_pending_effect_ids`,
+  `_resolve_optional_effects_in_chosen_order`, `unlock_phase`),
+  `src/vtesbot/engine/observation.py` (`MasterCardView`,
+  `build_observation`), `src/vtesbot/engine/politics.py`
+  (`variable_pool_burn_vote_options`), `src/vtesbot/engine/__init__.py`
+  (exports), `tests/rules/test_master_cards.py` (new; supersedes the first
+  landing's `tests/rules/test_locations.py`), `tests/rules/test_politics.py`.
+  Card registration is unchanged: Oxford University, England stays
+  `blocked`/`OQ-23` in the registry (superseding its own module's previous
+  `blocked_reason="OQ-6"` citation -- updating the registration itself,
+  including the `blocked_reason` string, is `card-implementer`'s job, not
+  this pass's, per this task's own explicit scope boundary); the 17 other
+  sweep cards (found by this entry's own quick sweep, all still
+  unimplemented, none touched here) can each be picked up by a future
+  `card-implementer` pass against these same primitives, with the
+  counter-bearing and opponent-burn/steal subsets each needing one further,
+  still-open engine primitive of their own first (noted above, not tracked
+  as a separate new OQ since neither is a ruling ambiguity -- both are
+  plain, sourced "what would be needed" notes, the same status this
+  entry's own "What's missing" section had before today).

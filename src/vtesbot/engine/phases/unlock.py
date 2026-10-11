@@ -48,6 +48,29 @@ delayed-restore step go through `engine/attachments.py::iter_attachments`/
 filter by the attachment's own `controller` (who played it), not by whose
 vampire it is attached to.
 
+OQ-23 (`docs/OPEN_QUESTIONS.md`, resolved by this pass): a standalone Master
+card in play (`engine/state.py::MasterCardInPlay`, e.g. Oxford University,
+England, still `blocked`) gets the same two unlock-phase treatments a
+vampire/ally already have, for reasons specific to this card category and
+not shared by the ally/attachment cases: (1) `_unlock_own_master_cards`
+below unlocks a `locked` `"in_play"` card, mirroring `_unlock_own_vampires`
+-- sourced directly by the generic Unlock Phase rule ("you must unlock all
+of your cards," quoted in full above, is not restricted to minions) and
+genuinely needed for Oxford's own repeatable "lock this card ... to get +2X
+votes" ability to ever be usable a second time, unlike an ally (no ally in
+the pool is ever locked except at recruit time, and nothing currently reads
+that lock back off) or an attachment (never locked at all); and (2) the
+same delayed-restore-from-contest half `_unlock_own_allies`/`_unlock_own_
+attachments` already have, for the identical "no 2P override for this card
+type" reason OQ-10/OQ-15/OQ-22 established -- only reachable for a card
+actually printed "Unique" (`engine/master_cards.py::detect_contest_on_
+bring_into_play`'s own contract; a non-unique card such as Wider View never
+calls that function, so its `contested_with` stays `None` and this branch
+never fires for it). A pending `f"contest_master_card:{...}"` effect,
+resolved by `engine/master_cards.py::resolve_one_master_card_contest`, is
+added to `_pending_effect_ids`/`_resolve_optional_effects_in_chosen_order`
+alongside the existing `"contest_ally:"`/`"contest_attachment:"` branches.
+
 OQ-22 follow-up (resolved finishing Fame, `card-implementer` pass): Fame's
 own remaining clause ("During each Methuselah's unlock phase, if this
 vampire is in torpor, that Methuselah burns 1 pool") is a *mandatory*
@@ -70,6 +93,7 @@ from ..attachments import (
 )
 from ..contests import resolve_one_contest
 from ..decision import Choice, Decision
+from ..master_cards import resolve_one_master_card_contest
 from ..pool import gain_pool
 
 if TYPE_CHECKING:
@@ -101,6 +125,7 @@ def unlock_phase(state: GameState, player: str) -> None:
     _unlock_own_vampires(state, player)
     _unlock_own_allies(state, player)
     _unlock_own_attachments(state, player)
+    _unlock_own_master_cards(state, player)
     hooks.run_effects(UNLOCK_PHASE_MANDATORY_EFFECT_HOOK, state, player=player)
     _resolve_optional_effects_in_chosen_order(state, player)
 
@@ -159,6 +184,36 @@ def _unlock_own_attachments(state: GameState, player: str) -> None:
             attachment.zone = "attached"
 
 
+def _unlock_own_master_cards(state: GameState, player: str) -> None:
+    """OQ-23 (`docs/OPEN_QUESTIONS.md`): two independent effects, both
+    mandatory, both sourced by the generic Unlock Phase rule quoted at the
+    top of this module ("you must unlock all of your cards"):
+
+    1. Unlock any `locked` `"in_play"` standalone master card (mirrors
+       `_unlock_own_vampires` exactly) -- the only way Oxford University,
+       England's own repeatable "lock this card ... to get +2X votes"
+       ability can ever be used a second time.
+    2. Restore a `"contested"` card whose opposing copy already yielded
+       (`contested_with is None`) back to `"in_play"`, on this player's own
+       next unlock phase -- mirrors `_unlock_own_allies`/`_unlock_own_
+       attachments`'s identical delayed-restore half, same rulebook wording
+       ("unlocked and turned face up during your *next* unlock phase"). Only
+       ever reachable for a card printed "Unique" (see `engine/master_
+       cards.py`'s own module docstring) -- a non-unique card's
+       `contested_with` is always `None`, so this branch is a no-op for it.
+
+    A card still actively contested (`contested_with` still set) is left
+    untouched: it is picked up instead by the optional pay-or-yield loop
+    (`_pending_effect_ids` / `resolve_one_master_card_contest`).
+    """
+    for card in state.players[player].master_cards.values():
+        if card.zone == "in_play" and card.locked:
+            card.locked = False
+        elif card.zone == "contested" and card.contested_with is None:
+            card.zone = "in_play"
+            card.locked = False
+
+
 def _pending_effect_ids(state: GameState, player: str, resolved: set[str]) -> list[str]:
     effects = [
         f"contest:{v.instance_id}"
@@ -181,6 +236,13 @@ def _pending_effect_ids(state: GameState, player: str, resolved: set[str]) -> li
         and a.contested_with is not None
         and a.zone != "burned"
         and f"contest_attachment:{a.instance_id}" not in resolved
+    ]
+    effects += [
+        f"contest_master_card:{card.instance_id}"
+        for card in state.players[player].master_cards.values()
+        if card.contested_with is not None
+        and card.zone != "burned"
+        and f"contest_master_card:{card.instance_id}" not in resolved
     ]
     if state.edge_holder == player and EDGE_GAIN_EFFECT not in resolved:
         effects.append(EDGE_GAIN_EFFECT)
@@ -212,6 +274,10 @@ def _resolve_optional_effects_in_chosen_order(state: GameState, player: str) -> 
             if attachment is None:
                 raise KeyError(instance_id)
             resolve_one_attachment_contest(state, player, attachment)
+        elif effect_id.startswith("contest_master_card:"):
+            instance_id = effect_id.split(":", 1)[1]
+            card = state.players[player].master_cards[instance_id]
+            resolve_one_master_card_contest(state, player, card)
         else:
             instance_id = effect_id.split(":", 1)[1]
             vampire = state.players[player].vampires[instance_id]
