@@ -1,0 +1,124 @@
+{
+  "id": 102229,
+  "printed_name": "Line Brawl",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Line Brawl"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Pelea entre bandas"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Bagarre rangée"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/linebrawl.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/linebrawl.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Pelea entre bandas",
+      "text": "Requiere a un Anarquista.\n[cel] Ⓓ Roba 1 de reserva sanguínea a otro Matusalén.\n[pot] Ⓓ Entra en combate con un siervo.\n[pre] Ⓓ Sangra con +1 de sangrado.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/linebrawl.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Bagarre rangée",
+      "text": "Requiert un Anarch.\n[cel] Ⓓ Voler 1 point de réserve d'un autre Mathusalem.\n[pot] Ⓓ Entrer en combat contre un serviteur.\n[pre] Ⓓ Mordre à +1 en morsure.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/linebrawl.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/linebrawl.jpg",
+  "types": [
+    "Action"
+  ],
+  "formats": [],
+  "artists": [
+    "Javier Santos"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "When played, a multi-Disciplines card counts as requiring the Discipline(s) being used. In the hand, library, or ash heap, the card is considered to require any and/or all Disciplines listed on it. [LSJ 20011204-3] [PIB 20130704]",
+      "group": "Multi-discipline",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20011204-3]",
+          "label": "LSJ 20011204-3",
+          "url": "https://usenet.krcg.org/t/JhBwcZjDlaQ/#m1"
+        },
+        {
+          "text": "[PIB 20130704]",
+          "label": "PIB 20130704",
+          "url": "https://www.vekn.net/forum/rules-questions/50982-iron-heart-vs-virtuosa#50984"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Requires an Anarch.\n[cel] Ⓓ Steal 1 pool from another Methuselah.\n[pot] Ⓓ Enter combat with a minion.\n[pre] Ⓓ Bleed with +1 bleed.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2021-12-31",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Choice",
+    "disciplines": [
+      "cel",
+      "pot",
+      "pre"
+    ]
+  }
+}
