@@ -9,56 +9,67 @@
       "count": 2,
       "capacity": 10,
       "group": 7,
-      "krcg_id": 201700
+      "krcg_id": 201700,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Queen Anne",
       "count": 1,
       "capacity": 10,
       "group": 6,
-      "krcg_id": 201647
+      "krcg_id": 201647,
+      "implementation_status": "blocked",
+      "blocked_reason": "OQ-6"
     },
     {
       "name": "Alexa Draper",
       "count": 3,
       "capacity": 8,
       "group": 6,
-      "krcg_id": 201529
+      "krcg_id": 201529,
+      "implementation_status": "blocked",
+      "blocked_reason": "OQ-6"
     },
     {
       "name": "Alice Chen",
       "count": 2,
       "capacity": 7,
       "group": 6,
-      "krcg_id": 201531
+      "krcg_id": 201531,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Kevin Jackson",
       "count": 1,
       "capacity": 7,
       "group": 7,
-      "krcg_id": 201629
+      "krcg_id": 201629,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Fiorenza Savona",
       "count": 1,
       "capacity": 7,
       "group": 6,
-      "krcg_id": 201616
+      "krcg_id": 201616,
+      "implementation_status": "blocked",
+      "blocked_reason": "OQ-6"
     },
     {
       "name": "Horst von Brühl",
       "count": 1,
       "capacity": 6,
       "group": 6,
-      "krcg_id": 201550
+      "krcg_id": 201550,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Madison",
       "count": 1,
       "capacity": 6,
       "group": 6,
-      "krcg_id": 201557
+      "krcg_id": 201557,
+      "implementation_status": "not_implemented"
     }
   ],
   "library": [
@@ -66,121 +77,143 @@
       "name": "Grooming the Protégé",
       "type": "Master",
       "count": 2,
-      "krcg_id": 100860
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
     },
     {
       "name": "Life in the City",
       "type": "Master",
       "count": 2,
-      "krcg_id": 101104
+      "krcg_id": 101104,
+      "implementation_status": "implemented"
     },
     {
       "name": "Perfectionist",
       "type": "Master",
       "count": 1,
-      "krcg_id": 101388
+      "krcg_id": 101388,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Wider View",
       "type": "Master",
       "count": 1,
-      "krcg_id": 102180
+      "krcg_id": 102180,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Dominate Kine",
       "type": "Action",
       "count": 1,
-      "krcg_id": 100573
+      "krcg_id": 100573,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Enchant Kindred",
       "type": "Action",
       "count": 3,
-      "krcg_id": 100640
+      "krcg_id": 100640,
+      "implementation_status": "implemented"
     },
     {
       "name": "Propaganda",
       "type": "Action",
       "count": 2,
-      "krcg_id": 101495
+      "krcg_id": 101495,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Kine Resources Contested",
       "type": "Political Action",
       "count": 3,
-      "krcg_id": 101056
+      "krcg_id": 101056,
+      "implementation_status": "implemented"
     },
     {
       "name": "Parity Shift",
       "type": "Political Action",
       "count": 2,
-      "krcg_id": 101353
+      "krcg_id": 101353,
+      "implementation_status": "implemented"
     },
     {
       "name": "Bonding",
       "type": "Action Modifier",
       "count": 2,
-      "krcg_id": 100236
+      "krcg_id": 100236,
+      "implementation_status": "implemented"
     },
     {
       "name": "Perfect Paragon",
       "type": "Action Modifier",
       "count": 3,
-      "krcg_id": 101387
+      "krcg_id": 101387,
+      "implementation_status": "blocked",
+      "blocked_reason": "OQ-6"
     },
     {
       "name": "Seduction",
       "type": "Action Modifier",
       "count": 2,
-      "krcg_id": 101712
+      "krcg_id": 101712,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Sleeping Mind, The",
       "type": "Action Modifier",
       "count": 2,
-      "krcg_id": 101805
+      "krcg_id": 101805,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Threats",
       "type": "Action Modifier",
       "count": 2,
-      "krcg_id": 101978
+      "krcg_id": 101978,
+      "implementation_status": "implemented"
     },
     {
       "name": "Voter Captivation",
       "type": "Action Modifier",
       "count": 2,
-      "krcg_id": 102131
+      "krcg_id": 102131,
+      "implementation_status": "blocked",
+      "blocked_reason": "OQ-6"
     },
     {
       "name": "Second Tradition: Domain",
       "type": "Reaction",
       "count": 4,
-      "krcg_id": 101706
+      "krcg_id": 101706,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Pulled Fangs",
       "type": "Combat",
       "count": 1,
-      "krcg_id": 101515
+      "krcg_id": 101515,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Rolling with the Punches",
       "type": "Combat",
       "count": 3,
-      "krcg_id": 101649
+      "krcg_id": 101649,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Soak",
       "type": "Combat",
       "count": 2,
-      "krcg_id": 101817
+      "krcg_id": 101817,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Weighted Walking Stick",
       "type": "Combat",
       "count": 2,
-      "krcg_id": 102169
+      "krcg_id": 102169,
+      "implementation_status": "not_implemented"
     }
   ],
   "unmatched": []

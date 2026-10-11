@@ -15,8 +15,18 @@ Checks implemented (see SKILL.md for the rule/source table):
   - Any entries left in the deck fixture's "unmatched" array are reported,
     never guessed
 
+Also reports (informational, never affects the LEGAL/ILLEGAL verdict or
+exit code -- a deck can be legal yet not playable by the bot, SKILL.md):
+  - Each crypt/library card's implementation status, looked up by krcg_id
+    against `src/vtesbot/cards/registry.py` -- "implemented", "blocked"
+    (with its `OQ-<n>` reason), or "not_implemented" (no registry entry).
+    Pass --annotate to write these as "implementation_status" /
+    "blocked_reason" fields back into the deck fixture itself, instead of
+    only printing them -- rerun with --annotate after any card's registry
+    status changes, rather than editing those fields by hand.
+
 Usage:
-    python scripts/validate_deck.py <deck.json> --format <format.json>
+    python scripts/validate_deck.py <deck.json> --format <format.json> [--annotate]
 
 Deck JSON: {"name", "crypt": [{"name","count","krcg_id","group",...}],
 "library": [{"name","count","krcg_id",...}], "unmatched": [...]}
@@ -31,6 +41,12 @@ Exit code: 0 if legal, 1 if any violation (so this can gate CI later).
 import argparse
 import json
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+
+import vtesbot.cards as _cards_pkg  # noqa: F401  (import for registration side effect)
+from vtesbot.cards import registry
 
 
 def _consecutive(groups: list[int]) -> bool:
@@ -75,6 +91,44 @@ def validate(deck: dict, fmt: dict) -> list[str]:
     return violations
 
 
+def implementation_status(krcg_id: int) -> dict[str, str]:
+    reg = registry.get(krcg_id)
+    if reg is None:
+        return {"implementation_status": "not_implemented"}
+    if reg.status is registry.Status.BLOCKED:
+        assert reg.blocked_reason is not None  # enforced by registry.register()
+        return {"implementation_status": "blocked", "blocked_reason": reg.blocked_reason}
+    return {"implementation_status": "implemented"}
+
+
+def not_yet_playable(deck: dict) -> list[str]:
+    lines = []
+    for section in ("crypt", "library"):
+        for c in deck[section]:
+            status = implementation_status(c["krcg_id"])
+            if status["implementation_status"] == "blocked":
+                lines.append(f"{c['name']}: blocked ({status['blocked_reason']})")
+            elif status["implementation_status"] == "not_implemented":
+                lines.append(f"{c['name']}: not implemented")
+    return lines
+
+
+def annotate(deck: dict) -> dict:
+    """Return `deck` with "implementation_status"/"blocked_reason" written
+    into every crypt/library entry, replacing any stale ones already there."""
+
+    skip = ("implementation_status", "blocked_reason")
+
+    def annotated_entry(entry: dict) -> dict:
+        base = {k: v for k, v in entry.items() if k not in skip}
+        return {**base, **implementation_status(entry["krcg_id"])}
+
+    deck = dict(deck)
+    deck["crypt"] = [annotated_entry(c) for c in deck["crypt"]]
+    deck["library"] = [annotated_entry(c) for c in deck["library"]]
+    return deck
+
+
 def main() -> None:
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
@@ -85,12 +139,22 @@ def main() -> None:
     parser.add_argument(
         "--format", required=True, help="dated format JSON, e.g. data/formats/2p/2026-10-03.json"
     )
+    parser.add_argument(
+        "--annotate",
+        action="store_true",
+        help="write each card's implementation_status/blocked_reason back into the deck fixture",
+    )
     args = parser.parse_args()
 
-    with open(args.deck, encoding="utf-8") as f:
-        deck = json.load(f)
+    deck_path = Path(args.deck)
+    deck = json.loads(deck_path.read_text(encoding="utf-8"))
     with open(args.format, encoding="utf-8") as f:
         fmt = json.load(f)
+
+    if args.annotate:
+        text = json.dumps(annotate(deck), indent=2, ensure_ascii=False) + "\n"
+        deck_path.write_text(text, encoding="utf-8")
+        print(f"annotated {deck_path}")
 
     violations = validate(deck, fmt)
 
@@ -108,6 +172,14 @@ def main() -> None:
     if violations:
         for v in violations:
             print(f" - {v}")
+    else:
+        print(" - none")
+
+    print("Not yet playable by the bot:")
+    npy = not_yet_playable(deck)
+    if npy:
+        for line in npy:
+            print(f" - {line}")
     else:
         print(" - none")
 

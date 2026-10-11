@@ -9,42 +9,48 @@
       "count": 3,
       "capacity": 8,
       "group": 6,
-      "krcg_id": 201658
+      "krcg_id": 201658,
+      "implementation_status": "implemented"
     },
     {
       "name": "Valeriya Zinovieva",
       "count": 3,
       "capacity": 7,
       "group": 6,
-      "krcg_id": 201614
+      "krcg_id": 201614,
+      "implementation_status": "implemented"
     },
     {
       "name": "Atiena",
       "count": 2,
       "capacity": 6,
       "group": 6,
-      "krcg_id": 201579
+      "krcg_id": 201579,
+      "implementation_status": "implemented"
     },
     {
       "name": "Leumeah",
       "count": 2,
       "capacity": 6,
       "group": 6,
-      "krcg_id": 201526
+      "krcg_id": 201526,
+      "implementation_status": "implemented"
     },
     {
       "name": "Octane",
       "count": 1,
       "capacity": 6,
       "group": 6,
-      "krcg_id": 201609
+      "krcg_id": 201609,
+      "implementation_status": "implemented"
     },
     {
       "name": "Siarhei Levchenko",
       "count": 1,
       "capacity": 5,
       "group": 6,
-      "krcg_id": 201612
+      "krcg_id": 201612,
+      "implementation_status": "implemented"
     }
   ],
   "library": [
@@ -52,103 +58,121 @@
       "name": "Celerity",
       "type": "Master",
       "count": 1,
-      "krcg_id": 100312
+      "krcg_id": 100312,
+      "implementation_status": "implemented"
     },
     {
       "name": "Fame",
       "type": "Master",
       "count": 1,
-      "krcg_id": 100698
+      "krcg_id": 100698,
+      "implementation_status": "implemented"
     },
     {
       "name": "Grooming the Protégé",
       "type": "Master",
       "count": 2,
-      "krcg_id": 100860
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
     },
     {
       "name": "Oxford University, England",
       "type": "Master",
       "count": 1,
-      "krcg_id": 101341
+      "krcg_id": 101341,
+      "implementation_status": "blocked",
+      "blocked_reason": "OQ-6"
     },
     {
       "name": "Wider View",
       "type": "Master",
       "count": 1,
-      "krcg_id": 102180
+      "krcg_id": 102180,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Enchant Kindred",
       "type": "Action",
       "count": 4,
-      "krcg_id": 100640
+      "krcg_id": 100640,
+      "implementation_status": "implemented"
     },
     {
       "name": "Fleetness",
       "type": "Action",
       "count": 2,
-      "krcg_id": 100747
+      "krcg_id": 100747,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Line Brawl",
       "type": "Action",
       "count": 4,
-      "krcg_id": 102229
+      "krcg_id": 102229,
+      "implementation_status": "implemented"
     },
     {
       "name": "Kine Resources Contested",
       "type": "Political Action",
       "count": 2,
-      "krcg_id": 101056
+      "krcg_id": 101056,
+      "implementation_status": "implemented"
     },
     {
       "name": "47th Street Royals",
       "type": "Ally",
       "count": 1,
-      "krcg_id": 102217
+      "krcg_id": 102217,
+      "implementation_status": "implemented"
     },
     {
       "name": "Organized Resistance",
       "type": "Reaction",
       "count": 4,
-      "krcg_id": 102230
+      "krcg_id": 102230,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Protection Racket",
       "type": "Reaction",
       "count": 2,
-      "krcg_id": 101501
+      "krcg_id": 101501,
+      "implementation_status": "implemented"
     },
     {
       "name": "Dust Up",
       "type": "Combat",
       "count": 6,
-      "krcg_id": 100597
+      "krcg_id": 100597,
+      "implementation_status": "implemented"
     },
     {
       "name": "Pursuit",
       "type": "Combat",
       "count": 3,
-      "krcg_id": 101523
+      "krcg_id": 101523,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Side Strike",
       "type": "Combat",
       "count": 2,
-      "krcg_id": 101778
+      "krcg_id": 101778,
+      "implementation_status": "implemented"
     },
     {
       "name": "Slam",
       "type": "Combat",
       "count": 4,
-      "krcg_id": 101798
+      "krcg_id": 101798,
+      "implementation_status": "not_implemented"
     },
     {
       "name": "Taste of Vitae",
       "type": "Combat",
       "count": 2,
-      "krcg_id": 101945
+      "krcg_id": 101945,
+      "implementation_status": "not_implemented"
     }
   ],
   "unmatched": []

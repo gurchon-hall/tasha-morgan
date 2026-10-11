@@ -46,11 +46,17 @@ python scripts/validate_deck.py <deck.json> \
 ```
 
 It covers crypt size/groups, library size, and allowed-list membership
-and type per section; it does not check "Implementation status" (that
-comes from the project's card registry, which doesn't exist yet) —
-report that part by hand. Any name left in the deck fixture's own
-`"unmatched"` array (from `scripts/krcg_match.py`) is reported as a
-violation, never guessed.
+and type per section, and reports "Implementation status" for every
+card (informational — never affects the LEGAL/ILLEGAL verdict or exit
+code) by looking each `krcg_id` up against
+`src/vtesbot/cards/registry.py`: `"implemented"`, `"blocked"` (with its
+`OQ-<n>` reason), or `"not_implemented"` (no registry entry). Pass
+`--annotate` to also write those as `"implementation_status"` /
+`"blocked_reason"` fields back into the deck fixture's own crypt/library
+entries, instead of only printing them — rerun with `--annotate` after
+any card's registry status changes, rather than editing those fields by
+hand. Any name left in the deck fixture's own `"unmatched"` array (from
+`scripts/krcg_match.py`) is reported as a violation, never guessed.
 
 ## Output
 
