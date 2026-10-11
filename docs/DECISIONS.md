@@ -83,3 +83,31 @@ are recorded here as design choices, not as VtES facts.
   providers must remove them afterwards (`hooks.unregister`/
   `hooks.clear`) so the catalogue does not leak between tests, since
   it is shared process-wide state.
+
+## D-6: `docs/OPEN_QUESTIONS.md` capped at 25 entries, overflow archived (2026-10-11)
+
+- Context: each resolved Open Question tends to accumulate a long
+  resolution history (follow-up audits, fix rounds, cross-references
+  to impacted code/cards), so the file's length grows much faster
+  than its entry count. Left unbounded, it becomes expensive to read
+  in full for routine work (implementing a card, auditing a rule),
+  even though most of its bulk is settled history rather than
+  anything still requiring a decision.
+- Decision: `docs/OPEN_QUESTIONS.md` holds at most 25 `## OQ-<n>`
+  entries at a time. When adding a new entry would exceed the cap,
+  the oldest entries still marked `resolved` (never an `open` one)
+  are moved verbatim to `docs/open_questions_archive/<NNN>.md` (also
+  capped at 25 entries per file), tracked by
+  `docs/open_questions_archive/INDEX.md`. OQ numbering stays global
+  and is never reused or renumbered by a move.
+- Rationale: this is an archival/ergonomics decision, not a rules
+  question, so it belongs here rather than as an Open Question
+  itself. Capping by entry count (not by a token/line budget) keeps
+  the rule simple and mechanically checkable (`grep -c '^## OQ-'`);
+  archiving only `resolved` entries guarantees nothing still needing
+  a decision ever becomes harder to find.
+- Consequence: anyone resolving or filing an OQ must check
+  `docs/open_questions_archive/INDEX.md` as well as
+  `docs/OPEN_QUESTIONS.md` when looking up the highest used `OQ-<n>`
+  or an existing entry's current location. See `vtes-rules-reference`
+  skill for the exact archive procedure.

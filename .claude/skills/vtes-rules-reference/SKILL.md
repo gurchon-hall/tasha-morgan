@@ -174,8 +174,24 @@ prey. Withdrawal rules exist (§5 Advanced).
 
 1. Re-read the card text, its rulings, the 2P variant page and the
    rulebook section.
-2. Still unclear or conflicting → do **not** choose. Append to
-   `docs/OPEN_QUESTIONS.md`:
+2. Still unclear or conflicting → do **not** choose. Before
+   appending, count the `## OQ-` headings in `docs/OPEN_QUESTIONS.md`.
+   If it already has 25, archive first (step 2a) — otherwise append
+   directly (step 2b).
+
+   2a. **Archive, then append.** Move the oldest entries still
+       marked `(status: resolved...)` (never an `open` one, even if
+       it is the oldest) out of `docs/OPEN_QUESTIONS.md` into
+       `docs/open_questions_archive/<NNN>.md`: reuse the highest-
+       numbered existing archive file if it has fewer than 25
+       entries, otherwise create the next `<NNN>.md`. Keep each
+       moved entry byte-for-byte (same `## OQ-<n>: ...` heading,
+       same body) — moving a file is not a chance to edit a ruling.
+       Update `docs/open_questions_archive/INDEX.md` with the
+       OQ-N → archive-file mapping for every entry moved. Only once
+       `docs/OPEN_QUESTIONS.md` is back under 25 entries, continue
+       to step 2b.
+   2b. **Append** to `docs/OPEN_QUESTIONS.md`:
 
    ```text
    ## OQ-<n>: <short title>   (status: open)
@@ -185,7 +201,16 @@ prey. Withdrawal rules exist (§5 Advanced).
    - Impacted code/cards:
    ```
 
+   `<n>` continues the global counter — check both
+   `docs/OPEN_QUESTIONS.md` and `docs/open_questions_archive/
+   INDEX.md` for the highest `OQ-<n>` used so far; numbers are never
+   reused or renumbered.
 3. Make the code path raise `UnresolvedRulingError("OQ-<n>")`, or
    mark the card `blocked`.
 4. Mention the OQ in your final report so the user can decide (or
    ask a VEKN judge).
+
+If an archived entry (`OQ-<n>` in `docs/open_questions_archive/`)
+later needs a resolution update (e.g. a `rules-auditor` follow-up),
+edit it in place in its archive file — do not move it back to
+`docs/OPEN_QUESTIONS.md` just to append to it.

@@ -4,6 +4,11 @@ Rules or card interactions that the official sources do not settle.
 Nothing listed here may be implemented by guessing. Format and
 procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
 
+Capped at 25 entries (`docs/DECISIONS.md` D-6). Older `resolved`
+entries live in `docs/open_questions_archive/` once this file fills
+up — check `docs/open_questions_archive/INDEX.md` too when looking
+up an OQ number or the highest one used so far.
+
 ## OQ-1: Prey/predator wording in a duel   (status: open)
 
 - Situation: with two players, each Methuselah is the other's prey
@@ -2609,3 +2614,79 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   opponent" as a whole, which never needed a target-choice `Decision` in
   the first place) must choose that target inside its `ActionCardSpec`
   provider's `apply()`, never inside `resolve()`.
+
+## OQ-22: Contested Cards gap beyond crypt/ally -- Fame (100698) (status: open)
+
+- Situation: implementing Fame (Master, krcg id 100698, in the active 2P
+  Brujah suggested decklist `data/decks/vekn-2p/brujah.json`) surfaced that
+  Fame is printed "Unique." and is "put ... on a ready vampire" as a
+  `CardAttachment` (`engine/cards.py::CardAttachment`), the same attachment
+  shape Celerity (100312) uses (OQ-8). Not a ruling ambiguity -- the base
+  rule is plain, and was already confirmed once by this document's own
+  OQ-10 resolution (re-fetched live against
+  <https://www.vekn.net/rulebook/4-detailed-turn-sequence>, "Advanced Rules
+  > Contested Cards", cross-checked against the local cache
+  `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`, lines
+  36-52): "If more than one unique card with the same name is brought into
+  play, that means control of the card is being contested. For the
+  duration of the contest, all of the contested cards are turned face down
+  and are out of play ... The cost to contest a card is 1 pool, which you
+  pay during each of your unlock phases. Instead of paying the cost ... you
+  may choose to yield the card. A yielded card is burned." OQ-10 already
+  established this is "one unified mechanism for *every* unique card
+  (crypt or not)," and that the 2P variant's "Contested crypt cards"
+  override (stay in play, usable, 1 pool/unlock or yield, no face-down) is
+  scoped to crypt cards only -- re-confirmed by that section's own title
+  and its own aside ("this means that contested crypt cards are no longer
+  out of play"), which by negation leaves an Ally/Equipment/Location/other
+  Unique master card under the *un*-modified base rule: face down, out of
+  play, for the contest's duration.
+- What's missing: `engine/cards.py::CardAttachment` has no
+  `contested_with` field (unlike `VampireInPlay`/`AllyInPlay`, both of
+  which do, per OQ-8/OQ-10's own resolutions); nothing checks, at the
+  moment a Unique master card like Fame is about to be attached, whether a
+  same-named `CardAttachment` is already live anywhere in play (either
+  controller) the way `engine/contests.py::detect_contest_on_reveal` and
+  `engine/allies.py::detect_contest_on_recruit` do for vampires/allies;
+  there is no face-down/out-of-play representation for an attachment; and
+  `engine/phases/unlock.py`'s pay-1-pool-or-yield ordering loop
+  (`_pending_effect_ids`/`_resolve_optional_effects_in_chosen_order`) only
+  resolves vampire (`"contest:"`) and ally (`"contest_ally:"`) pending
+  ids, nothing for an attached master card.
+- Why this matters now, not latent: unlike OQ-10 when it was first filed,
+  this is live today, not merely anticipated ahead of need. Fame is a real
+  card in the active 2P pool's own Brujah suggested decklist with exactly
+  one copy (correctly, per deck-construction uniqueness), but nothing
+  stops the *other* Methuselah in a duel from independently including and
+  playing their own separate copy of Fame -- from their own, separately
+  built deck (e.g. a mirror match using the same suggested Brujah
+  decklist, or any other user-supplied deck that happens to include it) --
+  onto a different vampire while the first copy is still attached and
+  un-contested. This is the ordinary, unremarkable "two Methuselahs, two
+  decks" situation this project explicitly scopes for (CLAUDE.md SS1,
+  "The user supplies a deck; the bot pilots it against a human (or another
+  bot)"), not a contrived edge case.
+- What would be needed (`rules-engineer` scope): generalize the
+  crypt/ally Contested Cards machinery to `CardAttachment` -- a
+  `contested_with`-shaped field, a detection check at the moment of
+  attachment (mirroring `detect_contest_on_reveal`/
+  `detect_contest_on_recruit`), a face-down/out-of-play representation (an
+  attached card has no existing "zone" of its own the way a vampire/ally
+  does, so this needs its own modelling decision), and a generalized
+  branch in `unlock.py`'s own pending-effect loop to resolve it
+  (pay-1-pool-or-yield, mirroring `resolve_one_contest`/
+  `resolve_one_ally_contest`).
+- Decision: per CLAUDE.md SS2 no-guessing rule and the project's own "one
+  registration = one status for the whole effect module" convention
+  (`src/vtesbot/cards/diana_iadanza.py`'s own docstring, which registers an
+  otherwise-partially-implementable card `blocked` wholesale rather than
+  splitting one card across two registry statuses), Fame is registered
+  `blocked` entirely rather than implementing its torpor-entry/unlock-phase
+  pool burns while silently leaving its own "Unique" clause unenforced.
+- Impacted code: `src/vtesbot/engine/cards.py::CardAttachment`,
+  `src/vtesbot/engine/phases/unlock.py` (pending-effect ordering loop), a
+  new `detect_contest_on_attach`-shaped check (exact location TBD by
+  `rules-engineer`). Impacted cards: Fame (100698, `blocked`); flag for any
+  future Unique attached master card too (the engine's own
+  `CardAttachment` docstring already names "Perfectionist" as a
+  hypothetical future example of this same category).

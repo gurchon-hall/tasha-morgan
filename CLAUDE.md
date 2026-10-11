@@ -54,6 +54,18 @@ conflict:
   from the playable pool) until the question is settled by the
   user.
 
+`docs/OPEN_QUESTIONS.md` is capped at **25 entries**. Once adding a
+new entry would exceed the cap, move the oldest entries still marked
+`resolved` out to `docs/open_questions_archive/<NNN>.md` (also capped
+at 25 entries each; append to the latest archive file until it is
+full, then start a new one) and update
+`docs/open_questions_archive/INDEX.md` (OQ-N → archive file). OQ
+numbering is global and never reused or renumbered on a move.
+Entries still `open` are never archived, even if they are the
+oldest — they stay in `docs/OPEN_QUESTIONS.md` regardless of count.
+See `vtes-rules-reference` skill for the exact procedure and
+`docs/DECISIONS.md` (D-6) for the rationale.
+
 Every rule implemented in code cites its source in the docstring
 (e.g. `Rulebook §4 Minion Phase > Detailed course of an action` or
 `2P variant §2.3 Starting transfers`).
@@ -124,7 +136,8 @@ src/vtesbot/
   interface/     # CLI (first), later TBD
 data/
 docs/
-  OPEN_QUESTIONS.md
+  OPEN_QUESTIONS.md        # active, capped at 25 entries
+  open_questions_archive/  # overflow, 25 entries per file + INDEX.md
   DECISIONS.md   # architecture decision records
 tests/
   rules/         # scenario tests from rulebook examples
