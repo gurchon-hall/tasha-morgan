@@ -1,0 +1,99 @@
+{
+  "id": 201703,
+  "printed_name": "Modius",
+  "unicity_suffix": "",
+  "suffix": "G7",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Modius"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Modius (G7)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/modiusg7.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/modiusg7.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Carmen Cornet"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "Cannot be used during a referendum that is automatically passing. [PIB 20150105] [LSJ 19980107]",
+      "group": "Usable during the polling step",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[PIB 20150105]",
+          "label": "PIB 20150105",
+          "url": "https://www.vekn.net/forum/rules-questions/68465-voting-is-complicated#68493"
+        },
+        {
+          "text": "[LSJ 19980107]",
+          "label": "LSJ 19980107",
+          "url": "https://usenet.krcg.org/t/aUUs4VCR_Ec/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "The ability can be used when in torpor. [LSJ 20011022]",
+      "group": "Ability usable in torpor",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20011022]",
+          "label": "LSJ 20011022",
+          "url": "https://usenet.krcg.org/t/KMg4MwD-Jn0/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Camarilla Prince of Gary: During the polling step of any referendum, Modius can discard a master card to get +1 vote.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2024-08-19",
+  "banned": null,
+  "clan": "Toreador",
+  "path": "",
+  "advanced": false,
+  "capacity": 8,
+  "group": "G7",
+  "disciplines": [
+    "obf",
+    "AUS",
+    "CEL",
+    "PRE"
+  ],
+  "title": "Prince"
+}

@@ -230,6 +230,22 @@ procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
   card's own text is authoritative per the Golden Rule for Cards (CLAUDE.md
   §2) and needs no new Open Question — it's a plain card-text clause, not
   an unsettled ruling.
+- Note for later (found implementing Modius, 2026-10-11): several
+  polling-step cards carry the same general ruling Perfect Paragon's and
+  Scalpel Tongue's own entries above already quote — "[c]annot be used
+  during a referendum that is automatically passing" [PIB 20150105]
+  [LSJ 19980107] — including Modius (verbatim in `src/vtesbot/cards/
+  modius.py`'s module docstring). `engine/politics.py::resolve_referendum`
+  has no "automatically passing" code path at all today (no card in this
+  pool triggers one, per the note directly above), so this restriction is
+  currently unreachable on every such card and is not covered by a test —
+  not a silently-dropped ruling, just one with no scenario to construct
+  against yet. Whichever future pass first implements a card whose own
+  text makes a referendum pass automatically (Cryptic Rider, Charming
+  Lobby, Malkavian Rider Clause, Día de los Muertos are the named examples
+  in the general ruling) must also re-check every already-implemented
+  polling-step card/ability for this same clause and gate it accordingly,
+  rather than assuming an already-`implemented` card already handles it.
 - Third `rules-auditor` follow-up (round 3, done): found two further MAJOR
   issues in the round-2 fix above, both now fixed.
   4. `_run_pre_cast_hook_window`'s `"polling_step"` hook context put the
