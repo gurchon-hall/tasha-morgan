@@ -17,6 +17,7 @@ milestone-3 scaffolding report for the full classification), not an error.
 
 from . import (
     alexa_draper,
+    atiena,
     bonding,
     celerity,
     diana_iadanza,
@@ -50,6 +51,7 @@ __all__: list[str] = []  # import-for-side-effect only; nothing is re-exported.
 
 _LOADED_MODULES = (
     alexa_draper,
+    atiena,
     bonding,
     celerity,
     diana_iadanza,

@@ -1,0 +1,82 @@
+{
+  "id": 201579,
+  "printed_name": "Atiena",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Atiena"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Atiena (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/atienag6.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Atiena",
+      "text": "Barón Anarquista de Mombasa.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/atienag6.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Atiena",
+      "text": "Anarch. Baron de Mombasa.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/atienag6.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/atienag6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Mark Kelly"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Anarch Baron of Mombasa.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2021-12-31",
+  "banned": null,
+  "clan": "Brujah",
+  "path": "",
+  "advanced": false,
+  "capacity": 6,
+  "group": "G6",
+  "disciplines": [
+    "obf",
+    "pot",
+    "pre",
+    "CEL"
+  ],
+  "title": "Baron"
+}
