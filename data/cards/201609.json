@@ -1,0 +1,89 @@
+{
+  "id": 201609,
+  "printed_name": "Octane",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Octane"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Octane (G6)"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Octano"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Octano (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/octaneg6.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Octano",
+      "text": "Anarquista.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/octaneg6.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Octane",
+      "text": "Anarch.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/octaneg6.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/octaneg6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Brian Graupner"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Anarch.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2021-12-31",
+  "banned": null,
+  "clan": "Brujah",
+  "path": "",
+  "advanced": false,
+  "capacity": 6,
+  "group": "G6",
+  "disciplines": [
+    "CEL",
+    "POT",
+    "PRE"
+  ],
+  "title": null
+}
