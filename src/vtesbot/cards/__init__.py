@@ -41,6 +41,7 @@ from . import (
     side_strike,
     telepathic_counter,
     threats,
+    valeriya_zinovieva,
     voter_captivation,
 )
 
@@ -72,5 +73,6 @@ _LOADED_MODULES = (
     side_strike,
     telepathic_counter,
     threats,
+    valeriya_zinovieva,
     voter_captivation,
 )

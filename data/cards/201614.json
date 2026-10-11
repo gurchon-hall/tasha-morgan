@@ -1,0 +1,99 @@
+{
+  "id": 201614,
+  "printed_name": "Valeriya Zinovieva",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Valeriya Zinovieva"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Valeriya Zinovieva (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/valeriyazinovievag6.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/valeriyazinovievag6.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Valeriya Zinovieva",
+      "text": "Barón Anarquista de Moscú. +1 de fuerza.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/valeriyazinovievag6.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Valeriya Zinovieva",
+      "text": "Anarch. Baron de Moscou : +1 en force.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/valeriyazinovievag6.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/valeriyazinovievag6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Ken Meyer, Jr."
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Anarch Baron of Moscow: +1 strength.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2021-12-31",
+  "banned": null,
+  "clan": "Brujah",
+  "path": "",
+  "advanced": false,
+  "capacity": 7,
+  "group": "G6",
+  "disciplines": [
+    "cel",
+    "pre",
+    "pro",
+    "POT"
+  ],
+  "title": "Baron"
+}
