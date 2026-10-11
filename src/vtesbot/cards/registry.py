@@ -41,6 +41,13 @@ class Hook(StrEnum):
 
     # Wired this pass (engine/hooks.py has a real call site):
     MASTER_PHASE_PLAY = "master_phase_play"
+    INFLUENCE_PHASE_ACTION = "influence_phase_action"
+    """A card-sourced, transfer-costed option offered during the Influence
+    phase (`engine/phases/influence.py::influence_phase`), alongside the
+    three hardcoded transfer types (add blood, remove blood, bring a crypt
+    card to the uncontrolled region) -- resolves `docs/OPEN_QUESTIONS.md`
+    OQ-24. A provider's `HookOption.apply(state)` must return the `int`
+    number of transfers consumed."""
     STEALTH_MODIFIER = "stealth_modifier"
     INTERCEPT_MODIFIER = "intercept_modifier"
     BLEED_AMOUNT_MODIFIER = "bleed_amount_modifier"

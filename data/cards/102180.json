@@ -1,0 +1,210 @@
+{
+  "id": 102180,
+  "printed_name": "Wider View",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Wider View"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Perspectiva más amplia"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Panorama élargi"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300024,
+        "code": "HttB"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PKia",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/heirs-to-the-blood/widerview.jpg"
+    },
+    {
+      "set": {
+        "id": 320001,
+        "code": "HttBR"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "A",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/heirs-to-the-blood-reprint/widerview.jpg"
+    },
+    {
+      "set": {
+        "id": 300030,
+        "code": "SP"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PwN",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-preconstructed/widerview.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 1,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 1,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/widerview.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PMin",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/widerview.jpg"
+    },
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/widerview.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Perspectiva más amplia",
+      "text": "Nimiedad.\nPon esta carta en juego. Puedes usar 1 transferencia para robar 1 carta de tu cripta y luego retirar del juego una carta de cripta de tu zona incontrolada. Puedes usar 4 transferencias para quemar esta carta y ganar 2 de reserva sanguínea.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/widerview.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Panorama élargi",
+      "text": "Triviale.\nMettez cette carte en jeu. Vous pouvez utiliser 1 transfert pour piocher 1 carte de votre crypte et retirer ensuite une carte de crypte dans votre région incontrôlée de la partie. Vous pouvez utiliser 4 transferts pour brûler cette carte et gagner 2 points de réserve.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/widerview.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/widerview.jpg",
+  "types": [
+    "Master"
+  ],
+  "formats": [],
+  "artists": [
+    "Michael Gaydos"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "Cards removed from the game are public. [LSJ 20080314]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20080314]",
+          "label": "LSJ 20080314",
+          "url": "https://usenet.krcg.org/t/GqHN0I3c8Sc/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Trifle.\nPut this card in play. You can use 1 transfer to draw 1 card from your crypt and then remove a crypt card in your uncontrolled region from the game. You can use 4 transfers to burn this card and gain 2 pool.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2010-03-05",
+  "banned": null,
+  "cost": {
+    "type": "Pool",
+    "value": 1
+  },
+  "burn_option": false,
+  "trifle": true,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}

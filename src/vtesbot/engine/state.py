@@ -21,12 +21,29 @@ from .rng import GameRNG
 if TYPE_CHECKING:
     from .decision import Choice, Decision
 
-Zone = str  # "uncontrolled" | "ready" | "torpor" | "burned"
+Zone = str  # "uncontrolled" | "ready" | "torpor" | "burned" | "removed_from_game"
 
 
 @dataclass
 class VampireInPlay:
-    """One controlled vampire instance (a dealt/drawn crypt card in a player's crypt area)."""
+    """One controlled vampire instance (a dealt/drawn crypt card in a player's crypt area).
+
+    `zone == "removed_from_game"` (OQ-24, `docs/OPEN_QUESTIONS.md`): a crypt
+    card physically removed from the game by an effect (e.g. Wider View,
+    krcg id 102180, "...remove a crypt card in your uncontrolled region from
+    the game") -- deliberately a distinct value from `"burned"`, not reused
+    for it, because the general ruling on file for that exact clause ("Cards
+    removed from the game are public." [LSJ 20080314]) only matters, and
+    only needed stating at all, for a card that may still be face-down and
+    unrevealed (`"uncontrolled"`) at the moment it is removed: a `"burned"`
+    vampire is always already-revealed (torpor/diablerie/contest-yield), so
+    its own public status was never in question the way a still-secret
+    uncontrolled card's is. No `Observation` change is needed to honour this
+    ruling: `build_observation`'s own `visible_identity = v.zone !=
+    "uncontrolled" or v.controller == viewer` already treats every zone
+    other than `"uncontrolled"` (this one included) as fully public to both
+    players, exactly like `"burned"` already is -- confirmed by reading that
+    function, not assumed."""
 
     instance_id: str
     card: CryptCard

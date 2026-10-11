@@ -20,10 +20,50 @@ itself cost a transfer).
 card's own bonus (e.g. Celerity's "+1 capacity") -- see
 `engine/attachments.py::effective_capacity`, consulted below instead of a
 bare `v.card.capacity` read.
+
+OQ-24 (`docs/OPEN_QUESTIONS.md`, resolved): until this pass, this phase was
+a closed, hardcoded implementation of exactly the three transfer types
+above plus the free reveal, with no hook dispatch at all -- unlike
+`engine/phases/master.py::master_phase`'s own `"master_phase_play"` hook.
+Wider View (krcg id 102180, "You can use 1 transfer to draw 1 card from
+your crypt and then remove a crypt card in your uncontrolled region from
+the game. You can use 4 transfers to burn this card and gain 2 pool.")
+needs two further transfer-costed options available during this same
+phase, which no existing hardcoded `kind` branch can express. Fixed by
+adding `INFLUENCE_PHASE_ACTION_HOOK` (`"influence_phase_action"`), offered
+via `hooks.offer` alongside the three hardcoded transfer types (kept as a
+hardcoded baseline rather than reimplemented as hook providers of their own
+-- see this module's own "Why hardcoded baseline, not hook providers"
+note below for the reasoning) -- mirrors `master_phase`'s own
+offer/by-value/dispatch shape. A provider's `HookOption.apply(state)` must
+return an `int`: the number of transfers the chosen option consumed (the
+same "`apply`'s return value documents the hook's own contract" pattern
+`master_phase`'s own module docstring already uses for its `bool`
+"is this a trifle" contract). As with every hook, legality of each offered
+option (e.g. Wider View's own 1-transfer draw option needing both a
+non-empty `crypt_deck` *and* at least one uncontrolled vampire to remove)
+is the registering provider's own responsibility (`GameState.ask`'s
+"legality by construction" invariant, `engine/state.py` module docstring) --
+the engine never second-guesses what a provider offers.
+
+Why hardcoded baseline, not hook providers: reimplementing the three
+existing transfer types as the *first* registered providers against
+`INFLUENCE_PHASE_ACTION_HOOK` would mean moving `_available_choices`/
+`_apply`'s existing, already-tested logic into provider functions that live
+in `engine/`, not `src/vtesbot/cards/` (CLAUDE.md SS6: "Card hooks ... lives
+in `src/vtesbot/cards/`. Do not special-case card names in the engine" --
+these three are generic rulebook mechanics, not any card's text, so they
+belong in `engine/` either way, but moving them behind the hook machinery
+would add indirection with no reader-facing benefit, since nothing outside
+this module needs to add to or override them). Keeping them hardcoded and
+simply unioning the hook's own options alongside them is the smaller diff
+and leaves the three types' own byte-for-byte behaviour, and every existing
+test asserting it, untouched.
 """
 
 from typing import TYPE_CHECKING
 
+from .. import hooks
 from ..attachments import effective_capacity
 from ..damage import add_blood
 from ..decision import Choice, Decision
@@ -38,6 +78,11 @@ FIRST_INFLUENCE_PHASE_TRANSFERS = 3
 STANDARD_TRANSFERS = 4
 """2P variant SS2.3: every influence phase thereafter, for both players."""
 
+INFLUENCE_PHASE_ACTION_HOOK = "influence_phase_action"
+"""OQ-24: a card-sourced, transfer-costed influence-phase option, offered
+alongside the three hardcoded transfer types. `HookOption.apply(state)`
+must return the `int` number of transfers consumed."""
+
 
 def influence_phase(state: GameState, player: str) -> None:
     if not state.first_influence_phase_used:
@@ -47,19 +92,34 @@ def influence_phase(state: GameState, player: str) -> None:
         remaining = STANDARD_TRANSFERS
 
     while True:
-        choices = _available_choices(state, player, remaining)
+        hook_options = hooks.offer(
+            INFLUENCE_PHASE_ACTION_HOOK, state, player=player, transfers_remaining=remaining
+        )
+        by_value = {o.choice.value: o for o in hook_options}
+        choices = _available_choices(state, player, remaining) + tuple(
+            o.choice for o in hook_options
+        )
         if not choices:
             return
+        all_choices = choices + (Choice("end_phase", "End influence phase"),)
+        # Audit-driven guard (OQ-24 addendum, `docs/OPEN_QUESTIONS.md`): a
+        # hook-provided choice value colliding with a hardcoded one (or with
+        # "end_phase") would otherwise silently take over that action --
+        # see `hooks.ensure_unique_choice_values`'s own docstring.
+        hooks.ensure_unique_choice_values(all_choices, decision_kind="influence_action")
         decision = Decision(
             player=player,
             kind="influence_action",
-            choices=choices + (Choice("end_phase", "End influence phase"),),
+            choices=all_choices,
             context={"transfers_remaining": remaining},
         )
         choice = state.ask(decision).value
         if choice == "end_phase":
             return
-        remaining -= _apply(state, player, choice)
+        if choice in by_value:
+            remaining -= int(by_value[choice].apply(state))
+        else:
+            remaining -= _apply(state, player, choice)
 
 
 def _available_choices(state: GameState, player: str, remaining: int) -> tuple[Choice, ...]:

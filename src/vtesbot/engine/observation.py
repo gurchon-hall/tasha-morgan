@@ -21,7 +21,7 @@ class VampireView:
 
     instance_id: str
     controller: str
-    zone: str  # "uncontrolled" | "ready" | "torpor" | "burned"
+    zone: str  # "uncontrolled" | "ready" | "torpor" | "burned" | "removed_from_game"
     locked: bool
     wounded: bool
     blood: int
@@ -131,6 +131,11 @@ def build_observation(state: GameState, viewer: str) -> Observation:
     are their private information and so are shown in full). Ready and
     torpor vampires are public knowledge for both players (Rulebook: the
     ready/torpor region is played face-up), so they are always shown in full.
+    Likewise a vampire removed from the game (OQ-24, `docs/
+    OPEN_QUESTIONS.md`; general ruling "Cards removed from the game are
+    public." [LSJ 20080314]) is always shown in full, for both players, by
+    the same `zone != "uncontrolled"` test as `"burned"`/`"torpor"` below --
+    no separate branch needed.
 
     Allies (rules-auditor finding, `docs/OPEN_QUESTIONS.md` OQ-7): an ally
     recruited via `engine/allies.py::recruit_ally` lives in the ready region

@@ -3151,3 +3151,208 @@ up an OQ number or the highest one used so far.
   as a separate new OQ since neither is a ruling ambiguity -- both are
   plain, sourced "what would be needed" notes, the same status this
   entry's own "What's missing" section had before today).
+
+## OQ-24: No influence-phase hook, no removed-from-game zone (status: resolved)
+
+- Situation: Wider View (krcg id 102180) appears in both active 2P
+  suggested decklists (`data/decks/vekn-2p/brujah.json`, `data/decks/
+  vekn-2p/toreador.json`), `implementation_status: "not_implemented"` in
+  both, not yet registered at all in `src/vtesbot/cards/`. Card text
+  (verbatim, via `krcg.load()`'s own `card_text` field for id 102180,
+  re-confirmed live 2026-10-11): "Trifle.\nPut this card in
+  play. You can use 1 transfer to draw 1 card from your crypt and then
+  remove a crypt card in your uncontrolled region from the game. You can use
+  4 transfers to burn this card and gain 2 pool." One ruling on file: "Cards
+  removed from the game are public. [LSJ 20080314]". Not a ruling ambiguity
+  -- the text and the ruling are both plain. This is the same category of
+  gap as OQ-7/8/9/10/22/23: a missing engine representation.
+- Clause 1 ("Trifle."/"Put this card in play") needed no further work at
+  all: OQ-23's own `MasterCardInPlay`/`engine/master_cards.py::
+  bring_master_card_into_play` already names Wider View by id, in both
+  `MasterCardInPlay`'s own docstring and `engine/master_cards.py`'s own
+  module docstring, as the motivating *non-unique* example (a standalone
+  Master card that stays in play but is never run through
+  `detect_contest_on_bring_into_play`) -- wiring it against
+  `"master_phase_play"` is a direct copy of `src/vtesbot/cards/
+  oxford_university_england.py`'s own `_provide_oxford_master_phase_play`,
+  with `apply()` returning `True` this time (this card *is* printed
+  "Trifle."). Deliberately not built here -- that is `card-implementer`'s
+  job, not this pass's (see "Impacted code" below).
+- What was missing, clause 2 (two gaps, both in `rules-engineer` scope):
+  1. **The Influence phase was not card-hookable.**
+     `src/vtesbot/engine/phases/influence.py`'s `influence_phase`/
+     `_available_choices`/`_apply` were a closed, hardcoded implementation
+     of the Rulebook's three standard transfer types (1 transfer = pool ->
+     uncontrolled vampire blood; 2 transfers = blood -> pool; 4 transfers + 1
+     pool = move the next crypt card to uncontrolled) plus the free reveal
+     action, with no hook dispatch at all -- confirmed by reading the whole
+     module and by grep (no `hooks.offer` call anywhere in it), unlike
+     `src/vtesbot/engine/phases/master.py::master_phase`'s own
+     `hooks.offer(MASTER_PHASE_PLAY_HOOK, ...)` call. Wider View's own two
+     "You can use N transfers to..." clauses need two *additional*
+     transfer-costed options available during this same phase, which no
+     existing hardcoded `kind` branch in `_apply` could express without
+     special-casing this card's name inside the engine (CLAUDE.md SS6: "Do
+     not special-case card names in the engine").
+  2. **No "removed from the game" zone existed for a crypt card.**
+     `src/vtesbot/engine/state.py::Zone` was `"uncontrolled" | "ready" |
+     "torpor" | "burned"` (confirmed by grep: nothing anywhere in `src/`
+     represented "removed from the game" as distinct from `"burned"`). The
+     ruling on file ("Cards removed from the game are public.") only
+     matters, and was only worth stating by LSJ at all, for a card that may
+     still be face-down and unrevealed (`"uncontrolled"`) at the moment it
+     is removed -- a `"burned"` vampire (torpor/diablerie/contest-yield) is
+     always already-revealed, so its own public status was never in
+     question the same way. Checked, not assumed, whether a separate
+     `Observation` branch was also needed: `engine/observation.py::
+     build_observation`'s own `visible_identity = v.zone != "uncontrolled"
+     or v.controller == viewer` already treats *any* zone value other than
+     `"uncontrolled"` as fully public to both players -- so a new zone
+     string automatically inherits full visibility with zero `Observation`
+     change, confirmed by reading the function rather than assumed.
+     `PlayerState.crypt_deck` (`engine/state.py`; populated by
+     `engine/setup.py`'s own shuffle/cut/deal) is confirmed to be the single
+     undrawn-crypt-pile concept in the engine -- the same deck
+     `influence_phase`'s own existing `"bring_crypt"` branch already pops
+     from -- so Wider View's "draw 1 card from your crypt" needs no second
+     crypt-deck concept.
+- Resolution (`rules-engineer` pass):
+  1. `src/vtesbot/engine/phases/influence.py` gained
+     `INFLUENCE_PHASE_ACTION_HOOK = "influence_phase_action"`, offered via
+     `hooks.offer` inside `influence_phase`'s own loop, alongside (not
+     replacing) the three hardcoded transfer types -- mirrors
+     `master_phase`'s own offer/by-value/dispatch shape exactly. A
+     provider's `HookOption.apply(state)` must return an `int`: the number
+     of transfers the chosen option consumed (the same "`apply`'s return
+     value documents the hook's own contract" pattern `master_phase`'s own
+     module docstring already uses for its `bool` "is this a trifle"
+     contract). Chose to keep the three existing transfer types hardcoded
+     (not reimplemented as the first hook providers against the new hook
+     point) rather than moving them into provider functions: they are
+     generic rulebook mechanics, not any card's text, so CLAUDE.md SS6's
+     "card-specific behaviour lives in `src/vtesbot/cards/`" does not
+     compel moving them, and simply unioning the hook's own options
+     alongside the existing hardcoded choices is the smaller diff, leaving
+     every pre-existing transfer-type test (and its exact byte-for-byte
+     behaviour) untouched. Legality of each offered hook option (e.g.
+     Wider View's own 1-transfer draw option needing both a non-empty
+     `crypt_deck` *and* at least one uncontrolled vampire to remove) is the
+     registering provider's own responsibility, per `GameState.ask`'s
+     "legality by construction" invariant (`engine/state.py` module
+     docstring) -- the engine never second-guesses what a provider offers,
+     the same contract every other hook in this engine already has.
+  2. `src/vtesbot/engine/state.py::Zone`'s type-alias comment and
+     `VampireInPlay`'s own docstring gained a fourth value,
+     `"removed_from_game"` -- reusing the existing `zone` field rather than
+     adding a new field or a boolean, deliberately kept distinct from
+     `"burned"` (not reused for it) for the documented reason above (the
+     ruling's own "still possibly face-down at removal time" scope, unlike
+     an already-revealed burned vampire). `src/vtesbot/engine/damage.py`
+     gained `remove_vampire_from_game(state, player, vampire)`, mirroring
+     `burn_vampire`'s own one-line shape (`zone = "removed_from_game"`,
+     `locked = False`). `src/vtesbot/engine/observation.py`'s
+     `VampireView.zone` comment and `build_observation`'s own docstring
+     were updated to name the new zone value and confirm (not merely
+     assert) that no further `Observation` code change was needed, per
+     finding 2 above.
+  3. `src/vtesbot/cards/registry.py::Hook` gained `INFLUENCE_PHASE_ACTION =
+     "influence_phase_action"` in the "wired this pass" group, matching the
+     new hook's string value.
+  Proven by six new tests appended to `tests/rules/test_influence.py`
+  (fake providers mirroring each of Wider View's own two clauses, exercised
+  through the real, production `influence_phase` call site, not just a
+  lower-level helper -- same bar OQ-7/OQ-13/OQ-23's own resolutions set):
+  the 1-transfer draw-and-remove option offered/costed/applied correctly,
+  and confirmed *not* offered once the crypt deck is empty even with an
+  uncontrolled vampire still available (the provider's own legality check);
+  the 4-transfer burn-for-pool option offered/costed/applied correctly, and
+  confirmed not offered during the 3-transfer first influence phase of the
+  game; a vampire moved to `"removed_from_game"` confirmed fully visible
+  (identity, zone, locked) to the *opponent* via `build_observation`,
+  proving the ruling's own "public" requirement; and a zero-regression test
+  proving the three hardcoded transfer types are offered and costed
+  identically with an unrelated hook provider also registered. Full suite
+  green: 472 passing (466 before this pass, 6 new, 0 regressions, confirmed
+  by running the full suite both with and without this pass's changes via
+  `git stash -u`), `ruff check`/`ruff format --check` clean on every touched
+  file and on the full repository.
+- Impacted code: `src/vtesbot/engine/phases/influence.py`
+  (`INFLUENCE_PHASE_ACTION_HOOK`, `influence_phase`), `src/vtesbot/engine/
+  state.py` (`Zone`, `VampireInPlay`), `src/vtesbot/engine/damage.py`
+  (`remove_vampire_from_game`, new), `src/vtesbot/engine/observation.py`
+  (`VampireView`, `build_observation` docstrings), `src/vtesbot/cards/
+  registry.py` (`Hook.INFLUENCE_PHASE_ACTION`), `tests/rules/
+  test_influence.py`. Card registration is unchanged: neither deck JSON's
+  `implementation_status` for Wider View was touched, and no `src/vtesbot/
+  cards/wider_view.py` module was written -- both are `card-implementer`'s
+  job, per this task's own explicit scope boundary, now that both engine
+  gaps this entry tracked are resolved.
+- Addendum (`rules-auditor` follow-up, same pass): two findings, both fixed.
+  1. **MAJOR**: `influence_phase` unioned the engine-hardcoded `kind:rest`-
+     prefixed choices (`"add_blood:{id}"`, `"remove_blood:{id}"`,
+     `"bring_crypt"`) with hook-provided `Choice`s into one `Decision` with
+     no uniqueness check across the two sources. `GameState.ask`'s own
+     `legal = {c.value: c for c in decision.choices}` keeps only the *last*
+     value on a collision, and the routing (`if choice in by_value: ...
+     else: _apply(...)`) meant a hook-provided `Choice.value` that happened
+     to collide with one of the three hardcoded patterns would silently
+     take over that exact action -- the real hardcoded transfer type became
+     unreachable for that value, with no error raised. Low practical risk
+     today (every card module namespaces its own choice values by card
+     name), but nothing enforced it, and the failure mode is silent
+     mis-resolution -- exactly what CLAUDE.md's "always plays legally and
+     never mis-resolves a card" milestone exists to prevent. **Fixed**:
+     `engine/hooks.py` gained `ensure_unique_choice_values(choices, *,
+     decision_kind)`, a general duplicate-value guard (not scoped to the
+     three named hardcoded patterns, so it also catches a collision against
+     the fixed `"end_phase"` choice, or between two future hook providers of
+     the same hook) raising `ValueError` the instant any two `Choice`s among
+     the full set about to be offered share a `.value` -- called once by
+     `influence_phase`, on the complete unioned-plus-`"end_phase"` choice
+     list, immediately before constructing the `Decision`. Chose the
+     general "assert no duplicates across the full offered set" approach
+     over "reserve the three hardcoded value patterns and reject a
+     collision against just those": the general check also protects
+     against a collision with `"end_phase"` itself and against two
+     *different* future hook providers of this same hook colliding with
+     each other, neither of which the narrower, pattern-specific approach
+     would have caught, for the same amount of code. `master_phase` has the
+     analogous risk for its own two-or-more-hook-provider case (two card
+     modules both registering against `"master_phase_play"` and
+     coincidentally choosing the same `Choice.value`) -- deliberately
+     **not** fixed here: it is a separate, not-yet-triggered gap (no card
+     module registers against `"master_phase_play"` with another that could
+     collide today), out of this addendum's own scope (CLAUDE.md "one rule
+     mechanism per change"); `hooks.ensure_unique_choice_values` is written
+     generically enough that wiring it into `master_phase` later is a
+     one-line addition, not a new primitive, whenever that pass happens.
+     Proven by a new regression test,
+     `tests/rules/test_influence.py::
+     test_a_colliding_hook_choice_value_raises_instead_of_silently_misrouting`:
+     a fake provider offers `Choice("add_blood:V1", ...)` with a no-op
+     `apply` (consumes 1 transfer, touches no pool/blood); before this fix
+     the fake option would have silently won the `by_value` lookup (pool/
+     blood unchanged, no error); after the fix, `influence_phase` raises
+     `ValueError` before ever building the `Decision`.
+  2. **MINOR**: `engine/damage.py::remove_vampire_from_game` did not guard
+     `contested_with`. Traced every code path and confirmed genuinely inert
+     today -- nothing can set `contested_with` on a still-`"uncontrolled"`
+     vampire (`engine/contests.py::detect_contest_on_reveal`, the only
+     writer of `contested_with`, only ever runs on a vampire already being
+     revealed to `"ready"`), the only zone this function is ever called
+     from -- but nothing enforced that invariant going forward. **Fixed**:
+     the function now raises `ValueError` if `vampire.contested_with is not
+     None`, turning the currently-true-by-construction invariant into an
+     enforced one; doubles as documentation for whoever builds the real
+     Wider View module next. Proven by two new tests in
+     `tests/rules/test_damage.py`: the ordinary zone-move/unlock behaviour,
+     and the guard itself (forcing the otherwise-impossible precondition
+     directly, since no production path can reach it).
+  Full suite green: 475 passing (472 before this addendum, 3 new, 0
+  regressions), `ruff check`/`ruff format --check` clean on every touched
+  file and on the full repository, `pymarkdown scan docs/ CLAUDE.md` clean.
+  Impacted code (this addendum only): `src/vtesbot/engine/hooks.py`
+  (`ensure_unique_choice_values`, new), `src/vtesbot/engine/phases/
+  influence.py` (`influence_phase`'s own call site), `src/vtesbot/engine/
+  damage.py` (`remove_vampire_from_game`'s own guard), `tests/rules/
+  test_influence.py`, `tests/rules/test_damage.py`.

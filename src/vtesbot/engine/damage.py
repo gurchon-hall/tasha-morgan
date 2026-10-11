@@ -83,6 +83,36 @@ def burn_vampire(state: GameState, player: str, vampire: VampireInPlay) -> None:
     vampire.locked = False
 
 
+def remove_vampire_from_game(state: GameState, player: str, vampire: VampireInPlay) -> None:
+    """Remove a crypt card from the game entirely (OQ-24, `docs/
+    OPEN_QUESTIONS.md`; e.g. Wider View, krcg id 102180: "...remove a crypt
+    card in your uncontrolled region from the game").
+
+    Deliberately a distinct zone/function from `burn_vampire` -- see
+    `VampireInPlay`'s own docstring for why `"removed_from_game"` is kept
+    separate from `"burned"` rather than reusing it, even though both leave
+    the vampire permanently out of play with `locked = False`.
+
+    `rules-auditor` finding (OQ-24 addendum, `docs/OPEN_QUESTIONS.md`):
+    nothing today can set `contested_with` on a still-`"uncontrolled"`
+    vampire (`engine/contests.py::detect_contest_on_reveal` -- the only
+    writer of `contested_with` -- only ever runs on a vampire *already*
+    being revealed to `"ready"`), the only zone this function is ever
+    called from, so a contested vampire being removed from the game is
+    genuinely unreachable today. The guard below turns that
+    currently-true-by-construction invariant into an enforced one, rather
+    than leaving it implicit, so a future change that makes it reachable
+    fails loudly instead of silently leaving a dangling `contested_with`
+    reference on the vampire this one was contested against."""
+    if vampire.contested_with is not None:
+        raise ValueError(
+            "remove_vampire_from_game: removing a contested vampire is unhandled -- "
+            "see this function's own docstring"
+        )
+    vampire.zone = "removed_from_game"
+    vampire.locked = False
+
+
 def send_to_torpor(state: GameState, player: str, vampire: VampireInPlay) -> None:
     """Torpor: controlled but not ready (Rulebook SS4 Torpor).
 

@@ -7,7 +7,10 @@ aggravated damage; burns 1 blood to mend, is wounded by the 2nd point, and
 the aggravated point burns him."
 """
 
+import pytest
+
 from helpers import ScenarioBuilder, ScriptedAgent
+from vtesbot.engine.damage import remove_vampire_from_game
 
 
 def _one_vampire_game(capacity: int = 3, blood: int = 0, wounded: bool = False):
@@ -112,3 +115,34 @@ def test_no_mend_decision_when_vampire_has_no_blood():
     game.apply_damage(target="V1", normal=1)
 
     assert game.vampire("V1").wounded is True
+
+
+# --- OQ-24 addendum (`rules-auditor` finding): remove_vampire_from_game ----
+
+
+def test_remove_vampire_from_game_moves_zone_and_unlocks():
+    game = _one_vampire_game(capacity=3, blood=0)
+    vampire = game.vampire("V1")
+    vampire.zone = "uncontrolled"
+    vampire.locked = True
+
+    remove_vampire_from_game(game.state, "A", vampire)
+
+    assert vampire.zone == "removed_from_game"
+    assert vampire.locked is False
+
+
+def test_remove_vampire_from_game_rejects_a_contested_vampire():
+    """`rules-auditor` finding (OQ-24 addendum, `docs/OPEN_QUESTIONS.md`):
+    confirmed by tracing every code path that nothing today can set
+    `contested_with` on a still-`"uncontrolled"` vampire (the only zone
+    this function is ever called from), so this guard is currently
+    unreachable in production -- proven directly here instead, by forcing
+    the otherwise-impossible precondition."""
+    game = _one_vampire_game(capacity=3, blood=0)
+    vampire = game.vampire("V1")
+    vampire.zone = "uncontrolled"
+    vampire.contested_with = "some-other-instance-id"
+
+    with pytest.raises(ValueError, match="contested"):
+        remove_vampire_from_game(game.state, "A", vampire)

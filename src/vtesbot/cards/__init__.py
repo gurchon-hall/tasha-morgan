@@ -48,6 +48,7 @@ from . import (
     threats,
     valeriya_zinovieva,
     voter_captivation,
+    wider_view,
 )
 
 __all__: list[str] = []  # import-for-side-effect only; nothing is re-exported.
@@ -85,4 +86,5 @@ _LOADED_MODULES = (
     threats,
     valeriya_zinovieva,
     voter_captivation,
+    wider_view,
 )

@@ -28,7 +28,7 @@ catalogue does not leak between tests.
 """
 
 from collections import defaultdict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -87,6 +87,37 @@ def offer(hook: str, state: GameState, **context: Any) -> list[HookOption]:
     for provider in _PROVIDERS.get(hook, ()):
         options.extend(provider(state, context))
     return options
+
+
+def ensure_unique_choice_values(choices: Iterable[Choice], *, decision_kind: str) -> None:
+    """Raise if two or more `Choice`s share the same `.value`.
+
+    CLAUDE.md "never mis-resolves a card": a call site that unions choices
+    from more than one source before building a `Decision` (e.g. engine-
+    hardcoded defaults plus hook-provided options -- `engine/phases/
+    influence.py::influence_phase`, the first caller, resolving `docs/
+    OPEN_QUESTIONS.md` OQ-24's own audit-driven addendum) must not let a
+    collision pass silently: `GameState.ask`'s own `legal = {c.value: c for
+    c in decision.choices}` keeps only the *last* value on a collision, so
+    without this check a hook-provided `Choice.value` that happened to
+    collide with a hardcoded one would silently make the hardcoded action
+    unreachable for that value, with no error raised -- exactly the silent
+    mis-resolution CLAUDE.md's "always plays legally and never mis-resolves
+    a card" milestone forbids. Call this once, on the full set of choices
+    about to be offered (including any fixed `"pass"`/`"end_phase"`-style
+    choice), right before constructing the `Decision`.
+    """
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for choice in choices:
+        if choice.value in seen:
+            duplicates.add(choice.value)
+        seen.add(choice.value)
+    if duplicates:
+        raise ValueError(
+            f"{decision_kind!r} decision: duplicate choice value(s) "
+            f"{sorted(duplicates)} offered from more than one source"
+        )
 
 
 def offer_until_pass(
