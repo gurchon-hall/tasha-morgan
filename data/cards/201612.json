@@ -1,0 +1,81 @@
+{
+  "id": 201612,
+  "printed_name": "Siarhei Levchenko",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Siarhei Levchenko"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Siarhei Levchenko (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/siarheilevchenkog6.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Siarhei Levchenko",
+      "text": "Anarquista.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/siarheilevchenkog6.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Siarhei Levchenko",
+      "text": "Anarch.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/siarheilevchenkog6.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/siarheilevchenkog6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Mark Kelly"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Anarch.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2021-12-31",
+  "banned": null,
+  "clan": "Brujah",
+  "path": "",
+  "advanced": false,
+  "capacity": 5,
+  "group": "G6",
+  "disciplines": [
+    "pot",
+    "CEL",
+    "PRE"
+  ],
+  "title": null
+}
