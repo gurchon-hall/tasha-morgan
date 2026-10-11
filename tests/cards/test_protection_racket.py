@@ -145,9 +145,7 @@ def test_base_bonus_is_one_intercept_when_acting_minion_is_untitled():
 
 def test_additional_bonus_is_two_intercept_when_acting_minion_is_titled():
     builder = ScenarioBuilder(seed=1)
-    builder.player("P1", pool=30).ready_vampire(
-        "A1", capacity=5, blood=0, title="Prince"
-    )
+    builder.player("P1", pool=30).ready_vampire("A1", capacity=5, blood=0, title="Prince")
     p2 = builder.player("P2", pool=30).ready_vampire("D1", capacity=3, blood=0)
     _set_sect(p2, "D1", Sect.ANARCH)
     p2.hand.append(_protection_racket_card())
@@ -219,8 +217,10 @@ def test_same_reacting_vampire_not_offered_twice_in_the_same_action():
 def test_a_different_eligible_vampire_is_still_offered_after_the_first_is_used():
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("A1", capacity=5, blood=0)
-    p2 = builder.player("P2", pool=30).ready_vampire("D1", capacity=3, blood=0).ready_vampire(
-        "D2", capacity=3, blood=0
+    p2 = (
+        builder.player("P2", pool=30)
+        .ready_vampire("D1", capacity=3, blood=0)
+        .ready_vampire("D2", capacity=3, blood=0)
     )
     _set_sect(p2, "D1", Sect.ANARCH)
     _set_sect(p2, "D2", Sect.ANARCH)
