@@ -180,6 +180,14 @@ tests/
   `CLAUDE.md`, ...) runs this alongside `pytest`/`ruff` as part
   of closing verification, every time, not only when something
   already looks off.
+- JSON lint: every tracked `.json` file under `data/` must be
+  pretty-printed (`pre-commit-hooks`'s `pretty-format-json`, 2-space
+  indent, keys left in source order, no `\uXXXX`-escaping of
+  non-ASCII) — `uv run pretty-format-json --no-sort-keys
+  --no-ensure-ascii $(find data -name '*.json')` to check,
+  add `--autofix` to fix in place. Any change touching a file
+  under `data/` runs this alongside `pytest`/`ruff` as part of
+  closing verification, every time.
 - A card is **implemented** only when: effect code + test(s)
   covering its text and each known ruling + registry entry + listed
   in the active 2P list.
