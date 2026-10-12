@@ -9,23 +9,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-4: 2P contested crypt cards — exact contest trigger moment   (status: resolved)
-
-- Situation: the 2P variant's contested-crypt-card rule (per the
-  `vtes-rules-reference` skill's condensed mapping) gave the *resolution*
-  cost (1 pool per unlock phase, or yield/burn) but the mapping did not
-  state the precise moment a contest begins.
-- Resolution: `rules-auditor` fetched the primary 2P variant page directly
-  (<https://www.vekn.net/two-player-format/655-two-player-variant-for-vampire-the-eternal-struggle>)
-  and quoted it verbatim: "If more than one unique crypt card with the same
-  name is brought into play, that means control of the card is being
-  contested" / "A second copy brought in later is immediately contested,
-  and can still be used as normal." This confirms the implemented reading
-  (contest triggers on reveal into play, not while both copies are merely
-  face down/uncontrolled) is correct.
-- Code: `src/vtesbot/engine/contests.py` (`detect_contest_on_reveal`) — no
-  change needed, reading A was already implemented.
-
 ## OQ-5: Does a failed block attempt lock the blocker?   (status: resolved)
 
 - Situation: `src/vtesbot/engine/action.py::attempt_block` locks the
@@ -4140,3 +4123,269 @@ up an OQ number or the highest one used so far.
     entry updated to `"implemented"`). No further `engine/` change was
     needed -- the mechanism the earlier `rules-engineer` pass built was
     already sufficient.
+
+## OQ-29: No end-of-round window -- Taste of Vitae (101945)   (status: resolved)
+
+- Situation: card text (verbatim, via the installed `krcg` package's own
+  `VTES["Taste of Vitae"].card_text` and cross-checked live against
+  `https://api.krcg.org/card/101945`, 2026-10-12, matching the raw snapshot
+  `data/cards/101945.json`): "Only usable at the end of a round of combat.
+  Not usable by a vampire being burned or going to torpor. A vampire can
+  play only one Taste of Vitae each round.\nThis vampire gains blood equal
+  to the amount of blood lost by the opposing vampire to damage this
+  round." Rulings (verbatim, both sources agree): "Cannot be played against
+  an ally. [PIB 20121028]"; "Must be played after the presses are handled
+  and can be played if the round ends prematurely. [RTR 20001020] [LSJ
+  20001024] [RTR 20030519]"; "Can be played before or after effects that
+  are played at the end of the round or 'when the combat would end' (eg.
+  [AUS] {Telepathic Tracking}). Can be played after [CEL] {Psyche!} [LSJ
+  20021113] [ANK 20191219] [ANK 20180910-1]"; "Can be played if the
+  opponent was burned. [LSJ 20031201-2]". Card type Combat, no discipline/
+  clan requirement (`discipline_requirement == {"type": "Mono",
+  "disciplines": []}`, `clan_requirement == []`), `cost is None`,
+  `burn_option is False`, `trifle is False`. Legal since 1994-09-15;
+  confirmed on the active 2P allowed list (`data/formats/2p/
+  2026-10-03.json`) and in the suggested 2P decklist `data/decks/
+  vekn-2p/brujah.json` (2 copies). No Ⓓ marker/prey-predator/political
+  wording -- a plain Combat card scoped to the current combat's own two
+  combatants, so OQ-1 (CLAUDE.md SS3) does not apply. Not a ruling
+  ambiguity -- the text and rulings are plain and mutually consistent. The
+  block is two missing engine representations.
+- Missing mechanism 1 -- no "End of Round" window at all: Rulebook SS4
+  Combat Sequence names "7. End of Round: End of round cards and effects
+  are played here" as its own step, after Press (step 6); this card's own
+  text ("Only usable at the end of a round of combat") and its own ruling
+  ("Must be played after the presses are handled") both key off exactly
+  this moment. `engine/combat.py::run_combat`'s own round loop has no such
+  step at all today -- confirmed by inspection: the loop's final block is
+  the Press step itself (`_ask_press` for each side, in order), and the
+  loop either continues to a fresh Determine Range step (someone pressed)
+  or `break`s out entirely (nobody pressed) with no intervening hook offer
+  of any kind; every earlier `break` in the same loop (Determine-Range-time
+  and Strike-time "no longer ready" checks) also exits with no such offer.
+  No `"end_of_round"`-shaped hook name exists anywhere in `cards/
+  registry.py::Hook` either (confirmed by grep).
+- Missing mechanism 2 -- no round-scoped "blood lost to damage" tracking:
+  this card's own gain amount is defined precisely as "the amount of blood
+  lost by the opposing vampire to damage this round" -- not simply "the
+  opposing vampire's current blood deficit" (which could also reflect
+  blood lost to something else entirely, e.g. an unrelated master/action
+  card played the same turn) and not merely "how much damage was dealt"
+  (mended damage costs 1 blood per point *actually mended*, but unmended
+  damage left as `wounded` costs no blood at all; aggravated damage against
+  an already-wounded vampire burns 1 blood per point *only while blood
+  remains*, switching to burning the vampire outright once it runs out --
+  `engine/damage.py::apply_damage`'s own mend/aggravated branches, both of
+  which mutate `vampire.blood` directly with no return value and no running
+  total kept anywhere). There is no round-scoped (or any other) "blood
+  lost to damage" accumulator in `engine/damage.py` or `engine/combat.py`
+  today (confirmed by inspection and by grep for `blood_lost`/
+  `damage_this_round`, no matches) -- `apply_damage` would need to record,
+  per vampire, per round, exactly how much of `vampire.blood`'s own
+  decrease was attributable to this round's own mend/aggravated-burn
+  branches specifically (not, e.g., a `pool`/`blood`-moving card effect
+  played the same round for an unrelated reason), reset fresh every round
+  the same way `round_state`'s own "(limited)" additional-strike tracking
+  already is.
+- "Not usable by a vampire being burned or going to torpor": a target-
+  legality check on the *playing* vampire's own zone at offer time (exclude
+  `zone in {"burned", "torpor"}`) -- not itself a missing mechanism (both
+  zones already exist), but only meaningful once mechanism 1 above gives
+  this card a moment to be offered at all, and ruling 2's "can be played if
+  the round ends prematurely" means this check must still correctly exclude
+  the *playing* vampire specifically (not, e.g., a vampire simply offered
+  the window after combat ended early for the *other* reason) once that
+  window is built.
+- "A vampire can play only one Taste of Vitae each round": a third,
+  genuinely separate round-scoped per-vampire cap, distinct from the
+  existing cross-card "(limited)" additional-strike cap (`additional_
+  strike_limit_used`, OQ-19) -- this card's own text never says "(limited)"
+  and has nothing to do with additional strikes; it needs its own private,
+  round-scoped bookkeeping once mechanism 1 exists to host it (same per-
+  round `round_state`-shaped scratch dict pattern, just a different key, not
+  reusing `ADDITIONAL_STRIKE_LIMIT_KEY`).
+- "Cannot be played against an ally" [PIB 20121028]: unreachable today for
+  the same reason OQ-7/OQ-10 already note for ally combat generally -- no
+  ally can currently be a combat participant at all (`engine/allies.py`'s
+  own docstring: ally bleed/block/combat participation is deliberately not
+  built), so "the opposing vampire" in this card's own text is, today,
+  always actually a vampire; noted for completeness, not itself blocking
+  anything additional.
+- "Can be played before or after effects that are played at the end of the
+  round or 'when the combat would end' (eg. [AUS] {Telepathic Tracking}).
+  Can be played after [CEL] {Psyche!}" [LSJ 20021113] [ANK 20191219] [ANK
+  20180910-1]: an ordering/sequencing clarification relative to two other,
+  specific named cards (Telepathic Tracking, krcg id 101950; Psyche!, krcg
+  id 101507), neither implemented in this project's pool -- not separately
+  actionable until at least one of them is, same "not reachable today, but
+  correctly modeled either way" status several other entries' own
+  not-yet-relevant rulings already carry (e.g. OQ-6's "automatically
+  passing" referendum note, `dust_up.py`'s own OQ-21 citation).
+- "Can be played if the opponent was burned" [LSJ 20031201-2]: confirms
+  that mechanism 1's own end-of-round window must still fire, and must
+  still offer this card, even when the *opposing* vampire (not the playing
+  one) ends the round burned rather than merely wounded/in torpor -- the
+  playing vampire's own "not usable by a vampire being burned or going to
+  torpor" restriction above is about itself only, never the opponent;
+  mechanism 2's own per-round blood-loss record for the now-burned opponent
+  must still be readable after the burn (i.e. not cleared or made
+  inaccessible by the zone transition to `"burned"` itself).
+- What would be needed: (1) a new `"end_of_round"`-shaped hook
+  (`cards/registry.py::Hook`), dispatched by `engine/combat.py::run_combat`
+  once per round, after the Press step resolves -- on *every* path out of
+  that round (normal "nobody pressed" ending, a premature "no longer ready"
+  break at any of the loop's existing checkpoints, and the "someone
+  pressed, loop continues" case too, since "end of round" happens
+  regardless of whether a *new* round follows) -- offered to each
+  combatant's controller (order per Rulebook SS2 Sequencing: acting
+  combatant's controller first, same precedent as press/OQ-3); (2) a
+  round-scoped, per-vampire "blood lost to damage this round" accumulator,
+  written by `engine/damage.py::apply_damage`'s own mend/aggravated-burn
+  branches and threaded into the new hook's context, mirroring how
+  `round_state`'s own "(limited)" additional-strike flag is threaded into
+  `COMBAT_DODGE_OPTION_HOOK`/`COMBAT_ADDITIONAL_STRIKE_HOOK` today -- but
+  `apply_damage` is also called directly by scenario tests and (per its own
+  module docstring) is meant to be usable "directly by future card effects"
+  outside of `run_combat` entirely, so this accumulator cannot simply be a
+  new required parameter; it needs its own degrade-gracefully convention
+  (missing context/no round in progress => nothing recorded, same shape
+  `additional_strike_limit_used` already uses for a hook offered outside
+  `run_combat`). This is `rules-engineer` scope (touches `engine/
+  combat.py`'s round loop structure and every one of its "no longer ready"
+  break points, plus `engine/damage.py::apply_damage`'s mend/aggravated-burn
+  branches) -- a card module cannot build either piece without touching
+  `engine/` files, which CLAUDE.md reserves for `rules-engineer`.
+- Impacted code (at the time this was opened): `src/vtesbot/engine/
+  combat.py` (`run_combat`'s round loop, every "no longer ready" break
+  point, the Press step), `src/vtesbot/engine/damage.py` (`apply_damage`'s
+  mend and aggravated-burn branches), `src/vtesbot/cards/registry.py`
+  (a new `Hook` entry). Impacted cards: Taste of Vitae (registered
+  `blocked`, reason `OQ-29`); any future card keying off "end of round"
+  timing or "blood lost to damage" would hit the same two gaps.
+- Resolution (`rules-engineer` pass, engine mechanisms only -- **Taste of
+  Vitae itself stayed `blocked`** pending a later `card-implementer` pass,
+  mirroring OQ-28's own two-step pattern): `engine/combat.py` and
+  `engine/damage.py` now build exactly the two mechanisms "What would be
+  needed" above asked for, generically (not Taste-of-Vitae-specific):
+  1. `Hook.END_OF_ROUND` (`cards/registry.py`) / `END_OF_ROUND_HOOK`
+     (`engine/combat.py`, string value `"end_of_round"`), dispatched by a
+     new `_ask_end_of_round` helper, called exactly once per round from
+     `run_combat`, on *every* path out of a round's own processing. The
+     round loop was restructured around two local booleans, `still_ready`
+     (did both combatants remain ready through the strike pair and any
+     additional-strikes pairs) and `pressed` (only ever asked if
+     `still_ready`), replacing the previous scattered `break` statements
+     with a single, unconditional `_ask_end_of_round` call placed once per
+     round, immediately followed by the loop's own `if not still_ready or
+     not pressed: break` -- guaranteeing exactly one dispatch per round on
+     every exit path (normal end, premature "no longer ready" end, and
+     "someone pressed, round continues" alike), with no duplicate/missing
+     call possible by construction. Dispatched via `hooks.resolve_impulse_
+     window` (the engine's standard two-sided, repeatable, "impulse returns
+     to the acting Methuselah, closes on two consecutive passes" shape --
+     CLAUDE.md rule 4 / Rulebook SS2 Sequencing), *not* `_ask_press`'s own
+     narrower "ask once per side, first yes wins" shape, since an
+     end-of-round card is a real window where either side may act (and
+     re-act) any number of times, not a single binary decision; only the
+     *ordering* precedent (acting combatant's controller offered first) is
+     shared with Press (OQ-3). Context carries `acting_player`/
+     `acting_vampire`/`blocking_player`/`blocking_vampire` as plain `str`
+     ids (never the live object, CLAUDE.md "information hiding") -- deliberately
+     *absolute*, not `vampire`/`opponent`-relative like `MANEUVER_HOOK`'s own
+     context, so a provider must compare `context["player"]` against
+     `acting_player`/`blocking_player` itself to work out which side it is
+     currently being offered to -- plus `round_state=`
+     (`ROUND_STATE_CONTEXT_KEY`), the same shared, round-scoped scratch dict
+     already threaded into every other combat hook this round.
+  2. `engine/damage.py::BLOOD_LOST_TO_DAMAGE_KEY`, a new key inside that
+     same round-scoped `round_state` dict, holding a `dict[str, int]` keyed
+     by vampire instance id. `apply_damage` gained an optional `round_state:
+     dict[str, Any] | None = None` parameter; its own Mend step and its own
+     aggravated-burn step each call the new `record_blood_lost_to_damage(
+     round_state, vampire_id, amount)` helper for exactly the blood *they
+     themselves* spent (and only those two branches -- nothing else in that
+     function decreases blood), summing across both within the same round.
+     `blood_lost_to_damage_this_round(round_state, vampire_id)` is the
+     public query helper (lives in `engine/damage.py`, not `engine/
+     combat.py`, to avoid a circular import, and takes the raw `round_state`
+     dict directly rather than a hook `context` mapping) -- analogous in
+     shape to `additional_strike_limit_used`/`commit_strike_for_round`'s own
+     public-helper convention. `engine/combat.py::_resolve_strike_pair` (the
+     only call site inside a combat) now passes the current round's
+     `round_state` into both of its `apply_damage` calls; every other
+     existing call site (direct card effects, scenario tests) passes
+     nothing and sees byte-for-byte the previous, untracked behaviour. The
+     record is a plain dict entry, untouched by any zone transition, so it
+     remains fully readable after the tracked vampire is burned --
+     directly supporting "Can be played if the opponent was burned" [LSJ
+     20031201-2].
+
+  - Zero-regression by construction: with no `END_OF_ROUND_HOOK` provider
+    registered, `hooks.resolve_impulse_window` returns immediately with no
+    `Decision` ever raised (CLAUDE.md "only when needed"), and `apply_
+    damage`'s new `round_state` parameter defaults to `None` everywhere
+    except the one new call site, reproducing the previous behaviour
+    exactly for every pre-existing caller/test.
+  - Proven generically (fake providers, not Taste of Vitae itself) by the
+    `rules-engineer`/`rules-auditor` passes' own engine-level tests; full
+    suite green before this card-level follow-up landed.
+  - Card registration (at the time this engine-mechanism-only pass landed)
+    was left unchanged: Taste of Vitae stayed `blocked`/`OQ-29` pending a
+    later `card-implementer` pass. Impacted code this pass:
+    `src/vtesbot/engine/combat.py`, `src/vtesbot/engine/damage.py`,
+    `src/vtesbot/cards/registry.py` (`Hook.END_OF_ROUND`, new).
+- Card-level follow-up (`card-implementer`, 2026-10-12, **fully resolved**):
+  wired Taste of Vitae against the mechanisms above. `src/vtesbot/cards/
+  taste_of_vitae.py` registers one `END_OF_ROUND_HOOK` provider, offered to
+  both `acting_player` and `blocking_player` -- for whichever side is being
+  asked, it resolves `context["player"]` against `acting_player`/
+  `blocking_player` to determine "this vampire" (the one that would play the
+  card) and "the opposing vampire" (whose blood-loss record is queried),
+  per the mechanism's own absolute-id context shape.
+  - Gates: the card in the playing vampire's controller's hand; the playing
+    vampire's own `zone not in {"burned", "torpor"}` (never the opponent's
+    own zone, which this provider never even reads -- only the opponent's
+    `instance_id`, directly supporting "[c]an be played if the opponent was
+    burned" with no extra code); a private, round-scoped per-vampire
+    "already played Taste of Vitae this round" cap, keyed under its own
+    `_USED_KEY` nested inside the shared `round_state` dict -- genuinely
+    separate from `ADDITIONAL_STRIKE_LIMIT_KEY` (this card's text never says
+    "(limited)" and has nothing to do with additional strikes), confirmed
+    independent per playing-vampire id (one combatant's own play does not
+    block the other's).
+  - Effect: `blood_lost_to_damage_this_round(round_state, <opponent's own
+    instance id>)`, recomputed fresh inside `apply()` rather than captured
+    at offer time (`END_OF_ROUND_HOOK`'s own window is a real, repeatable
+    impulse window), added to the playing vampire via `add_blood` (capped at
+    effective capacity, OQ-8). An amount of 0 (the opponent lost no blood to
+    damage this round) is not itself a reason to withhold the option -- the
+    card text conditions playability only on the zone/hand/once-per-round
+    gates above, never on a nonzero amount -- so the option is still offered
+    (and still "succeeds," gaining 0 blood) in that case.
+  - "Cannot be played against an ally" [PIB 20121028]: confirmed still
+    unreachable today, same reason OQ-7/OQ-10 already note for ally combat
+    generally -- no ally can currently be a combat participant at all.
+  - "Can be played before or after effects that are played at the end of the
+    round ... Can be played after [CEL] {Psyche!}" [LSJ 20021113] [ANK
+    20191219] [ANK 20180910-1]: Telepathic Tracking (krcg id 101950) and
+    Psyche! (krcg id 101507) remain unimplemented in this project's pool --
+    not separately actionable until at least one of them is;
+    `END_OF_ROUND_HOOK`'s own repeatable, two-sided impulse-window shape
+    already accommodates "before or after, any order" generically, with
+    nothing Taste-of-Vitae-specific needed for it.
+  - Proven by `tests/cards/test_taste_of_vitae.py` (17 tests): the window/
+    hand/zone gates; the per-round cap (including its own fresh-round reset
+    and per-vampire independence); correct acting/blocking side resolution
+    in both directions; the gain amount read correctly across mend-only,
+    aggravated-only and mixed-total scenarios; the zero-amount-still-
+    playable case; surviving the opponent being burned; and one full
+    `run_combat` integration test exercising the entire chain end to end
+    (a real hand strike, a real player-chosen mend amount, a real
+    end-of-round play, a real blood gain). Registry status is now
+    `implemented`, `blocked_reason` cleared. Full suite green (606
+    passing). Impacted code: `src/vtesbot/cards/taste_of_vitae.py`,
+    `tests/cards/test_taste_of_vitae.py`, `data/decks/vekn-2p/brujah.json`
+    (Taste of Vitae's own `implementation_status` entry updated to
+    `"implemented"`). No further `engine/` change was needed -- the
+    mechanisms the earlier `rules-engineer` pass built were already
+    sufficient.

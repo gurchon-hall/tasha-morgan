@@ -1,0 +1,488 @@
+{
+  "id": 101945,
+  "printed_name": "Taste of Vitae",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Taste of Vitae"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Saborear la Vitae"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Gorgée de vitæ"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300001,
+        "code": "Jyhad"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/jyhad/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300002,
+        "code": "VTES"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PN",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300011,
+        "code": "BH"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PN",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/black-hand/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300014,
+        "code": "KMW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAn",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/kindred-most-wanted/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300015,
+        "code": "LoB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PO",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/legacies-of-blood/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": ""
+    },
+    {
+      "set": {
+        "id": 300019,
+        "code": "LotN"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PG",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/lords-of-the-night/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PT",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PN",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PN",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PL",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PR",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PS",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/tasteofvitae.jpg"
+    },
+    {
+      "set": {
+        "id": 300043,
+        "code": "SV5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PCaine",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-v5/tasteofvitae.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Saborear la Vitae",
+      "text": "Sólo utilizable al final de un asalto de combate. No utilizable por un vampiro que se esté quemando o entrando en letargo. Un vampiro puede jugar sólo un ejemplar de esta carta por asalto.\nEste vampiro gana tanta sangre como sangre haya perdido el vampiro oponente debido al daño en este asalto.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/tasteofvitae.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Gorgée de vitæ",
+      "text": "Seulement utilisable à la fin d'un round de combat. Non utilisable par un vampire en train d'être brûlé ou d'aller en torpeur. Un vampire ne peut en jouer qu'un seul exemplaire par round.\nCe vampire gagne autant de points de sang que de points de sang perdus par le vampire opposé à cause de dégâts ce round-ci.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/tasteofvitae.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/tasteofvitae.jpg",
+  "types": [
+    "Combat"
+  ],
+  "formats": [],
+  "artists": [
+    "Pete Venters",
+    "Brian LeBlanc"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "Cannot be played against an ally. [PIB 20121028]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[PIB 20121028]",
+          "label": "PIB 20121028",
+          "url": "https://www.vekn.net/forum/rules-questions/39816-ec-2012-can-you-answer-these?start=6#39843"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "Must be played after the presses are handled and can be played if the round ends prematurely. [RTR 20001020] [LSJ 20001024] [RTR 20030519]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[RTR 20001020]",
+          "label": "RTR 20001020",
+          "url": "https://usenet.krcg.org/t/GvxNYsYsWJ4/#m0"
+        },
+        {
+          "text": "[LSJ 20001024]",
+          "label": "LSJ 20001024",
+          "url": "https://usenet.krcg.org/t/GvxNYsYsWJ4/#m6"
+        },
+        {
+          "text": "[RTR 20030519]",
+          "label": "RTR 20030519",
+          "url": "https://usenet.krcg.org/t/NOBWXWrd-vA/#m0"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "Can be played before or after effects that are played at the end of the round or \"when the combat would end\" (eg. [AUS] {101950|Telepathic Tracking}). Can be played after [CEL] {101507|Psyche!} [LSJ 20021113] [ANK 20191219] [ANK 20180910-1]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20021113]",
+          "label": "LSJ 20021113",
+          "url": "https://usenet.krcg.org/t/df2P8YHZex8/#m11"
+        },
+        {
+          "text": "[ANK 20191219]",
+          "label": "ANK 20191219",
+          "url": "https://www.vekn.net/forum/rules-questions/78241-relentless-reaper-vs-blissful-agony-and-scheduled-combat-rulings-ambiguity#98308"
+        },
+        {
+          "text": "[ANK 20180910-1]",
+          "label": "ANK 20180910-1",
+          "url": "https://www.vekn.net/forum/rules-questions/76990-correct-order-impulse-for-combat-cards-after-combat#90517"
+        }
+      ],
+      "cards": [
+        {
+          "id": 101950,
+          "printed_name": "Telepathic Tracking",
+          "unicity_suffix": "",
+          "suffix": ""
+        },
+        {
+          "id": 101507,
+          "printed_name": "Psyche!",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": [
+        {
+          "text": "[AUS]",
+          "symbol": "A",
+          "count": ""
+        },
+        {
+          "text": "[CEL]",
+          "symbol": "C",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "Can be played if the opponent was burned. [LSJ 20031201-2]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20031201-2]",
+          "label": "LSJ 20031201-2",
+          "url": "https://usenet.krcg.org/t/6lN9MbBeL1E/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Only usable at the end of a round of combat. Not usable by a vampire being burned or going to torpor. A vampire can play only one Taste of Vitae each round.\nThis vampire gains blood equal to the amount of blood lost by the opposing vampire to damage this round.",
+  "draft": "",
+  "flavor": "",
+  "legal": "1994-09-15",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}

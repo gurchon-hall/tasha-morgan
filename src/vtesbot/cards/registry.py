@@ -135,6 +135,27 @@ class Hook(StrEnum):
     *combat*-scoped (not round-scoped) scratch dict a provider needs for a
     once-per-combat grant like Saku's; `context["round_state"]` carries the
     shared, round-scoped scratch dict `commit_strike_for_round` writes into."""
+    END_OF_ROUND = "end_of_round"
+    """Rulebook SS4 Combat > Combat Sequence, step 7, "End of Round: End of
+    round cards and effects are played here" -- dispatched once per round by
+    `engine/combat.py::run_combat` (via `_ask_end_of_round`), on every path
+    out of a round's own processing: a normal end (nobody pressed), a
+    premature end (a combatant went not-ready before the Press step was even
+    reached), and the "someone pressed, another round follows" case alike.
+    Modeled as the engine's standard two-sided impulse window (CLAUDE.md rule
+    4 / Rulebook SS2 Sequencing, `hooks.resolve_impulse_window`) -- acting
+    combatant's controller offered first, same ordering precedent as Press
+    (`engine/combat.py` module docstring, OQ-3) -- not `_ask_press`'s own
+    narrower "ask once, first yes wins" shape, since an end-of-round card
+    effect is a real window where either side may act (and re-act) an
+    arbitrary number of times, not a single binary decision. Added resolving
+    `docs/OPEN_QUESTIONS.md` OQ-29's mechanism 1 (Taste of Vitae, krcg id
+    101945, "Only usable at the end of a round of combat"). `context["round_
+    state"]` (`engine/combat.py::ROUND_STATE_CONTEXT_KEY`) carries the same
+    round-scoped scratch dict threaded into every other combat hook this
+    round -- including, as of the same pass, `engine/damage.py::apply_damage`'s
+    own "blood lost to damage this round" record (`engine/damage.py::
+    blood_lost_to_damage_this_round`, OQ-29 mechanism 2)."""
     # Named for classification; no engine wiring exists yet (see the
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"

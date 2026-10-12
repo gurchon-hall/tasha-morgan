@@ -357,6 +357,94 @@ combat is run by `engine/action.py::perform_minion_action` itself, internally
 -- see that module's own docstring and `engine/phases/minion.py::
 ActionCardSpec.maneuver_grant` for how this same seed now reaches that
 internal call too.
+
+End of Round and round-scoped blood-loss tracking (OQ-29, `docs/
+OPEN_QUESTIONS.md` -- Taste of Vitae, krcg id 101945, "Only usable at the end
+of a round of combat. ... This vampire gains blood equal to the amount of
+blood lost by the opposing vampire to damage this round."):
+
+- Combat Sequence (verbatim, step list, quoted in full above in "Determine
+  Range and maneuvers"): "... 6. Press ... 7. End of Round: End of round
+  cards and effects are played here." `run_combat`'s own round loop
+  previously had no such step: every exit from a round's own processing --
+  the normal end (nobody presses), a premature end (a combatant goes
+  not-ready before the Press step is even reached, Rulebook SS4: "Combat
+  ends at once if a combatant is no longer ready"), and the "someone
+  presses, another round follows" case -- left with no hook offer of any
+  kind. Taste of Vitae's own rulings confirm this window exists
+  independently of whether Press itself ever actually ran: "Must be played
+  after the presses are handled and can be played if the round ends
+  prematurely" [RTR 20001020] [LSJ 20001024] [RTR 20030519], and "Can be
+  played if the opponent was burned" [LSJ 20031201-2].
+- `run_combat`'s round loop is restructured (behaviour-preserving for every
+  existing test: with no `END_OF_ROUND_HOOK` provider registered, `hooks.
+  resolve_impulse_window` returns immediately with no `Decision` raised,
+  CLAUDE.md "only when needed") around two local booleans, `still_ready`
+  (did both combatants remain ready through the initial strike pair and any
+  additional-strikes pairs) and `pressed` (did either side press -- only
+  ever asked if `still_ready`) -- replacing the previous scattered `break`
+  statements with a single, unconditional call to `_ask_end_of_round` placed
+  once per round, after where the Press step sits in the rulebook's own
+  numbering (whether or not Press actually ran this round), immediately
+  followed by the loop's own `if not still_ready or not pressed: break`.
+  This guarantees exactly one `END_OF_ROUND_HOOK` dispatch per round, on
+  every exit path, with no duplicate/missing call possible by construction.
+- `_ask_end_of_round` dispatches `END_OF_ROUND_HOOK` via `hooks.
+  resolve_impulse_window` (CLAUDE.md rule 4 / Rulebook SS2 Sequencing) --
+  acting combatant's controller offered first, matching the Press step's own
+  ordering precedent (OQ-3 above), but using the full two-sided
+  "impulse-returns-to-the-acting-Methuselah, closes on two consecutive
+  passes" shape rather than `_ask_press`'s own narrower "ask once per side,
+  first yes wins" shape, since an end-of-round card is a real window where
+  either side may act (and re-act) any number of times -- not a single
+  binary decision. Context carries `acting_player`/`acting_vampire`/
+  `blocking_player`/`blocking_vampire` (plain `str` ids, never the live
+  object -- `Decision.context` reaches agent-visible code, CLAUDE.md
+  "information hiding") so a provider can tell, from `context["player"]`
+  alone, which side is its own controller and which vampire is "this
+  vampire" versus "the opposing vampire" for a card like Taste of Vitae; and
+  `round_state=` (`ROUND_STATE_CONTEXT_KEY`), the same shared, round-scoped
+  scratch dict already threaded into every other combat hook this round, so
+  a provider can also read this round's blood-loss record (below) before it
+  is discarded at the top of the next round.
+- Blood-loss tracking: Taste of Vitae's own gain amount is "the amount of
+  blood lost by the opposing vampire to damage this round" -- not the
+  vampire's current blood deficit (which could also reflect an unrelated
+  blood/pool-moving effect played the same turn) and not the raw damage
+  dealt (unmended normal damage left as `wounded` costs no blood at all;
+  mended normal damage costs exactly 1 blood per point actually mended, a
+  player's own choice at the Mend step; aggravated damage against an
+  already-wounded vampire burns 1 blood per point only while blood remains,
+  then burns the vampire outright with no further blood cost once it runs
+  out). `engine/damage.py::apply_damage` now accepts an optional
+  `round_state: dict[str, Any] | None = None` parameter -- `_resolve_strike_
+  pair` (the only call site inside a combat) passes the current round's
+  shared scratch dict; every other existing call site (direct card effects,
+  scenario tests) passes nothing and sees byte-for-byte the previous,
+  untracked behaviour. When given, `apply_damage` records exactly the
+  amount `vampire.blood` decreased from its own mend step and its own
+  aggravated-burn step (and only those two branches -- nothing else in that
+  function decreases blood) into the dict under `engine/damage.py::
+  BLOOD_LOST_TO_DAMAGE_KEY`, keyed by vampire instance id (mirrors every
+  other per-vampire-id-keyed sub-dict this module's own `round_state`
+  already carries). `engine/damage.py::blood_lost_to_damage_this_round` is
+  the public helper a future provider (Taste of Vitae) queries, analogous to
+  `additional_strike_limit_used`/`commit_strike_for_round`'s own
+  public-helper shape -- it lives in `engine/damage.py`, not here, and takes
+  the raw `round_state` dict directly (not a hook `context` mapping) to
+  avoid a circular import (`engine/combat.py` already imports `apply_damage`
+  from `engine/damage.py`); a provider reads `context.get(ROUND_STATE_
+  CONTEXT_KEY)` itself (the same pattern `cards/dust_up.py`'s own
+  `_round_state` helper already uses) and passes the result in. The record
+  is a plain dict entry keyed by instance id, untouched by any zone
+  transition, so it remains fully readable after the tracked vampire is
+  burned -- directly supporting "Can be played if the opponent was burned"
+  [LSJ 20031201-2].
+- Wiring an actual card (Taste of Vitae) against `END_OF_ROUND_HOOK`/
+  `blood_lost_to_damage_this_round` is left to a future `card-implementer`
+  pass (OQ-29); this pass only builds and tests the two generic engine
+  mechanisms (CLAUDE.md "decision points, not hard-coded play" / "card
+  hooks" -- the engine must not special-case a card name).
 """
 
 from collections.abc import Mapping
@@ -387,6 +475,10 @@ COMBAT_ADDITIONAL_STRIKE_HOOK = "combat_additional_strike"
 MANEUVER_HOOK = "maneuver"
 """Matches `cards/registry.py::Hook.MANEUVER`'s string value -- see module
 docstring's "Determine Range and maneuvers" section."""
+END_OF_ROUND_HOOK = "end_of_round"
+"""Matches `cards/registry.py::Hook.END_OF_ROUND`'s string value -- see
+module docstring's "End of Round and round-scoped blood-loss tracking"
+section (OQ-29, `docs/OPEN_QUESTIONS.md`)."""
 
 CLOSE_RANGE = "close"
 LONG_RANGE = "long"
@@ -920,11 +1012,26 @@ def _resolve_strike_pair(
         damage_to_blocking = 0
 
     # Simultaneous: both strikes' damage is resolved in the same step,
-    # neither combatant's mend decision can react to the other's.
+    # neither combatant's mend decision can react to the other's. `round_
+    # state` is forwarded so `apply_damage` can record this round's "blood
+    # lost to damage" total (module docstring's "End of Round and
+    # round-scoped blood-loss tracking" section, OQ-29).
     if damage_to_blocking:
-        apply_damage(state, blocking_player, blocking_vampire, normal=damage_to_blocking)
+        apply_damage(
+            state,
+            blocking_player,
+            blocking_vampire,
+            normal=damage_to_blocking,
+            round_state=round_state,
+        )
     if damage_to_acting:
-        apply_damage(state, acting_player, acting_vampire, normal=damage_to_acting)
+        apply_damage(
+            state,
+            acting_player,
+            acting_vampire,
+            normal=damage_to_acting,
+            round_state=round_state,
+        )
 
 
 def _ask_additional_strike(
@@ -1091,6 +1198,66 @@ def _ask_press(state: GameState, player: str, vampire: VampireInPlay) -> str:
     return state.ask(decision).value
 
 
+def _ask_end_of_round(
+    state: GameState,
+    acting_player: str,
+    acting_vampire: VampireInPlay,
+    blocking_player: str,
+    blocking_vampire: VampireInPlay,
+    round_state: dict[str, Any],
+) -> None:
+    """Rulebook SS4 Combat > Combat Sequence, step 7, "End of Round: End of
+    round cards and effects are played here" (module docstring's "End of
+    Round and round-scoped blood-loss tracking" section, OQ-29 `docs/
+    OPEN_QUESTIONS.md`). Dispatched as the engine's standard two-sided
+    impulse window (CLAUDE.md rule 4 / Rulebook SS2 Sequencing, `hooks.
+    resolve_impulse_window`) -- the same "acting Methuselah gets the impulse
+    first ... window closes when both pass" shape every other two-sided
+    card-option window in this project already uses (`engine/politics.py::
+    _run_pre_cast_hook_window`, `engine/phases/minion.py::_perform_bleed`'s
+    own `BLEED_AMOUNT_MODIFIER_HOOK`), rather than `_ask_press`'s own
+    narrower "ask each side once, in order, first 'yes' wins" shape (Press is
+    a single binary decision per side, not a window where either side may
+    play an arbitrary number of card effects); only the *ordering*
+    precedent -- acting combatant's controller offered first -- is shared
+    with `_ask_press` (module docstring's own Press-step-order paragraph,
+    OQ-3).
+
+    Called exactly once per round by `run_combat`, on every path out of a
+    round's own processing -- a normal end (nobody pressed), a premature end
+    (a combatant went not-ready before the Press step was even reached), and
+    the "someone pressed, another round follows" case alike (Taste of Vitae's
+    own ruling: "Must be played after the presses are handled and can be
+    played if the round ends prematurely" [RTR 20001020] [LSJ 20001024]
+    [RTR 20030519] -- the window fires in the premature case too, even though
+    no Press decision ever actually occurred).
+
+    Context carries `acting_player`/`acting_vampire`/`blocking_player`/
+    `blocking_vampire` (plain `str` ids, never the live object -- `Decision.
+    context` reaches agent-visible code, CLAUDE.md "information hiding") so a
+    provider can tell, from `context["player"]` alone, which side is its own
+    controller and which vampire is "this vampire" versus "the opposing
+    vampire"; and `round_state=` (`ROUND_STATE_CONTEXT_KEY`), the same
+    shared, round-scoped scratch dict `_ask_maneuver`/`_ask_strike` already
+    receive this round, so a provider can read this round's `engine/
+    damage.py::blood_lost_to_damage_this_round` record before it is discarded
+    at the top of the next round.
+    """
+    hooks.resolve_impulse_window(
+        state,
+        END_OF_ROUND_HOOK,
+        acting_player,
+        blocking_player,
+        context={
+            "acting_player": acting_player,
+            "acting_vampire": acting_vampire.instance_id,
+            "blocking_player": blocking_player,
+            "blocking_vampire": blocking_vampire.instance_id,
+            ROUND_STATE_CONTEXT_KEY: round_state,
+        },
+    )
+
+
 def run_combat(
     state: GameState,
     acting_player: str,
@@ -1147,47 +1314,69 @@ def run_combat(
             state, acting_player, acting_vampire, blocking_player, blocking_vampire, round_state
         )
 
-        if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
-            break
+        # `still_ready` tracks whether this round's processing continues past
+        # each "combat ends at once if a combatant is no longer ready" check
+        # (Rulebook SS4) -- rather than `break`ing out of `run_combat`'s own
+        # loop immediately at each such point as before, so that the single
+        # `_ask_end_of_round` call below (module docstring's "End of Round and
+        # round-scoped blood-loss tracking" section, OQ-29) is still reached
+        # on every path out of the round, including a premature one.
+        still_ready = _is_ready(acting_vampire) and _is_ready(blocking_vampire)
 
         # --- Additional strikes (Rulebook SS4 Combat > Additional Strikes;
         # see module docstring): resolved after the normal pair, as repeated
         # choose-strike/resolve-strike steps -- acting combatant decides
         # whether to use an available grant first, each time -- "repeated as
-        # necessary" while either combatant still has an unused grant. ---
-        while True:
-            acting_extra = _ask_additional_strike(
-                state, acting_player, acting_vampire, blocking_vampire, round_state
-            )
-            blocking_extra = _ask_additional_strike(
-                state, blocking_player, blocking_vampire, acting_vampire, round_state
-            )
-            if not acting_extra and not blocking_extra:
-                break
-            _resolve_strike_pair(
-                state,
-                acting_player,
-                acting_vampire,
-                blocking_player,
-                blocking_vampire,
-                round_state,
-                acting_participates=acting_extra,
-                blocking_participates=blocking_extra,
-            )
-            if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
-                break
-        if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
-            break
+        # necessary" while either combatant still has an unused grant. Skipped
+        # entirely once `still_ready` is already False, same as the previous
+        # immediate `break` would have skipped it. ---
+        if still_ready:
+            while True:
+                acting_extra = _ask_additional_strike(
+                    state, acting_player, acting_vampire, blocking_vampire, round_state
+                )
+                blocking_extra = _ask_additional_strike(
+                    state, blocking_player, blocking_vampire, acting_vampire, round_state
+                )
+                if not acting_extra and not blocking_extra:
+                    break
+                _resolve_strike_pair(
+                    state,
+                    acting_player,
+                    acting_vampire,
+                    blocking_player,
+                    blocking_vampire,
+                    round_state,
+                    acting_participates=acting_extra,
+                    blocking_participates=blocking_extra,
+                )
+                if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
+                    break
+            still_ready = _is_ready(acting_vampire) and _is_ready(blocking_vampire)
 
         # --- Press step: the acting minion's controller always goes first
-        # (Rulebook SS2 Sequencing; see module docstring / OQ-3). ---
-        order = [(acting_player, acting_vampire), (blocking_player, blocking_vampire)]
-
+        # (Rulebook SS2 Sequencing; see module docstring / OQ-3). Skipped
+        # entirely if the round already ended prematurely (`still_ready` is
+        # False) -- same as the previous immediate `break` would have. ---
         pressed = False
-        for player, vampire in order:
-            if _ask_press(state, player, vampire) == "press":
-                pressed = True
-                break
-        if not pressed:
+        if still_ready:
+            order = [(acting_player, acting_vampire), (blocking_player, blocking_vampire)]
+            for player, vampire in order:
+                if _ask_press(state, player, vampire) == "press":
+                    pressed = True
+                    break
+
+        # --- End of Round step (Rulebook SS4 Combat > Combat Sequence, step
+        # 7; module docstring's "End of Round and round-scoped blood-loss
+        # tracking" section, OQ-29): fires exactly once per round, on every
+        # path out of it -- a normal end, a premature end, or "someone
+        # pressed, another round follows" -- positioned here, after where the
+        # Press step sits above, whether or not Press actually ran this
+        # round. ---
+        _ask_end_of_round(
+            state, acting_player, acting_vampire, blocking_player, blocking_vampire, round_state
+        )
+
+        if not still_ready or not pressed:
             break
     state.combat_range = None  # no combat in progress once run_combat returns
