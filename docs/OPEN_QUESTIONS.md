@@ -9,7 +9,7 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-1: Prey/predator wording in a duel   (status: open)
+## OQ-1: Prey/predator wording in a duel   (status: resolved)
 
 - Situation: with two players, each Methuselah is the other's prey
   and predator (Rulebook §5). Some card texts distinguish prey from
@@ -20,19 +20,55 @@ up an OQ number or the highest one used so far.
   clarification found.
 - Candidate readings: to be listed per card when encountered.
 - Impacted cards: to be listed.
-
-## OQ-2: Interface target   (status: resolved — digital first)
-
-- Decision: digital-first. The engine owns the full game state and
-  exposes explicit legal choices; the first implementation target
-  is a CLI interface.
-- Rationale: the project is built around deterministic state
-  tracking, legal-action decision points, and engine-driven play,
-  which are natural to a digital interface and easier to validate
-  than a physical-table workflow.
-- Scope: the physical-table workflow remains out of scope unless a
-  concrete requirement appears. The project will proceed with
-  digital play and CLI-first tooling by default.
+- Resolution: re-fetched both primary sources live (not the local
+  cache) to settle the premise, not just restate it.
+  1. **Rulebook §5 Ending the Game**, fetched directly
+     (<https://www.vekn.net/rulebook/5-ending-the-game>): "The game
+     continues until only one Methuselah is left," and its own
+     worked example states verbatim: "Now, Justine and Richard are
+     the only ones left, and so each is prey of the other." Since
+     predator/prey are a reciprocal pair (X is Y's predator ⇔ Y is
+     X's prey), "each is prey of the other" necessarily also means
+     each is the other's predator. **Confirmed as a rulebook fact,
+     not an inference**: with exactly two Methuselahs, the sole
+     opponent is simultaneously prey and predator.
+  2. **2P variant page**, re-fetched directly
+     (<https://www.vekn.net/two-player-format/655-two-player-variant-for-vampire-the-eternal-struggle>):
+     its §2.3 exception list ("All rules of the... rulebook apply in
+     this format, except for the following") does not include
+     prey/predator among the listed deltas, so the unmodified
+     rulebook rule above stands with no 2P override.
+  This closes the structural half of this entry's own situation
+  (confirmed, not merely assumed) — matching what CLAUDE.md §3 and
+  several `engine/`/`cards/` module docstrings (`engine/action.py`,
+  `engine/ousting.py`, `cards/fleetness.py`,
+  `cards/enchant_kindred.py`, `cards/line_brawl.py`,
+  `cards/kine_resources_contested.py`) already treat as settled when
+  explicitly distinguishing their own reasoning from "OQ-1" proper.
+  The second half of this entry's own situation — card text that
+  *distinguishes* prey from predator with a different effect for
+  each, which the structural collapse above could not resolve on its
+  own — has not materialized in practice: every card or engine path
+  encountered so far that touches prey/predator wording (the six
+  modules listed above, plus `attempt_block`'s directed/undirected
+  block-candidate scoping) collapsed cleanly to "the sole opponent,"
+  each case explicitly reasoned through and cited as *not* needing
+  this entry, rather than raising `UnresolvedRulingError("OQ-1")`.
+  No code currently raises `UnresolvedRulingError("OQ-1")` and no
+  card is registered `blocked` for `OQ-1` (confirmed by grep across
+  `src/`). Closing this entry rather than leaving it open
+  indefinitely as a placeholder with nothing left to track; if a
+  future card's own printed text ever assigns genuinely different
+  effects depending on whether a target is addressed specifically as
+  "prey" versus specifically as "predator" (not just "another
+  Methuselah" collapsing to the one opponent), that would be a new,
+  card-specific Open Question citing this entry's own resolution,
+  not a reopening of this one.
+- Impacted code/cards: none currently blocked on this entry (see
+  resolution). `engine/action.py`, `engine/ousting.py`,
+  `cards/fleetness.py`, `cards/enchant_kindred.py`,
+  `cards/line_brawl.py`, `cards/kine_resources_contested.py` already
+  cite the confirmed structural fact in their own docstrings.
 
 ## OQ-3: Combat "press" step — exact turn order   (status: resolved)
 
@@ -3510,3 +3546,132 @@ up an OQ number or the highest one used so far.
   `src/vtesbot/engine/phases/minion.py` (`ActionCardSpec.maneuver_grant`,
   `_perform_action_card`), `tests/rules/test_pre_combat_maneuver_grant.py`
   (new).
+
+## OQ-26: Organized Resistance (102230) -- no forced-block hook   (status: resolved)
+
+- Situation: card text (verbatim, via krcg 5.14, 2026-10-12, matching the raw
+  snapshot `data/cards/102230.json`): "Requires a baron. Usable by a locked
+  baron.\nAn Anarch you control gets +1 intercept. Also usable to unlock a
+  locked Anarch you control; that Anarch attempts to block with +1
+  intercept, even if intercept is not yet needed." Not a ruling ambiguity --
+  the text and every ruling on file are explicit (quoted below). The block
+  is a missing engine representation, same category as OQ-7/8/9.
+- Rulings consulted (verbatim, via krcg):
+  - "Counts as requiring an Anarch (for eg. {Powerbase: Los Angeles})."
+    [LSJ 20080603] [LSJ 20050128]
+  - "If the action lacks a suitable target because of the unlock (e.g.
+    {Ambush}), the block attempt still happens, as does the resulting
+    combat if the block is successful." [LSJ 20090514]
+  - "Can be used by a vampire who is already attempting to block."
+    [ANK 20181122-2]
+  - "Cannot be used if the vampire cannot attempt to block the action (eg.
+    {Daring the Dawn})." [LSJ 20010714-2]
+  - "Does not ignore the normal prey, predator or target restrictions."
+    [ANK 20180623]
+- Card type: Reaction (`types == ["Reaction"]`). No discipline/clan
+  requirement (`disciplines == []`, `clans is None`); legal since
+  2021-12-01; confirmed on the active 2P allowed list
+  (`data/formats/2p/2026-10-03.json`, krcg id 102230).
+- First clause ("An Anarch you control gets +1 intercept") is clean and
+  would be implementable today, exactly like `protection_racket.py` (a
+  plain `"intercept_modifier"` provider, `engine/action.py::
+  INTERCEPT_MODIFIER_HOOK`), gated on (a) the vampire playing the card
+  having printed title "Baron" (`CryptCard.title == "Baron"`) and `zone ==
+  "ready"` regardless of `.locked` (the card's own "usable by a locked
+  baron" clause relaxes the normal reaction-card "ready, unlocked minion"
+  requirement, SS8 glossary, down to just "ready" for this one card), and
+  (b) the player controlling at least one Anarch vampire (`CryptCard.sect
+  is Sect.ANARCH`) to receive the bonus.
+- What is blocked: the second clause ("Also usable to unlock a locked
+  Anarch you control; that Anarch attempts to block with +1 intercept, even
+  if intercept is not yet needed") needs a *forced block attempt from an
+  otherwise-ineligible (locked) candidate*, which `engine/action.py::
+  attempt_block` has no hook for -- its own candidate list is hardcoded to
+  `state.ready_unlocked_vampires(defender)` (the loop's first line), with
+  no way for a card to (i) add a currently-locked vampire as a legal block
+  candidate, (ii) unlock it as part of choosing it, or (iii) grant it a
+  mandatory, non-"only when needed" intercept bonus the instant it is
+  chosen -- bypassing `_duel_stealth_intercept`'s ping-pong entirely, per
+  the first ruling above: the block attempt and any resulting combat
+  happen unconditionally, independent of whether intercept is otherwise
+  needed. `src/vtesbot/cards/registry.py::Hook.BLOCK_CANDIDATE_INJECTION`
+  is, per its own listing, "named for classification; no engine wiring
+  exists yet" -- confirmed by grep across `src/vtesbot/engine/` and
+  `src/vtesbot/cards/`: no call site offers it, no card registers against
+  it.
+- Because the card's second clause cannot be correctly gated or modeled,
+  and the registry/CLAUDE.md model a card as either fully `implemented`
+  (all of its text tested) or `blocked`, not a partial implementation of
+  only the clean clause (same reasoning as OQ-9/Bonding), the whole card is
+  blocked pending the fix below.
+- What would be needed: a new hook point in `attempt_block` (`engine/
+  action.py`), offered alongside (or just before) the existing
+  `"block_attempt"` candidate-selection `Decision`, letting a registered
+  `Hook.BLOCK_CANDIDATE_INJECTION` provider contribute an extra candidate
+  drawn from the defender's own *locked* vampires; choosing that candidate
+  must (a) unlock it, (b) feed it straight into the block-attempt/combat
+  machinery as if it had already won a successful block (no
+  `_duel_stealth_intercept` ping-pong -- the first ruling confirms the +1
+  intercept is a flat, mandatory addition, not an "only when needed"
+  offer), and (c) still respect "the normal prey, predator or target
+  restrictions" (last ruling) -- in this project's 2P collapse (CLAUDE.md
+  §3, OQ-1), that restriction is already structurally satisfied by
+  `attempt_block` only ever being called with the sole opponent as
+  `defender`, so it needs no extra code, only correct scoping of the new
+  candidate to `defender`'s own vampires. This is `rules-engineer` scope
+  (it touches `engine/action.py`, not just `cards/`).
+- Impacted code (at the time this was opened): `src/vtesbot/engine/
+  action.py` (`attempt_block`). Impacted cards: Organized Resistance
+  (registered `blocked`, reason `OQ-26`); any future card with a
+  similarly-shaped "unlock one of your own locked minions to force a block
+  attempt" effect (e.g. Guardian Vigil-style cards, not currently in the 2P
+  pool) would hit the same gap.
+- Resolution (`rules-engineer` pass): added `BLOCK_CANDIDATE_INJECTION_HOOK`
+  (`"block_candidate_injection"`, matching `src/vtesbot/cards/
+  registry.py::Hook.BLOCK_CANDIDATE_INJECTION`'s own string value) to
+  `src/vtesbot/engine/action.py`, offered from inside `attempt_block`'s own
+  retry loop, to `defender`, every time around the loop, alongside the
+  existing hardcoded `state.ready_unlocked_vampires(defender)` candidates --
+  not instead of them. A registered provider's `HookOption.apply(state)`
+  must unlock the locked vampire it is built from (`vampire.locked = False`)
+  and return that same `VampireInPlay` instance; `attempt_block` recognizes
+  the chosen `Choice` via a `by_injected_value` lookup built the same pass as
+  the ordinary candidates' `by_value`-style dict, and returns that `apply`
+  return value *directly* as the blocker -- an immediate, unconditional
+  successful block, never routed through `_duel_stealth_intercept`'s "only
+  when needed" ping-pong, matching the first ruling on file ("the block
+  attempt still happens, as does the resulting combat if the block is
+  successful" [LSJ 20090514]). The new choices are unioned with the
+  hardcoded ones via `hooks.ensure_unique_choice_values` before the
+  `"block_attempt"` `Decision` is built (the same collision guard
+  `engine/phases/influence.py::influence_phase` already uses for its own
+  hook union, OQ-24). `attempt_block`'s own "no candidates -> return `None`
+  with no decision raised" short-circuit now checks the *union* of both
+  sources, so it is unaffected when a provider has nothing to offer either.
+  Zero-regression by construction, not just by testing: with no provider
+  registered (every call site and every other card today, confirmed by the
+  full suite passing unchanged), `hooks.offer(BLOCK_CANDIDATE_INJECTION_HOOK,
+  ...)` returns `[]`, so the candidate list offered, the decision shape and
+  `attempt_block`'s return value are all byte-for-byte the same as before
+  this pass. `perform_minion_action` needed no changes at all: it already
+  treats whatever `attempt_block` returns as "the successful blocker" (locks
+  it, runs combat), exactly the behaviour the task required. The "respect
+  the normal prey, predator or target restrictions" ruling [ANK 20180623]
+  needs no extra code: `attempt_block`'s own `defender` parameter already
+  scopes every candidate -- hardcoded or injected -- to the single 2P
+  opponent, which is structurally both prey and predator (CLAUDE.md §3,
+  OQ-1). Proven by `tests/rules/test_block_candidate_injection.py` (new),
+  using a fake provider (not Organized Resistance itself -- that card stays
+  registered `blocked`/`OQ-26` until a `card-implementer` pass builds it
+  against this hook): a locked vampire injected, unlocked and forced into an
+  unconditional successful block even against a `base_stealth` that would
+  fail every ordinary attempt; the same end-to-end through
+  `perform_minion_action` (combat runs, `resolve()` never fires); and two
+  zero-regression checks (ordinary ready-unlocked block path unaffected, and
+  the "no candidates at all -> no decision raised" short-circuit still
+  firing) with no provider registered.
+- Impacted code: `src/vtesbot/engine/action.py` (`BLOCK_CANDIDATE_
+  INJECTION_HOOK`, `attempt_block`), `tests/rules/
+  test_block_candidate_injection.py` (new). Card registration is unchanged
+  (Organized Resistance stays `blocked`/`OQ-26` in the registry;
+  re-implementing it against this capability is `card-implementer`'s job).

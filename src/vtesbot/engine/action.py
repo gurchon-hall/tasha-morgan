@@ -68,6 +68,29 @@ so a single card play can deliver an effect that spans both phases without
 desynchronizing from whatever later clamp/computation consumes it (see
 `engine/phases/minion.py`'s own docstring for the worked example).
 
+Forced block from a locked vampire (OQ-26, `docs/OPEN_QUESTIONS.md`,
+resolved): `attempt_block` below also offers `Hook.BLOCK_CANDIDATE_
+INJECTION` (`BLOCK_CANDIDATE_INJECTION_HOOK`, `"block_candidate_
+injection"`) to `defender`, alongside its own hardcoded `state.ready_
+unlocked_vampires(defender)` candidates, every time around the retry loop.
+A registered provider contributes an extra `HookOption` built from one of
+`defender`'s own currently-*locked* vampires (e.g. Organized Resistance's
+"unlock a locked Anarch you control; that Anarch attempts to block ...
+even if intercept is not yet needed"); choosing it calls that `HookOption`'s
+own `apply(state)`, which must unlock the vampire (`vampire.locked = False`)
+and return that same `VampireInPlay` -- `attempt_block` returns it directly
+as the successful blocker, the same way a normal candidate is returned once
+`intercept >= stealth`, but *without* ever calling `_duel_stealth_intercept`
+for it. This matches the one on-file ruling that settles the point: "If the
+action lacks a suitable target because of the unlock ..., the block attempt
+still happens, as does the resulting combat if the block is successful"
+[LSJ 20090514] -- i.e. once chosen, this option cannot fail and always
+leads straight to combat, so it is never worth running the "only when
+needed" ping-pong for it at all. With no provider registered (every call
+site and every other card today), `hooks.offer` returns an empty list and
+this is a pure no-op: the candidate list offered is byte-for-byte the same
+as before this pass.
+
 Pre-combat maneuver grant (OQ-25, `docs/OPEN_QUESTIONS.md`, resolved):
 `perform_minion_action`'s own `maneuver_grant: str | None = None` parameter
 threads a vampire instance id into this function's *own internal*
@@ -91,6 +114,19 @@ if TYPE_CHECKING:
 
 STEALTH_MODIFIER_HOOK = "stealth_modifier"
 INTERCEPT_MODIFIER_HOOK = "intercept_modifier"
+BLOCK_CANDIDATE_INJECTION_HOOK = "block_candidate_injection"
+"""OQ-26 (`docs/OPEN_QUESTIONS.md`, resolved): mirrors `src/vtesbot/cards/
+registry.py::Hook.BLOCK_CANDIDATE_INJECTION`'s own string value -- a card-
+sourced option, offered to `defender` inside `attempt_block`'s retry loop
+alongside the normal ready-unlocked candidates, that contributes an
+*additional* block candidate drawn from one of `defender`'s own currently-
+*locked* vampires. A provider's `HookOption.apply(state)` must unlock the
+chosen vampire (`vampire.locked = False`) and return that same
+`VampireInPlay` instance; `attempt_block` then returns it directly as the
+blocker -- an immediate, unconditional *successful* block, bypassing
+`_duel_stealth_intercept`'s "only when needed" ping-pong entirely for this
+candidate (see the module docstring's own "Forced block from a locked
+vampire" section for the sourcing)."""
 
 ACTION_BLEED = "bleed"
 ACTION_HUNT = "hunt"
@@ -221,17 +257,46 @@ def attempt_block(
     `pending` gets one fresh `{}`, created once here (not per retry of the
     loop below), so every hook offer during this one call shares the same
     mutable object.
+
+    `BLOCK_CANDIDATE_INJECTION_HOOK` (OQ-26, `docs/OPEN_QUESTIONS.md`,
+    resolved) is offered to `defender` every time around the loop, alongside
+    the hardcoded `state.ready_unlocked_vampires(defender)` candidates;
+    choosing an injected option calls its own `apply(state)` (which must
+    unlock the vampire it is built from and return that same `VampireInPlay`)
+    and returns the result directly as the blocker, without ever running
+    `_duel_stealth_intercept` for it -- see this module's own "Forced block
+    from a locked vampire" docstring section. With no provider registered,
+    this adds nothing: `hooks.offer` returns `[]` and the candidate list
+    offered is exactly `state.ready_unlocked_vampires(defender)`, as before.
     """
     if pending is None:
         pending = {}
     while True:
         candidates = state.ready_unlocked_vampires(defender)
-        if not candidates:
+        candidate_choices = tuple(
+            Choice(f"block_with:{v.instance_id}", f"Block with {v.card.name}") for v in candidates
+        )
+
+        injected_options = hooks.offer(
+            BLOCK_CANDIDATE_INJECTION_HOOK,
+            state,
+            player=defender,
+            actor=actor,
+            defender=defender,
+            acting_vampire=acting_vampire.instance_id if acting_vampire is not None else None,
+            action=action,
+            directed=directed,
+            base_stealth=base_stealth,
+            pending=pending,
+        )
+        by_injected_value = {o.choice.value: o for o in injected_options}
+
+        offered_choices = candidate_choices + tuple(o.choice for o in injected_options)
+        if not offered_choices:
             return None  # nothing legal to block with: no vacuous decision raised.
 
-        choices = tuple(
-            Choice(f"block_with:{v.instance_id}", f"Block with {v.card.name}") for v in candidates
-        ) + (Choice("decline", "Decline to block"),)
+        choices = offered_choices + (Choice("decline", "Decline to block"),)
+        hooks.ensure_unique_choice_values(choices, decision_kind="block_attempt")
         decision = Decision(
             player=defender,
             kind="block_attempt",
@@ -246,6 +311,11 @@ def attempt_block(
         choice = state.ask(decision)
         if choice.value == "decline":
             return None
+
+        if choice.value in by_injected_value:
+            # OQ-26: an immediate, unconditional successful block -- never
+            # runs the stealth/intercept ping-pong for this candidate.
+            return by_injected_value[choice.value].apply(state)
 
         instance_id = choice.value.split(":", 1)[1]
         blocker = state.players[defender].vampires[instance_id]

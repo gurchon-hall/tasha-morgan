@@ -1,0 +1,155 @@
+{
+  "_i18n": {
+    "es": {
+      "name": "Resistencia organizada",
+      "card_text": "Requiere a un barón. Utilizable por un barón girado.\nUn Anarquista que controles obtiene +1 de intercepción. También utilizable para enderezar a un Anarquista girado que controles; ese Anarquista intenta bloquear con +1 de intercepción, aunque la intercepción no sea necesaria.",
+      "url": "https://static.krcg.org/card/es/organizedresistance.jpg"
+    },
+    "fr": {
+      "name": "Résistance organisée",
+      "card_text": "Requiert un baron. Utilisable par un baron incliné.\nUn Anarch que vous contrôlez reçoit +1 en interception. Utilisable également pour redresser un Anarch incliné que vous contrôlez ; cet Anarch tente de bloquer avec +1 en interception, même si de l'interception n'est pas encore nécessaire.",
+      "url": "https://static.krcg.org/card/fr/organizedresistance.jpg"
+    }
+  },
+  "id": 102230,
+  "_name": "Organized Resistance",
+  "url": "https://static.krcg.org/card/organizedresistance.jpg",
+  "types": [
+    "Reaction"
+  ],
+  "card_text": "Requires a baron. Usable by a locked baron.\nAn Anarch you control gets +1 intercept. Also usable to unlock a locked Anarch you control; that Anarch attempts to block with +1 intercept, even if intercept is not yet needed.",
+  "_set": "V5A:PB6, NB2:PB5/PG3, V5C:PTz3",
+  "sets": {
+    "Fifth Edition (Anarch)": [
+      {
+        "release_date": "2021-12-01",
+        "precon": "Brujah",
+        "copies": 6
+      }
+    ],
+    "New Blood II": [
+      {
+        "release_date": "2022-08-01",
+        "precon": "Brujah",
+        "copies": 5
+      },
+      {
+        "release_date": "2022-08-01",
+        "precon": "Gangrel",
+        "copies": 3
+      }
+    ],
+    "Fifth Edition (Companion)": [
+      {
+        "release_date": "2024-01-01",
+        "precon": "Tzimisce",
+        "copies": 3
+      }
+    ]
+  },
+  "scans": {
+    "Fifth Edition (Anarch)": "https://static.krcg.org/card/set/fifth-edition-anarch/organizedresistance.jpg",
+    "New Blood II": "https://static.krcg.org/card/set/new-blood-ii/organizedresistance.jpg",
+    "Fifth Edition (Companion)": "https://static.krcg.org/card/set/fifth-edition-companion/organizedresistance.jpg"
+  },
+  "artists": [
+    "Martín de Diego Sábada"
+  ],
+  "ordered_sets": [
+    "Fifth Edition (Anarch)",
+    "New Blood II",
+    "Fifth Edition (Companion)"
+  ],
+  "legality": "2021-12-01",
+  "rulings": [
+    {
+      "text": "Counts as requiring an Anarch (for eg. {Powerbase: Los Angeles}). [LSJ 20080603] [LSJ 20050128]",
+      "references": [
+        {
+          "text": "[LSJ 20080603]",
+          "label": "LSJ 20080603",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/9usl4idp-pY/m/LuT1iK1b4QIJ"
+        },
+        {
+          "text": "[LSJ 20050128]",
+          "label": "LSJ 20050128",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/HVy8iPUxNbI/m/ZHGTnprQjGUJ"
+        }
+      ],
+      "cards": [
+        {
+          "text": "{Powerbase: Los Angeles}",
+          "id": 101435,
+          "name": "Powerbase: Los Angeles",
+          "usual_name": "Powerbase: Los Angeles",
+          "vekn_name": "Powerbase: Los Angeles"
+        }
+      ],
+      "group": "Require a Baron"
+    },
+    {
+      "text": "If the action lacks a suitable target because of the unlock (e.g. {Ambush}), the block attempt still happens, as does the resulting combat if the block is successful. [LSJ 20090514]",
+      "references": [
+        {
+          "text": "[LSJ 20090514]",
+          "label": "LSJ 20090514",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/PKQ6lQUBUOI/m/Zra43F1WXGcJ"
+        }
+      ],
+      "cards": [
+        {
+          "text": "{Ambush}",
+          "id": 100046,
+          "name": "Ambush",
+          "usual_name": "Ambush",
+          "vekn_name": "Ambush"
+        }
+      ],
+      "group": "Unlocks and attempts to block"
+    },
+    {
+      "text": "Can be used by a vampire who is already attempting to block. [ANK 20181122-2]",
+      "references": [
+        {
+          "text": "[ANK 20181122-2]",
+          "label": "ANK 20181122-2",
+          "url": "https://www.vekn.net/forum/rules-questions/77176-eagle-s-sight-and-guardian-vigil#91965"
+        }
+      ],
+      "group": "Forces Block attempt"
+    },
+    {
+      "text": "Cannot be used if the vampire cannot attempt to block the action (eg. {Daring the Dawn}). [LSJ 20010714-2]",
+      "references": [
+        {
+          "text": "[LSJ 20010714-2]",
+          "label": "LSJ 20010714-2",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/9U-jt3p3R_Q/m/WxDJwkgc25kJ"
+        }
+      ],
+      "cards": [
+        {
+          "text": "{Daring the Dawn}",
+          "id": 100492,
+          "name": "Daring the Dawn",
+          "usual_name": "Daring the Dawn",
+          "vekn_name": "Daring the Dawn"
+        }
+      ],
+      "group": "Forces Block attempt"
+    },
+    {
+      "text": "Does not ignore the normal prey, predator or target restrictions. [ANK 20180623]",
+      "references": [
+        {
+          "text": "[ANK 20180623]",
+          "label": "ANK 20180623",
+          "url": "https://www.vekn.net/forum/rules-questions/76748-black-sunrise#88361"
+        }
+      ],
+      "group": "Forces Block attempt"
+    }
+  ],
+  "name": "Organized Resistance",
+  "printed_name": "Organized Resistance"
+}
