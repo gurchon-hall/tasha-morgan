@@ -16,6 +16,10 @@ dist/
 # krcg's local card-data cache (rebuilt from the installed package on load)
 krcg_cards_*.pkl
 
+# sim/ run artifacts (opt-in `report_dir` on run_match/run_many) -- generated,
+# not source; kept for implementation-phase verification, not committed.
+logs/
+
 # Editor / OS
 .vscode/
 .idea/

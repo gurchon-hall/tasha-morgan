@@ -4,6 +4,18 @@ CLAUDE.md SS5 engine invariant: "every decision and every random draw is
 logged so a game can be replayed and a bug reproduced." The log is an
 engine-internal record (unlike `Observation`, it is not shown to agents and
 does not need to hide hidden information -- it exists for debugging/replay).
+
+`"event"` entries (`record_event`) are a later, purely additive addition on
+top of that invariant: a human-readable narration of a handful of
+notable, deterministic *consequences* of decisions/random draws already in
+the log (pool gained/lost, damage taken, a vampire entering torpor or being
+burned, an oust) -- added because a `sim/report.py`-rendered decision log,
+while complete enough to replay, was hard for a person to read ("how did
+this game actually end?") without mentally re-deriving these consequences.
+They change nothing about replay/reproducibility (no rule reads them back;
+only `pool.py`/`damage.py`/`ousting.py` write them, right where the state
+change already happens) and are never required reading -- the log is still
+fully reconstructable from just its `"decision"`/`"random"` entries.
 """
 
 from dataclasses import dataclass, field
@@ -15,7 +27,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class LogEntry:
-    kind: str  # "decision" | "random"
+    kind: str  # "decision" | "random" | "event"
     data: dict[str, Any]
 
 
@@ -41,3 +53,8 @@ class ReplayLog:
         self.entries.append(
             LogEntry(kind="random", data={"description": description, "result": result})
         )
+
+    def record_event(self, description: str) -> None:
+        """A human-readable note about a notable state change (see module
+        docstring) -- observability only, never read back by any rule."""
+        self.entries.append(LogEntry(kind="event", data={"description": description}))

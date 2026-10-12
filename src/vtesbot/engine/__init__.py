@@ -20,6 +20,7 @@ from .cards import CardAttachment, CryptCard, LibraryCard, Sect, derive_sect
 from .decision import Choice, Decision
 from .errors import IllegalChoiceError, UnresolvedRulingError
 from .format import FormatConfig
+from .hand import effective_hand_size, reconcile_hand_size
 from .log import ReplayLog
 from .master_cards import bring_master_card_into_play, detect_contest_on_bring_into_play
 from .observation import AllyView, MasterCardView, Observation, VampireView, build_observation
@@ -55,6 +56,8 @@ __all__ = [
     "IllegalChoiceError",
     "UnresolvedRulingError",
     "FormatConfig",
+    "effective_hand_size",
+    "reconcile_hand_size",
     "ReplayLog",
     "Observation",
     "VampireView",

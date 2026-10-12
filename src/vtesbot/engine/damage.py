@@ -23,6 +23,14 @@ vampire, exactly as `apply_damage`'s existing wounded-vampire branch already
 modelled. Ryan (already wounded, takes aggravated damage) is unaffected by
 this fix and is covered by `test_aggravated_damage_burns_an_already_wounded_vampire`.
 
+Replay-log narration (`engine/log.py`'s `record_event`, observability only,
+added alongside `pool.py`'s own pool-change events): `apply_damage` logs one
+summary line per call ("takes N normal + M aggravated damage"), and
+`send_to_torpor`/`burn_vampire` each log their own zone transition -- a
+plain wound with no zone change is deliberately not logged, to keep the
+signal-to-noise ratio useful for a human reading a `sim/report.py` decision
+log end to end.
+
 Vampire blood capacity cap (a vampire may never hold more blood than its
 printed capacity) is a foundational, uncontested VTES rule (Rulebook SS1
 Vampires) and is enforced here via `add_blood`.
@@ -163,6 +171,7 @@ def burn_vampire(state: GameState, player: str, vampire: VampireInPlay) -> None:
     """Move a vampire out of play to the ash heap (destroyed)."""
     vampire.zone = "burned"
     vampire.locked = False
+    state.log.record_event(f"{vampire.card.name} ({vampire.instance_id}) is burned")
 
 
 def remove_vampire_from_game(state: GameState, player: str, vampire: VampireInPlay) -> None:
@@ -206,6 +215,7 @@ def send_to_torpor(state: GameState, player: str, vampire: VampireInPlay) -> Non
     """
     vampire.zone = "torpor"
     vampire.locked = False
+    state.log.record_event(f"{vampire.card.name} ({vampire.instance_id}) enters torpor")
     hooks.run_effects(VAMPIRE_ENTERS_TORPOR_HOOK, state, vampire=vampire, player=player)
 
 
@@ -237,6 +247,10 @@ def apply_damage(
         raise ValueError("damage amounts must be non-negative")
     if normal == 0 and aggravated == 0:
         return
+    state.log.record_event(
+        f"{vampire.card.name} ({vampire.instance_id}) takes {normal} normal + "
+        f"{aggravated} aggravated damage"
+    )
 
     # --- Prevent step: single-sided window for the damaged vampire's own
     # controller (see module docstring); a "damage_box" is threaded through

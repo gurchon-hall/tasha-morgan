@@ -71,6 +71,21 @@ class Hook(StrEnum):
     `docs/OPEN_QUESTIONS.md` OQ-18 Gap 2."""
     CAPACITY_MODIFIER = "capacity_modifier"
     DISCIPLINE_LEVEL_MODIFIER = "discipline_level_modifier"
+    HAND_SIZE_MODIFIER = "hand_size_modifier"
+    """Passive, mandatory numeric hook (`hooks.sum_modifiers` contract, same
+    shape as `CAPACITY_MODIFIER` above) wired by `engine/hand.py::
+    effective_hand_size`, called from `reconcile_hand_size`'s own call sites
+    (`vtesbot.cards._shared.play_from_hand_pending`, `engine/phases/
+    discard.py::discard_phase`). A provider contributes a signed `int` delta
+    to the base `FormatConfig.hand_size` (default 7) and must re-check its
+    own triggering condition every call rather than caching a prior answer,
+    since the motivating case -- Carmelita Neillson, krcg id 201625,
+    "Camarilla: While Carmelita is ready, you get +1 hand size" -- is a
+    continuously re-evaluated condition (her own `zone`/`locked`), not a
+    one-shot effect. Not a ruling gap: plain milestone-2 engine-skeleton
+    work (Rulebook SS2 Card Types > Drawing Cards), no Open Question
+    attached. Carmelita's own effect module (registering a provider here)
+    is a separate, later `card-implementer` pass."""
     RECRUIT_ALLY_PLAY = "recruit_ally_play"
     ACTION_CARD_PLAY = "action_card_play"
     """A library card of type "Action" (not "Action Modifier") that itself
@@ -175,7 +190,6 @@ class Hook(StrEnum):
     RANGED_STRIKE = "ranged_strike"
     ALLY_ENTITY = "ally_entity"
     LOCATION_ENTITY = "location_entity"
-    HAND_SIZE_MODIFIER = "hand_size_modifier"
     DIABLERIE = "diablerie"
     CANCEL_AS_PLAYED = "cancel_as_played"
     BLOCK_CANDIDATE_INJECTION = "block_candidate_injection"

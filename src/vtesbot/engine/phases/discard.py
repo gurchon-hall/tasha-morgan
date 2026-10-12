@@ -10,6 +10,7 @@ from library after play") or passing are offered.
 from typing import TYPE_CHECKING
 
 from ..decision import Choice, Decision
+from ..hand import reconcile_hand_size
 
 if TYPE_CHECKING:
     from ..state import GameState
@@ -35,3 +36,11 @@ def discard_phase(state: GameState, player: str) -> None:
         drawn = p.library.pop(0)
         state.log.record_random(f"{player} draws a discard-phase replacement", drawn.name)
         p.hand.append(drawn)
+    # Rulebook SS2 Drawing Cards: "whenever an effect ... adds or removes
+    # cards from your hand, immediately discard down to or draw up to match
+    # your hand size" -- covers the empty-library branch too (the discard
+    # with no replacement could still leave hand above a *raised* effective
+    # size, or the net-zero case could leave it below a size that dropped
+    # mid-phase); `reconcile_hand_size` re-derives the target rather than
+    # assuming either branch is already balanced.
+    reconcile_hand_size(state, player)

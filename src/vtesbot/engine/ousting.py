@@ -36,3 +36,7 @@ def check_oust(state: GameState, player: str) -> None:
     state.players[predator].pool += OUST_PREDATOR_POOL
     state.game_over = True
     state.winner = predator
+    state.log.record_event(
+        f"{player} is OUSTED -- {predator} wins "
+        f"(VP={state.victory_points[predator]}, pool={state.players[predator].pool})"
+    )

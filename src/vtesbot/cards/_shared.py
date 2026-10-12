@@ -9,6 +9,7 @@ reimplement the same two small pieces of bookkeeping.
 from typing import TYPE_CHECKING, Any
 
 from vtesbot.engine.cards import LibraryCard
+from vtesbot.engine.hand import reconcile_hand_size
 
 if TYPE_CHECKING:
     from vtesbot.engine.state import GameState
@@ -36,6 +37,16 @@ def play_from_hand_pending(state: GameState, player: str, krcg_id: int) -> Libra
     `play_from_hand` -- that part of the rule does not depend on the
     action's eventual success. Raises `LookupError` if the card is not in
     hand, mirroring `play_from_hand`.
+
+    The card leaving hand and its replacement arriving are each, on their
+    own, a moment the hand-size rule (Rulebook SS2 Drawing Cards) says must
+    be reconciled "immediately" -- `engine/hand.py::reconcile_hand_size` is
+    called once after both have happened, which already covers either
+    direction (the card removed could itself have been what temporarily
+    raised an effective hand size past its usual value; the replacement
+    draw could put hand back over a *lowered* effective size) since it
+    re-derives the target from scratch rather than assuming a net change of
+    zero.
     """
     p = state.players[player]
     for i, card in enumerate(p.hand):
@@ -43,6 +54,7 @@ def play_from_hand_pending(state: GameState, player: str, krcg_id: int) -> Libra
             played = p.hand.pop(i)
             if p.library:
                 p.hand.append(p.library.pop(0))
+            reconcile_hand_size(state, player)
             return played
     raise LookupError(f"{player} has no krcg_id={krcg_id} card in hand to play")
 
