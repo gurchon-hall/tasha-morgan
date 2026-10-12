@@ -67,13 +67,23 @@ hands that same object to `resolve`/`on_blocked` once the outcome is known,
 so a single card play can deliver an effect that spans both phases without
 desynchronizing from whatever later clamp/computation consumes it (see
 `engine/phases/minion.py`'s own docstring for the worked example).
+
+Pre-combat maneuver grant (OQ-25, `docs/OPEN_QUESTIONS.md`, resolved):
+`perform_minion_action`'s own `maneuver_grant: str | None = None` parameter
+threads a vampire instance id into this function's *own internal*
+`run_combat` call on the blocked branch (via `engine/combat.py::seed_pre_
+combat_maneuver_grant`), the one combat-producing path a card's own
+`ActionCardSpec`/`resolve` closure has no other way to reach -- see `engine/
+combat.py`'s own "Pre-combat grant seeding" docstring section and `engine/
+phases/minion.py::ActionCardSpec.maneuver_grant` for the full picture
+(unblocked path vs. this one).
 """
 
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from . import hooks
-from .combat import run_combat
+from .combat import run_combat, seed_pre_combat_maneuver_grant
 from .decision import Choice, Decision
 
 if TYPE_CHECKING:
@@ -267,6 +277,7 @@ def perform_minion_action(
     action: str | None = None,
     directed: bool | None = None,
     on_blocked: Callable[[dict[str, Any]], None] | None = None,
+    maneuver_grant: str | None = None,
 ) -> None:
     """Announce (lock) -> block attempt -> resolve-or-combat (Rulebook SS4).
 
@@ -286,6 +297,23 @@ def perform_minion_action(
     card played during the earlier block-attempt phase can stash something
     for either callback to read back -- see `engine/phases/minion.py`'s own
     docstring for the worked example this resolves.
+
+    `maneuver_grant` (OQ-25, `docs/OPEN_QUESTIONS.md`, resolved): the vampire
+    instance id to pre-grant one optional maneuver to, for a combat this
+    *blocked* branch's own internal `run_combat` call produces -- `None` (the
+    default; every call site before this pass) changes nothing. This
+    function has no `ActionCardSpec`-shaped field or hook of its own to
+    extend on that internal call, unlike the unblocked branch's own
+    `resolve()` callback, which can already call `engine/combat.py::
+    run_combat` directly with its own `initial_combat_state=` (see that
+    module's own "Pre-combat grant seeding" docstring section) -- this
+    parameter is the only way for a card whose grant must exist before
+    *this* branch's combat starts to reach it. Built into `seed_pre_combat_
+    maneuver_grant(maneuver_grant)` and passed as `run_combat`'s own
+    `initial_combat_state`, so a `"maneuver"` hook provider recognizing
+    `engine/combat.py::PRE_COMBAT_MANEUVER_GRANT_KEY` sees the grant from this
+    combat's very first round, exactly as if it had been seeded by an
+    unblocked `resolve()`'s own direct `run_combat` call.
     """
     vampire.locked = True
     pending: dict[str, Any] = {}
@@ -301,7 +329,10 @@ def perform_minion_action(
     )
     if blocker is not None:
         blocker.locked = True
-        run_combat(state, actor_player, vampire, defender_player, blocker)
+        initial_combat_state = (
+            seed_pre_combat_maneuver_grant(maneuver_grant) if maneuver_grant is not None else None
+        )
+        run_combat(state, actor_player, vampire, defender_player, blocker, initial_combat_state)
         if on_blocked is not None:
             on_blocked(pending)
         return

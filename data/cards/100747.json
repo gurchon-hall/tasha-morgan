@@ -1,0 +1,153 @@
+{
+  "id": 100747,
+  "printed_name": "Fleetness",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Fleetness"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Presteza"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Légèreté"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/fleetness.jpg"
+    },
+    {
+      "set": {
+        "id": 320002,
+        "code": "KoTR"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "B",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition-reprint/fleetness.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBh",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/fleetness.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Presteza",
+      "text": "Acción con +1 de sigilo.\n[cel] Ⓓ Sangra.\n[CEL] Ⓓ Entra en combate con un siervo girado. Este vampiro obtiene 1 maniobra opcional durante ese combate.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/fleetness.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Légèreté",
+      "text": "Action à +1 en discrétion.\n[cel] Ⓓ Mordre.\n[CEL] Ⓓ Entrer en combat contre un serviteur incliné. Ce vampire qui agit reçoit 1 manœuvre optionnelle durant ce combat.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/fleetness.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/fleetness.jpg",
+  "types": [
+    "Action"
+  ],
+  "formats": [],
+  "artists": [
+    "John Bridges"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "[CEL]If the action is unblocked when it resolves and the target is unlocked, the action \"fizzles\" (cost, if any, is paid, and it is considered successful, but has no effect). [ANK 20210124] [LSJ 20070411] [LSJ 20090514]",
+      "group": "Action targeting locked minion",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20210124]",
+          "label": "ANK 20210124",
+          "url": "https://www.vekn.net/forum/rules-questions/79001-the-question-of-the-month-action-fizzles#101492"
+        },
+        {
+          "text": "[LSJ 20070411]",
+          "label": "LSJ 20070411",
+          "url": "https://usenet.krcg.org/t/umdINigMKqs/#m1"
+        },
+        {
+          "text": "[LSJ 20090514]",
+          "label": "LSJ 20090514",
+          "url": "https://usenet.krcg.org/t/PKQ6lQUBUOI/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[CEL]",
+          "symbol": "C",
+          "count": ""
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "text": "+1 stealth action.\n[cel] Ⓓ Bleed.\n[CEL] Ⓓ Enter combat with a locked minion. This acting vampire gets 1 optional maneuver during that combat.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2008-12-19",
+  "banned": null,
+  "cost": {
+    "type": "Blood",
+    "value": 1
+  },
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "cel"
+    ]
+  }
+}

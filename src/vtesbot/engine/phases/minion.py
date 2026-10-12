@@ -88,6 +88,16 @@ call to `hooks.offer(ACTION_CARD_PLAY_HOOK, ...)` returns an empty list, so
 this is pure scaffolding -- byte-for-byte the pre-OQ-17 result -- until a
 card registers.
 
+Pre-combat maneuver grant (OQ-25, `docs/OPEN_QUESTIONS.md`, resolved by this
+pass): `ActionCardSpec.maneuver_grant` lets a provider pre-grant one optional
+maneuver to a named vampire for whichever combat its own action produces,
+fixed at announce time (before the block-attempt window even opens) -- see
+that field's own docstring, `engine/action.py::perform_minion_action`'s own
+`maneuver_grant` parameter, and `engine/combat.py`'s "Pre-combat grant
+seeding" docstring section for the full mechanism (Fleetness, krcg 100747, is
+the first card needing it; its own card module is a separate, `card-
+implementer` pass).
+
 Pending-modifier scratch container (OQ-11, `docs/OPEN_QUESTIONS.md`):
 `perform_minion_action` (`engine/action.py`) now calls `resolve` with one
 `pending: dict[str, Any]` argument -- the same object threaded into the
@@ -245,6 +255,21 @@ class ActionCardSpec:
     bonding.py`'s superior clause, gated on `context.get("action") ==
     ACTION_BLEED`) that fires during this window is not misled about what
     is actually happening.
+
+    `maneuver_grant`: the OQ-25 (`docs/OPEN_QUESTIONS.md`, resolved) pre-combat
+    grant -- the vampire instance id to pre-grant one optional maneuver to,
+    for whichever combat this action produces (e.g. Fleetness's superior
+    clause, "This acting vampire gets 1 optional maneuver during that
+    combat"). Forwarded unchanged to `perform_minion_action`'s own `maneuver_
+    grant` parameter below, which seeds it into that function's *internal*
+    `run_combat` call on the blocked branch only (`engine/action.py`'s own
+    docstring) -- the unblocked branch's grant, if any, is this provider's
+    own `resolve` closure's responsibility: it already calls `engine/
+    combat.py::run_combat` directly (mirrors `cards/line_brawl.py`'s `[pot]`
+    clause) and so can pass `initial_combat_state=engine.combat.seed_pre_
+    combat_maneuver_grant(...)` to that same call itself, with no engine
+    plumbing needed on that path. Left `None` (the default), nothing is
+    pre-granted -- byte-for-byte the pre-OQ-25 result.
     """
 
     base_stealth: int
@@ -252,6 +277,7 @@ class ActionCardSpec:
     resolve: Callable[[dict[str, Any]], None]
     on_blocked: Callable[[dict[str, Any]], None] | None = None
     action: str = ACTION_ACTION_CARD
+    maneuver_grant: str | None = None
 
 
 def minion_phase(state: GameState, player: str) -> None:
@@ -527,4 +553,5 @@ def _perform_action_card(
         action=spec.action,
         directed=spec.directed,
         on_blocked=spec.on_blocked,
+        maneuver_grant=spec.maneuver_grant,
     )

@@ -3356,3 +3356,157 @@ up an OQ number or the highest one used so far.
   influence.py` (`influence_phase`'s own call site), `src/vtesbot/engine/
   damage.py` (`remove_vampire_from_game`'s own guard), `tests/rules/
   test_influence.py`, `tests/rules/test_damage.py`.
+
+## OQ-25: No pre-combat maneuver grant -- Fleetness (100747) (status: resolved)
+
+- Situation: card text (verbatim, via the installed `krcg` package's own
+  `CardDict`, `krcg.load()`, indexed by name "Fleetness", `.text` field,
+  2026-10-12, matching the raw snapshot `data/cards/100747.json`,
+  cross-checked live against `https://api.krcg.org/card/100747`):
+  "+1 stealth action.\n[cel] Ⓓ Bleed.\n[CEL] Ⓓ Enter combat with a locked
+  minion. This acting vampire gets 1 optional maneuver during that combat."
+  One ruling on file: "[CEL]If the action is unblocked when it resolves and
+  the target is unlocked, the action \"fizzles\" (cost, if any, is paid, and
+  it is considered successful, but has no effect)." [ANK 20210124]
+  [LSJ 20070411] [LSJ 20090514]. Not a ruling ambiguity -- both the text and
+  the ruling are plain, and the ruling is itself just a restatement of the
+  already-generalized OQ-21 fizzle convention. The block is a missing
+  engine representation, same category as OQ-7/8/9/22/23/24.
+- What is clean and directly buildable (named here so a future unblocking
+  pass does not have to re-derive it): the basic `[cel]` clause (a plain
+  directed, default-amount bleed with a printed "+1 stealth" baseline,
+  `ACTION_CARD_PLAY_HOOK`/`ActionCardSpec`, structurally identical to
+  `enchant_kindred.py`'s own basic `[pre]` clause) and the "Enter combat
+  with a locked minion" half of the superior `[CEL]` clause (identical shape
+  to `line_brawl.py`'s `[pot]` clause, with one extra "must be locked"
+  target filter, and the OQ-21 fizzle convention already covering a target
+  that stops being locked between announce and resolve). The card's own
+  printed 1-blood cost (Rulebook SS2 Card Types > "Requirements for Playing
+  Cards": "Only a vampire with enough blood on them can play a card with a
+  blood cost"; Rulebook SS4 Minion Phase, quoted by `engine/action.py`'s own
+  module docstring, step 3: "If unblocked -> pay cost, resolve. If blocked
+  -> ... cost not paid") needs no new engine hook either -- gated at offer
+  time on the acting vampire's own blood, paid via a direct `vampire.blood
+  -= 1` inside `resolve()` only on the unblocked branch, the same pattern
+  `grooming_the_protege.py`'s `source.blood -= amount` already uses.
+- What is blocked: "This acting vampire gets 1 optional maneuver during
+  that combat" is a once-per-*this-specific-combat* grant, textually the
+  same shape as Saku Pihlajamäki's printed "gets 1 optional maneuver each
+  combat" (`src/vtesbot/cards/saku_pihlajamaki.py`, krcg id 201658) -- except
+  Saku's own grant is checked/recorded entirely *inside* `run_combat`'s own
+  `combat_state: dict[str, Any]` scratch dict (`engine/combat.py::
+  COMBAT_STATE_CONTEXT_KEY`), which `run_combat` always creates fresh and
+  empty the instant it is called, *before* its per-round loop -- fine for
+  Saku, since her own vampire is already a live combatant by the time any
+  `"maneuver"` hook offer happens, so nothing needs to reach `run_combat`
+  before it starts. Fleetness's own grant must exist from the moment the
+  card is played, at *announce time* -- strictly before the block-attempt
+  window even opens (Rulebook SS4 "Announce the Action": "All details of the
+  action are defined when the action is announced"; this engine's own
+  `ActionCardSpec` contract requires the same) -- i.e. before whichever
+  combat this one action produces has even started. Two distinct paths both
+  reach `run_combat` from that earlier point, and neither has anywhere to
+  put a pre-combat grant: (1) unblocked, this card's own `resolve()` would
+  call `run_combat` directly (mirrors `line_brawl.py`'s `[pot]` clause), but
+  `run_combat`'s signature (`engine/combat.py`) takes no parameter at all for
+  a caller to pre-seed its freshly-created, always-`{}`-at-the-top
+  `combat_state`; (2) blocked, `engine/action.py::perform_minion_action`'s
+  own blocked branch calls `run_combat` *itself*, internally, with no
+  `ActionCardSpec` field, no `resolve`/`on_blocked` callback, and no hook
+  offer of any kind between "block succeeds" and `run_combat` starting --
+  confirmed by reading the function: `on_blocked` only runs *after*
+  `run_combat` returns, too late to matter for a maneuver usable at any
+  point during that already-finished combat. A card-module-only workaround
+  (a bare module-level `dict` tracking "this vampire has a pending grant")
+  was considered and rejected: it would live outside `GameState` entirely,
+  breaking this engine's determinism/replay invariant (CLAUDE.md SS5) and
+  departing from this codebase's own established convention that every
+  comparable per-combat grant (Dust Up's `CEL_GRANTS_KEY`, Saku's own "used"
+  flag) is nested *inside* an engine-threaded scratch dict, never a bare
+  module global -- CLAUDE.md's "No engine patches ... do not hack around it
+  inside the card module" rule directly forbids that workaround.
+- Because the registry/CLAUDE.md model a card as either fully `implemented`
+  (every clause) or `blocked` -- never a partial implementation of only the
+  clean clauses (`src/vtesbot/cards/registry.py::Status` has exactly two
+  values; same framing as OQ-9's own history for Bonding) -- the whole card
+  is blocked pending the fix below, even though the clauses named above are
+  individually buildable today.
+- What would be needed: a way for a card's own `ActionCardSpec` to pre-grant
+  a one-shot, this-combat-only maneuver (or, more generally, a pre-combat
+  grant of any kind) to a named vampire, honored by both paths that can lead
+  into a combat from one action: (1) `engine/combat.py::run_combat` gaining
+  an optional parameter (e.g. `initial_combat_state: dict[str, Any] | None =
+  None`) to seed its local `combat_state` instead of always starting from
+  `{}`, under a documented key/shape a `"maneuver"` hook provider can
+  recognize; (2) `engine/phases/minion.py::ActionCardSpec` gaining a field
+  carrying that same pre-seed (e.g. `maneuver_grant: str | None`), and
+  `engine/action.py::perform_minion_action`'s blocked branch threading it
+  into its own internal `run_combat` call -- a genuine new parameter on
+  `perform_minion_action` itself, not merely a new optional argument nobody
+  has to pass. This is `rules-engineer` scope (it touches `engine/combat.py`
+  and `engine/action.py`, not just `cards/`).
+- Impacted code (at the time this was opened): `src/vtesbot/engine/
+  combat.py` (`run_combat`), `src/vtesbot/engine/action.py`
+  (`perform_minion_action`), `src/vtesbot/engine/phases/minion.py`
+  (`ActionCardSpec`, `_perform_action_card`). Impacted cards: Fleetness
+  (registered `blocked`, reason `OQ-25`); any future card whose own text
+  grants a maneuver (or other per-combat effect) that must exist *before*
+  the combat it applies to has started would hit the same gap.
+- Resolution (`rules-engineer` pass): built exactly the two-part primitive
+  this entry's own "What would be needed" section described. (1)
+  `engine/combat.py::run_combat` gained an optional `initial_combat_state:
+  dict[str, Any] | None = None` parameter, used *directly* (not copied) as
+  its local `combat_state` instead of always starting from `{}`; `None`
+  (every pre-existing call site) reproduces the previous behaviour exactly.
+  `PRE_COMBAT_MANEUVER_GRANT_KEY` is the generic (not Fleetness-specific)
+  key this seed is recognized under, nested inside `combat_state` exactly
+  like Dust Up's own `CEL_GRANTS_KEY` and Saku Pihlajamäki's own per-combat
+  "used" flag -- a `dict[str, int]` keyed by vampire instance id, each entry
+  counting that vampire's still-unclaimed pre-granted maneuvers (an `int`
+  count, not a bool, so a future card printing more than one pre-combat
+  maneuver, or two independently-granting cards stacking on the same
+  vampire, compose by addition rather than one overwriting the other).
+  `seed_pre_combat_maneuver_grant(vampire_id, count=1)`/
+  `pre_combat_maneuver_available(context)`/`consume_pre_combat_maneuver_
+  grant(context)` are the shared helpers a `"maneuver"` hook provider uses,
+  mirroring `additional_strike_limit_used`/`mark_additional_strike_limit_
+  used`'s own degrade-gracefully contract (a hook offered directly, with no
+  `combat_state` in its context at all, is treated as "nothing granted,"
+  not an error). (2) `engine/phases/minion.py::ActionCardSpec` gained a
+  `maneuver_grant: str | None = None` field (the vampire instance id to
+  pre-grant), and `engine/action.py::perform_minion_action` gained a new
+  `maneuver_grant: str | None = None` parameter, forwarded unchanged from
+  `_perform_action_card`; its blocked branch now builds `seed_pre_combat_
+  maneuver_grant(maneuver_grant)` and passes it as `initial_combat_state`
+  to its own internal `run_combat` call when `maneuver_grant` is not `None`
+  (`None`, every pre-existing call site, changes nothing). The unblocked
+  path needed no engine change: a card's own `resolve()` already calls
+  `run_combat` directly (mirrors `cards/line_brawl.py`'s `[pot]` clause) and
+  can pass `initial_combat_state=seed_pre_combat_maneuver_grant(...)` to
+  that same call itself. Proven end-to-end, not just as isolated plumbing,
+  by `tests/rules/test_pre_combat_maneuver_grant.py`: a generic fake
+  `"maneuver"` provider recognizing `PRE_COMBAT_MANEUVER_GRANT_KEY` is
+  exercised through (a) a direct `run_combat(..., initial_combat_state=...)`
+  call, proving the grant is offered from round one, before Determine Range
+  has otherwise done anything; (b) `perform_minion_action`'s unblocked
+  branch, with `resolve()` seeding the grant on its own direct `run_combat`
+  call; (c) `perform_minion_action`'s blocked branch, with `maneuver_grant=`
+  passed directly, and a regression check that `maneuver_grant=None` (the
+  default) offers nothing even with the provider registered; and (d) a full
+  `ActionCardSpec`-based fake `"action_card_play"` provider (a Fleetness-
+  shaped stand-in, not Fleetness itself) driven through the real
+  `minion_phase` entry point for both the unblocked and blocked cases,
+  proving `ActionCardSpec.maneuver_grant` threads all the way from a card's
+  own hook option to the resulting combat. Zero-regression: the full
+  pre-existing suite (501 tests before this file's own 9 additions) passes
+  unmodified. `pytest`, `ruff check`, `ruff format --check` and
+  `pymarkdown scan docs/OPEN_QUESTIONS.md` all pass. Card registration is
+  unchanged (Fleetness stays `blocked`/`OQ-25` in the registry;
+  re-implementing it against this capability is `card-implementer`'s job).
+- Impacted code (this pass): `src/vtesbot/engine/combat.py` (`run_combat`,
+  `PRE_COMBAT_MANEUVER_GRANT_KEY`, `seed_pre_combat_maneuver_grant`,
+  `pre_combat_maneuver_available`, `consume_pre_combat_maneuver_grant`),
+  `src/vtesbot/engine/action.py` (`perform_minion_action`),
+  `src/vtesbot/engine/phases/minion.py` (`ActionCardSpec.maneuver_grant`,
+  `_perform_action_card`), `tests/rules/test_pre_combat_maneuver_grant.py`
+  (new).

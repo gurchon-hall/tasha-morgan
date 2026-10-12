@@ -265,6 +265,48 @@ future Steal Blood-style strike's non-damage effect); `_resolve_one_strike`
 currently has no mechanism to suppress a non-damage `apply(state)` side
 effect for a dodging combatant. A future combat card needing this will need
 to extend `COMBAT_STRIKE_OPTION_HOOK`'s contract again.
+
+Pre-combat grant seeding (OQ-25, `docs/OPEN_QUESTIONS.md`, resolved -- Fleetness
+(100747), "This acting vampire gets 1 optional maneuver during that combat"):
+a grant that must exist *before* `run_combat` itself is ever called (the
+acting vampire's own card is played, and the grant fixed, at Rulebook SS4
+"Announce the Action" time -- strictly before the block-attempt window even
+opens, let alone whichever combat results from it) cannot be recorded the way
+Saku Pihlajamäki's own "1 optional maneuver each combat" is (entirely inside
+`combat_state`, which `run_combat` previously always created fresh and empty,
+with no way for an earlier caller to seed it). `run_combat` now accepts an
+optional `initial_combat_state: dict[str, Any] | None = None` parameter, used
+directly (not copied) as its local `combat_state` instead of always starting
+from `{}`; a caller with nothing to pre-seed (every call site before this
+pass) passes nothing and sees byte-for-byte the previous `{}`-start
+behaviour. `PRE_COMBAT_MANEUVER_GRANT_KEY` is the generic (not
+Fleetness-specific) key this seed is recognized under, nested inside
+`combat_state` exactly like Dust Up's own `CEL_GRANTS_KEY` (module docstring's
+"Cross-card '(limited)' cap" section) and Saku's own per-combat "used" flag --
+a `dict[str, int]` keyed by vampire instance id, each entry counting that
+vampire's still-unclaimed pre-granted maneuvers (an `int` count, not a bool,
+so a future card printing more than one pre-combat maneuver -- or two
+different pre-combat-granting cards stacking on the same vampire -- composes
+correctly by addition rather than one silently overwriting the other).
+`seed_pre_combat_maneuver_grant`/`pre_combat_maneuver_available`/
+`consume_pre_combat_maneuver_grant` below are the shared helpers: a card's own
+`"maneuver"` hook provider calls `pre_combat_maneuver_available(context)` at
+offer time and `consume_pre_combat_maneuver_grant(context)` from the option it
+offers, exactly mirroring `additional_strike_limit_used`/`mark_additional_
+strike_limit_used`'s own degrade-gracefully contract (a hook offered directly,
+bypassing `run_combat`, with no `combat_state` in its context at all, is
+treated as "nothing granted" rather than raising).
+
+Two distinct call sites now have somewhere to put this pre-seed: (1) an
+unblocked action's own `resolve()` callback, which already calls `run_combat`
+directly (mirrors `cards/line_brawl.py`'s `[pot]` clause), can now pass
+`initial_combat_state=seed_pre_combat_maneuver_grant(acting_vampire_id)`
+itself -- no further engine change needed for this path, since the card's own
+closure already has full control over that call; (2) a *blocked* action's
+combat is run by `engine/action.py::perform_minion_action` itself, internally
+-- see that module's own docstring and `engine/phases/minion.py::
+ActionCardSpec.maneuver_grant` for how this same seed now reaches that
+internal call too.
 """
 
 from collections.abc import Mapping
@@ -318,6 +360,63 @@ engine-level helper is provided for this (unlike `additional_strike_limit_
 used`/`mark_additional_strike_limit_used` below), since no cross-card,
 engine-enforced cap is sourced for maneuvers -- it is a single card's own
 private bookkeeping, not a rule this module itself needs to enforce."""
+
+PRE_COMBAT_MANEUVER_GRANT_KEY = "pre_combat_maneuver_grants"
+"""Key inside the `combat_state` dict (`COMBAT_STATE_CONTEXT_KEY`) for a
+pre-combat maneuver grant seeded via `run_combat`'s own `initial_combat_state`
+parameter (module docstring's "Pre-combat grant seeding" section, OQ-25,
+`docs/OPEN_QUESTIONS.md`). Value is a `dict[str, int]` keyed by vampire
+instance id, each entry counting that vampire's still-unclaimed pre-granted
+maneuvers -- generic (not Fleetness-specific), exactly the "documented
+key/shape a `'maneuver'` hook provider can recognize" OQ-25 asked for. A
+`"maneuver"` hook provider recognizing this key must consume (decrement) its
+own vampire's entry when it offers/claims the grant -- use
+`pre_combat_maneuver_available`/`consume_pre_combat_maneuver_grant` below
+rather than reading/writing this dict directly, mirroring `additional_
+strike_limit_used`/`mark_additional_strike_limit_used`'s own shared-helper
+convention."""
+
+
+def seed_pre_combat_maneuver_grant(vampire_id: str, count: int = 1) -> dict[str, Any]:
+    """Build an `initial_combat_state` seed (`run_combat`'s own parameter)
+    granting `vampire_id` `count` unclaimed pre-combat maneuvers (default 1),
+    recognized by `pre_combat_maneuver_available`/`consume_pre_combat_
+    maneuver_grant` below via `PRE_COMBAT_MANEUVER_GRANT_KEY`. A card whose
+    own text grants a pre-combat maneuver calls this to build the dict it
+    passes as `run_combat(..., initial_combat_state=...)` (unblocked path) or
+    as `ActionCardSpec.maneuver_grant`/`perform_minion_action`'s own
+    `maneuver_grant` argument (blocked path, `engine/action.py`,
+    `engine/phases/minion.py`) -- the single source of truth for this seed's
+    shape, so a producing card module and a consuming `"maneuver"` provider
+    cannot silently desync over a hand-rolled dict literal."""
+    return {PRE_COMBAT_MANEUVER_GRANT_KEY: {vampire_id: count}}
+
+
+def pre_combat_maneuver_available(context: Mapping[str, Any]) -> bool:
+    """Whether `context["vampire"]` currently has an unclaimed pre-combat
+    maneuver grant (module docstring's "Pre-combat grant seeding" section). A
+    missing `COMBAT_STATE_CONTEXT_KEY` entry (the hook offered directly,
+    bypassing `run_combat` -- some scenario tests do this to probe a provider
+    in isolation) is treated as "nothing granted," matching `additional_
+    strike_limit_used`'s own degrade-gracefully convention."""
+    combat_state = context.get(COMBAT_STATE_CONTEXT_KEY)
+    if combat_state is None:
+        return False
+    return combat_state.get(PRE_COMBAT_MANEUVER_GRANT_KEY, {}).get(context["vampire"], 0) > 0
+
+
+def consume_pre_combat_maneuver_grant(context: Mapping[str, Any]) -> None:
+    """Consume one of `context["vampire"]`'s unclaimed pre-combat maneuver
+    grants (see `pre_combat_maneuver_available`). A missing `COMBAT_STATE_
+    CONTEXT_KEY` entry, or a vampire with none left, is a no-op."""
+    combat_state = context.get(COMBAT_STATE_CONTEXT_KEY)
+    if combat_state is None:
+        return
+    grants = combat_state.get(PRE_COMBAT_MANEUVER_GRANT_KEY, {})
+    vampire_id = context["vampire"]
+    if grants.get(vampire_id, 0) > 0:
+        grants[vampire_id] -= 1
+
 
 ADDITIONAL_STRIKE_LIMIT_KEY = "additional_strike_limit_used"
 """Key inside the `ROUND_STATE_CONTEXT_KEY` dict for the "(limited)"
@@ -747,13 +846,24 @@ def run_combat(
     acting_vampire: VampireInPlay,
     blocking_player: str,
     blocking_vampire: VampireInPlay,
+    initial_combat_state: dict[str, Any] | None = None,
 ) -> None:
-    """Resolve combat between the acting and the (successfully) blocking minion."""
+    """Resolve combat between the acting and the (successfully) blocking minion.
+
+    `initial_combat_state` (OQ-25, `docs/OPEN_QUESTIONS.md`, resolved -- module
+    docstring's "Pre-combat grant seeding" section): if given, used *directly*
+    (not copied) as this combat's `combat_state` instead of starting from a
+    fresh `{}` -- lets a caller pre-seed a grant that must already exist
+    before this combat's very first round (e.g.
+    `seed_pre_combat_maneuver_grant`). `None` (every call site before this
+    pass, and every call site with nothing to pre-seed) reproduces the
+    previous, always-`{}`-at-the-top behaviour exactly.
+    """
     # One combat-scoped scratch dict, created once for the whole combat (not
     # recreated per round, unlike round_state below) -- module docstring's
     # "Determine Range and maneuvers" section, "Per-combat, not per-round,
     # scoping" paragraph.
-    combat_state: dict[str, Any] = {}
+    combat_state: dict[str, Any] = initial_combat_state if initial_combat_state is not None else {}
     while True:
         if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
             break  # Rulebook SS4: combat ends at once if a combatant is no longer ready.
