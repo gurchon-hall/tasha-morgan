@@ -1,0 +1,197 @@
+{
+  "id": 101798,
+  "printed_name": "Slam",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Slam"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Golpear"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Plaquage"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300019,
+        "code": "LotN"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PG",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/lords-of-the-night/slam.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/slam.jpg"
+    },
+    {
+      "set": {
+        "id": 300024,
+        "code": "HttB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PGar",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/heirs-to-the-blood/slam.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/slam.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Golpear",
+      "text": "[pot] Ataque: ataca con la mano con +2 de daño.\n[POT] Como antes, con 1 maniobra opcional, sólo utilizable para acercarse.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/slam.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Plaquage",
+      "text": "[pot] Frapper : frappe à mains nues à +2 points de dégâts.\n[POT] Comme ci-dessus, avec 1 manœuvre optionnelle, seulement utilisable pour aller au contact.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/slam.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/slam.jpg",
+  "types": [
+    "Combat"
+  ],
+  "formats": [],
+  "artists": [
+    "Imaginary Friends Studios"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "Additional damage inherits all of the properties of the base damage. [TOM 19960225]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[TOM 19960225]",
+          "label": "TOM 19960225",
+          "url": "https://usenet.krcg.org/t/0LLTOfvyVbM/#m11"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "[POT]The optional maneuver cannot be used if the strike cannot be used (eg. {100916|Hidden Lurker}). [LSJ 20021028]",
+      "group": "Strikes with optional maneuver",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20021028]",
+          "label": "LSJ 20021028",
+          "url": "https://usenet.krcg.org/t/g0GGiVIxyis/#m1"
+        }
+      ],
+      "cards": [
+        {
+          "id": 100916,
+          "printed_name": "Hidden Lurker",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": [
+        {
+          "text": "[POT]",
+          "symbol": "P",
+          "count": ""
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "text": "[pot] Strike: hand strike at +2 damage.\n[POT] As above, with 1 optional maneuver, only usable to get to close range.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2007-10-26",
+  "banned": null,
+  "cost": {
+    "type": "Blood",
+    "value": 1
+  },
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "pot"
+    ]
+  }
+}

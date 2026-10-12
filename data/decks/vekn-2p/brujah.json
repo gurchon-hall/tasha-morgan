@@ -164,7 +164,7 @@
       "type": "Combat",
       "count": 4,
       "krcg_id": 101798,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Taste of Vitae",

@@ -216,22 +216,72 @@ fetched live <https://www.vekn.net/rulebook/4-detailed-turn-sequence>
   the range left at long -- the worked example's own prose elides this last,
   trivial turn, but the loop still asks it (a provider legitimately could
   have one more grant to offer there; this combat's fake providers do not).
-- Scope restriction (CLAUDE.md "no guessing"/"small commits"): only an
-  ability-granted maneuver *not* bundled with choosing a strike is wired --
-  exactly Saku's shape (a printed vampire ability, "1 optional maneuver each
-  combat," no card played, not bundled with a strike choice). Explicitly
-  **not** built: "To use a maneuver from a strike card, the minion plays the
-  strike card during this step instead of during the choose strike step. If
-  a minion uses the maneuver from a strike card or a weapon, they are
-  effectively choosing their strike as well. As such, they cannot use a
-  second strike card or weapon to maneuver again in the same round." --
-  i.e. a maneuver source that also simultaneously satisfies that combatant's
-  strike choice for the round (Pursuit, Slam, Dance with the Devil, ...).
-  This is a separate, larger future engine change (the strike step would
-  need to know a combatant's choice was already consumed during Determine
-  Range); a future pass building it, or a `card-implementer` pass hitting
-  this gap on one of those specific cards, will need its own engine change
-  or its own Open Question -- not pre-built or anticipated here.
+- Scope restriction, first pass (superseded below for the strike-bundled
+  case -- OQ-28, `docs/OPEN_QUESTIONS.md`, resolved): only an ability-granted
+  maneuver *not* bundled with choosing a strike was wired at first -- exactly
+  Saku's shape (a printed vampire ability, "1 optional maneuver each combat,"
+  no card played, not bundled with a strike choice). Pursuit's own basic
+  `[cel]` "Maneuver." clause (`cards/pursuit.py`, OQ-27, resolved) was later
+  confirmed to be this same plain shape too, despite being a played card, not
+  a printed ability -- see that module's own docstring for the full
+  Choose-Strike-citation analysis distinguishing a bare "Maneuver." clause
+  from a maneuver genuinely "from a strike."
+
+Maneuver bundled with a strike (resolves OQ-28, `docs/OPEN_QUESTIONS.md` --
+Slam, krcg id 101798, "[pot] Strike: hand strike at +2 damage. [POT] As
+above, with 1 optional maneuver, only usable to get to close range."; .44
+Magnum, krcg id 100001, is the identically-shaped weapon-side example, not
+yet in the card pool): Rulebook SS4 Combat > Strike > Choose Strike
+(verbatim, re-fetched live <https://www.vekn.net/rulebook/4-detailed-turn-sequence>
+2026-10-12, matching the local cache `data/sources/rulebook/2026-10-09/
+4-detailed-turn-sequence.md`): "Each minion chooses their strike. The strike
+can be from a combat card, from a weapon the minion possesses, by default
+from a hand strike, or can be from any other card providing this minion a
+strike. If a minion has used a maneuver from a strike (either a strike card
+or a weapon) this round, then they cannot choose any other strike for their
+initial strike of the round." Also Determine Range itself: "To use a
+maneuver from a strike card, the minion plays the strike card during this
+step instead of during the choose strike step. If a minion uses the maneuver
+from a strike card or a weapon, they are effectively choosing their strike as
+well." Together these mean: claiming this kind of `MANEUVER_HOOK` grant does
+not just flip the range -- it *simultaneously* fixes that combatant's one
+strike choice for the round to the same bundled strike effect, so `_ask_
+strike` must never separately offer that combatant a strike choice for their
+initial strike afterwards.
+
+Mechanism: `_ask_maneuver`'s `hooks.offer(MANEUVER_HOOK, ...)` call now also
+threads the current round's shared scratch dict into the hook context under
+`round_state=` (`ROUND_STATE_CONTEXT_KEY`) -- the same key/object `COMBAT_
+DODGE_OPTION_HOOK`/`COMBAT_ADDITIONAL_STRIKE_HOOK` already receive it under
+(module docstring's "Cross-card '(limited)' cap" section); `run_combat`
+therefore now creates `round_state` once at the very top of each round
+iteration, *before* calling `_determine_range`, rather than only afterwards
+(reordered; no other call site's shape changes). A `MANEUVER_HOOK` provider
+whose own grant is itself part of a strike effect calls `commit_strike_for_
+round(context, strike)` (below) from the very closure that applies the
+maneuver, passing a `HookOption` wrapping that bundled strike's own effect
+(the same `apply(state) -> int | StrikeDamage` contract a `COMBAT_STRIKE_
+OPTION_HOOK` provider uses) -- this records the commitment under `COMMITTED_
+STRIKE_KEY` inside `round_state`, keyed by vampire instance id. `_ask_strike`
+consults (and consumes) that record for `vampire.instance_id` before
+offering anything: if present, it resolves straight to the pre-committed
+strike, with no `Decision` raised for that combatant's initial strike at all
+-- not "may also choose this strike," but exactly "this strike card is
+played now, during Determine Range, instead of during the choose strike
+step." Popping the entry on read (rather than merely reading a flag) is what
+correctly scopes the lock to "their initial strike of the round" only: the
+first, and only the first, `_ask_strike` call for that vampire each round
+finds it; any later Additional Strikes pair (Rulebook SS4 Combat > Additional
+Strikes, a separate, later choose-strike step the quoted restriction's own
+"initial strike" wording does not reach) finds nothing and gets the engine's
+normal, fully independent strike choice, exactly like any other combatant.
+A plain maneuver not bundled with a strike (Saku, Pursuit's basic clause,
+Dance with the Devil, Fleetness) must never call `commit_strike_for_round` --
+doing so would wrongly lock that combatant's strike choice with no textual
+basis. Wiring an actual card (Slam, .44 Magnum) against this mechanism is
+left to a future `card-implementer` pass; this pass only builds and tests the
+generic engine mechanism (CLAUDE.md "decision points, not hard-coded play" /
+"card hooks" -- the engine must not special-case a card name).
 - Per-combat, not per-round, scoping: Saku's own grant ("1 optional maneuver
   each combat") spans however many rounds the whole combat lasts, unlike a
   combat card's maneuver grant (consumed the one round it is played, same
@@ -321,6 +371,15 @@ if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
 
 HAND_STRIKE_STRENGTH = 1
+HAND_STRIKE_VALUE = "hand_strike"
+NO_STRIKE_VALUE = "no_strike"
+"""The two built-in `strike_choice` values `_ask_strike` always offers
+(Rulebook SS4 Combat > Strike, "by default from a hand strike"). Named here
+(rather than left as bare string literals at each use site) so
+`commit_strike_for_round` can assert no card-sourced choice value collides
+with either -- a collision would silently mis-resolve `_resolve_one_strike`'s
+own `if choice == ...` branching onto the wrong effect, exactly the "never
+mis-resolves a card" failure CLAUDE.md forbids."""
 COMBAT_STRIKE_OPTION_HOOK = "combat_strike_option"
 COMBAT_STRENGTH_MODIFIER_HOOK = "combat_strength_modifier"
 COMBAT_DODGE_OPTION_HOOK = "combat_dodge_option"
@@ -337,13 +396,18 @@ long range")."""
 
 ROUND_STATE_CONTEXT_KEY = "round_state"
 """Context key, under `COMBAT_DODGE_OPTION_HOOK`/`COMBAT_ADDITIONAL_STRIKE_
-HOOK`, for the shared, round-scoped scratch `dict[str, Any]` `run_combat`
-creates fresh at the top of every round (see module docstring's "Cross-card
-'(limited)' cap" section). A hook offered directly, bypassing `run_combat`
-(as several scenario tests do, to probe one hook in isolation), simply has
-no entry under this key; `additional_strike_limit_used`/`mark_additional_
-strike_limit_used` below both treat that as "no shared state available" and
-degrade gracefully (see their own docstrings) rather than raising."""
+HOOK`/`MANEUVER_HOOK`, for the shared, round-scoped scratch `dict[str, Any]`
+`run_combat` creates fresh at the top of every round (see module docstring's
+"Cross-card '(limited)' cap" and "Maneuver bundled with a strike" sections).
+`MANEUVER_HOOK` only started receiving this context key alongside the other
+two once `commit_strike_for_round`/`COMMITTED_STRIKE_KEY` (below) needed
+somewhere round-scoped to record a strike-bundled maneuver's commitment --
+earlier callers of `MANEUVER_HOOK` that never consult it are unaffected. A
+hook offered directly, bypassing `run_combat` (as several scenario tests do,
+to probe one hook in isolation), simply has no entry under this key;
+`additional_strike_limit_used`/`mark_additional_strike_limit_used`/
+`commit_strike_for_round` below all treat that as "no shared state available"
+and degrade gracefully (see their own docstrings) rather than raising."""
 
 COMBAT_STATE_CONTEXT_KEY = "combat_state"
 """Context key, under `MANEUVER_HOOK`, for the shared, *combat*-scoped (not
@@ -503,6 +567,152 @@ class StrikeDamage:
     ignore_dodge: bool = False
 
 
+COMMITTED_STRIKE_KEY = "committed_strike"
+"""Key inside the `ROUND_STATE_CONTEXT_KEY` dict for a strike effect a
+`MANEUVER_HOOK` grant has pre-committed a combatant to for their *initial*
+strike of the round (module docstring's "Maneuver bundled with a strike"
+section, OQ-28 `docs/OPEN_QUESTIONS.md`; Rulebook SS4 Combat > Strike >
+Choose Strike: "If a minion has used a maneuver from a strike ... this
+round, then they cannot choose any other strike for their initial strike of
+the round"). Value is a `dict[str, hooks.HookOption]` keyed by vampire
+instance id -- per-combatant, like every other `round_state` sub-dict in
+this module, since the two combatants' commitments (if any) are entirely
+independent of each other. `_ask_strike` pops (not just reads) its own
+combatant's entry the first time it is consulted each round: only that
+first lookup is the combatant's "initial strike of the round" the rulebook
+text scopes this lock to -- any later Additional Strikes pair (a separate,
+later choose-strike step) finds nothing left and gets a full, independent
+strike choice, exactly like any other combatant's additional strike.
+
+An entry present under this key for a given vampire id, for as long as it
+has *not yet* been popped by `_ask_strike`, doubles as this round's "already
+committed a strike-bundled maneuver" flag -- `strike_committed_this_round`
+reads it for exactly this purpose. Since Determine Range always runs to
+completion before the strike step begins each round (`run_combat`'s own
+per-round ordering), this flag is live for the *entire* window during which
+a second strike-bundled maneuver could legally be offered, and is gone
+(popped) only once that window has already irreversibly closed -- so reusing
+this one dict for both purposes, rather than keeping a second explicit
+"used" flag, loses no coverage."""
+
+
+def strike_committed_this_round(context: Mapping[str, Any]) -> bool:
+    """Whether `context["vampire"]` already has a strike-bundled-maneuver
+    commitment recorded this round (`COMMITTED_STRIKE_KEY`'s own docstring).
+
+    Rulebook SS4 Combat > Determine Range (module docstring's "Maneuver
+    bundled with a strike" section, OQ-28 `docs/OPEN_QUESTIONS.md`): "If a
+    minion uses the maneuver from a strike card or a weapon, they are
+    effectively choosing their strike as well. As such, they cannot use a
+    second strike card or weapon to maneuver again in the same round." A
+    `MANEUVER_HOOK` provider offering a strike-bundled maneuver (one whose
+    own grant will call `commit_strike_for_round`) must gate its own offer on
+    `not strike_committed_this_round(context)` -- the same "provider consults
+    a shared flag at its own offer-time gate" convention
+    `additional_strike_limit_used` already establishes for the "(limited)"
+    additional-strike cap (module docstring's "Cross-card '(limited)' cap"
+    section) -- *not* enforced centrally by `_ask_maneuver`/`hooks.offer`
+    itself: the engine cannot tell, before a provider's own `apply()` runs,
+    which of its offered `HookOption`s are strike-bundled versus plain, so it
+    cannot filter them out of the offered list on a provider's behalf.
+    `commit_strike_for_round` itself raises `ValueError` if called a second
+    time for the same vampire the same round, as a loud backstop against a
+    provider that forgets this gate (see its own docstring) -- but the gate
+    below is still what a correctly-written provider must consult to avoid
+    even *offering* an illegal second option in the first place (CLAUDE.md
+    "decision points, not hard-coded play": an illegal choice must never
+    reach a `Decision` at all).
+
+    This is *not* a block on maneuvering in general: a combatant who has
+    already committed a strike-bundled maneuver this round may still use a
+    *plain*, non-strike-bundled maneuver afterward -- the quoted restriction
+    only bars a *second strike card or weapon* source, not maneuvering as
+    such. A plain `MANEUVER_HOOK` provider (Saku Pihlajamäki, Pursuit's basic
+    "[cel] Maneuver." clause, Dance with the Devil, Fleetness) must never
+    consult this.
+
+    Degrades to `False` if `ROUND_STATE_CONTEXT_KEY` is missing from
+    `context` (the hook offered directly, bypassing `run_combat`, as several
+    scenario tests do to probe one provider in isolation) -- matching every
+    other degrade-gracefully helper in this module."""
+    round_state = context.get(ROUND_STATE_CONTEXT_KEY)
+    if round_state is None:
+        return False
+    return context["vampire"] in round_state.get(COMMITTED_STRIKE_KEY, {})
+
+
+def commit_strike_for_round(context: Mapping[str, Any], strike: hooks.HookOption) -> None:
+    """Pre-commit `context["vampire"]`'s initial strike of the round to
+    `strike` (see `COMMITTED_STRIKE_KEY`'s own docstring and the module
+    docstring's "Maneuver bundled with a strike" section, OQ-28).
+
+    Call this only from a `MANEUVER_HOOK` provider's own grant -- specifically
+    from the same closure that applies the maneuver itself -- when, and only
+    when, that provider's printed text bundles the maneuver together with
+    choosing a strike (e.g. Slam's superior "[POT] As above, with 1 optional
+    maneuver, only usable to get to close range," where "as above" is the
+    same card's own "Strike: hand strike at +2 damage" clause; .44 Magnum's
+    "Strike: 2R damage, with 1 optional maneuver each combat" is the
+    identically-shaped weapon-side example). The provider must have already
+    gated its own offer on `not strike_committed_this_round(context)` (see
+    that function's own docstring) -- this function raises `ValueError` if a
+    commitment is already recorded for this vampire this round, as a loud
+    backstop against a provider that forgets that gate (Rulebook SS4 Combat
+    > Determine Range: "they cannot use a second strike card or weapon to
+    maneuver again in the same round" -- silently overwriting the first
+    commitment instead of refusing it outright would let a second such
+    maneuver illegally take effect with no error raised, exactly the
+    mis-resolution CLAUDE.md's "never mis-resolves a card" milestone
+    forbids).
+
+    `strike` must be a `HookOption` whose `apply(state)` returns an `int` or
+    `StrikeDamage`, exactly the contract a `COMBAT_STRIKE_OPTION_HOOK`
+    provider's own `apply` already follows -- it is invoked later, at
+    strike-resolution time (never here, at maneuver time), so it can read
+    whatever live state (e.g. the current base hand-strike damage) is only
+    settled by then. `strike.choice.value` must not collide with the two
+    built-in strike choices (`HAND_STRIKE_VALUE`, `NO_STRIKE_VALUE`) -- name
+    it like any other card-sourced choice value (e.g. `"slam:superior"`), the
+    same convention every other hook option in this project already follows;
+    this function raises `ValueError` on a collision rather than relying on
+    convention alone (a collision would otherwise silently mis-resolve
+    `_resolve_one_strike`'s own `if choice == ...` branching onto the wrong,
+    built-in effect instead of the intended one).
+
+    A plain maneuver *not* bundled with a strike (Saku Pihlajamäki's printed
+    ability, Pursuit's basic "[cel] Maneuver." clause, Dance with the Devil,
+    Fleetness) must never call this -- doing so would wrongly lock that
+    combatant's strike choice with no textual basis; see `cards/pursuit.py`'s
+    own module docstring (OQ-27) for the citation distinguishing the two
+    shapes.
+
+    A missing `ROUND_STATE_CONTEXT_KEY` entry in `context` (the hook offered
+    directly, bypassing `run_combat` -- as several scenario tests do, to
+    probe one provider in isolation) is a no-op, matching `mark_additional_
+    strike_limit_used`'s own degrade-gracefully convention: there is nothing
+    to persist to, and a test exercising this mechanism end-to-end must run
+    it through `run_combat` (or construct and thread its own shared dict)."""
+    if strike.choice.value in (HAND_STRIKE_VALUE, NO_STRIKE_VALUE):
+        raise ValueError(
+            f"commit_strike_for_round: strike.choice.value {strike.choice.value!r} collides "
+            "with a built-in strike choice -- use a card-specific value instead"
+        )
+    round_state = context.get(ROUND_STATE_CONTEXT_KEY)
+    if round_state is None:
+        return
+    committed = round_state.setdefault(COMMITTED_STRIKE_KEY, {})
+    vampire_id = context["vampire"]
+    if vampire_id in committed:
+        raise ValueError(
+            "commit_strike_for_round: vampire "
+            f"{vampire_id!r} already has a committed strike this round -- Rulebook SS4 Combat "
+            "> Determine Range: a minion cannot use a second strike card or weapon to maneuver "
+            "again in the same round; the offering provider must gate itself on "
+            "strike_committed_this_round(context) before returning this option"
+        )
+    committed[vampire_id] = strike
+
+
 def _is_ready(vampire: VampireInPlay) -> bool:
     return vampire.zone == "ready"
 
@@ -547,7 +757,29 @@ def _ask_strike(
     `combat_dodge_option` rather than `combat_strike_option`, so the caller
     can apply dodge's damage-nullifying effect itself rather than trusting a
     provider's `apply` return value for it (see module docstring).
+
+    Maneuver-committed strike (module docstring's "Maneuver bundled with a
+    strike" section, OQ-28 `docs/OPEN_QUESTIONS.md`): if `commit_strike_for_
+    round` recorded a pre-committed strike for this combatant earlier this
+    round (Determine Range runs strictly before the strike step every round),
+    that entry is popped from `round_state` and resolved directly here --
+    *no* `Decision` is raised at all for this call, matching "the combatant
+    does not get an independent, later choice at the strike step." Popping
+    (not merely reading) the entry is what correctly limits this to the
+    combatant's *initial* strike of the round only, per the rulebook's own
+    wording -- a later Additional Strikes pair calling this function again
+    for the same combatant finds nothing left and gets the engine's normal,
+    fully independent strike choice.
     """
+    # Relies on this being the first `_ask_strike` call for `vampire` since
+    # Determine Range committed the entry (true today: Determine Range always
+    # finishes before the strike step begins, and no other call site reads
+    # COMMITTED_STRIKE_KEY) -- a future engine change interleaving another
+    # strike-step-shaped call between Determine Range and here would need to
+    # re-check this assumption.
+    committed = round_state.get(COMMITTED_STRIKE_KEY, {}).pop(vampire.instance_id, None)
+    if committed is not None:
+        return committed.choice.value, {committed.choice.value: committed}, frozenset()
     strike_options = hooks.offer(
         COMBAT_STRIKE_OPTION_HOOK,
         state,
@@ -568,8 +800,8 @@ def _ask_strike(
     dodge_values = frozenset(o.choice.value for o in dodge_options)
     choices = (
         (
-            Choice("hand_strike", "Hand strike"),
-            Choice("no_strike", "Do not strike this round"),
+            Choice(HAND_STRIKE_VALUE, "Hand strike"),
+            Choice(NO_STRIKE_VALUE, "Do not strike this round"),
         )
         + tuple(o.choice for o in strike_options)
         + tuple(o.choice for o in dodge_options)
@@ -628,9 +860,9 @@ def _resolve_one_strike(
     if choice in dodge_values:
         by_value[choice].apply(state)  # dodge's own side effect, if any
         return 0, True, False
-    if choice == "hand_strike":
+    if choice == HAND_STRIKE_VALUE:
         return _strike_strength(state, player, vampire, opponent), False, False
-    if choice == "no_strike":
+    if choice == NO_STRIKE_VALUE:
         return 0, False, False
     result = by_value[choice].apply(state)  # card-granted strike option: its own damage
     if isinstance(result, StrikeDamage):
@@ -757,18 +989,28 @@ def _ask_maneuver(
     vampire: VampireInPlay,
     opponent: VampireInPlay,
     combat_state: dict[str, Any],
+    round_state: dict[str, Any],
 ) -> bool:
     """Offer this combatant's controller every currently-available
     `MANEUVER_HOOK` grant for one turn of the Determine Range step (module
-    docstring's "Determine Range and maneuvers" section) -- only an
+    docstring's "Determine Range and maneuvers" section) -- both a plain
     ability-granted maneuver *not* bundled with choosing a strike (e.g. Saku
-    Pihlajamäki's printed "1 optional maneuver each combat"); a maneuver
-    bundled with playing a strike card/weapon is explicitly out of scope (see
-    module docstring).
+    Pihlajamäki's printed "1 optional maneuver each combat", Pursuit's basic
+    clause) and a maneuver genuinely "from a strike" (Slam, .44 Magnum -- see
+    module docstring's "Maneuver bundled with a strike" section, OQ-28): both
+    shapes register against this same hook, the distinction lives entirely in
+    whether a given provider also calls `commit_strike_for_round`.
 
     `combat_state` is the shared, *combat*-scoped (not round-scoped --
     `COMBAT_STATE_CONTEXT_KEY`) scratch dict, threaded into the hook context
     so a provider like Saku's own can record its one-time, whole-combat use.
+
+    `round_state` is the current round's shared scratch dict (module
+    docstring's "Cross-card '(limited)' cap" and "Maneuver bundled with a
+    strike" sections), threaded into the hook context under `round_state=`
+    (`ROUND_STATE_CONTEXT_KEY`) so a strike-bundled maneuver's own grant can
+    call `commit_strike_for_round` from its `apply`-time closure; a plain
+    maneuver provider simply never reads it.
 
     No options registered/currently available => no `Decision` raised at all
     (CLAUDE.md "only when needed"). Returns whether this combatant plays a
@@ -781,6 +1023,7 @@ def _ask_maneuver(
         vampire=vampire.instance_id,
         opponent=opponent.instance_id,
         combat_state=combat_state,
+        round_state=round_state,
     )
     if not options:
         return False
@@ -806,11 +1049,19 @@ def _determine_range(
     blocking_player: str,
     blocking_vampire: VampireInPlay,
     combat_state: dict[str, Any],
+    round_state: dict[str, Any],
 ) -> None:
     """Rulebook SS4 Combat > Combat Sequence step 2, "Determine Range" (see
     module docstring's verbatim quote and its "Turn order and termination"
     paragraph for the sourcing of the alternation/closing rule implemented
     here). Sets `state.combat_range` for this round.
+
+    `round_state` is this round's shared scratch dict, forwarded unchanged to
+    every `_ask_maneuver` call this step makes (module docstring's "Maneuver
+    bundled with a strike" section, OQ-28) -- the *same* object `run_combat`
+    goes on to use for the strike step immediately afterward, so a
+    strike-bundled maneuver claimed here is visible to `_ask_strike` later
+    this same round.
     """
     state.combat_range = CLOSE_RANGE  # "Close range is the default for each round."
     turns = (
@@ -821,7 +1072,7 @@ def _determine_range(
     consecutive_declines = 0
     while consecutive_declines < 2:
         player, vampire, opponent = turns[turn_index]
-        if _ask_maneuver(state, player, vampire, opponent, combat_state):
+        if _ask_maneuver(state, player, vampire, opponent, combat_state, round_state):
             state.combat_range = _flip_range(state.combat_range)
             consecutive_declines = 0
         else:
@@ -868,20 +1119,28 @@ def run_combat(
         if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
             break  # Rulebook SS4: combat ends at once if a combatant is no longer ready.
 
+        # One fresh, shared round-scoped scratch dict per round (module
+        # docstring's "Cross-card '(limited)' cap" and "Maneuver bundled with
+        # a strike" sections): created here, at the top of every iteration of
+        # this loop, so it never carries a flag over into a later round of
+        # the *same* combat, and threaded unchanged into every hook offer
+        # below for this round only -- including Determine Range's own
+        # MANEUVER_HOOK offers, so a strike-bundled maneuver claimed there is
+        # visible to the strike step immediately afterward (OQ-28).
+        round_state: dict[str, Any] = {}
+
         # --- Determine Range step (Rulebook SS4 Combat > Combat Sequence
         # step 2; see module docstring): resolved before the strike step
         # every round, same ordering as the rulebook's own numbered list. ---
         _determine_range(
-            state, acting_player, acting_vampire, blocking_player, blocking_vampire, combat_state
+            state,
+            acting_player,
+            acting_vampire,
+            blocking_player,
+            blocking_vampire,
+            combat_state,
+            round_state,
         )
-
-        # One fresh, shared "(limited)"-additional-strike scratch dict per
-        # round (module docstring's "Cross-card '(limited)' cap" section):
-        # created here, at the top of every iteration of this loop, so it
-        # never carries a flag over into a later round of the *same* combat,
-        # and threaded unchanged into every hook offer below for this round
-        # only.
-        round_state: dict[str, Any] = {}
 
         # --- Strike step: acting minion's controller chooses first; simultaneous resolution. ---
         _resolve_strike_pair(

@@ -9,23 +9,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-3: Combat "press" step — exact turn order   (status: resolved)
-
-- Situation: Rulebook SS4 Combat describes each round ending with a "press"
-  step ("alternating") before the round either ends or another begins. The
-  `vtes-rules-reference` skill's condensed mapping names the step and that
-  it alternates, but did not spell out which combatant is consulted first.
-- Resolution: `rules-auditor` fetched the primary rulebook page directly and
-  quoted it verbatim: "The acting minion always gets first opportunity to
-  use cards or effects before the opposing minion" — stated as applying at
-  every stage of combat, including press. This matches the project's own
-  impulse invariant (CLAUDE.md SS5 / Rulebook SS2 Sequencing): the acting
-  minion's controller is always asked to press first, every round, never
-  alternating by round parity.
-- Fix applied: `src/vtesbot/engine/combat.py` (`run_combat`, press step) now
-  always orders `[(acting_player, acting_vampire), (blocking_player,
-  blocking_vampire)]`, with no round-parity alternation.
-
 ## OQ-4: 2P contested crypt cards — exact contest trigger moment   (status: resolved)
 
 - Situation: the 2P variant's contested-crypt-card rule (per the
@@ -3935,3 +3918,225 @@ up an OQ number or the highest one used so far.
     `engine/` file was touched -- the existing `MANEUVER_HOOK`/
     `COMBAT_ADDITIONAL_STRIKE_HOOK` machinery was already sufficient once the
     card's own correct classification was established.
+
+## OQ-28: Maneuver committing a strike -- Slam (101798)   (status: resolved)
+
+- Situation: card text (verbatim, via the installed `krcg` package's own
+  `VTES["Slam"].card_text` and cross-checked live against
+  `https://api.krcg.org/card/101798`, 2026-10-12, matching the raw snapshot
+  `data/cards/101798.json`): "[pot] Strike: hand strike at +2 damage.
+  [POT] As above, with 1 optional maneuver, only usable to get to close
+  range." Rulings (verbatim, both sources agree): "Additional damage
+  inherits all of the properties of the base damage. [TOM 19960225]";
+  "[POT]The optional maneuver cannot be used if the strike cannot be used
+  (eg. {Hidden Lurker}). [LSJ 20021028]". Card type Combat, `discipline_
+  requirement == {"type": "Mono", "disciplines": ["pot"]}`, `cost ==
+  {"type": "Blood", "value": 1}` (1 blood, printed cost box, independent of
+  which clause is used -- burned to play the card at all, same precondition
+  shape as Fleetness's own 1-blood cost). Legal since 2007-10-26; confirmed
+  on the active 2P allowed list (`data/formats/2p/2026-10-03.json`).
+- What is clean: the basic `[pot]` clause, "Strike: hand strike at +2
+  damage", is a plain `COMBAT_STRIKE_OPTION_HOOK` grant -- the exact same
+  shape Dust Up's own `[pot]` clause (`src/vtesbot/cards/dust_up.py`,
+  identical printed text, "[pot] Strike: hand strike at +2 damage.") already
+  implements: a `StrikeDamage` of the current base hand-strike damage
+  (including any live strength-modifier contribution) plus 2, not flagged
+  `ignore_dodge`, per the "[TOM 19960225]" ruling on file (the additional
+  damage inherits the base damage's own properties, so it stacks with
+  rather than replaces any other strength bonus already in play, computed
+  the same non-hardcoded way `dust_up.py`'s own
+  `_base_hand_strike_damage` helper does).
+- Missing mechanism: the superior `[POT]` clause, "As above, with 1 optional
+  maneuver, only usable to get to close range," bundles the maneuver
+  together with the *same* "Strike: hand strike at +2 damage" effect in one
+  clause ("as above") -- confirmed, per `docs/OPEN_QUESTIONS.md` OQ-27's own
+  resolution (Rulebook SS4 Combat > Strike > Choose Strike: "If a minion has
+  used a maneuver from a strike (either a strike card or a weapon) this
+  round, then they cannot choose any other strike for their initial strike
+  of the round"), to be a genuine instance of "a maneuver from a strike":
+  using this clause's maneuver during the Determine Range step must
+  simultaneously commit that combatant's one strike choice for the round to
+  this same "hand strike at +2 damage" effect -- the combatant does not get
+  an independent, later choice at the strike step at all (not "may also
+  choose this strike," but "this strike card is played now, during
+  Determine Range, instead of during the choose strike step," per the same
+  Rulebook section's own wording, already quoted in full by `cards/
+  pursuit.py`'s own module docstring and `engine/combat.py`'s "Determine
+  Range and maneuvers" docstring section). No such mechanism exists: the
+  already-wired `MANEUVER_HOOK` (`engine/combat.py::_ask_maneuver`/
+  `_determine_range`) has no way for a granted maneuver to also pre-commit
+  the combatant's later strike-step choice, and `_ask_strike` (`engine/
+  combat.py`) unconditionally offers every combatant a full, independent
+  strike choice every round regardless of anything that happened during
+  Determine Range -- confirmed by inspection (no `forced_strike`/
+  `committed_strike`/`pending_strike`-shaped state anywhere in `engine/
+  combat.py`, and `_ask_strike`'s own docstring/body consult no such flag).
+  This is exactly the gap `engine/combat.py`'s own "Determine Range and
+  maneuvers" docstring section and `cards/registry.py::Hook.MANEUVER`'s own
+  docstring already named (Slam listed by name, alongside .44 Magnum and,
+  until OQ-27's resolution, Pursuit) as deliberately left unbuilt: "a
+  maneuver bundled with playing a strike card/weapon... is a separate,
+  larger future engine change... not pre-built or anticipated here." Neither
+  .44 Magnum (the weapon-side example of the same shape) nor any other card
+  in the pool currently implements this mechanism either, so there is no
+  existing working pattern to reuse (checked: `grep -r "44 Magnum" src/
+  vtesbot` finds no implementation, only this entry's and `pursuit.py`'s own
+  comparison citations).
+- Because the superior clause cannot be correctly gated without inventing a
+  new engine mechanism, and the registry/CLAUDE.md model a card as either
+  fully `implemented` (all of its text, with basic/superior tested
+  separately) or `blocked` -- not a partial implementation of only the clean
+  basic clause -- the whole card is registered `blocked`, same precedent as
+  OQ-9 (Bonding) and OQ-27's own original (pre-resolution) analysis for
+  Pursuit.
+- What would be needed: a way for a `MANEUVER_HOOK` grant to, when claimed,
+  both flip the range (as today) *and* record that this combatant's strike
+  choice for the round is already fixed to a specific strike effect (here,
+  "hand strike at +2 damage"); `_ask_strike` would need to consult that
+  record and skip its own normal choice for that combatant this round,
+  resolving the pre-committed strike directly instead. This is
+  `rules-engineer` scope (touches `engine/combat.py`'s `_ask_maneuver`/
+  `_ask_strike`/round-state shape, the same call sites OQ-27's own original
+  "What would be needed" paragraph named for Pursuit, before OQ-27 was
+  resolved the other way for that specific card).
+- The "[POT]The optional maneuver cannot be used if the strike cannot be
+  used (eg. {Hidden Lurker})" ruling further confirms the strike and the
+  maneuver are not independent for this card -- the maneuver's own legality
+  depends on the bundled strike still being usable, the reverse direction of
+  the same coupling the missing mechanism above would need to model; not
+  separately actionable until that mechanism exists.
+- Impacted code (at the time this was opened): `src/vtesbot/engine/
+  combat.py` (`_ask_maneuver`, `_ask_strike`, round-state shape). Impacted
+  cards: Slam (registered `blocked`, reason `OQ-28`); .44 Magnum (krcg id
+  100001, an Equipment, not currently in this project's card pool) remains
+  the weapon-side example of the identical still-unbuilt shape.
+- Resolution (`rules-engineer` pass, engine mechanism only -- **Slam itself
+  stays `blocked`**, see "Impacted code" below): `engine/combat.py` now
+  builds exactly the "What would be needed" mechanism above, generically (not
+  Slam-specific), so a future `card-implementer` pass can wire Slam (and
+  later .44 Magnum) against it directly:
+  - `COMMITTED_STRIKE_KEY`, a new key inside the existing round-scoped
+    `round_state` dict (`ROUND_STATE_CONTEXT_KEY`), holding a
+    `dict[str, hooks.HookOption]` keyed by vampire instance id.
+  - `commit_strike_for_round(context, strike)`: called by a `MANEUVER_HOOK`
+    provider's own grant (from the same closure that applies the maneuver)
+    when, and only when, that provider's printed text bundles the maneuver
+    with a strike. `strike` is a `HookOption` whose `apply(state)` returns an
+    `int`/`StrikeDamage`, invoked later at strike-resolution time, not at
+    maneuver time (so it can read whatever live state, e.g. the current base
+    hand-strike damage, is only settled by then).
+  - `_ask_strike` now pops `COMMITTED_STRIKE_KEY[vampire.instance_id]` before
+    offering anything: if present, it resolves straight to that pre-committed
+    effect with **no `Decision` raised at all** for that combatant's initial
+    strike this round -- not "may also pick this strike," a hard lock, per
+    the Choose Strike quote above. Popping (not merely reading) is what
+    correctly scopes the lock to "their initial strike of the round" only: a
+    later Additional Strikes pair (a separate, later choose-strike step) is
+    unaffected and still gets a full, independent choice.
+  - `MANEUVER_HOOK`'s own context now also carries `round_state=` (previously
+    only `combat_state=`), required reordering `run_combat` to create
+    `round_state` once at the top of each round, before `_determine_range`
+    runs, rather than only afterward (`_ask_maneuver`/`_determine_range` both
+    gained a `round_state` parameter to thread it through). A plain,
+    non-strike-bundled `MANEUVER_HOOK` provider (Saku Pihlajamäki, Pursuit's
+    basic `[cel]` clause, Dance with the Devil, Fleetness) never calls
+    `commit_strike_for_round` and is completely unaffected by any of this --
+    proven by a dedicated regression test.
+  - The companion sentence in the same Rulebook paragraph -- "As such, they
+    cannot use a second strike card or weapon to maneuver again in the same
+    round" -- is covered too: `strike_committed_this_round(context)` lets a
+    strike-bundled `MANEUVER_HOOK` provider gate its own offer (the same
+    "provider consults a shared flag at its own offer-time gate" convention
+    `additional_strike_limit_used` already establishes for the "(limited)"
+    cap, OQ-19 -- not centrally enforced by `_ask_maneuver`/`hooks.offer`
+    itself, since the engine cannot tell which of a provider's own offered
+    options are strike-bundled before that provider's `apply()` actually
+    runs). `commit_strike_for_round` additionally raises `ValueError` if
+    called a second time for the same vampire the same round, as a loud
+    backstop against a provider that forgets that gate, rather than silently
+    overwriting the first commitment (`rules-auditor` finding on this pass).
+  - `rules-auditor` finding, also fixed this pass: `commit_strike_for_round`
+    now also raises `ValueError` if the committed `strike.choice.value`
+    collides with either built-in strike choice (now named
+    `HAND_STRIKE_VALUE`/`NO_STRIKE_VALUE` constants, replacing the previous
+    bare `"hand_strike"`/`"no_strike"` string literals at each use site) --
+    a collision would otherwise have silently mis-resolved
+    `_resolve_one_strike`'s own branching onto the wrong, built-in effect.
+  - Proven by `tests/rules/test_combat_maneuver.py`: a strike-bundled fake
+    maneuver commits the initial strike and skips the strike-choice decision
+    entirely; the lock does not extend to a later additional strike for the
+    same combatant (proving the `.pop()`, not merely read, semantics); a
+    plain fake maneuver is completely unaffected (regression guard); a second
+    strike-bundled fake maneuver for the same vampire is never offered once
+    the first commits (two independent fake providers, simulating two
+    physical copies/cards); and both of `commit_strike_for_round`'s own
+    `ValueError` guards (double-commit, built-in-value collision) are
+    exercised directly. Full suite re-run clean (563 passed,
+    `uv run pytest -q --ignore=tests/cards/test_octane.py
+    --ignore=tests/cards/test_siarhei_levchenko.py` -- those two ignored
+    files fail to *collect* in this environment on an unrelated, pre-existing
+    `ModuleNotFoundError: No module named 'krcg.vtes'` under `uv run`,
+    confirmed pre-existing via `git stash` to the base commit, not caused by
+    or touched by this pass).
+  - Card registration (at the time this engine-mechanism-only pass landed)
+    was left unchanged: Slam stayed `blocked`/`OQ-28` pending a later
+    `card-implementer` pass, mirroring exactly how OQ-9's own engine-level
+    resolution left Bonding itself `blocked`/`OQ-9` pending its own later
+    `card-implementer` pass. Impacted code this pass: `src/vtesbot/engine/
+    combat.py`, `src/vtesbot/cards/registry.py` (`Hook.MANEUVER`'s own
+    docstring updated to describe the now-built mechanism), `tests/rules/
+    test_combat_maneuver.py`.
+- Card-level follow-up (`card-implementer`, 2026-10-12, **fully resolved**):
+  wired Slam against the now-built mechanism above. `src/vtesbot/cards/
+  slam.py`'s own stale "no engine mechanism exists for this" docstring
+  wording (quoted in this entry's own "Missing mechanism" paragraph above)
+  is corrected to describe the resolution instead. Both clauses now
+  implemented:
+  - `[pot]` basic clause: a plain `COMBAT_STRIKE_OPTION_HOOK` grant, exactly
+    as this entry's own "What is clean" paragraph already described --
+    gated on basic-or-superior `"pot"`, the card in hand, and the printed
+    1-blood cost (checked as a precondition, paid in the option's own
+    `apply`, mirroring Fleetness's own 1-blood-cost convention since a
+    Combat card has no block-attempt window of its own to defer payment
+    past).
+  - `[POT]` superior clause: a `MANEUVER_HOOK` provider gated on superior
+    `"POT"`, the card in hand, the 1-blood cost, `not strike_committed_
+    this_round(context)` (OQ-28's own cap), and `state.combat_range ==
+    LONG_RANGE` ("only usable to get to close range" -- offering it only
+    while already at long range guarantees `_ask_maneuver`'s own
+    direction-agnostic flip always goes long -> close, never the other way,
+    with no new engine support needed for this part: the provider's own
+    `state` parameter already exposes `combat_range` live). Choosing it
+    plays the card, pays the blood cost, and calls `commit_strike_for_round`
+    with a `HookOption` wrapping the identical "hand strike at +2 damage"
+    effect the basic clause grants -- per that function's own contract, the
+    wrapped `apply` performs no further side effect (the card and its cost
+    are already spent at maneuver time; the wrapped `apply` exists solely to
+    compute the strike's damage from whatever base hand-strike damage is
+    live when the strike step actually resolves).
+  - "[POT]The optional maneuver cannot be used if the strike cannot be used
+    (eg. {Hidden Lurker})" [LSJ 20021028]: confirmed still unreachable today
+    (Hidden Lurker, krcg id 100916, is not implemented in this project, and
+    no mechanism anywhere makes a combatant's strike "unusable" -- every
+    combatant can always choose at least a plain hand strike), so this
+    precondition is vacuously satisfied by every offer this module makes;
+    a future pass implementing Hidden Lurker (or any "this vampire cannot
+    strike" effect) and finding this clause needs an actual gate against it
+    will need its own new engine hook, not guessed at or pre-built here.
+  - Proven by `tests/cards/test_slam.py` (15 tests): both clauses' own
+    discipline/hand/blood-cost gates; the superior clause's own "only at
+    long range" and "not offered twice in the same round" gates; the
+    committed-strike behaviour end to end through `run_combat` (no
+    `strike_choice` decision is ever raised for the combatant who
+    maneuvered with Slam, while the opponent still gets an ordinary,
+    independent one); and, as a regression guard proving this card's own
+    use of `commit_strike_for_round` does not interfere with Pursuit's own
+    plain, non-strike-bundled `[cel]` maneuver clause (OQ-27) on the same
+    vampire holding both cards, including after Slam's own commitment is
+    already recorded. Registry status is now `implemented`,
+    `blocked_reason` cleared. Full suite green (577 passing). Impacted
+    code: `src/vtesbot/cards/slam.py`, `tests/cards/test_slam.py`,
+    `data/decks/vekn-2p/brujah.json` (Slam's own `implementation_status`
+    entry updated to `"implemented"`). No further `engine/` change was
+    needed -- the mechanism the earlier `rules-engineer` pass built was
+    already sufficient.

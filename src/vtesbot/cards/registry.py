@@ -118,16 +118,23 @@ class Hook(StrEnum):
     the acting Methuselah": Rulebook SS4 Combat > Determine Range's "A minion
     cannot play two maneuvers in a row" is enforced by this alternation,
     rather than by a provider-side check), closing once two consecutive
-    turns both decline/have nothing. Scope restriction (see `engine/
-    combat.py` module docstring): only an ability-granted maneuver *not*
-    bundled with choosing a strike (e.g. Saku Pihlajamäki's printed "1
-    optional maneuver each combat") is wired -- a maneuver bundled with
-    playing a strike card/weapon (Pursuit, Slam, Dance with the Devil, ...),
-    which simultaneously satisfies that combatant's strike choice for the
-    round per the same rulebook section, is a separate, larger future engine
-    change, not built by this hook. `context["combat_state"]` carries the
-    shared, *combat*-scoped (not round-scoped) scratch dict a provider needs
-    for a once-per-combat grant like Saku's."""
+    turns both decline/have nothing. Covers both a plain ability-granted
+    maneuver *not* bundled with choosing a strike (e.g. Saku Pihlajamäki's
+    printed "1 optional maneuver each combat", Pursuit's basic "[cel]
+    Maneuver." clause -- OQ-27, `docs/OPEN_QUESTIONS.md`, resolved) and a
+    maneuver genuinely "from a strike" (Slam, .44 Magnum -- OQ-28, `docs/
+    OPEN_QUESTIONS.md`, resolved): a provider of the latter shape must also
+    call `engine/combat.py::commit_strike_for_round` from its own grant's
+    `apply`-time closure, fixing that combatant's initial strike of the round
+    to the same bundled strike effect (Rulebook SS4 Combat > Strike > Choose
+    Strike: "If a minion has used a maneuver from a strike ... this round,
+    then they cannot choose any other strike for their initial strike of the
+    round") -- see `engine/combat.py` module docstring's "Maneuver bundled
+    with a strike" section for the full mechanism; a plain-maneuver provider
+    simply never calls it. `context["combat_state"]` carries the shared,
+    *combat*-scoped (not round-scoped) scratch dict a provider needs for a
+    once-per-combat grant like Saku's; `context["round_state"]` carries the
+    shared, round-scoped scratch dict `commit_strike_for_round` writes into."""
     # Named for classification; no engine wiring exists yet (see the
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"
