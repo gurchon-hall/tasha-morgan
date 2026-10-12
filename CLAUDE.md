@@ -226,7 +226,8 @@ High-stakes changes (core engine, combat, impulse) are reviewed by
 - **Bot strength target**: "always legal" (milestone 1) →
   "reasonable" → "strong". Approach for the strong bot (heuristics,
   determinized MCTS / ISMCTS, RL) is not settled; no published VtES
-  benchmark is known to the project.
+  benchmark is known to the project. See milestone 8 for the RL/
+  self-play option specifically.
 - **Frontend** beyond CLI: not decided.
 
 ---
@@ -242,3 +243,10 @@ High-stakes changes (core engine, combat, impulse) are reviewed by
 5. Heuristic agent.
 6. Full 2P allowed list.
 7. Search-based agent.
+8. *(Exploratory, end-of-project, not committed)* Self-play /
+   reinforcement learning from recorded bot-vs-bot games
+   (`src/vtesbot/sim/`'s replay logs — `Observation`/`Decision`/
+   `Choice` sequences, outcome from `MatchResult.winner`). Only
+   worth revisiting once milestones 5–7 exist to compare against;
+   approach (featurizing `Observation`, reward shaping, which
+   algorithm) is unsettled -- see §8's "Bot strength target".
