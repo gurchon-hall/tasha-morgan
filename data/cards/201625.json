@@ -1,0 +1,64 @@
+{
+  "id": 201625,
+  "printed_name": "Carmelita Neillson",
+  "unicity_suffix": "",
+  "suffix": "G7",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Carmelita Neillson"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Carmelita Neillson (G7)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/carmelitaneillsong7.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/carmelitaneillsong7.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Ginés Quiñonero-Santiago"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Camarilla: While Carmelita is ready, you get +1 hand size.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2022-05-17",
+  "banned": null,
+  "clan": "Toreador",
+  "path": "",
+  "advanced": false,
+  "capacity": 5,
+  "group": "G7",
+  "disciplines": [
+    "cel",
+    "pre",
+    "AUS"
+  ],
+  "title": null
+}
