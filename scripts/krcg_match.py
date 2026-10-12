@@ -26,6 +26,10 @@ one krcg printing, the group >= 5 one is selected. If zero or more than one
 printing qualifies, the name is left unmatched with all candidate
 (krcg_id, group) pairs listed for a human to pick — never guessed.
 
+The actual matching logic (`build_indexes`/`match_crypt`/`match_library`) now
+lives in `src/vtesbot/decks/name_resolution.py`, shared with the production
+deck-import pipeline; this script is a thin CLI wrapper around it.
+
 Usage:
     python scripts/krcg_match.py input.json [-o output.json] [--crypt-min-group N]
 
@@ -44,106 +48,14 @@ Output JSON: {"krcg_version": "...", "card_count": N,
 import argparse
 import json
 import sys
-import unicodedata
 from importlib.metadata import version
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import krcg
-from krcg import utils as krcg_utils
 
-
-def _fold(name: str) -> str:
-    """Case/whitespace/accent-insensitive key."""
-    name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
-    return " ".join(name.strip().split()).casefold()
-
-
-def build_indexes(cards: krcg.CardDict):
-    """Library cards keyed by VEKN "X, The" convention and krcg's own
-    "The X" printed_name, so either spelling resolves. Crypt cards grouped
-    by base name (krcg's disambiguating suffix stripped) so a bare VEKN
-    name can be disambiguated by group instead of grabbing whichever
-    printing happens to own the un-suffixed name."""
-    library_index = {}
-    crypt_by_base = {}
-    for card in cards.cards():
-        if card.kind.value == "Crypt":
-            base = krcg_utils.vekn_name(card, ascii=False)
-            if card.unicity_suffix:
-                base = base.removesuffix(f" ({card.unicity_suffix})")
-            crypt_by_base.setdefault(_fold(base), []).append(card)
-        else:
-            library_index.setdefault(_fold(krcg_utils.vekn_name(card, ascii=False)), card)
-            library_index.setdefault(_fold(card.printed_name), card)
-    return library_index, crypt_by_base
-
-
-def _the_variants(name: str) -> list[str]:
-    """Forms to retry krcg's fuzzy get() on: swap 'X, The' <-> 'The X',
-    and also the bare title with no article at all (a stray/missing ', The'
-    is as likely as a genuine typo elsewhere in the name)."""
-    stripped = name.strip()
-    variants = []
-    if stripped.lower().endswith(", the"):
-        bare = stripped[: -len(", the")]
-        variants += ["The " + bare, bare]
-    elif stripped.lower().startswith("the "):
-        bare = stripped[4:]
-        variants += [bare + ", The", bare]
-    return variants
-
-
-def _group_num(card) -> int:
-    """krcg 5.x reports crypt group as a string like 'G7'."""
-    return int(card.group.lstrip("Gg"))
-
-
-def _unmatched(cards, name: str, candidates: list | None = None) -> dict:
-    suggestion = cards.get(name)
-    for variant in _the_variants(name):
-        if suggestion:
-            break
-        suggestion = cards.get(variant)
-    result = {
-        "krcg_id": None,
-        "matched": False,
-        "suggested_krcg_id": suggestion.id if suggestion else None,
-        "suggested_name": krcg_utils.vekn_name(suggestion, ascii=False) if suggestion else None,
-    }
-    if candidates:
-        result["candidates"] = [
-            {
-                "krcg_id": c.id,
-                "krcg_name": krcg_utils.vekn_name(c, ascii=False),
-                "group": _group_num(c),
-            }
-            for c in candidates
-        ]
-    return result
-
-
-def match_crypt(cards, name: str, crypt_by_base: dict[str, list], min_group: int) -> dict:
-    candidates = crypt_by_base.get(_fold(name))
-    if not candidates:
-        return _unmatched(cards, name)
-    if len(candidates) == 1:
-        card = candidates[0]
-        name_ = krcg_utils.vekn_name(card, ascii=False)
-        return {"krcg_id": card.id, "krcg_name": name_, "matched": True}
-    qualifying = [c for c in candidates if _group_num(c) >= min_group]
-    if len(qualifying) == 1:
-        card = qualifying[0]
-        name_ = krcg_utils.vekn_name(card, ascii=False)
-        return {"krcg_id": card.id, "krcg_name": name_, "matched": True}
-    # 0 or >1 printings at group >= min_group: don't guess, list them all.
-    return _unmatched(cards, name, candidates)
-
-
-def match_library(cards, name: str, library_index: dict) -> dict:
-    card = library_index.get(_fold(name))
-    if card is not None:
-        name_ = krcg_utils.vekn_name(card, ascii=False)
-        return {"krcg_id": card.id, "krcg_name": name_, "matched": True}
-    return _unmatched(cards, name)
+from vtesbot.decks.name_resolution import build_indexes, match_crypt, match_library
 
 
 def main() -> None:
