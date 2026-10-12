@@ -101,7 +101,7 @@
       "type": "Action",
       "count": 2,
       "krcg_id": 100747,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Line Brawl",
@@ -129,7 +129,7 @@
       "type": "Reaction",
       "count": 4,
       "krcg_id": 102230,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Protection Racket",
@@ -150,7 +150,7 @@
       "type": "Combat",
       "count": 3,
       "krcg_id": 101523,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Side Strike",

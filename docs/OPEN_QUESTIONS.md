@@ -9,67 +9,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-1: Prey/predator wording in a duel   (status: resolved)
-
-- Situation: with two players, each Methuselah is the other's prey
-  and predator (Rulebook §5). Some card texts distinguish prey from
-  predator, or refer to "other Methuselahs" in a way written for
-  4–5 players.
-- Sources read: Rulebook v1.1 §5; 2P variant page (modified
-  2025-05-20); 2P updates page (2026-10-03). No dedicated
-  clarification found.
-- Candidate readings: to be listed per card when encountered.
-- Impacted cards: to be listed.
-- Resolution: re-fetched both primary sources live (not the local
-  cache) to settle the premise, not just restate it.
-  1. **Rulebook §5 Ending the Game**, fetched directly
-     (<https://www.vekn.net/rulebook/5-ending-the-game>): "The game
-     continues until only one Methuselah is left," and its own
-     worked example states verbatim: "Now, Justine and Richard are
-     the only ones left, and so each is prey of the other." Since
-     predator/prey are a reciprocal pair (X is Y's predator ⇔ Y is
-     X's prey), "each is prey of the other" necessarily also means
-     each is the other's predator. **Confirmed as a rulebook fact,
-     not an inference**: with exactly two Methuselahs, the sole
-     opponent is simultaneously prey and predator.
-  2. **2P variant page**, re-fetched directly
-     (<https://www.vekn.net/two-player-format/655-two-player-variant-for-vampire-the-eternal-struggle>):
-     its §2.3 exception list ("All rules of the... rulebook apply in
-     this format, except for the following") does not include
-     prey/predator among the listed deltas, so the unmodified
-     rulebook rule above stands with no 2P override.
-  This closes the structural half of this entry's own situation
-  (confirmed, not merely assumed) — matching what CLAUDE.md §3 and
-  several `engine/`/`cards/` module docstrings (`engine/action.py`,
-  `engine/ousting.py`, `cards/fleetness.py`,
-  `cards/enchant_kindred.py`, `cards/line_brawl.py`,
-  `cards/kine_resources_contested.py`) already treat as settled when
-  explicitly distinguishing their own reasoning from "OQ-1" proper.
-  The second half of this entry's own situation — card text that
-  *distinguishes* prey from predator with a different effect for
-  each, which the structural collapse above could not resolve on its
-  own — has not materialized in practice: every card or engine path
-  encountered so far that touches prey/predator wording (the six
-  modules listed above, plus `attempt_block`'s directed/undirected
-  block-candidate scoping) collapsed cleanly to "the sole opponent,"
-  each case explicitly reasoned through and cited as *not* needing
-  this entry, rather than raising `UnresolvedRulingError("OQ-1")`.
-  No code currently raises `UnresolvedRulingError("OQ-1")` and no
-  card is registered `blocked` for `OQ-1` (confirmed by grep across
-  `src/`). Closing this entry rather than leaving it open
-  indefinitely as a placeholder with nothing left to track; if a
-  future card's own printed text ever assigns genuinely different
-  effects depending on whether a target is addressed specifically as
-  "prey" versus specifically as "predator" (not just "another
-  Methuselah" collapsing to the one opponent), that would be a new,
-  card-specific Open Question citing this entry's own resolution,
-  not a reopening of this one.
-- Impacted code/cards: none currently blocked on this entry (see
-  resolution). `engine/action.py`, `engine/ousting.py`,
-  `cards/fleetness.py`, `cards/enchant_kindred.py`,
-  `cards/line_brawl.py`, `cards/kine_resources_contested.py` already
-  cite the confirmed structural fact in their own docstrings.
-
 ## OQ-3: Combat "press" step — exact turn order   (status: resolved)
 
 - Situation: Rulebook SS4 Combat describes each round ending with a "press"
@@ -3675,3 +3614,324 @@ up an OQ number or the highest one used so far.
   test_block_candidate_injection.py` (new). Card registration is unchanged
   (Organized Resistance stays `blocked`/`OQ-26` in the registry;
   re-implementing it against this capability is `card-implementer`'s job).
+
+## OQ-27: Maneuver bundled with a strike card -- Pursuit (101523)   (status: resolved)
+
+- Situation: card text (verbatim, via krcg, 2026-10-12, matching both the
+  installed `krcg` package's own `VTES["Pursuit"].card_text` and the live
+  `https://api.krcg.org/card/101523` response, raw snapshot saved to
+  `data/cards/101523.json`): "[cel] Maneuver.\n[CEL] Additional strike
+  (limited)." Card type Combat, `discipline_requirement == {"type": "Mono",
+  "disciplines": ["cel"]}` (same basic/superior Celerity shape as Side
+  Strike, `src/vtesbot/cards/side_strike.py`). No rulings on file (`rulings
+  == []`, both sources, checked 2026-10-12). Not a ruling ambiguity -- this
+  exact gap was already anticipated and named verbatim, by this card's own
+  name, in `engine/combat.py`'s "Determine Range and maneuvers" docstring
+  section and in `cards/registry.py::Hook.MANEUVER`'s own docstring, both
+  written during the Saku Pihlajamäki/Fleetness engine passes. This entry is
+  that anticipated hit, now formally filed against a real `card-implementer`
+  pass on the named card.
+- Missing mechanism: Rulebook §4 Combat > Determine Range (verbatim, already
+  quoted by `engine/combat.py`'s own module docstring, re-fetched live
+  2026-10-11 and matching the local cache
+  `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`): "To use a
+  maneuver from a strike card, the minion plays the strike card during this
+  [Determine Range] step instead of during the choose strike step. If a
+  minion uses the maneuver from a strike card or a weapon, they are
+  effectively choosing their strike as well. As such, they cannot use a
+  second strike card or weapon to maneuver again in the same round."
+  Pursuit's basic `[cel]` clause ("Maneuver.", with no accompanying strike
+  text on that line) is exactly this shape: a Combat-type card playable for
+  a maneuver at the Determine Range step that simultaneously consumes that
+  combatant's one strike choice for the round -- the same physical card is
+  not also played again at the strike step for a separate strike. The
+  already-wired `MANEUVER_HOOK` (`engine/combat.py::_ask_maneuver`/
+  `_determine_range`) has no way to record "this combatant's strike choice
+  for the round is already spent"; `_ask_strike` (the strike step,
+  `COMBAT_STRIKE_OPTION_HOOK`/`COMBAT_DODGE_OPTION_HOOK`/the built-in hand
+  strike) has no way to read any such flag, and would still offer this
+  combatant a full, independent strike choice later the same round --
+  letting a single physical card illegally double-dip into both a maneuver
+  and an unrelated hand strike. This is a true mis-resolution risk, not
+  merely an unimplemented bonus (CLAUDE.md: "a bot that... never
+  mis-resolves a card").
+- What is clean: Pursuit's superior `[CEL]` clause ("Additional strike
+  (limited).") is the exact same shape as Side Strike's own superior clause
+  -- a plain `COMBAT_ADDITIONAL_STRIKE_HOOK` grant, gated on superior
+  Celerity and the already-built cross-card "(limited)" cap
+  (`additional_strike_limit_used`/`mark_additional_strike_limit_used`,
+  OQ-19) -- and would need no new engine mechanism at all.
+- Because the card's basic clause cannot be correctly gated without risking
+  a mis-resolved strike this round, and the registry/CLAUDE.md model a card
+  as either fully `implemented` (all of its text, with basic/superior
+  tested separately) or `blocked` -- not a partial implementation of only
+  the clean clause -- the whole card is blocked pending the fix below, same
+  precedent as OQ-9 (Bonding).
+- What would be needed: a way for a combatant's strike-choice-for-the-round
+  to be marked "already spent" when claimed through `MANEUVER_HOOK` for a
+  strike-card-sourced (or weapon-sourced) maneuver, consulted by
+  `_ask_strike` to skip that combatant's own strike-step offer for the
+  remainder of the round -- and, per the quoted rule's own last sentence, to
+  also prevent a *second* strike card or weapon from being played for a
+  second maneuver the same round. This is `rules-engineer` scope (touches
+  `engine/combat.py`'s `_ask_maneuver`/`_ask_strike`/round-state shape, not
+  just a `cards/*.py` module).
+- Impacted code (at the time this was opened): `src/vtesbot/engine/
+  combat.py` (`_ask_maneuver`, `_ask_strike`, `ROUND_STATE_CONTEXT_KEY`
+  shape). Impacted cards: Pursuit (registered `blocked`, reason `OQ-27`);
+  `engine/combat.py`'s own docstring and `cards/registry.py::Hook.MANEUVER`'s
+  own docstring additionally name Slam and Dance with the Devil as other
+  printed cards with this same "maneuver from a strike card" shape, neither
+  yet attempted by a `card-implementer` pass.
+- Follow-up (`card-implementer`, 2026-10-12): the project owner raised a lead
+  on this entry before it was first closed out: "Pursuit is either maneuver
+  (to close or long) or additional strike (limited). Pursuit [cel] can be
+  used more than once in the determine range step if the opponent changed
+  the range after giving the impulse." **Explicitly flagged by the owner
+  themselves as their own words, not a verified source** -- treated here as
+  a lead to check, not as a citation, per CLAUDE.md's no-guessing rule.
+  Checked against official sources before touching the implementation or
+  this entry's conclusion:
+  1. Re-fetched Pursuit's own rulings live
+     (`https://api.krcg.org/card/101523`, 2026-10-12): still `rulings == []`
+     -- no card-specific ruling exists for Pursuit confirming or denying the
+     owner's claim, on this or the earlier snapshot date.
+  2. Re-fetched the VEKN **General Rulings** page live
+     (<https://www.vekn.net/general-rulings>, 2026-10-12, a compilation of
+     historical Rules Team rulings per its own "Compilation from the RTR"
+     header) and searched its "Combat:" section for every ruling mentioning
+     "maneuver". Found one directly on point, not previously checked by this
+     entry's first pass (which had only read the Rulebook's own consolidated
+     prose, not the older per-ruling compilation it was built from): "Only
+     maneuvering with a weapon commits you to striking with that weapon.
+     Other effects can be used without striking with the weapon. [LSJ
+     19971215]". No ruling found addressing repeated use of a *strike card's*
+     maneuver across alternating impulse exchanges within one Determine
+     Range step specifically (the owner's exact claim) -- the closest
+     adjacent rulings found are "A maneuver or press gained by a combat card
+     can only be used during the current round of combat ... [TOM 19960521]"
+     (round-scoping, not repeat-count) and "If an effect 'sets' the range of
+     a round ... no other effect can be used to reset the range. [RTR
+     19970630]" (a different mechanic, "setting" vs. maneuvering, not
+     applicable to Pursuit's plain "Maneuver").
+  3. Re-fetched the Rulebook's own Determine Range section live
+     (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>, 2026-10-12,
+     confirmed byte-for-byte identical to the already-quoted local cache) --
+     no additional clause beyond what this entry already quoted. Its own
+     worked example (Ayelech/Colette) *does* show both combatants playing
+     more than one maneuver card each across the same round's alternating
+     exchange, which is already exactly how `engine/combat.py::
+     _ask_maneuver`/`_determine_range`'s own strict-alternation loop already
+     works for *any* registered `MANEUVER_HOOK` provider today (no new
+     mechanism needed for "maneuver more than once per round via alternating
+     turns" in general -- Saku Pihlajamäki's own once-*per-combat*, not
+     once-per-round, grant already exercises multiple rounds of exactly this
+     loop). That worked example's own two maneuver sources are a weapon
+     (.44 Magnum, "allows her to strike ... and gives her an optional
+     maneuver") and "another maneuver card" whose own printed text is never
+     quoted in the example -- not demonstrably a same-card-twice repeat, and
+     not identifiable as a Pursuit-shaped (maneuver with no accompanying
+     strike at that clause) card either way.
+  4. **Assessment: no official source found confirms the owner's claim; if
+     anything, the Rulebook's own plain text runs the other way.** The
+     Rulebook's literal last sentence on this topic -- "they cannot use a
+     second strike card or weapon to maneuver again in the same round" --
+     states a flat prohibition on a *second* strike card doing this, with no
+     stated exception for "the opponent changed the range back after
+     yielding the impulse" (the scenario the owner describes is, if
+     anything, the textbook case that sentence appears written to forbid: a
+     second maneuver attempt later in the same round, using a second
+     physical strike card). The newly found General Ruling [LSJ 19971215]
+     does not help the owner's specific claim either -- it narrows what
+     "committing to a strike" *means* for a **weapon** specifically (you
+     must then strike *with that weapon*, but other effects do not force
+     this), it does not say anything about repeat-use of a non-weapon
+     **strike card's own maneuver** across a round at all, so it neither
+     confirms nor is obviously in conflict with the "cannot use a second
+     strike card" sentence -- they address two different questions (weapon
+     *choice* at the strike step vs. repeat *use* of strike cards during
+     Determine Range).
+  5. This General Ruling is, however, new evidence worth recording for
+     whoever next revisits this entry, since it does create a real,
+     unresolved tension *elsewhere* in the Rulebook's own broader claim that
+     "a strike card **or a weapon**" maneuver equally "effectively
+     [chooses] their strike as well" -- the 1997 ruling says only a *weapon*
+     maneuver commits you to anything (to striking with that weapon
+     specifically), while "other effects" (which would include a plain
+     combat/strike card's own maneuver, e.g. Pursuit's basic clause) "can be
+     used without striking with the weapon" -- arguably implying such other
+     effects do not force a strike-choice lock-in at all, contrary to the
+     Rulebook's own "strike card or a weapon" phrasing. Per this project's
+     own stated precedence (`.claude/skills/vtes-rules-reference/SKILL.md`:
+     "Card text > official card rulings > 2P variant > rulebook"), an
+     official ruling that conflicts with the Rulebook's prose would in
+     principle outrank it -- but this is a genuine conflict between two live
+     official VEKN sources on a point neither is explicit enough about to
+     settle confidently by inference alone (the 1997 ruling is about weapon
+     *choice*, not framed as a general statement about every maneuver
+     source; reading it as settling Pursuit's specific case either way would
+     itself be guessing). **Not resolved by this follow-up**: recorded here,
+     with its own direct citation, for a future pass (ideally with a VEKN
+     judge's input, or a card-specific ruling for Pursuit/Slam/Dance with the
+     Devil if one is ever issued) to weigh, rather than inferred into a
+     decision now.
+
+  - Candidate readings, updated:
+    - **A** (Rulebook's own plain text, as this entry's first pass already
+      read it): Pursuit's basic `[cel]` clause forfeits that combatant's
+      strike choice for the round, and a second physical copy cannot be
+      played to maneuver again the same round either. Status quo; the whole
+      card stays `blocked` under this reading, per this entry's existing
+      "What would be needed"/engine-gap analysis.
+    - **B** (an inference from General Ruling [LSJ 19971215], not an
+      explicit statement of it): only a *weapon's* maneuver forces a
+      strike-choice lock-in; a plain combat/strike card's own maneuver
+      (Pursuit's basic clause) does not, and the "cannot use a second strike
+      card ... to maneuver again" sentence might then need its own separate,
+      narrower reading too. If **B** were ever confirmed by an explicit
+      source, Pursuit's basic clause could likely be implemented today
+      against the existing `MANEUVER_HOOK` with no new engine mechanism at
+      all (same shape as Saku Pihlajamäki's provider), including the
+      owner's own "used more than once if the opponent changes range back"
+      behaviour as a natural consequence of `_determine_range`'s own
+      existing alternating-turns loop -- but **B** is not confirmed by any
+      source found so far, and is **not implemented** on the strength of the
+      owner's statement alone (CLAUDE.md no-guessing rule).
+    - **Owner's lead** (unverified, the owner's own words, not a citation):
+      "Pursuit [cel] can be used more than once in the determine range step
+      if the opponent changed the range after giving the impulse." Recorded
+      here verbatim for traceability; per finding 4 above, no source found
+      confirms it, and the Rulebook's own plain text runs the other way.
+  - Card registration is unchanged: Pursuit stays `blocked`/`OQ-27`. No code
+    (`src/vtesbot/cards/pursuit.py`, `tests/cards/test_pursuit.py`) changed
+    by this follow-up.
+- Second follow-up (`card-implementer`, 2026-10-12, **resolved**): the project
+  owner raised a second, more specific structural lead -- again explicitly
+  their own words, not a cited source: "Pursuit is a non-weapon, non-strike
+  maneuver. This is as plain as it is written. A maneuver in [a] strike
+  [card] is Slam for example. A maneuver in [a] weapon is .44 Magnum's strike
+  for reference[s]." Their argument: the Determine Range restriction is
+  specifically about a card/weapon whose maneuver is *bundled with* a strike
+  in the same clause -- Pursuit's bare "[cel] Maneuver.", textually separate
+  from its own unrelated "[CEL] Additional strike (limited)." clause, is not
+  that shape. Checked before changing anything:
+  1. Fetched Slam's and .44 Magnum's own printed text live (via the installed
+     `krcg` package, re-checked against `https://api.krcg.org/card/101798`
+     and `.../100001`): Slam (krcg id 101798) reads "[pot] Strike: hand
+     strike at +2 damage.\n[POT] As above, with 1 optional maneuver, only
+     usable to get to close range." -- the superior clause's maneuver is
+     explicitly "as above", i.e. part of the very same "Strike:" effect as
+     the basic clause. .44 Magnum (krcg id 100001, `types == ["Equipment"]`)
+     reads "Weapon: gun.\nStrike: 2R damage, with 1 optional maneuver each
+     combat." -- again, the maneuver is printed *inside* the "Strike:"
+     clause itself ("with 1 optional maneuver"). Pursuit's own text, by
+     contrast, has no "Strike:" wording anywhere in its basic clause and no
+     "as above" connecting the two clauses -- they are two independent
+     effects at two different discipline levels, confirmed structurally
+     different from both comparison cards, exactly as the owner described.
+     (Dance with the Devil, krcg id 102315, re-checked the same way: "[obf]
+     or [tha] Maneuver, only usable to get to close range.\n[OBF] or [THA]
+     As above, and once this round, this vampire can burn 1 blood to get 1
+     additional maneuver, only usable to get to close range." -- also a bare
+     maneuver with zero "Strike:" wording at either level, `types ==
+     ["Combat"]`, the same shape as Pursuit's own basic clause, not Slam's or
+     .44 Magnum's.)
+  2. Re-read the Rulebook's **Strike** step (SS4 Combat > 4. Strike > Choose
+     Strike), re-fetched live 2026-10-12
+     (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>) and matching
+     the cached copy (`data/sources/rulebook/2026-10-09/
+     4-detailed-turn-sequence.md:824-828`) -- not previously quoted by this
+     entry's first two passes, which had only read the *Determine Range*
+     section's own restatement. Its own cross-reference to this exact
+     restriction, verbatim: "Each minion chooses their strike. The strike
+     can be from a combat card, from a weapon the minion possesses, by
+     default from a hand strike, or can be from any other card providing
+     this minion a strike. **If a minion has used a maneuver from a strike
+     (either a strike card or a weapon) this round**, then they cannot
+     choose any other strike for their initial strike of the round." This
+     pins down the technical meaning of "a strike card" for this whole SS4
+     mechanism: the maneuver must be "**from a strike**" -- i.e. the very
+     clause granting the maneuver must itself be, or be part of, a strike
+     effect (matching Slam's "as above" and .44 Magnum's "with 1 optional
+     maneuver" *inside* their own "Strike:" clauses) -- not merely "printed
+     on a card that happens to have a strike-capable clause somewhere else,
+     at a different, unconnected discipline level." Pursuit's basic clause
+     grants no strike at all, so it is not "a maneuver from a strike," and
+     neither this Choose-Strike lock nor the Determine-Range "cannot use a
+     second strike card or weapon to maneuver again" cap applies to it.
+  3. Searched the VEKN General Rulings page again (same live fetch as the
+     prior follow-up) for any ruling defining "strike card" or distinguishing
+     a plain-maneuver effect from a maneuver-with-strike effect: found none
+     beyond the already-quoted [LSJ 19971215] ("Only maneuvering with a
+     weapon commits you to striking with that weapon"), which is consistent
+     with, and no longer in any apparent tension with, this resolution --
+     read together, both sources now agree: a maneuver only "commits"
+     anything (to a weapon's own strike, or -- per the Rulebook's Choose
+     Strike wording -- to a strike card's own bundled strike) when the
+     maneuver itself comes from an actual strike effect; a bare, unbundled
+     maneuver (Pursuit's basic clause, Dance with the Devil, Saku
+     Pihlajamäki's innate ability) commits to nothing.
+  4. **Conclusion: the owner's structural reading holds up and is directly
+     supported by the Rulebook's own text, not merely inferred.** Pursuit's
+     basic `[cel]` "Maneuver." clause is a plain maneuver grant, the same
+     category as Saku Pihlajamäki's innate ability or Dance with the Devil's
+     own clauses -- not "a maneuver from a strike" (Slam, .44 Magnum remain
+     correctly unbuilt examples of that other, still-unimplemented shape).
+     It needs no new engine mechanism: the already-wired `MANEUVER_HOOK`
+     (`engine/combat.py::_ask_maneuver`/`_determine_range`) is sufficient,
+     exactly like Saku Pihlajamäki's own provider, with no per-combat
+     "already used" bookkeeping needed either (each physical copy is its own
+     one-shot grant, consumed from hand when played). This also directly
+     confirms the practical substance of the *first* follow-up's "Owner's
+     lead" (repeated use across alternating impulse exchanges): since the
+     basic clause carries no strike-lock and no "cannot use a second strike
+     card" cap (because it is not "a maneuver from a strike" in the first
+     place), nothing stops a second physical copy from maneuvering again
+     later in the same round in response to the opponent's own
+     counter-maneuver -- not via a special exception to the Determine Range
+     restriction (there is no stated exception for "after the opponent
+     yields the impulse," and this entry does not claim one), but because
+     that restriction was never triggered by this card's basic clause to
+     begin with. Candidate reading **A** (this entry's original premise) is
+     now rejected on direct textual evidence (the Choose Strike section's
+     "from a strike" qualifier, not previously consulted); candidate reading
+     **B** is confirmed, upgraded from "an inference from an old general
+     ruling" to "supported by the Rulebook's own current text."
+
+  - **Resolved.** `src/vtesbot/cards/pursuit.py` now implements both
+    clauses: the basic `[cel]` "Maneuver." clause against `MANEUVER_HOOK`
+    (plain grant, offered at either Celerity level, no strike-lock, no
+    per-combat bookkeeping), and the superior `[CEL]` "Additional strike
+    (limited)." clause against `COMBAT_ADDITIONAL_STRIKE_HOOK` (unchanged
+    from this entry's own earlier "what is clean" analysis -- the exact
+    shape of Side Strike's own superior clause). Registry status is now
+    `implemented`, `hooks=(Hook.MANEUVER, Hook.COMBAT_ADDITIONAL_STRIKE)`,
+    no `blocked_reason`. Proven by `tests/cards/test_pursuit.py`, including
+    two integration tests specific to this resolution: maneuvering with
+    Pursuit does not lock the strike choice (the acting vampire still lands
+    an ordinary hand strike the same round), and a second physical copy can
+    maneuver again later in the same round after the opponent's own
+    counter-maneuver.
+  - `engine/combat.py`'s own "Determine Range and maneuvers" docstring
+    section and `cards/registry.py::Hook.MANEUVER`'s own docstring, which
+    both named Pursuit (alongside Slam and Dance with the Devil) as an
+    example of the still-unbuilt "maneuver bundled with a strike card" gap,
+    should be corrected by a future pass to drop Pursuit from that list (it
+    turned out not to be an instance of that shape) and keep Slam and .44
+    Magnum (both genuine "maneuver from a strike" cards, confirmed above,
+    still unimplemented) as the motivating examples -- not done as part of
+    this `card-implementer` pass, since it touches `engine/` module
+    docstrings outside this task's own file set; flagged here so the next
+    pass touching that gap does not re-cite Pursuit incorrectly. Dance with
+    the Devil (krcg id 102315), confirmed above to be the same bare-maneuver
+    shape as Pursuit's basic clause (not "from a strike" either), is not
+    itself implemented by this pass -- noted here as a candidate for a future
+    `card-implementer` pass against the same already-sufficient
+    `MANEUVER_HOOK`, not built speculatively now.
+  - Impacted code: `src/vtesbot/cards/pursuit.py`,
+    `tests/cards/test_pursuit.py`,
+    `data/decks/vekn-2p/brujah.json`/`toreador.json` (Pursuit's own
+    `implementation_status` entries updated to `"implemented"`). No
+    `engine/` file was touched -- the existing `MANEUVER_HOOK`/
+    `COMBAT_ADDITIONAL_STRIKE_HOOK` machinery was already sufficient once the
+    card's own correct classification was established.

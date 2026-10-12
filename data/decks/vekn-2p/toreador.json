@@ -162,7 +162,7 @@
       "type": "Combat",
       "count": 2,
       "krcg_id": 101523,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Side Strike",

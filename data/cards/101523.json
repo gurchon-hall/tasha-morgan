@@ -1,0 +1,280 @@
+{
+  "id": 101523,
+  "printed_name": "Pursuit",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Pursuit"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Persecución"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Course-poursuite"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300005,
+        "code": "Sabbat"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300007,
+        "code": "FN"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PA",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/final-nights/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300010,
+        "code": "Anarchs"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAG",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anarchs/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300014,
+        "code": "KMW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAn",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/kindred-most-wanted/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300015,
+        "code": "LoB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PO",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/legacies-of-blood/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300019,
+        "code": "LotN"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PA",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/lords-of-the-night/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PT",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/pursuit.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBh",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/pursuit.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Persecución",
+      "text": "[cel] Maniobra.\n[CEL] Ataque adicional (limitada).",
+      "flavor": "¿Qué loco propósito?\n¿Qué lucha por escapar?\nJohn Keats, \"Oda a una urna griega\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/pursuit.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Course-poursuite",
+      "text": "[cel] Manœuvrer.\n[CEL] Frappe additionnelle (limité).",
+      "flavor": "Et cette folle poursuite ? Qui se débat pour s'échapper ?\nJohn Keats, \"Ode sur une urne grecque\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/pursuit.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/pursuit.jpg",
+  "types": [
+    "Combat"
+  ],
+  "formats": [],
+  "artists": [
+    "Kevin McCann",
+    "Brian LeBlanc"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "[cel] Maneuver.\n[CEL] Additional strike (limited).",
+  "draft": "",
+  "flavor": "What mad pursuit?\nWhat struggle to escape?\nJohn Keats, \"Ode on a Grecian Urn\"",
+  "legal": "1996-11-27",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "cel"
+    ]
+  }
+}
