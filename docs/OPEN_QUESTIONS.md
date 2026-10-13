@@ -582,45 +582,25 @@ up an OQ number or the highest one used so far.
   own card module is not written for clause 1 — stays
   `blocked`/`OQ-32`; her "+1 bleed" clause is implemented separately.
 
-## OQ-33 - Diana Iadanza - no cancel-type marker (status: open)
+## OQ-33 - Diana Iadanza - no cancel-type marker (status: resolved)
 
 - Situation: OQ-32 (resolved) built `engine/hooks.py::apply_chosen_option`
-  but deliberately left one gap dormant (its own docstring, "Two known
-  gaps"): `cancel_context` carries `canceled_choice` (the canceled option's
-  `Choice.value` string) but no structured marker of which hook produced it,
-  nor of the canceled option's own card type. Diana's clause 1 ("Diana can
-  burn 1 blood to cancel a *reaction card* as it is played") needs exactly
-  that marker -- she cancels only a Reaction card, not any cancelable
-  option.
-- Why this is live, not hypothetical: the only referendum-phase dispatch
-  site wired through `apply_chosen_option` is `engine/politics.py`'s
-  pre-cast `POLLING_STEP_HOOK` window (`resolve_impulse_window`) -- the sole
-  moment spanning "during a referendum [Diana] calls" (`_cast_votes` raises
-  its own `Decision` directly, with no `HookOption`/hook dispatch at all, so
-  nothing played there is cancelable by this mechanism regardless). That
-  same window already has two live, non-Reaction-card providers reachable
-  by the side opposing the caller: Modius (`modius.py`, "During the polling
-  step of any referendum, Modius can discard a master card to get +1
-  vote" -- a printed ability, not a card) and Oxford University, England
-  (`oxford_university_england.py`, a Master card's own repeatable in-play
-  ability). Either could be chosen while Diana's controller is offered
-  `CANCEL_AS_PLAYED_HOOK`; a provider that cancels "whatever gets chosen"
-  without checking card type would incorrectly let Diana cancel these too,
-  contradicting her own "cancel a reaction card" text.
-- Missing mechanism: a structured field on `apply_chosen_option`'s
-  `cancel_context` identifying the canceled option's own card type (or at
-  least "is this a Reaction card") -- most likely a new optional
-  `HookOption` field threaded through by whichever `offer_until_pass`/
-  `resolve_impulse_window` call built the canceled option, since no current
-  `HookOption` carries one either. Engine-internal plumbing, not a ruling
-  question -- `rules-engineer` scope.
-- Ruling check (not the gap): re-verified live (`https://api.krcg.org/
-  card/201694`, 2026-10-13) and all 5 on-file rulings for the generic
-  "cancel as played" mechanic -- none mention a "once per referendum" cap;
-  Diana may cancel as many times as she can afford (1 blood each), each its
-  own "immediate, no other effects" window [LSJ 20061207]. Not the blocker;
-  recorded so a future pass does not re-derive it.
-- Impacted code: none yet. Impacted cards: Diana Iadanza
-  (`src/vtesbot/cards/diana_iadanza.py`) stays `Status.BLOCKED`, reason
-  `OQ-33`, for clause 1 only; her "+1 bleed" clause 2 is implemented in the
-  same module (CLAUDE.md §6: status is per whole card, not split).
+  but left `cancel_context` carrying no structured marker of the canceled
+  option's own card type -- Diana's clause 1 ("Diana can burn 1 blood to
+  cancel a *reaction card* as it is played") needs exactly that marker, to
+  tell a genuine Reaction-card play apart from the same referendum-phase
+  window's other, non-Reaction providers (Modius's discard-a-master-card
+  ability, Oxford University, England's polling-step burn).
+- Rules/interactions: a missing engine primitive, not a ruling question.
+  The 5 on-file rulings for the generic "cancel as played" mechanic say
+  nothing about a referendum-level cap on Diana's own ability; that cap
+  comes separately from Rulebook §3 "Wording templates" > "During X, do
+  Y": "only one Y can be done per X with this card."
+- Solution: `HookOption` gained `played_card_type` (`engine/hooks.py`),
+  set by every card-playing provider to its printed card type and left at
+  `None` for a printed-ability activation; `apply_chosen_option` threads it
+  into `CANCEL_AS_PLAYED_HOOK`'s context as `canceled_card_type`. Diana
+  Iadanza (`src/vtesbot/cards/diana_iadanza.py`) then implemented clause 1
+  against it, gated to Reaction-type options, to a referendum Diana herself
+  called, and capped once per referendum via `pending["diana_iadanza_
+  canceled"]`. `Status.IMPLEMENTED`.
