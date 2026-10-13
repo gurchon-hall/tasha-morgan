@@ -1,12 +1,11 @@
 """Deck-construction legality verdict + expansion to an `engine.setup.DeckSpec`.
 
-Ties `formats.check_deck_legality` (the rules) to a live krcg lookup (the
-per-card identity data `engine.cards.CryptCard`/`LibraryCard` need) so a
-resolved decklist becomes either a usable `DeckSpec` (legal) or a reported
-set of violations (illegal) -- the output shape mirrors the
-`deck-validation` skill's required report (LEGAL/ILLEGAL + violations with
-source, "Not yet playable by the bot" kept separate and never affecting the
-verdict).
+Ties `formats.check_deck_legality` to a live krcg lookup for the per-card
+identity data `engine.cards.CryptCard`/`LibraryCard` need, so a resolved
+decklist becomes either a usable `DeckSpec` (legal) or a reported set of
+violations (illegal) -- mirrors the `deck-validation` skill's required
+report shape (LEGAL/ILLEGAL + violations with source; "not yet playable"
+kept separate, never affecting the verdict).
 """
 
 import krcg
@@ -90,9 +89,8 @@ def _build_crypt_card(krcg_id: int, count: int, cards: krcg.CardDict) -> list[Cr
         capacity=card.capacity,
         group=int(card.group.lstrip("Gg")),
         clan=card.clan,
-        # krcg reports `title`/`card.types` entries as enum members, not
-        # plain strings; `CryptCard.title` is `str | None` (a plain printed
-        # stat, per its own docstring), so unwrap the enum's `.value` here.
+        # krcg reports `title` as an enum member; `CryptCard.title` wants a
+        # plain `str | None`, so unwrap `.value` here.
         title=card.title.value if card.title else None,
         disciplines=tuple(card.disciplines),
         sect=sect,
@@ -103,11 +101,9 @@ def _build_crypt_card(krcg_id: int, count: int, cards: krcg.CardDict) -> list[Cr
 def _build_library_card(krcg_id: int, count: int, cards: krcg.CardDict) -> list[LibraryCard]:
     card = cards[krcg_id]
     name = krcg_utils.vekn_name(card, ascii=False)
-    # `LibraryCard.card_type` is a single string (mirrors the existing engine
-    # simplification, e.g. `cards/modius.py`'s own "Master"-type comparison);
-    # every library card in the active 2P pool prints exactly one krcg type
-    # (checked 2026-10-12 across the pool's Action/Action Modifier/Combat/
-    # Master/Political Action/Reaction cards), so the first (only) one is used.
+    # `LibraryCard.card_type` is a single string; every library card in the
+    # active 2P pool prints exactly one krcg type (checked 2026-10-12), so
+    # the first (only) one is used.
     card_type = card.types[0].value
     built = LibraryCard(krcg_id=krcg_id, name=name, card_type=card_type)
     return [built] * count
@@ -160,9 +156,7 @@ def load_resolved_fixture(fixture: dict) -> ResolvedDecklist:
     so those fixtures can drive `check_and_build` directly as regression
     tests without going through the plain-text parser/resolver."""
     crypt = [
-        ResolvedCryptEntry(
-            krcg_id=c["krcg_id"], name=c["name"], count=c["count"], group=c["group"]
-        )
+        ResolvedCryptEntry(krcg_id=c["krcg_id"], name=c["name"], count=c["count"], group=c["group"])
         for c in fixture["crypt"]
     ]
     library = [

@@ -1,17 +1,14 @@
 """The random-legal baseline agent (CLAUDE.md milestone 4).
 
-Picks uniformly among whatever `decision.choices` the engine offers, with
-no domain knowledge of any decision `kind` -- this is the entire point of a
-"random legal" baseline: by construction it can never raise
-`IllegalChoiceError` (`GameState.ask`, `engine/state.py`), since it only
-ever returns a member of the exact tuple it was given.
+Picks uniformly among `decision.choices` with no knowledge of decision
+`kind`, so by construction it can never raise `IllegalChoiceError`
+(`engine/state.py`'s `GameState.ask`).
 
-Agents live outside `engine/`, so they are not bound by (and cannot share)
-`GameRNG` -- CLAUDE.md's "nothing under `engine/` may call `random`
-directly" is scoped to the engine's own internal randomness (shuffle/cut/
-draw, replayed from the log). Each `RandomLegalAgent` instance owns its own
-seeded `random.Random`, so a match is still fully reproducible once its
-seed (and the setup seed) are fixed -- see `sim/runner.py::run_match`.
+Agents live outside `engine/`, so they are not bound by `GameRNG` --
+CLAUDE.md's "nothing under `engine/` may call `random` directly" is scoped
+to the engine's own internal randomness. Each instance owns its own seeded
+`random.Random`, so a match stays reproducible from its top-level seed
+(`sim/runner.py::run_match`).
 """
 
 import random

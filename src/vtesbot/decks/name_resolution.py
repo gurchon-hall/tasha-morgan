@@ -1,25 +1,20 @@
 """Match a VEKN-style card name to a krcg card id.
 
-Extracted from `scripts/krcg_match.py` (originally written for the
-`format-curator` agent / `sync-2p-format` skill to build the curated
-`data/decks/vekn-2p/*.json` fixtures) so the production deck-import
-pipeline (`decks/loader.py`) and that dev script share one implementation
-instead of maintaining the matching logic twice. `scripts/krcg_match.py`
-now imports these functions rather than redefining them; its own CLI
-behaviour (including stderr/stdout shape) is unchanged.
+Shared by `decks/loader.py` and `scripts/krcg_match.py` so the production
+deck-import pipeline and that dev script don't maintain the matching logic
+twice.
 
-Project rule (CLAUDE.md): a name that does not match exactly is reported to
-the caller, never silently auto-corrected -- `match_library`/`match_crypt`
-only ever auto-resolve an *exact* match (folding case/whitespace/accents and
-the "Name, The" <-> "The Name" VEKN convention). Anything else comes back
+No-guessing rule (CLAUDE.md): `match_library`/`match_crypt` only ever
+auto-resolve an *exact* match (folding case/whitespace/accents and the
+"Name, The" <-> "The Name" VEKN convention). Anything else comes back
 unmatched with krcg's own fuzzy suggestion attached for a human to confirm.
 
 Crypt ambiguity: VEKN writes a vampire's name with no group suffix, but
 krcg keeps several printings (one per group) under that same base name.
 Confirmed with the user 2026-10-08: every vampire on the VEKN 2-player
 allowed list is printed at group >= 5, so when a crypt name has more than
-one krcg printing, the group >= `min_group` one is selected; if zero or more
-than one printing qualifies, the name is left unmatched with every
+one krcg printing, the group >= `min_group` one is selected; if zero or
+more than one printing qualifies, the name is left unmatched with every
 candidate listed -- never guessed.
 
 Built against krcg >= 5.14 (see pyproject.toml): uses `krcg.load()` ->
@@ -33,7 +28,6 @@ from krcg import utils as krcg_utils
 
 
 def _fold(name: str) -> str:
-    """Case/whitespace/accent-insensitive key."""
     name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
     return " ".join(name.strip().split()).casefold()
 
@@ -41,11 +35,11 @@ def _fold(name: str) -> str:
 def build_indexes(
     cards: krcg.CardDict,
 ) -> tuple[dict[str, object], dict[str, list]]:
-    """Library cards keyed by VEKN "X, The" convention and krcg's own
+    """Library cards keyed by both the VEKN "X, The" convention and krcg's
     "The X" printed_name, so either spelling resolves. Crypt cards grouped
-    by base name (krcg's disambiguating suffix stripped) so a bare VEKN
-    name can be disambiguated by group instead of grabbing whichever
-    printing happens to own the un-suffixed name."""
+    by base name (suffix stripped) so a bare VEKN name can be disambiguated
+    by group instead of grabbing whichever printing happens to own the
+    un-suffixed name."""
     library_index: dict[str, object] = {}
     crypt_by_base: dict[str, list] = {}
     for card in cards.cards():
@@ -61,9 +55,9 @@ def build_indexes(
 
 
 def _the_variants(name: str) -> list[str]:
-    """Forms to retry krcg's fuzzy get() on: swap 'X, The' <-> 'The X',
-    and also the bare title with no article at all (a stray/missing ', The'
-    is as likely as a genuine typo elsewhere in the name)."""
+    """Forms to retry krcg's fuzzy get() on: swap 'X, The' <-> 'The X', and
+    the bare title with no article (a missing ', The' is as likely as a
+    typo elsewhere in the name)."""
     stripped = name.strip()
     variants = []
     if stripped.lower().endswith(", the"):
@@ -76,8 +70,7 @@ def _the_variants(name: str) -> list[str]:
 
 
 def group_num(card) -> int:
-    """krcg 5.x reports crypt group as a string like 'G7'. Public: also used
-    by `decks/resolver.py` to populate a resolved crypt entry's `group`."""
+    """krcg 5.x reports crypt group as a string like 'G7'."""
     return int(card.group.lstrip("Gg"))
 
 

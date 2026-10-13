@@ -1,11 +1,9 @@
 """Loads one versioned VEKN 2-player allowed-card-list file.
 
-CLAUDE.md SS4: "2P allowed list: stored as `data/formats/2p/<YYYY-MM-DD>.json`
-... The active version is selected by config, never implicit." Accordingly
-`load_allowed_list` always takes an explicit path -- callers decide which
-dated file is active (e.g. a CLI flag, a test fixture), the same contract
-`scripts/validate_deck.py --format <path>` already enforces for the dev
-tooling this module's checks were ported from.
+CLAUDE.md §4: the active dated file is selected by config, never implicit,
+so `load_allowed_list` always takes an explicit path -- the same contract
+`scripts/validate_deck.py --format <path>` enforces for the dev tooling
+this module's checks were ported from.
 """
 
 import json
@@ -16,8 +14,7 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class AllowedCard:
-    """One entry on the allowed list: `data/formats/2p/<date>.json`'s own
-    `{"name", "type", "krcg_id"}` shape. `type` is `"Crypt"` or a single
+    """One entry on the allowed list. `type` is `"Crypt"` or a single
     library type string (`"Master"`, `"Action"`, `"Political Action"`, ...)."""
 
     krcg_id: int

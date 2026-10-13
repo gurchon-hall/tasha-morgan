@@ -1,17 +1,15 @@
 """2P deck-construction legality checks.
 
 Typed port of `scripts/validate_deck.py::validate`'s rule checks (that
-script is kept as a standalone dev tool for fixture maintenance; this module
-is the reusable implementation the production deck-import pipeline and the
-script both ultimately rely on for the *rules*, even though the script's own
-`validate()` operates on raw fixture dicts rather than these dataclasses).
+script stays a standalone dev tool for fixture maintenance; this module is
+what the production deck-import pipeline relies on for the rules).
 
-Rule sources, all per the `deck-validation` skill / CLAUDE.md SS2-4:
-  - Crypt size >= 12: Rulebook SS1 Deck construction.
-  - Crypt groups: one group, or two consecutive groups: Rulebook SS1-2.
-  - Library size 40-60 (replaces the rulebook's 60-90): 2P variant SS2.3.
+Rule sources, all per the `deck-validation` skill / CLAUDE.md §2-4:
+  - Crypt size >= 12: Rulebook §1 Deck construction.
+  - Crypt groups: one group, or two consecutive groups: Rulebook §1-2.
+  - Library size 40-60 (replaces the rulebook's 60-90): 2P variant §2.3.
   - Every crypt/library card on the active 2P allowed list, with the
-    matching Crypt/Library type for its section: 2P variant SS2.3.
+    matching Crypt/Library type for its section: 2P variant §2.3.
 No maximum copy count exists in any source; none is enforced here.
 """
 

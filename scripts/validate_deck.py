@@ -1,10 +1,10 @@
 """Check a decklist fixture against a versioned VEKN 2-player format file.
 
-Used by the `deck-validation` skill / `format-curator` agent so the checks in
-`.claude/skills/deck-validation/SKILL.md` are reproducible instead of being
-re-run as an ad hoc one-off command each time. Mirrors the project's
-no-guessing rule (CLAUDE.md): an id missing from the deck fixture's own
-`unmatched` list is reported as a violation, never silently skipped.
+Used by the `deck-validation` skill / `format-curator` agent so the checks
+in `.claude/skills/deck-validation/SKILL.md` are reproducible rather than
+re-run ad hoc. Mirrors CLAUDE.md's no-guessing rule: an id missing from the
+deck fixture's own `unmatched` list is reported as a violation, never
+silently skipped.
 
 Checks implemented (see SKILL.md for the rule/source table):
   - Crypt size >= 12 (Rulebook SS1 Deck construction)
@@ -15,15 +15,12 @@ Checks implemented (see SKILL.md for the rule/source table):
   - Any entries left in the deck fixture's "unmatched" array are reported,
     never guessed
 
-Also reports (informational, never affects the LEGAL/ILLEGAL verdict or
-exit code -- a deck can be legal yet not playable by the bot, SKILL.md):
+Also reports, informational only -- never affects the LEGAL/ILLEGAL verdict
+or exit code (a deck can be legal yet not playable by the bot, SKILL.md):
   - Each crypt/library card's implementation status, looked up by krcg_id
     against `src/vtesbot/cards/registry.py` -- "implemented", "blocked"
-    (with its `OQ-<n>` reason), or "not_implemented" (no registry entry).
-    Pass --annotate to write these as "implementation_status" /
-    "blocked_reason" fields back into the deck fixture itself, instead of
-    only printing them -- rerun with --annotate after any card's registry
-    status changes, rather than editing those fields by hand.
+    (with its `OQ-<n>` reason), or "not_implemented". Pass --annotate to
+    write these back into the deck fixture instead of only printing them.
 
 Usage:
     python scripts/validate_deck.py <deck.json> --format <format.json> [--annotate]

@@ -1,21 +1,13 @@
 """Human-readable rendering of a match's outcome and full decision trail.
 
-`engine/log.py::ReplayLog` already records every decision (player, kind,
-offered choices, context, chosen value), every random draw (CLAUDE.md's
-"every decision and every random draw is logged" invariant), and -- a later,
-purely additive, human-readability-only addition, see `ReplayLog`'s own
-docstring -- a handful of narrated `"event"` entries (pool changes, damage
-taken, torpor/burn, ousting). The gap this module fills is purely
-presentation: a short summary, and a full line-by-line transcript suitable
-for debugging/reproducing one seed or just reading "what happened," each as
-a separate, independently-testable string-formatting function; the `write_*`
-functions
-are the only parts of this module that touch disk (`sim/` -- unlike
-`engine/`/`cards/` -- is allowed to do I/O, CLAUDE.md SS5's own "replay
-logs" package), and are themselves opt-in (`run_match`/`run_many`'s
-`report_dir` parameter, `runner.py`) rather than always-on, so a mature run
-(e.g. evaluating an agent over many games) isn't forced to pay for file I/O
-it no longer needs for day-to-day use.
+`engine/log.py::ReplayLog` already records every decision, every random
+draw, and a few narrated `"event"` entries (pool changes, damage, torpor/
+burn, ousting). This module only adds presentation: a short summary and a
+full line-by-line transcript, each as an independently-testable formatting
+function. The `write_*` functions are the only I/O here (`sim/`, unlike
+`engine/`/`cards/`, is allowed to do I/O) and are opt-in via `report_dir`
+(`run_match`/`run_many`, `runner.py`), so a mature evaluation run isn't
+forced to pay for file I/O it no longer needs.
 
 Only type-hint imports from `.runner` (under `TYPE_CHECKING`) so `runner.py`
 can import this module at the top level without a circular import.
@@ -41,10 +33,7 @@ def format_crash(seed: int, exc: BaseException) -> str:
 def format_summary(result: MatchResult) -> str:
     outcome = f"winner={result.winner}" if result.game_over else "STUCK (max_turns reached)"
     vp = ", ".join(f"{player}={points}" for player, points in result.victory_points.items())
-    return (
-        f"seed={result.seed} turns_played={result.turns_played} {outcome}\n"
-        f"victory_points: {vp}"
-    )
+    return f"seed={result.seed} turns_played={result.turns_played} {outcome}\nvictory_points: {vp}"
 
 
 def format_decision_log(log: ReplayLog) -> str:
@@ -77,12 +66,11 @@ def write_match_report(result: MatchResult, directory: Path) -> tuple[Path, Path
 
 def write_batch_report(batch: BatchResult, directory: Path, *, sample_count: int = 3) -> Path:
     """Writes `batch`'s outcome to `directory`: `batch_results.csv` (one row
-    per completed game -- seed, turns played, outcome, victory points),
-    `crashes.log` (a full reproducible traceback per crashed seed, if any),
-    and a `samples/` subfolder holding `write_match_report`'s full
-    summary+decision-log output for the first `sample_count` completed
-    games -- enough to spot-check real decision-level detail without
-    writing one file pair per game in a large batch. Returns `directory`.
+    per completed game), `crashes.log` (a full traceback per crashed seed),
+    and a `samples/` subfolder with `write_match_report`'s full output for
+    the first `sample_count` games -- enough to spot-check decision-level
+    detail without writing a file pair per game in a large batch. Returns
+    `directory`.
     """
     directory.mkdir(parents=True, exist_ok=True)
 

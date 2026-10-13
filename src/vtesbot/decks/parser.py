@@ -60,9 +60,7 @@ def parse_decklist(text: str) -> ParsedDecklist:
 
         match = _LINE_RE.match(line)
         if match is None:
-            errors.append(
-                ParseError(line_no, raw_line, "does not match '<count>[x] <name>'")
-            )
+            errors.append(ParseError(line_no, raw_line, "does not match '<count>[x] <name>'"))
             continue
         if section is None:
             errors.append(

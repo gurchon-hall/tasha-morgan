@@ -3,8 +3,7 @@ plays several bot-vs-bot matchups and persists every batch's outcome under
 `logs/games/<matchup>/` via `sim.run_many`'s opt-in `report_dir` parameter,
 so the "no crash or stuck state" claim can be checked from disk, not just a
 printed summary. `logs/` is gitignored -- these are run artifacts, not
-source; drop this script once the project no longer needs a file trail for
-every verification run.
+source.
 
 Usage: python scripts/run_sim_verification.py
 """

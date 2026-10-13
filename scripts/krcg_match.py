@@ -1,34 +1,11 @@
 """Match VEKN card names (as published on a VEKN page) to KRCG card ids.
 
-Used by the `format-curator` agent / `sync-2p-format` skill and by deck
-imports, so the exact matching logic is reproducible instead of being
-re-typed ad hoc in each session. Project rule (CLAUDE.md): a name that does
-not match exactly is reported to the user, never silently auto-corrected —
-so this script only auto-fills a krcg_id for an *exact* match (allowing the
-"Name, The" <-> "The Name" VEKN convention and case/whitespace folding).
-Anything else is left unmatched with krcg's own fuzzy suggestion attached
-for a human to confirm.
+Thin CLI wrapper around `vtesbot.decks.name_resolution` (shared with the
+production deck-import pipeline) — see that module's docstring for the
+no-guessing rule and the crypt group-disambiguation rule it implements.
 
-Built against krcg >= 5.14 (see pyproject.toml). krcg 5.x replaced the old
-`krcg.vtes.VTES` singleton with `krcg.load()` -> `CardDict`; this script uses
-only the new API (`cards.cards()`, `card.kind`, `card.printed_name`,
-`krcg.utils.vekn_name()`). It is not compatible with krcg 4.x.
-
-Crypt ambiguity: VEKN writes a vampire's name with no group suffix, but
-krcg keeps several printings (one per group) under that same base name,
-and `cards.get()` / bare-name lookups resolve to whichever printing happens
-to be entered first — which is often a low-group one (confirmed still true
-under the 5.x API by hand-testing "Lucinde, Alastor", which resolves to the
-G3 printing, not G7). Confirmed with the user 2026-10-08: every vampire on
-the VEKN 2-player allowed list is printed at group >= 5 (the project's 2P
-card pool only uses group 5-7 reprints), so when a crypt name has more than
-one krcg printing, the group >= 5 one is selected. If zero or more than one
-printing qualifies, the name is left unmatched with all candidate
-(krcg_id, group) pairs listed for a human to pick — never guessed.
-
-The actual matching logic (`build_indexes`/`match_crypt`/`match_library`) now
-lives in `src/vtesbot/decks/name_resolution.py`, shared with the production
-deck-import pipeline; this script is a thin CLI wrapper around it.
+Built against krcg >= 5.14 (see pyproject.toml): uses `krcg.load()` ->
+`CardDict`, not the old krcg 4.x `krcg.vtes.VTES` singleton.
 
 Usage:
     python scripts/krcg_match.py input.json [-o output.json] [--crypt-min-group N]
