@@ -61,6 +61,9 @@ from vtesbot.engine.state import GameState
 KRCG_ID = 101978
 BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
 LIMITED_USED_KEY = "bleed_increase_limited_used"
+CARD_TYPE = "Action Modifier"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Action Modifier" docstring fact above."""
 
 
 def _provide_threats(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
@@ -93,6 +96,7 @@ def _provide_threats(state: GameState, context: Mapping[str, Any]) -> list[HookO
         HookOption(
             choice=Choice("threats:basic", "Threats [dom]: +1 bleed (limited)"),
             apply=_make_apply(1),
+            played_card_type=CARD_TYPE,
         )
     ]
     if "DOM" in disciplines:
@@ -100,6 +104,7 @@ def _provide_threats(state: GameState, context: Mapping[str, Any]) -> list[HookO
             HookOption(
                 choice=Choice("threats:superior", "Threats [DOM]: +2 bleed (limited)"),
                 apply=_make_apply(2),
+                played_card_type=CARD_TYPE,
             )
         )
     return options

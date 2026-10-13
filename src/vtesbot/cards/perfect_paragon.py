@@ -73,6 +73,9 @@ BLOOD_COST = 1
 clause's own `apply()`, independent of which clause is used."""
 BASIC_VOTES = 3
 SUPERIOR_INTERCEPT_DELTA = -1
+CARD_TYPE = "Action Modifier"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own title "Perfect Paragon (Action Modifier)" above."""
 
 
 def _caller_vampire(state: GameState, context: Mapping[str, Any]) -> VampireInPlay | None:
@@ -125,6 +128,7 @@ def _provide_perfect_paragon_basic(
                 "perfect_paragon:basic", "Perfect Paragon [pre]: this vampire gets +3 votes"
             ),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -180,6 +184,7 @@ def _provide_perfect_paragon_superior(
                 "Perfect Paragon [PRE]: allies and younger vampires get -1 intercept",
             ),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

@@ -9,200 +9,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-7: No ally-in-play entity -- 47th St. Royals (102217) (status: resolved)
-
-- Situation: card text (verbatim, via krcg, 2026-10-09): "Unique mortal with
-  2 life. 1 strength, 0 bleed. You can burn 47th Street Royals to reduce a
-  bleed against you by 3." Card type `Ally`, clan requirement Brujah, no
-  discipline requirement, `cost is None`, `burn_option is False` (per krcg's
-  own fields -- the burn mechanic here is the card's own printed text, not
-  the engine's generic "burn_option" flag). This is not a ruling ambiguity:
-  the text is plain. The block is a missing engine representation.
-- Missing mechanism: `src/vtesbot/engine/state.py`'s `PlayerState` has no
-  notion of an ally (or retainer) in play at all -- only `vampires: dict[str,
-  VampireInPlay]`. An Ally is a distinct minion-like entity with its own life
-  total, strength and bleed values, that can be brought into play (for a
-  pool/blood cost, paid as an action — out of milestone-2's scope, which only
-  implements the bleed/hunt default minion actions), can act (bleed/block/
-  fight) independently of any vampire, and can be destroyed (loses all its
-  life) or burned by its controller's own card text (this card's reaction).
-  `src/vtesbot/cards/registry.py`'s `Hook.ALLY_ENTITY` is named for
-  classification only, with no engine wiring (no call site in `engine/`
-  offers it, no `AllyInPlay`-equivalent dataclass exists) -- confirmed by
-  grep across `src/vtesbot/engine/`.
-- What would be needed: an `AllyInPlay` dataclass (life, strength, bleed,
-  controller, zone/locked analogous to `VampireInPlay`) on `PlayerState`, a
-  way to play an Ally library card into that zone (cost, timing window), and
-  at least the one new reaction window this specific card needs (a burn-to-
-  reduce-bleed reaction analogous to Telepathic Counter's
-  `"bleed_amount_modifier"` hook, but consuming the ally itself as its cost
-  instead of a card from hand). This is `rules-engineer` scope, not a card
-  module.
-- Impacted code (at the time this was opened): none yet (no `AllyInPlay`
-  representation existed to extend). Impacted cards: 47th Street Royals
-  (registered `blocked`, reason `OQ-7`).
-- Resolution (`rules-engineer` pass): added `AllyInPlay` (`src/vtesbot/
-  engine/state.py`: `instance_id`, `krcg_id`, `name`, `controller`, `life`,
-  `strength`, `bleed`, `zone`, `locked`, `is_ready_unlocked`) and
-  `PlayerState.allies: dict[str, AllyInPlay]` / `PlayerState.
-  new_ally_instance_id()` (own `"<player>-A<n>"` namespace, distinct from
-  vampires' `"<player>-V<n>"`). `src/vtesbot/engine/allies.py` adds
-  `recruit_ally(state, player, *, krcg_id, name, life, strength=0, bleed=0)`
-  (creates the ally ready-but-locked, per "recruited ally cannot act this
-  turn") and `burn_ally(state, player, ally)` (mirrors `engine/damage.py::
-  burn_vampire`'s zone/locked reset). 47th Street Royals' own reaction needs
-  no new hook wiring: it registers against the already-wired
-  `"bleed_amount_modifier"` hook exactly like `telepathic_counter.py`, with
-  `burn_ally` as the cost instead of playing a card from hand -- proven by a
-  scaffolding scenario test using a fake provider
-  (`tests/rules/test_allies.py::test_ally_burned_as_a_bleed_reduction_
-  reaction_cost`).
-  Deliberately **not** built (no card in the pool needs it, CLAUDE.md rule
-  2): the full "recruit ally" minion action (its own announce/block-attempt
-  window, mirroring `engine/action.py::perform_minion_action`) and ally
-  bleed/block/combat participation. `recruit_ally` is the minimal "bring
-  into play" effect such a future action's `resolve()` could call once
-  built; until then, and for 47th Street Royals (which never acts, blocks,
-  or fights), it is also the direct entry point a card module or scenario
-  test uses.
-- Follow-up (`rules-auditor` finding, same pass): the initial `AllyInPlay`
-  landing gave an ally no representation in `engine/observation.py` at all
-  -- an ally recruited via `recruit_ally` was invisible to *both* players'
-  `Observation`, even though Rulebook SS4 Recruit Ally makes a ready-region
-  ally fully public, exactly like a ready vampire (there is no face-down
-  state for an ally to be in: `AllyInPlay`'s only zones are `"ready"`/
-  `"burned"`, never `"uncontrolled"`). Fixed by adding `AllyView`
-  (`engine/observation.py`, mirroring `VampireView`'s shape minus the
-  conditional `visible_identity` branch, since an ally has nothing to hide)
-  and `Observation.allies: tuple[AllyView, ...]`, populated in
-  `build_observation` from both players' `PlayerState.allies` unconditionally
-  (not gated on `viewer`/`controller`, unlike the uncontrolled-vampire case).
-  Exported via `src/vtesbot/engine/__init__.py`. Proven by
-  `tests/rules/test_observation.py::
-  test_a_recruited_ally_is_fully_visible_to_the_other_player` and
-  `test_both_players_allies_appear_in_each_others_observation`.
-- Impacted code: `src/vtesbot/engine/state.py`, `src/vtesbot/engine/
-  allies.py` (new), `src/vtesbot/engine/observation.py`, `src/vtesbot/
-  engine/__init__.py` (exports). Card registration is unchanged (47th
-  Street Royals stays `blocked`/`OQ-7` in the registry; re-implementing it
-  against this capability is `card-implementer`'s job).
-
-## OQ-8: Attachment effects unconsulted -- Celerity (100312) (status: resolved)
-
-- Situation: card text (verbatim, via krcg, 2026-10-09): "Discipline. Put
-  this card on a vampire. This vampire gets +1 level of Celerity [cel] and
-  +1 capacity. Cannot be put on a vampire with superior Celerity [CEL]."
-  Card type `Master`, no discipline/clan requirement, `cost is None`,
-  `trifle is False`. Not a ruling ambiguity -- the text is plain and this is
-  the generic "Discipline"-type master card pattern (one per discipline).
-  The block is a missing engine representation.
-- The "put this card on a vampire" part has an existing representation:
-  `src/vtesbot/engine/state.py::VampireInPlay.attachments: list[CardAttachment]`
-  (`engine/cards.py::CardAttachment`) already models "a card physically
-  attached to a vampire," and its docstring literally names Celerity as the
-  motivating example. Playing it as a master-phase action is also already
-  wired generically (`"master_phase_play"` hook, `engine/phases/master.py`,
-  used by Life in the City). So *attaching* the card is not blocked.
-- What is blocked: the card's two numeric effects ("+1 level of Celerity",
-  "+1 capacity") have no consumer anywhere in the engine. `vampire.card` is
-  a frozen `CryptCard` documented as "deck-construction identity only"
-  (`engine/cards.py`); every place that reads a vampire's capacity reads
-  `vampire.card.capacity` directly with no attachment-aware indirection:
-  `engine/damage.py::add_blood` (`added = min(amount, vampire.card.capacity -
-  vampire.blood)`) and `engine/phases/influence.py` (two call sites, `v.blood
-  < v.card.capacity` / `v.blood >= v.card.capacity`). Likewise, every
-  discipline-level check so far reads `vampire.card.disciplines` directly
-  (e.g. `src/vtesbot/cards/threats.py`, `telepathic_counter.py`). None of
-  these consult `VampireInPlay.attachments`. `Hook.EQUIPMENT_ATTACHMENT`
-  (`registry.py`) is, per its own comment, "named for classification; no
-  engine wiring exists yet." Implementing Celerity today would mean either
-  (a) a no-op attachment whose printed effect is silently dropped (CLAUDE.md:
-  "never mis-resolves a card"), or (b) mutating the frozen `vampire.card`
-  identity object in the card module to fake the bonus -- a workaround
-  routing around a missing engine mechanism, which CLAUDE.md explicitly
-  forbids ("Do not hack around it inside the card module").
-- What would be needed: an engine-exposed "effective capacity" / "effective
-  discipline levels" computation for a `VampireInPlay` that folds in its
-  `attachments` (e.g. a `VampireInPlay.effective_capacity` /
-  `effective_disciplines` property, or a wired `"equipment_attachment"`-style
-  hook), with `engine/damage.py::add_blood`, both `engine/phases/
-  influence.py` capacity checks, and any discipline-level-gated card updated
-  to consult it instead of `vampire.card.*` directly. This is
-  `rules-engineer` scope (it touches `engine/` files, not just `cards/`).
-- Impacted code (at the time this was opened): `src/vtesbot/engine/
-  damage.py`, `src/vtesbot/engine/phases/influence.py`, `src/vtesbot/
-  engine/state.py`. Impacted cards: Celerity (registered `blocked`, reason
-  `OQ-8`); any future discipline/archetype-granting master card (Potence,
-  Obfuscate, etc.) and any future card whose legality depends on an
-  attached discipline level would hit the same gap.
-- Resolution (`rules-engineer` pass): added `src/vtesbot/engine/
-  attachments.py`, exposing `effective_capacity(state, vampire)` and
-  `effective_disciplines(state, vampire)` -- `vampire.card.capacity`/
-  `.disciplines` (the frozen, deck-construction-identity `CryptCard`, left
-  untouched per its own docstring) folded with whatever any attached card's
-  own module contributes via two new passive hooks,
-  `"capacity_modifier"` (`hooks.sum_modifiers` contract: numeric, e.g.
-  Celerity's "+1 capacity") and `"discipline_level_modifier"` (a new
-  `hooks.union_modifiers` helper added alongside `sum_modifiers`: set-valued,
-  e.g. Celerity's "+1 level of Celerity [cel]"). Both are mandatory/passive
-  (CLAUDE.md rule 3's "mandatory effects" exception -- an attachment's bonus
-  is not something its controller chooses to apply turn to turn), so no
-  `Decision` is raised for them; a card module recognizes its own `krcg_id`
-  among `vampire.attachments` and contributes the bonus, same pattern as
-  every other hook.
-  Updated every `engine/` call site OQ-8 named to stop reading
-  `vampire.card.capacity` directly: `engine/damage.py::add_blood` (now
-  `add_blood(state, vampire, amount)` -- the signature gained a leading
-  `state` parameter; its one existing caller outside `engine/`,
-  `src/vtesbot/cards/life_in_the_city.py`, was updated to match, a
-  mechanical call-site fix, not new card behaviour), both capacity checks
-  in `engine/phases/influence.py`, and `engine/observation.py`'s
-  `VampireView.capacity` (so a revealed vampire's capacity shown to either
-  player already reflects any attachment, since an attached card on a
-  ready/torpor vampire is public information). Proven by
-  `tests/rules/test_attachments.py` using fake attachment-bonus providers
-  (not a real card).
-  **Not** touched, per this task's explicit scope: `src/vtesbot/cards/
-  threats.py` and `telepathic_counter.py` still read `vampire.card.
-  disciplines` directly rather than `effective_disciplines(state, vampire)`
-  -- both are already-`implemented` cards, and updating a `cards/*.py`
-  module is `card-implementer`'s job, not this pass's. They have the same
-  latent gap OQ-8 originally described (an attached discipline-granting
-  card would not be seen by either card's own discipline check); switching
-  them over is flagged here for a future `card-implementer`/`rules-auditor`
-  pass rather than guessed at silently.
-- Follow-up (`rules-auditor` findings, same pass): two small corrections,
-  neither changing the resolution above.
-  1. `src/vtesbot/cards/registry.py`'s `Hook` enum had not been updated to
-     list `"capacity_modifier"`/`"discipline_level_modifier"` as wired (they
-     were simply missing, rather than miscategorized); added
-     `Hook.CAPACITY_MODIFIER`/`Hook.DISCIPLINE_LEVEL_MODIFIER` to the "wired
-     this pass" group with matching string values, and fixed
-     `src/vtesbot/cards/celerity.py`'s registration, which cited the
-     unrelated, still-unwired `Hook.EQUIPMENT_ATTACHMENT`, to cite these two
-     instead (they are what will actually back Celerity's two numeric
-     effects once implemented).
-  2. `hooks.union_modifiers` (and `effective_disciplines`, which wraps it)
-     returned a `frozenset[str]`, a latent determinism footgun (CLAUDE.md
-     SS5: "same seed + same decisions => same game") -- Python's string
-     hashing is randomized per process, so a future card module iterating
-     this set to build `Decision.choices` would get non-reproducible
-     ordering across process runs from the same replay log. Both now return
-     a sorted `tuple[str, ...]` instead; no current consumer needed set
-     semantics. `tests/rules/test_hooks.py::
-     test_union_modifiers_returns_a_sorted_tuple_not_a_frozenset` and the
-     two `tests/rules/test_attachments.py` tests asserting
-     `effective_disciplines`'s return value were updated to match.
-- Impacted code: `src/vtesbot/engine/attachments.py` (new),
-  `src/vtesbot/engine/hooks.py` (`union_modifiers`), `src/vtesbot/engine/
-  damage.py`, `src/vtesbot/engine/phases/influence.py`, `src/vtesbot/
-  engine/observation.py`, `src/vtesbot/engine/__init__.py` (exports),
-  `src/vtesbot/cards/life_in_the_city.py` (mechanical `add_blood` call-site
-  update only), `src/vtesbot/cards/registry.py`, `src/vtesbot/cards/
-  celerity.py` (hook-tag fix only). Card registration is unchanged (Celerity
-  stays `blocked`/`OQ-8` in the registry; re-implementing it against this
-  capability is `card-implementer`'s job).
-
 ## OQ-9: stealth_modifier omits action type -- Bonding (status: resolved)
 
 - Situation: card text (verbatim, via krcg, 2026-10-09): "Only usable during
@@ -4482,3 +4288,377 @@ up an OQ number or the highest one used so far.
   pass) -- a future pass wiring any of them against `INTERCEPT_DECREASE_
   HOOK` now has both offer points available with no further engine work
   needed.
+
+## OQ-32: No "cancel as played" hook -- Diana Iadanza (201694) (status: resolved)
+
+- Situation: Diana Iadanza's printed text (verbatim, via krcg's live API,
+  `https://api.krcg.org/card/201694`, 2026-10-13; raw snapshot `data/cards/
+  201694.json`): "Camarilla Toreador Justicar: During a referendum she
+  calls, Diana can burn 1 blood to cancel a reaction card as it is played
+  (cost is still paid). +1 bleed." Found while implementing this card
+  (`src/vtesbot/cards/diana_iadanza.py`) during a `card-implementer` pass
+  that otherwise built and unblocked the trailing "+1 bleed" clause against
+  OQ-6's now-resolved referendum machinery. This entry covers only the first
+  clause (the reflexive cancellation); the "+1 bleed" clause needed no new
+  engine work and is implemented.
+- Generic rulings on file for "cancel a card as it is played" (not specific
+  to Diana -- the general mechanic her clause invokes), via krcg, same card:
+  - "Cards are not replaced during the 'as played' window. The cancelation
+    must be played immediately: no other effects can be used, except for
+    wakes (eg. neither {The Barrens} nor {Dreams of the Sphinx} can be
+    used)." [LSJ 20061207] [RBK playing-a-card] [LSJ 20061013]
+  - "If the canceled card had a 'do not replace until' clause (or alternate
+    replacement like {Steely Tenacity}), that clause is canceled as well
+    and the card is replaced normally." [LSJ 20080630] [LSJ 20011023]
+  - "The canceled card has still been played. The same reaction or modifier
+    cannot be played again by the same minion. Any card which text
+    prohibits to play more than once cannot be played again." [ANK
+    20190104] [RBK cancel-a-card] [LSJ 19980212]
+  - "If a limited effect is canceled (bleed, additional strike), then the
+    limit is not triggered and another limited effect can be used." [LSJ
+    20030224]
+  - "A card played 'as if from hand' can be canceled 'as played'." [LSJ
+    20060106]
+- Missing mechanism (as originally filed): `src/vtesbot/cards/registry.py`'s
+  `Hook.CANCEL_AS_PLAYED` was named for classification only -- no call site
+  anywhere in `engine/` dispatched it. More fundamentally, every Reaction
+  card implemented so far (`src/vtesbot/cards/organized_resistance.py`,
+  `protection_racket.py`) resolves its *entire* printed effect atomically
+  inside the one `HookOption.apply()` the player's choice selects
+  (`engine/hooks.py::resolve_impulse_window`/`offer_until_pass` invoked
+  `apply()` the instant the choice was picked) -- there was no intervening
+  "announced, not yet resolved" moment at any existing call site where a
+  third party could inject a cancellation, pay its own cost, and suppress
+  that `apply()`'s effect while still (per the rulings above) treating the
+  card as having been played (cost still paid, counts against the SS8
+  "same reaction card once per action" restriction, any "do not replace
+  until" clause still canceled). This was flagged as a cross-cutting
+  dispatch-model gap (how a chosen `HookOption` resolves at every hook, or
+  at least every Reaction-card hook), not a single new hook alongside the
+  existing ones -- not itself a ruling gap, so not something re-fetching
+  live sources could settle; it needed engine work, handed to
+  `rules-engineer`.
+- Resolution: this is a missing engine primitive, not an unsettled ruling
+  (the generic rulings quoted above already fully specify the mechanic);
+  the primitive has now been built, closing this entry without any new
+  ruling needed.
+- Engineering follow-up (done): a new generic interception point,
+  `engine/hooks.py::apply_chosen_option(state, option, played_by,
+  may_cancel, context)`, sits between "a `HookOption` is chosen" and "that
+  option's effect runs," for *any* hook dispatched through either of the
+  two generic decision-loop helpers:
+  - `HookOption` gained an optional `cost: Callable[[GameState], Any] |
+    None = None` field (default `None`, so every pre-existing provider's
+    behaviour is unchanged). When set, `cost` runs unconditionally, before
+    any cancellation is even offered -- this is what lets "cost is still
+    paid" hold even when the effect itself ends up suppressed; a provider
+    that folds its own SS8 "once per action" bookkeeping into `cost` rather
+    than `apply` thereby also keeps that bookkeeping correct regardless of
+    cancellation, and a "do not replace until" clause set only inside
+    `apply` is naturally never set at all when `apply` is suppressed --
+    exactly "canceled as well... replaced normally," with no extra code.
+  - After `cost` runs, `apply_chosen_option` offers the *other* side (never
+    the player who just chose, per "one cannot cancel one's own card")
+    `CANCEL_AS_PLAYED_HOOK` (`engine/hooks.py::CANCEL_AS_PLAYED_HOOK =
+    "cancel_as_played"`, mirroring `cards/registry.py::Hook.CANCEL_
+    AS_PLAYED`'s own value) -- a single ask, not a further loop, per "the
+    cancelation must be played immediately: no other effects can be used."
+    If they choose a cancellation, its own `HookOption.apply(state)` runs
+    (paying its own cost, e.g. Diana's "burn 1 blood") and the original
+    option's `apply` is suppressed entirely -- `apply_chosen_option` returns
+    `None`. Declining (or no `CANCEL_AS_PLAYED_HOOK` provider registered,
+    true of every card in the pool today) falls through to the original
+    `option.apply(state)`, unchanged.
+  - `offer_until_pass` (single-sided: the non-choosing side is
+    `state.other_player(player)`, the 2P structural fact) and
+    `resolve_impulse_window` (two-sided: the non-choosing side is whichever
+    of `acting_player`/`other_player` is not `turn`) both now resolve a
+    chosen option via `apply_chosen_option` instead of a bare
+    `.apply(state)` call. With no `CANCEL_AS_PLAYED_HOOK` provider
+    registered anywhere today, `offer(...)` for it always returns `[]`
+    (CLAUDE.md "only when needed": no options => no decision raised), so
+    this is a zero-behaviour-change wiring for every already-implemented
+    card -- proven by the full existing suite passing unchanged, plus a
+    dedicated regression test below.
+  - `context` passed into the nested `CANCEL_AS_PLAYED_HOOK` offer carries
+    `canceled_by`/`canceled_choice` (identifying what is being canceled)
+    alongside whatever the caller's own `context` already held (including
+    `context["pending"]`, if present); the nested `Decision` this may raise
+    is still built via `sanitize_decision_context`, so `pending` never
+    reaches the agent (CLAUDE.md "Information hiding" -- the same trap
+    OQ-6's own round-3 `rules-auditor` finding caught for a different hook
+    context, `docs/open_questions_archive/001.md` lines 299-315; not
+    repeated here).
+  - Scenario tests (new, `tests/rules/test_hooks.py`): generic, fake-hook
+    proofs only, not coupled to Diana's own card module --
+    `test_apply_chosen_option_runs_apply_normally_with_no_cancel_provider`
+    (zero-regression path),
+    `test_apply_chosen_option_pays_cost_but_suppresses_apply_when_canceled`
+    (the actual mechanism: `cost` runs, `apply` is suppressed, the
+    canceler's own `apply` runs instead),
+    `test_apply_chosen_option_passing_the_cancellation_lets_apply_run`
+    (declining a cancellation falls through normally), and
+    `test_apply_chosen_option_is_offered_to_the_non_acting_side_in_an_
+    impulse_window` (same mechanism through `resolve_impulse_window`, the
+    two-sided helper).
+  - `src/vtesbot/cards/registry.py::Hook.CANCEL_AS_PLAYED` moved out of the
+    "named for classification only, no engine wiring exists yet" group into
+    the documented, wired group (its own docstring now points at
+    `apply_chosen_option`), mirroring how `POLLING_STEP`/`REFERENDUM_
+    TALLIED` were each updated the pass their own call sites landed.
+  - Not built, and out of scope for this pass: Diana Iadanza's own card
+    module (`src/vtesbot/cards/diana_iadanza.py`) is untouched -- it stays
+    `Status.BLOCKED`, `blocked_reason="OQ-32"`, for a future
+    `card-implementer` pass to register against `CANCEL_AS_PLAYED_HOOK`
+    (and against `INTERCEPT_MODIFIER_HOOK`/`_ask_modifier`'s own inline
+    "ask + apply" sites in `engine/action.py`, or `BLOCK_CANDIDATE_
+    INJECTION_HOOK`'s own inline resolution, or any other reaction-card
+    hook dispatch site that is *not* one of the two generic
+    `offer_until_pass`/`resolve_impulse_window` helpers this pass touched --
+    `_ask_modifier`/`_ask_stealth_or_decrease` in `engine/action.py` were
+    deliberately left unwired by this pass, since no card currently needs
+    a reaction played through one of them to be cancelable; a future pass
+    adding that need can route through the same `apply_chosen_option`
+    rather than re-inventing cancellation dispatch, but still has that
+    wiring to do). Diana's own "+1 bleed" clause remains implemented and
+    unblocked separately, as before this entry.
+- `rules-auditor` review (done) -- one MAJOR finding, fixed, plus two
+  documented-only structural gaps:
+  1. **Fixed.** Telepathic Counter (`src/vtesbot/cards/
+     telepathic_counter.py`, krcg id 101948) is dispatched through `engine/
+     phases/minion.py::_perform_bleed` -> `hooks.resolve_impulse_window`
+     against `BLEED_AMOUNT_MODIFIER_HOOK` -- a live, already-`implemented`
+     card genuinely routed through `apply_chosen_option`, unlike Organized
+     Resistance/Protection Racket below. Its `HookOption.apply` atomically
+     did three things: `play_from_hand` (discard-and-replace),
+     `amount_box[0] -= delta` (the actual effect), and the SS8 `used_by`
+     registration. With `apply` suppressed on a cancellation, the card would
+     never have left the defender's hand, never been replaced, and the
+     vampire would never have been marked as having used it -- directly
+     contradicting "[t]he canceled card has still been played... cannot be
+     played again by the same minion" [ANK 20190104]. Dormant only because
+     no `CANCEL_AS_PLAYED_HOOK` provider exists yet, but a landmine in an
+     already-live card, not a hypothetical future one. **Fixed**: split into
+     `cost` (`play_from_hand` + `used_by.add`, runs unconditionally) and
+     `apply` (only `amount_box[0] -= delta`, suppressed on cancellation).
+     Proven by new test `tests/cards/test_telepathic_counter.py::
+     test_a_cancellation_still_pays_cost_but_suppresses_the_bleed_reduction`
+     (toy always-cancel `CANCEL_AS_PLAYED_HOOK` provider; asserts the card
+     left hand and was played to the ash heap, the bleed amount was *not*
+     reduced, and a second copy in hand could not be played by the same
+     already-used vampire this action).
+  2. **Confirmed safe, no fix needed, noted explicitly so it is not mistaken
+     for already covered:** Organized Resistance (`src/vtesbot/cards/
+     organized_resistance.py`) and Protection Racket (`protection_racket.py`)
+     have the identical atomic cost+apply pattern, but neither is currently
+     exposed to `apply_chosen_option` -- both dispatch via `_ask_modifier`'s
+     own bare `.apply(state)` call (`engine/action.py`, for `INTERCEPT_
+     MODIFIER_HOOK`) or `attempt_block`'s own inline resolution (for
+     `BLOCK_CANDIDATE_INJECTION_HOOK`), neither of which is one of the two
+     generic helpers this pass touched. Not a live bug today; whoever wires
+     either of those dispatch sites through `apply_chosen_option` in the
+     future must apply the same `cost`/`apply` split to both cards' own
+     providers first.
+  3. **Minor correction to this entry's own prior engineering-follow-up
+     write-up:** an earlier draft of this write-up (relayed in the
+     `rules-engineer` agent's own chat report, not in this file) described
+     `src/vtesbot/cards/registry.py::Hook.CANCEL_AS_PLAYED` as having been a
+     "pre-existing accidental duplicate enum member" fixed by this pass.
+     That was wrong -- `git show HEAD:src/vtesbot/cards/registry.py` shows
+     exactly one definition both before and after this pass; it was a plain
+     relocation (classification-only group -> documented/wired group), never
+     a duplicate. This file's own "Impacted code" line below already said
+     "docstring/placement only, no value change," which was correct; the
+     incorrect "duplicate" claim never appeared in this document, only in
+     the out-of-band chat report, and is corrected here so it cannot stand
+     as evidence of a prior bug that never existed.
+  4. **Documented, not fixed (both dormant -- no current provider hits
+     either):** `engine/hooks.py::apply_chosen_option`'s own docstring now
+     records two structural gaps for whoever builds the first real
+     `CANCEL_AS_PLAYED_HOOK` provider: (a) `cancel_context` carries the
+     canceled option's own `Choice.value` but not which hook produced it,
+     nor any structured "is this a Reaction card" marker -- a provider
+     wanting to cancel only Reaction cards (as Diana's own text requires)
+     has no structured field to check without fragile string-matching on
+     `canceled_choice`; (b) nothing enforces "the cancelation must be played
+     immediately: no other effects can be used" [LSJ 20061207] if a future
+     `cost` or cancel-`apply` itself re-enters `hooks.offer`/
+     `offer_until_pass`/`resolve_impulse_window`. Neither blocks anything in
+     the current pool; both must be addressed (or confirmed moot) by
+     whoever builds the first provider against this hook.
+- Impacted code: `src/vtesbot/engine/hooks.py` (`HookOption.cost` field,
+  new; `CANCEL_AS_PLAYED_HOOK`, new; `apply_chosen_option`, new, including
+  its two documented-gaps section; `offer_until_pass`/
+  `resolve_impulse_window`, both updated to dispatch through it),
+  `src/vtesbot/cards/registry.py` (`Hook.CANCEL_AS_PLAYED` docstring/
+  placement only, no value change), `src/vtesbot/cards/
+  telepathic_counter.py` (`cost`/`apply` split, `rules-auditor` finding),
+  `tests/rules/test_hooks.py` (four new tests), `tests/cards/
+  test_telepathic_counter.py` (one new regression test). Impacted cards:
+  Telepathic Counter (fixed, still `implemented`, no registry change);
+  Diana Iadanza stays registered `blocked`, reason `OQ-32`, for her clause 1
+  only (her "+1 bleed" clause is implemented and unblocked separately,
+  `src/vtesbot/cards/diana_iadanza.py`); Organized Resistance and Protection
+  Racket are unaffected today (not exposed to `apply_chosen_option`, see
+  finding 2 above) but will need the same split applied to their own
+  providers whenever a future pass wires their dispatch sites through it;
+  no other card in the current pool registers against `CANCEL_AS_PLAYED_
+  HOOK`.
+
+## OQ-33: No card-type marker -- Diana Iadanza clause 1 (201694) (status: resolved)
+
+- Situation: OQ-32 (resolved) built `engine/hooks.py::apply_chosen_option`
+  but deliberately left one gap dormant (its own docstring, "Two known
+  gaps"): `cancel_context` carries `canceled_choice` (the canceled option's
+  `Choice.value` string) but no structured marker of which hook produced it,
+  nor of the canceled option's own card type. Diana's clause 1 ("Diana can
+  burn 1 blood to cancel a *reaction card* as it is played") needs exactly
+  that marker -- she cancels only a Reaction card, not any cancelable
+  option.
+- Why this is live, not hypothetical: the only referendum-phase dispatch
+  site wired through `apply_chosen_option` is `engine/politics.py`'s
+  pre-cast `POLLING_STEP_HOOK` window (`resolve_impulse_window`) -- the sole
+  moment spanning "during a referendum [Diana] calls" (`_cast_votes` raises
+  its own `Decision` directly, with no `HookOption`/hook dispatch at all, so
+  nothing played there is cancelable by this mechanism regardless). That
+  same window already has two live, non-Reaction-card providers reachable
+  by the side opposing the caller: Modius (`modius.py`, "During the polling
+  step of any referendum, Modius can discard a master card to get +1
+  vote" -- a printed ability, not a card) and Oxford University, England
+  (`oxford_university_england.py`, a Master card's own repeatable in-play
+  ability). Either could be chosen while Diana's controller is offered
+  `CANCEL_AS_PLAYED_HOOK`; a provider that cancels "whatever gets chosen"
+  without checking card type would incorrectly let Diana cancel these too,
+  contradicting her own "cancel a reaction card" text.
+- Missing mechanism: a structured field on `apply_chosen_option`'s
+  `cancel_context` identifying the canceled option's own card type (or at
+  least "is this a Reaction card") -- most likely a new optional
+  `HookOption` field threaded through by whichever `offer_until_pass`/
+  `resolve_impulse_window` call built the canceled option, since no current
+  `HookOption` carries one either. Engine-internal plumbing, not a ruling
+  question -- `rules-engineer` scope.
+- Ruling check (not the gap, correction): the prior round of this entry
+  checked only the card-specific/generic-mechanic rulings (krcg, same 5
+  "cancel as played" rulings) and found no cap there -- but missed the
+  rulebook's own general wording-template rule, independent of any card
+  ruling: Rulebook SS3 Playing the Game > Wording templates, "'During X,
+  do Y': ... only one Y can be done per X with this card" (verbatim,
+  `data/sources/rulebook/2026-10-09/3-playing-the-game.md` lines 86-91,
+  the Vessel example). Diana's clause 1 is phrased exactly in this
+  template ("During a referendum she calls, Diana can burn 1 blood to
+  cancel a reaction card as it is played") -- X = "a referendum she
+  calls", Y = "burn 1 blood to cancel a reaction card as it is played".
+  **Corrected finding: she may do this only once per referendum she
+  calls**, not an unlimited number of times per her own blood supply as
+  this entry previously concluded. Recorded so a future pass does not
+  re-derive, or repeat, either the template rule or the prior error.
+- Resolution: this is a missing engine primitive, not an unsettled ruling
+  (same status as its own parent entry, OQ-32); the primitive has now been
+  built, closing this entry without any new ruling needed.
+- Engineering follow-up (done): `engine/hooks.py::HookOption` gained a new
+  optional field, `played_card_type: str | None = None`. It identifies
+  *what is being played* when a specific option is chosen: the printed
+  `LibraryCard.card_type` value (e.g. `"Reaction"`, `"Action Modifier"`,
+  `"Master"`, `"Ally"`, `"Combat"`, `"Action"`, `"Political Action"`) of the
+  physical library card that option's own `apply` actually plays/recruits
+  from hand -- the same string `decks/loader.py::_build_library_card`
+  already derives from krcg at deck-import time. `None` (the default) means
+  the option is *not* playing a card at all: a printed vampire/crypt-card
+  ability being activated, a card already in play using its own standing
+  ability, or an option that only resolves/claims an effect some card
+  already played and paid for earlier in the same action/round/combat.
+  `apply_chosen_option` threads it into `cancel_context` as
+  `"canceled_card_type"`, alongside the pre-existing `canceled_by`/
+  `canceled_choice` (OQ-32) -- a `CANCEL_AS_PLAYED_HOOK` provider wanting to
+  cancel only Reaction cards (Diana's own text) now checks
+  `context["canceled_card_type"] == "Reaction"` instead of fragile
+  `canceled_choice` string-matching.
+  - Generic, not Diana-specific (CLAUDE.md §6): the field lives on
+    `HookOption` itself, and every provider that constructs one states its
+    own card's printed type the same way -- a per-module `CARD_TYPE`
+    constant (restating the "Card type: X" fact each card module's own
+    docstring already sources from krcg; CLAUDE.md §2 "card text first",
+    not a new, separately-guessed fact) passed as `played_card_type=
+    CARD_TYPE` at every construction site that is actually a fresh card
+    play. No engine code anywhere branches on a card name or krcg id to
+    decide this.
+  - Backfilled correctly, not left defaulting: every one of the ~24 card
+    modules with an existing `HookOption` construction site (`src/vtesbot/
+    cards/*.py`) plus `engine/politics.py::variable_pool_burn_vote_options`
+    was individually re-read against its own "Card type: X" docstring line
+    and against whether its option is a genuine card play at all (the
+    `rules-auditor`-caught OQ-32 "landmine" pattern -- a field silently
+    defaulting to a wrong value the moment the first real
+    `CANCEL_AS_PLAYED_HOOK` provider exists -- applies identically to a
+    missing `played_card_type` as it did to a missing `cost`/`apply` split).
+    Two categories of site were identified and correctly left at the
+    default `None`, each now documented inline at its own site/module so no
+    future reader mistakes the omission for an oversight:
+    1. A printed vampire/crypt-card ability or a card's own already-in-play
+       standing ability, never a fresh card play: Modius's "discard a
+       master card to get +1 vote" (`modius.py`), Saku Pihlajamäki's innate
+       maneuver (`saku_pihlajamaki.py`), Oxford University, England's
+       polling-step burn (`oxford_university_england.py`, via
+       `variable_pool_burn_vote_options`), Wider View's own
+       transfer-costed clauses 2/3 (`wider_view.py`), 47th Street Royals'
+       burn-the-already-recruited-ally bleed reduction
+       (`forty_seventh_street_royals.py`).
+    2. An option that only resolves/claims an effect some card already
+       played and paid for earlier the same action/round: Slam's deferred,
+       already-committed strike (`slam.py`), Dust Up's claiming of its own
+       already-recorded `[cel]` grant (`dust_up.py`), Fleetness's claiming
+       of its own pre-seeded pre-combat maneuver grant (`fleetness.py`).
+  - Scenario tests (new, `tests/rules/test_hooks.py`, generic fake-hook
+    proofs only, mirroring OQ-32's own tests, not coupled to Diana's own
+    card module): `test_cancel_context_carries_the_canceled_options_
+    played_card_type` (the marker reaches the cancel provider's context and
+    is load-bearing: a fake Reaction-typed option is actually canceled by a
+    Reaction-only canceler) and `test_a_reaction_only_canceler_cannot_
+    reach_a_non_card_play_option` (the motivating OQ-33 scenario itself: a
+    Reaction-only canceler offers nothing at all against an option left at
+    the default `None`, mirroring Modius/Oxford University, England's own
+    shape -- the effect runs unsuppressed because no legal cancellation was
+    ever offered).
+  - `apply_chosen_option`'s own docstring "Two known gaps" section is
+    updated: the card-type gap is marked resolved and folded into the
+    `canceled_card_type` description; the still-open re-entrant-dispatch
+    gap (unenforced "no other effects can be used" during a cancellation)
+    is kept, unchanged, as the sole remaining documented gap -- still out
+    of scope for this pass, same as OQ-32 left it.
+  - Confirmed not contradicted: this entry's own prior "Ruling check"
+    correction (Diana's clause 1 may burn-and-cancel only once per
+    referendum she calls, Rulebook §3's "During X, do Y" wording template)
+    is a plain rules fact about her own future card module, not something
+    this pass's engine primitive needs to enforce -- `played_card_type`
+    only identifies *what* may be canceled; a future `card-implementer`
+    pass must still track Diana's own "already used this referendum" flag
+    itself (scoped to the specific referendum instance, e.g. a key on
+    `pending` keyed by the referendum's own identity, not per-action or
+    global), exactly as this entry already recorded it.
+  - Not built, and out of scope for this pass: `src/vtesbot/cards/
+    diana_iadanza.py` is untouched, per instruction -- it stays
+    `Status.BLOCKED`, `blocked_reason="OQ-33"`, for a future
+    `card-implementer` pass. That pass is now genuinely unblocked on the
+    engine side: it can register a `CANCEL_AS_PLAYED_HOOK` provider gated
+    on `context["canceled_card_type"] == "Reaction"`, burn 1 blood in its
+    own `apply`, and separately track her own "once per referendum she
+    calls" limiter (the only remaining piece, per the paragraph above --
+    not an engine gap).
+- Impacted code: `src/vtesbot/engine/hooks.py` (`HookOption.played_card_
+  type` field, new; `apply_chosen_option`'s `cancel_context` and docstring,
+  updated), `src/vtesbot/engine/politics.py`
+  (`variable_pool_burn_vote_options`'s own docstring, noting it always
+  leaves the field at its default), `tests/rules/test_hooks.py` (two new
+  tests). Impacted cards (docstring/constant additions only, each module's
+  own effect code unchanged, full suite passes unchanged): `threats.py`,
+  `telepathic_counter.py`, `taste_of_vitae.py`, `slam.py`, `side_strike.py`,
+  `parity_shift.py`, `pursuit.py`, `kine_resources_contested.py`,
+  `oxford_university_england.py`, `protection_racket.py`,
+  `grooming_the_protege.py`, `saku_pihlajamaki.py`, `organized_resistance.py`,
+  `perfect_paragon.py`, `forty_seventh_street_royals.py`, `bonding.py`,
+  `fleetness.py`, `celerity.py`, `modius.py`, `fame.py`, `dust_up.py`,
+  `enchant_kindred.py`, `life_in_the_city.py`, `line_brawl.py`,
+  `wider_view.py`. Diana Iadanza stays registered `blocked`, reason
+  `OQ-33`, for her clause 1 only (her "+1 bleed" clause 2 remains
+  implemented and unblocked separately); no other card in the current pool
+  registers against `CANCEL_AS_PLAYED_HOOK`.

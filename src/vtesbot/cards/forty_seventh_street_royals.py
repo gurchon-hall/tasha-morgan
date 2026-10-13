@@ -83,6 +83,15 @@ STRENGTH = 1
 BLEED = 0
 BLEED_REDUCTION = 3
 CLAN_REQUIREMENT = ("Brujah",)
+CARD_TYPE = "Ally"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Ally" docstring fact above -- set only on the
+recruit (`_provide_recruit`, the card actually leaving hand); the bleed-
+reduction clause (`_provide_bleed_reduction`) burns an already-recruited,
+in-play copy as its own cost, not a card played from hand (module docstring:
+"the cost consumed is the ally itself ... not a card played from hand"), so
+it leaves `HookOption.played_card_type` at its default `None` (see that
+field's own docstring)."""
 
 
 def _provide_recruit(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
@@ -106,6 +115,7 @@ def _provide_recruit(state: GameState, context: Mapping[str, Any]) -> list[HookO
         HookOption(
             choice=Choice("recruit_47th_street_royals", "Recruit 47th Street Royals"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

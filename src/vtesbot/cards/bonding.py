@@ -116,6 +116,9 @@ BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
 STEALTH_MODIFIER_HOOK = "stealth_modifier"
 BASIC = "dom"
 SUPERIOR = "DOM"
+CARD_TYPE = "Action Modifier"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Action Modifier" docstring fact above."""
 
 
 def _find_vampire(state: GameState, player: str, vampire_id: str | None) -> VampireInPlay | None:
@@ -156,6 +159,7 @@ def _provide_bonding_basic(state: GameState, context: Mapping[str, Any]) -> list
         HookOption(
             choice=Choice("bonding:basic", "Bonding [dom]: +1 bleed (limited)"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -197,6 +201,7 @@ def _provide_bonding_superior(state: GameState, context: Mapping[str, Any]) -> l
         HookOption(
             choice=Choice("bonding:superior", "Bonding [DOM]: +1 stealth and +1 bleed (limited)"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

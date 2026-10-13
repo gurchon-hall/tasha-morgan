@@ -103,6 +103,9 @@ KRCG_ID = 100698
 MASTER_PHASE_PLAY_HOOK = "master_phase_play"
 VAMPIRE_ENTERS_TORPOR_HOOK = "vampire_enters_torpor"
 UNLOCK_PHASE_MANDATORY_EFFECT_HOOK = "unlock_phase_mandatory_effect"
+CARD_TYPE = "Master"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Master" docstring fact above."""
 
 
 def _active_fame_attachment(vampire: VampireInPlay) -> CardAttachment | None:
@@ -160,6 +163,7 @@ def _provide_fame_master_phase_play(
                     f"Fame: attach to {vampire.card.name} ({vampire.controller})",
                 ),
                 apply=_apply,
+                played_card_type=CARD_TYPE,
             )
         )
     return options

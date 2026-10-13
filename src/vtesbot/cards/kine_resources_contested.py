@@ -112,6 +112,9 @@ from vtesbot.engine.state import GameState
 KRCG_ID = 101056
 TOTAL_POINTS = 4
 """Printed "Allocate 4 points ..."."""
+CARD_TYPE = "Political Action"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Political Action" docstring fact above."""
 
 
 def _provide_kine_resources_contested(
@@ -168,6 +171,7 @@ def _provide_kine_resources_contested(
         HookOption(
             choice=Choice("kine_resources_contested:play", "Play Kine Resources Contested"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

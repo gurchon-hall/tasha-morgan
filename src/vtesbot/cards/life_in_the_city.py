@@ -55,6 +55,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 101104
 MASTER_PHASE_PLAY_HOOK = "master_phase_play"
+CARD_TYPE = "Master"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Master" docstring fact above."""
 
 
 def _ready_targets(state: GameState) -> list[VampireInPlay]:
@@ -90,6 +93,7 @@ def _provide_life_in_the_city(state: GameState, context: Mapping[str, Any]) -> l
                     f"Life in the City: add 1 blood to {vampire.card.name} ({vampire.controller})",
                 ),
                 apply=_apply,
+                played_card_type=CARD_TYPE,
             )
         )
     return options

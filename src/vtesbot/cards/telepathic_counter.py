@@ -48,6 +48,21 @@ window with no observable difference for this specific card.
 "Reduce a bleed against you by N": clamped at 0 by `_perform_bleed`'s own
 `amount = max(0, amount_box[0])`, already covering the case where the total
 reduction exceeds the (possibly further-increased) bleed amount.
+
+`cost`/`apply` split (`docs/OPEN_QUESTIONS.md` OQ-32, resolved;
+`rules-auditor` finding on that entry's own review): this hook is dispatched
+through `engine/phases/minion.py::_perform_bleed` -> `hooks.
+resolve_impulse_window`, which now resolves every chosen option via
+`engine/hooks.py::apply_chosen_option` -- the moment any future provider
+registers against `CANCEL_AS_PLAYED_HOOK` (no card does today), a canceled
+option's `apply` is suppressed but its `cost` still runs. "Played from hand"
+(discard-and-replace) and the SS8 "same reaction card once per minion" `used_
+by` registration therefore live in `cost`, since the generic ruling on file
+is explicit that a canceled reaction "has still been played" [ANK 20190104]
+-- a canceled Telepathic Counter must still leave the defender's hand,
+replace normally, and count against that vampire playing it again this
+bleed. Only the actual effect (`amount_box[0] -= delta`) lives in `apply`,
+so cancellation suppresses the bleed reduction and nothing else.
 """
 
 from collections.abc import Mapping
@@ -63,6 +78,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 KRCG_ID = 101948
 BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
 USED_BY_KEY = "telepathic_counter_used_by"
+CARD_TYPE = "Reaction"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Reaction" docstring fact above."""
 
 
 def _is_defender(state: GameState, player: str, acting_vampire_id: str) -> bool:
@@ -93,23 +111,31 @@ def _provide_telepathic_counter(state: GameState, context: Mapping[str, Any]) ->
     book = bleed_bookkeeping(context["pending"])
     used_by: set[str] = book.setdefault(USED_BY_KEY, set())
 
-    def _make_apply(vampire: VampireInPlay, delta: int) -> Any:
-        def _apply(s: GameState) -> None:
+    def _make_cost(vampire: VampireInPlay) -> Any:
+        def _cost(s: GameState) -> None:
             play_from_hand(s, player, KRCG_ID)
-            amount_box[0] -= delta
             used_by.add(vampire.instance_id)
+
+        return _cost
+
+    def _make_apply(delta: int) -> Any:
+        def _apply(s: GameState) -> None:
+            amount_box[0] -= delta
 
         return _apply
 
     options: list[HookOption] = []
     for vampire in _eligible_vampires(state, player, used_by):
+        cost = _make_cost(vampire)
         options.append(
             HookOption(
                 choice=Choice(
                     f"telepathic_counter:basic:{vampire.instance_id}",
                     f"Telepathic Counter [aus]: reduce bleed by 1 ({vampire.card.name})",
                 ),
-                apply=_make_apply(vampire, 1),
+                cost=cost,
+                apply=_make_apply(1),
+                played_card_type=CARD_TYPE,
             )
         )
         if "AUS" in vampire.card.disciplines:
@@ -119,7 +145,9 @@ def _provide_telepathic_counter(state: GameState, context: Mapping[str, Any]) ->
                         f"telepathic_counter:superior:{vampire.instance_id}",
                         f"Telepathic Counter [AUS]: reduce bleed by 2 ({vampire.card.name})",
                     ),
-                    apply=_make_apply(vampire, 2),
+                    cost=cost,
+                    apply=_make_apply(2),
+                    played_card_type=CARD_TYPE,
                 )
             )
     return options

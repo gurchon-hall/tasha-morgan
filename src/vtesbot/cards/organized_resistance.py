@@ -139,6 +139,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 102230
 USED_BY_KEY = "organized_resistance_used_by"
+CARD_TYPE = "Reaction"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Reaction" docstring fact above."""
 
 
 def _eligible_barons(state: GameState, player: str, used_by: set[str]) -> list[VampireInPlay]:
@@ -218,6 +221,7 @@ def _provide_organized_resistance_intercept(
                 f" ({baron.card.name})",
             ),
             apply=_make_apply(baron),
+            played_card_type=CARD_TYPE,
         )
         for baron in barons
     ]
@@ -255,6 +259,7 @@ def _provide_organized_resistance_block_candidate(
                 f" (played by {baron.card.name})",
             ),
             apply=_make_apply(baron, anarch),
+            played_card_type=CARD_TYPE,
         )
         for baron in barons
         for anarch in anarchs

@@ -139,6 +139,9 @@ PRE_BLEED_BASE_AMOUNT = 2
 """Default bleed amount (1) + this card's own printed "+1 bleed", baked into
 the baseline the same way `enchant_kindred.py`'s own `BASIC_BLEED_BASE_AMOUNT`
 is -- not a separately-offered, declinable modifier."""
+CARD_TYPE = "Action"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Action" docstring fact above."""
 
 
 def _controllers_vampire(state: GameState, context: Mapping[str, Any]) -> VampireInPlay | None:
@@ -196,6 +199,7 @@ def _provide_line_brawl_cel(state: GameState, context: Mapping[str, Any]) -> lis
                 "line_brawl:cel", "Line Brawl [cel]: Steal 1 pool from another Methuselah"
             ),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -249,6 +253,7 @@ def _provide_line_brawl_pot(state: GameState, context: Mapping[str, Any]) -> lis
         HookOption(
             choice=Choice("line_brawl:pot", "Line Brawl [pot]: Enter combat with a minion"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -309,6 +314,7 @@ def _provide_line_brawl_pre(state: GameState, context: Mapping[str, Any]) -> lis
         HookOption(
             choice=Choice("line_brawl:pre", "Line Brawl [pre]: Bleed with +1 bleed"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

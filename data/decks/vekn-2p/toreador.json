@@ -11,7 +11,7 @@
       "group": 7,
       "krcg_id": 201694,
       "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "blocked_reason": "OQ-33"
     },
     {
       "name": "Marcos Belegrad",
@@ -51,7 +51,7 @@
       "capacity": 5,
       "group": 7,
       "krcg_id": 201625,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     }
   ],
   "library": [

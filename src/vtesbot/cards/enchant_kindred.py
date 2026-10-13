@@ -132,6 +132,9 @@ SUPERIOR_STEALTH = 1
 (mirrors `HUNT_STEALTH`/`RECRUIT_ALLY_STEALTH`, `engine/phases/minion.py`),
 not a modifier layered on top of a 0 baseline."""
 ADD_BLOOD_AMOUNT = 2
+CARD_TYPE = "Action"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Action" docstring fact above."""
 
 
 def _eligible_targets(
@@ -206,6 +209,7 @@ def _provide_enchant_kindred_basic(
         HookOption(
             choice=Choice("enchant_kindred:basic", "Enchant Kindred [pre]: Bleed with +1 bleed"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -269,6 +273,7 @@ def _provide_enchant_kindred_superior(
                 "Add 2 blood to a younger vampire in your uncontrolled region",
             ),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

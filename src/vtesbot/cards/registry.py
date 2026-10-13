@@ -180,6 +180,22 @@ class Hook(StrEnum):
     round -- including, as of the same pass, `engine/damage.py::apply_damage`'s
     own "blood lost to damage this round" record (`engine/damage.py::
     blood_lost_to_damage_this_round`, OQ-29 mechanism 2)."""
+    CANCEL_AS_PLAYED = "cancel_as_played"
+    """Generic "cancel a card as it is played" interception point (`docs/
+    OPEN_QUESTIONS.md` OQ-32, resolved): offered to the side *not* making a
+    choice, right after any `HookOption` is chosen through either generic
+    decision-loop helper (`engine/hooks.py::offer_until_pass`/
+    `resolve_impulse_window`, via the new `apply_chosen_option`), before
+    that option's own `apply` runs. A provider's own chosen `HookOption.
+    apply(state)` pays its own cost (e.g. Diana Iadanza's "burn 1 blood")
+    and suppresses the original option's `apply` entirely; the original
+    option's own `HookOption.cost` (if it sets one) has already run by
+    then, independent of cancellation, so "cost is still paid" holds
+    generically. No provider is registered against this hook yet (zero
+    behaviour change today, true of every hook before its first
+    provider -- see `engine/hooks.py` module docstring); Diana Iadanza's
+    own clause 1 (`src/vtesbot/cards/diana_iadanza.py`, still `blocked`)
+    still needs a `card-implementer` pass to register against it."""
     # Named for classification; no engine wiring exists yet (see the
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"
@@ -200,7 +216,6 @@ class Hook(StrEnum):
     ALLY_ENTITY = "ally_entity"
     LOCATION_ENTITY = "location_entity"
     DIABLERIE = "diablerie"
-    CANCEL_AS_PLAYED = "cancel_as_played"
     BLOCK_CANDIDATE_INJECTION = "block_candidate_injection"
     EQUIPMENT_ATTACHMENT = "equipment_attachment"
 

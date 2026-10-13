@@ -85,6 +85,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 KRCG_ID = 101778
 CEL_BASIC = "cel"
 CEL_SUPERIOR = "CEL"
+CARD_TYPE = "Combat"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Combat" docstring fact above."""
 
 
 def _controllers_vampire(state: GameState, context: Mapping[str, Any]) -> VampireInPlay | None:
@@ -121,6 +124,7 @@ def _provide_dodge(state: GameState, context: Mapping[str, Any]) -> list[HookOpt
         HookOption(
             choice=Choice("side_strike:dodge", "Side Strike [cel]: dodge"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -157,6 +161,7 @@ def _provide_additional_strike(state: GameState, context: Mapping[str, Any]) -> 
                 "side_strike:additional_strike", "Side Strike [CEL]: additional strike (limited)"
             ),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

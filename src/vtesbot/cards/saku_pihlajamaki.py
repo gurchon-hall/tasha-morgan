@@ -95,6 +95,9 @@ def _provide_saku_pihlajamaki(
         used.add(vampire_id)
 
     choice = Choice("saku_pihlajamaki_maneuver", "Saku Pihlajamäki's maneuver")
+    # `played_card_type` stays at its default `None` (OQ-33, `docs/
+    # OPEN_QUESTIONS.md`): this is a printed crypt-vampire ability, not a
+    # library card being played at all.
     return [hooks.HookOption(choice=choice, apply=use)]
 
 

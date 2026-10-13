@@ -140,6 +140,14 @@ KRCG_ID = 100597
 ANI = "ani"
 CEL = "cel"
 POT = "pot"
+CARD_TYPE = "Combat"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Combat" docstring fact above -- set on the
+three card-playing providers (`_provide_ani`/`_provide_pot`/
+`_provide_cel_dodge`); `_provide_cel_additional_strike` only claims an
+already-recorded grant from a copy already played and paid for earlier
+this round, so it leaves `HookOption.played_card_type` at its default
+`None` (see that field's own docstring)."""
 
 CEL_GRANTS_KEY = "dust_up_cel_grants"
 """Context key for the one piece of state still genuinely private to this
@@ -249,6 +257,7 @@ def _provide_ani(state: GameState, context: Mapping[str, Any]) -> list[HookOptio
         HookOption(
             choice=Choice("dust_up:ani", "Dust Up [ani]: hand strike +1, cannot be dodged"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -276,6 +285,7 @@ def _provide_pot(state: GameState, context: Mapping[str, Any]) -> list[HookOptio
         HookOption(
             choice=Choice("dust_up:pot", "Dust Up [pot]: hand strike +2 damage"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -312,6 +322,7 @@ def _provide_cel_dodge(state: GameState, context: Mapping[str, Any]) -> list[Hoo
                 "dust_up:cel", "Dust Up [cel]: dodge, with 1 additional strike (limited)"
             ),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

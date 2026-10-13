@@ -105,6 +105,9 @@ REQUIRED_TITLES = frozenset({"Prince", "Justicar"})
 """Verbatim "Requires a prince or justicar."."""
 MAX_ALLOCATION = 3
 """Printed "allocate 3 of their pool ...."."""
+CARD_TYPE = "Political Action"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Political Action" docstring fact above."""
 
 
 def _provide_parity_shift(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
@@ -151,6 +154,7 @@ def _provide_parity_shift(state: GameState, context: Mapping[str, Any]) -> list[
         HookOption(
             choice=Choice("parity_shift:play", "Play Parity Shift"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

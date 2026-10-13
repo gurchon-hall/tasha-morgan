@@ -119,6 +119,13 @@ POT_BASIC = "pot"
 POT_SUPERIOR = "POT"
 BLOOD_COST = 1
 STRIKE_BONUS = 2
+CARD_TYPE = "Combat"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Combat" docstring fact above -- set on both
+outer options (the card actually being played), never on the nested,
+already-paid-for `strike_option` wrapper `commit_strike_for_round` defers to
+strike-resolution time (that one leaves `played_card_type` at its default
+`None`, per that field's own docstring: it is not a fresh "play" event)."""
 
 
 def _controllers_vampire(state: GameState, context: Mapping[str, Any]) -> VampireInPlay | None:
@@ -175,6 +182,7 @@ def _provide_basic(state: GameState, context: Mapping[str, Any]) -> list[HookOpt
         HookOption(
             choice=Choice("slam:basic", "Slam [pot]: hand strike +2 damage"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -223,6 +231,7 @@ def _provide_superior_maneuver(state: GameState, context: Mapping[str, Any]) -> 
                 "Slam [POT]: maneuver to close range, with hand strike +2 damage",
             ),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

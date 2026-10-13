@@ -127,6 +127,9 @@ from vtesbot.engine.state import GameState
 KRCG_ID = 101945
 _USED_KEY = "taste_of_vitae_used"
 _EXCLUDED_ZONES = ("burned", "torpor")
+CARD_TYPE = "Combat"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Combat" docstring fact above."""
 
 
 def _provide_taste_of_vitae(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
@@ -167,6 +170,7 @@ def _provide_taste_of_vitae(state: GameState, context: Mapping[str, Any]) -> lis
         HookOption(
             choice=Choice("taste_of_vitae", f"Taste of Vitae: gain {preview_amount} blood"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

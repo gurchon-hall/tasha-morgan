@@ -1,0 +1,181 @@
+{
+  "id": 201694,
+  "printed_name": "Diana Iadanza",
+  "unicity_suffix": "",
+  "suffix": "G7",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Diana Iadanza"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Diana Iadanza (G7)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/dianaiadanzag7.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/dianaiadanzag7.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Carmen Cornet"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "Cards are not replaced during the \"as played\" window. The cancelation must be played immediately: no other effects can be used, except for wakes (eg. neither {100135|The Barrens} nor {100588|Dreams of the Sphinx} can be used). [LSJ 20061207] [RBK playing-a-card] [LSJ 20061013]",
+      "group": "Cancel",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20061207]",
+          "label": "LSJ 20061207",
+          "url": "https://usenet.krcg.org/t/nqcrJlhg4Ng/#m2"
+        },
+        {
+          "text": "[RBK playing-a-card]",
+          "label": "RBK playing-a-card",
+          "url": "https://www.vekn.net/rulebook#playing-a-card"
+        },
+        {
+          "text": "[LSJ 20061013]",
+          "label": "LSJ 20061013",
+          "url": "https://usenet.krcg.org/t/6w8K3yDtBH0/#m16"
+        }
+      ],
+      "cards": [
+        {
+          "id": 100135,
+          "printed_name": "The Barrens",
+          "unicity_suffix": "",
+          "suffix": ""
+        },
+        {
+          "id": 100588,
+          "printed_name": "Dreams of the Sphinx",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": []
+    },
+    {
+      "text": "If the canceled card had a \"do not replace until\" clause (or alternate replacement like {101869|Steely Tenacity}), that clause is canceled as well and the card is replaced normally. [LSJ 20080630] [LSJ 20011023]",
+      "group": "Cancel",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20080630]",
+          "label": "LSJ 20080630",
+          "url": "https://usenet.krcg.org/t/nvuXBpEaKAA/#m2"
+        },
+        {
+          "text": "[LSJ 20011023]",
+          "label": "LSJ 20011023",
+          "url": "https://usenet.krcg.org/t/2GOLIrXAF8M/#m1"
+        }
+      ],
+      "cards": [
+        {
+          "id": 101869,
+          "printed_name": "Steely Tenacity",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": []
+    },
+    {
+      "text": "The canceled card has still been played. The same reaction or modifier cannot be played again by the same minion. Any card which text prohibits to play more than once cannot be played again. [ANK 20190104] [RBK cancel-a-card] [LSJ 19980212]",
+      "group": "Cancel",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20190104]",
+          "label": "ANK 20190104",
+          "url": "https://www.vekn.net/forum/rules-questions/77254-canceling-cards-and-bold-text?start=6#92640"
+        },
+        {
+          "text": "[RBK cancel-a-card]",
+          "label": "RBK cancel-a-card",
+          "url": "https://www.vekn.net/rulebook#cancel-a-card"
+        },
+        {
+          "text": "[LSJ 19980212]",
+          "label": "LSJ 19980212",
+          "url": "https://usenet.krcg.org/t/fLFLlXZXHqA/#m0"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "If a limited effect is canceled (bleed, additional strike), then the limit is not triggered and another limited effect can be used. [LSJ 20030224]",
+      "group": "Cancel",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20030224]",
+          "label": "LSJ 20030224",
+          "url": "https://usenet.krcg.org/t/67261v339Ds/#m5"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "A card played \"as if from hand\" can be canceled \"as played\" [LSJ 20060106]",
+      "group": "Cancel",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20060106]",
+          "label": "LSJ 20060106",
+          "url": "https://usenet.krcg.org/t/NBX34nHwJdo/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Camarilla Toreador Justicar: During a referendum she calls, Diana can burn 1 blood to cancel a reaction card as it is played (cost is still paid). +1 bleed.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2024-08-19",
+  "banned": null,
+  "clan": "Toreador",
+  "path": "",
+  "advanced": false,
+  "capacity": 9,
+  "group": "G7",
+  "disciplines": [
+    "AUS",
+    "CEL",
+    "FOR",
+    "PRE"
+  ],
+  "title": "Justicar"
+}

@@ -158,6 +158,14 @@ of which clause is used (module docstring)."""
 BLOOD_COST = 1
 """Printed blood-cost box: burned from the acting vampire, only on the
 unblocked branch, independent of which clause is used (module docstring)."""
+CARD_TYPE = "Action"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Action" docstring fact above -- set on both
+`ACTION_CARD_PLAY_HOOK` options (the card actually being played); the
+`MANEUVER_HOOK` provider (`_provide_fleetness_maneuver`) only claims an
+already-seeded pre-combat grant from a Fleetness already played and paid
+for earlier this action, so it leaves `HookOption.played_card_type` at its
+default `None` (see that field's own docstring)."""
 
 
 def _controllers_vampire(state: GameState, context: Mapping[str, Any]) -> VampireInPlay | None:
@@ -239,6 +247,7 @@ def _provide_fleetness_basic(state: GameState, context: Mapping[str, Any]) -> li
         HookOption(
             choice=Choice("fleetness:basic", "Fleetness [cel]: +1 stealth action. Bleed"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 
@@ -315,6 +324,7 @@ def _provide_fleetness_superior(state: GameState, context: Mapping[str, Any]) ->
                 "Enter combat with a locked minion. Gets 1 optional maneuver",
             ),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

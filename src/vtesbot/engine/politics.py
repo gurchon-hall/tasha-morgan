@@ -367,6 +367,15 @@ def variable_pool_burn_vote_options(
     card and burn X pool during the polling step of a political action to
     get +2X votes").
 
+    `HookOption.played_card_type` is deliberately left at its default
+    `None` on every option this builds (`docs/OPEN_QUESTIONS.md` OQ-33,
+    resolved): every known caller (Oxford University, England) is a Master
+    card's own already-in-play, repeatable ability, never a fresh card play
+    -- see `played_card_type`'s own docstring, `engine/hooks.py`. A future
+    caller whose own "burn X pool for votes" clause is instead the moment a
+    *new* physical card is played must not reuse this helper as-is without
+    re-checking that assumption.
+
     Choosing the X-pool option burns that much pool from `player`
     (`engine/pool.py::lose_pool`), then runs `on_burn(state)` if given --
     for Oxford's own shape, this is where a future card module locks the

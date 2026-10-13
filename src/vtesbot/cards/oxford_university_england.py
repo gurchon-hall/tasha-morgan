@@ -91,6 +91,16 @@ NAME = "Oxford University, England"
 MASTER_PHASE_PLAY_HOOK = "master_phase_play"
 CLAN_REQUIREMENT = ("Brujah",)
 VOTES_PER_POOL = 2
+CARD_TYPE = "Master"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Master" docstring fact above -- set only on
+the initial play (`_provide_oxford_master_phase_play`); the polling-step
+clause (`_provide_oxford_polling_step`, via `variable_pool_burn_vote_
+options`) is this already-in-play card's own standing ability, not a fresh
+card play, so it leaves `HookOption.played_card_type` at its default `None`
+(see that field's own docstring; this is the exact non-Reaction-card
+provider OQ-33 names as live-reachable by the side opposing a referendum's
+caller)."""
 
 
 def _controls_a_ready_brujah(state: GameState, player: str) -> bool:
@@ -124,6 +134,7 @@ def _provide_oxford_master_phase_play(
         HookOption(
             choice=Choice("oxford_university_england", f"Play {NAME}"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

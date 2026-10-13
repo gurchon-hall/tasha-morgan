@@ -74,6 +74,10 @@ CAPACITY_MODIFIER_HOOK = "capacity_modifier"
 DISCIPLINE_LEVEL_MODIFIER_HOOK = "discipline_level_modifier"
 SUPERIOR = "CEL"
 BASIC = "cel"
+CARD_TYPE = "Master"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Master" docstring fact above (krcg's own
+`types[0].value`; "Discipline" is a subtype, not a distinct krcg card type)."""
 
 
 def _find_vampire(state: GameState, vampire_id: str) -> VampireInPlay | None:
@@ -124,6 +128,7 @@ def _provide_celerity(state: GameState, context: Mapping[str, Any]) -> list[Hook
                     f"Celerity: attach to {vampire.card.name} ({vampire.controller})",
                 ),
                 apply=_apply,
+                played_card_type=CARD_TYPE,
             )
         )
     return options

@@ -292,6 +292,275 @@ def test_resolve_impulse_window_never_exposes_pending_in_the_decisions_context()
     p2.assert_exhausted()
 
 
+def test_apply_chosen_option_runs_apply_normally_with_no_cancel_provider():
+    """Zero-regression check (`docs/OPEN_QUESTIONS.md` OQ-32, resolved): with
+    no `CANCEL_AS_PLAYED_HOOK` provider registered (true of every card in
+    the pool today), `offer_until_pass` behaves byte-for-byte as before this
+    primitive existed -- no extra decision is raised to the other player."""
+    from vtesbot.engine.decision import Choice
+
+    calls = []
+
+    def provider(state, context):
+        return [
+            hooks.HookOption(choice=Choice("tick", "Tick"), apply=lambda s: calls.append("apply"))
+        ]
+
+    hooks.register("fake_cancelable", provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    p1 = ScriptedAgent("P1")
+    p1.expect("fake_cancelable", "tick")
+    p1.expect("fake_cancelable", "pass")
+    p2 = ScriptedAgent("P2")  # never asked: no CANCEL_AS_PLAYED_HOOK provider exists.
+    game.state.agents["P1"] = p1
+    game.state.agents["P2"] = p2
+
+    hooks.offer_until_pass(game.state, "fake_cancelable", "P1", context={})
+
+    assert calls == ["apply"]
+    p1.assert_exhausted()
+    p2.assert_exhausted()
+
+
+def test_apply_chosen_option_pays_cost_but_suppresses_apply_when_canceled():
+    """The actual OQ-32 mechanism: the other side cancels a chosen option
+    *as it is played* -- its `cost` (the generic "cost is still paid") still
+    runs, but its `apply` (the actual effect) is suppressed, and the
+    canceling option's own `apply` (its own cost, e.g. Diana's "burn 1
+    blood") runs instead. Proven generically, against a throwaway fake
+    hook/provider pair -- not coupled to Diana Iadanza's own card module,
+    which this primitive does not implement (`src/vtesbot/cards/
+    diana_iadanza.py` stays `blocked`, pending a `card-implementer` pass)."""
+    from vtesbot.engine.decision import Choice
+
+    paid_cost = []
+    ran_effect = []
+    canceler_paid = []
+
+    def provider(state, context):
+        return [
+            hooks.HookOption(
+                choice=Choice("tick", "Tick"),
+                cost=lambda s: paid_cost.append(True),
+                apply=lambda s: ran_effect.append(True),
+            )
+        ]
+
+    def cancel_provider(state, context):
+        assert context["canceled_choice"] == "tick"
+        assert context["canceled_by"] == "P1"
+        return [
+            hooks.HookOption(
+                choice=Choice("cancel_it", "Cancel as played"),
+                apply=lambda s: canceler_paid.append(True),
+            )
+        ]
+
+    hooks.register("fake_cancelable", provider)
+    hooks.register(hooks.CANCEL_AS_PLAYED_HOOK, cancel_provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    p1 = ScriptedAgent("P1")
+    p1.expect("fake_cancelable", "tick")
+    p1.expect("fake_cancelable", "pass")  # nothing left after the suppressed option
+    p2 = ScriptedAgent("P2")
+    p2.expect(hooks.CANCEL_AS_PLAYED_HOOK, "cancel_it")
+    game.state.agents["P1"] = p1
+    game.state.agents["P2"] = p2
+
+    hooks.offer_until_pass(game.state, "fake_cancelable", "P1", context={})
+
+    assert paid_cost == [True]  # "cost is still paid"
+    assert ran_effect == []  # the effect itself is suppressed
+    assert canceler_paid == [True]  # the canceling option's own cost ran instead
+    p1.assert_exhausted()
+    p2.assert_exhausted()
+
+
+def test_apply_chosen_option_passing_the_cancellation_lets_apply_run():
+    """The other side is offered a cancellation but declines (passes): the
+    original option's own `apply` runs normally, same as if no
+    `CANCEL_AS_PLAYED_HOOK` provider had been registered at all."""
+    from vtesbot.engine.decision import Choice
+
+    ran_effect = []
+
+    def provider(state, context):
+        return [
+            hooks.HookOption(choice=Choice("tick", "Tick"), apply=lambda s: ran_effect.append(True))
+        ]
+
+    def cancel_provider(state, context):
+        return [
+            hooks.HookOption(choice=Choice("cancel_it", "Cancel as played"), apply=lambda s: None)
+        ]
+
+    hooks.register("fake_cancelable", provider)
+    hooks.register(hooks.CANCEL_AS_PLAYED_HOOK, cancel_provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    p1 = ScriptedAgent("P1")
+    p1.expect("fake_cancelable", "tick")
+    p1.expect("fake_cancelable", "pass")
+    p2 = ScriptedAgent("P2")
+    p2.expect(hooks.CANCEL_AS_PLAYED_HOOK, "pass")
+    game.state.agents["P1"] = p1
+    game.state.agents["P2"] = p2
+
+    hooks.offer_until_pass(game.state, "fake_cancelable", "P1", context={})
+
+    assert ran_effect == [True]
+    p1.assert_exhausted()
+    p2.assert_exhausted()
+
+
+def test_apply_chosen_option_is_offered_to_the_non_acting_side_in_an_impulse_window():
+    """Same mechanism through `resolve_impulse_window` (the other generic
+    decision-loop helper): whichever side did *not* just choose gets offered
+    the cancellation -- here, the acting player's own chosen option is
+    offered for cancellation to the non-acting player."""
+    from vtesbot.engine.decision import Choice
+
+    used = [False]
+    ran_effect = []
+
+    def provider(state, context):
+        # One-shot, like a real card: `cost` (below) marks it used the
+        # instant it is chosen, regardless of whether it then gets
+        # canceled -- same "still treated as played" semantics the OQ-32
+        # docstring documents, needed here only so the window terminates.
+        if context.get("player") != "P1" or used[0]:
+            return []
+        return [
+            hooks.HookOption(
+                choice=Choice("tick", "Tick"),
+                cost=lambda s: used.__setitem__(0, True),
+                apply=lambda s: ran_effect.append(True),
+            )
+        ]
+
+    def cancel_provider(state, context):
+        assert context["canceled_by"] == "P1"
+        return [
+            hooks.HookOption(choice=Choice("cancel_it", "Cancel as played"), apply=lambda s: None)
+        ]
+
+    hooks.register("fake_window", provider)
+    hooks.register(hooks.CANCEL_AS_PLAYED_HOOK, cancel_provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    p1 = ScriptedAgent("P1")
+    p1.expect("fake_window", "tick")
+    p2 = ScriptedAgent("P2")
+    p2.expect(hooks.CANCEL_AS_PLAYED_HOOK, "cancel_it")
+    game.state.agents["P1"] = p1
+    game.state.agents["P2"] = p2
+
+    hooks.resolve_impulse_window(game.state, "fake_window", "P1", "P2", context={})
+
+    assert ran_effect == []
+    p1.assert_exhausted()
+    p2.assert_exhausted()
+
+
+def test_cancel_context_carries_the_canceled_options_played_card_type():
+    """`docs/OPEN_QUESTIONS.md` OQ-33, resolved: a `CANCEL_AS_PLAYED_HOOK`
+    provider that only cancels a specific card type (Diana Iadanza's own
+    "cancel a *reaction card* as it is played") can gate on
+    `context["canceled_card_type"]` instead of fragile `canceled_choice`
+    string-matching. Here the fake provider's own option is marked
+    `played_card_type="Reaction"`, and the canceler checks for exactly
+    that -- proving the marker reaches the cancel provider's context and is
+    load-bearing, not merely present."""
+    from vtesbot.engine.decision import Choice
+
+    ran_effect = []
+    canceler_ran = []
+
+    def provider(state, context):
+        return [
+            hooks.HookOption(
+                choice=Choice("tick", "Tick"),
+                apply=lambda s: ran_effect.append(True),
+                played_card_type="Reaction",
+            )
+        ]
+
+    def cancel_provider(state, context):
+        if context["canceled_card_type"] != "Reaction":
+            return []  # mirrors Diana Iadanza's own "a reaction card" gate.
+        return [
+            hooks.HookOption(
+                choice=Choice("cancel_it", "Cancel as played"),
+                apply=lambda s: canceler_ran.append(True),
+            )
+        ]
+
+    hooks.register("fake_cancelable", provider)
+    hooks.register(hooks.CANCEL_AS_PLAYED_HOOK, cancel_provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    p1 = ScriptedAgent("P1")
+    p1.expect("fake_cancelable", "tick")
+    p1.expect("fake_cancelable", "pass")
+    p2 = ScriptedAgent("P2")
+    p2.expect(hooks.CANCEL_AS_PLAYED_HOOK, "cancel_it")
+    game.state.agents["P1"] = p1
+    game.state.agents["P2"] = p2
+
+    hooks.offer_until_pass(game.state, "fake_cancelable", "P1", context={})
+
+    assert ran_effect == []  # the reaction-only canceler correctly suppressed it
+    assert canceler_ran == [True]
+    p1.assert_exhausted()
+    p2.assert_exhausted()
+
+
+def test_a_reaction_only_canceler_cannot_reach_a_non_card_play_option():
+    """The motivating OQ-33 scenario itself: a `CANCEL_AS_PLAYED_HOOK`
+    provider gated to Reaction cards only must offer nothing at all against
+    an option that is not a card play (`played_card_type` left at its
+    default `None` -- the same shape Modius's "discard a master card to get
+    +1 vote" and Oxford University, England's polling-step burn both use).
+    Proven generically here, not against either real card module."""
+    from vtesbot.engine.decision import Choice
+
+    ran_effect = []
+
+    def provider(state, context):
+        return [
+            hooks.HookOption(
+                choice=Choice("tick", "Tick"),
+                apply=lambda s: ran_effect.append(True),
+                # `played_card_type` left at its default `None`: an ability
+                # activation, not a card being played (module docstring).
+            )
+        ]
+
+    def cancel_provider(state, context):
+        if context["canceled_card_type"] != "Reaction":
+            return []  # mirrors Diana Iadanza's own "a reaction card" gate.
+        raise AssertionError("must never offer a cancellation for a non-Reaction option")
+
+    hooks.register("fake_cancelable", provider)
+    hooks.register(hooks.CANCEL_AS_PLAYED_HOOK, cancel_provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    p1 = ScriptedAgent("P1")
+    p1.expect("fake_cancelable", "tick")
+    p1.expect("fake_cancelable", "pass")
+    p2 = ScriptedAgent("P2")  # never asked: the reaction-only canceler offers nothing.
+    game.state.agents["P1"] = p1
+    game.state.agents["P2"] = p2
+
+    hooks.offer_until_pass(game.state, "fake_cancelable", "P1", context={})
+
+    assert ran_effect == [True]  # not suppressed: no legal cancellation was ever offered
+    p1.assert_exhausted()
+    p2.assert_exhausted()
+
+
 def test_block_attempt_offers_no_stealth_or_intercept_decision_without_providers():
     """Zero-regression check: with no stealth/intercept provider registered,
     `attempt_block` behaves exactly as before this pass's hook wiring (see

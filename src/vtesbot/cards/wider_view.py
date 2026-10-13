@@ -102,6 +102,13 @@ MASTER_PHASE_PLAY_HOOK = "master_phase_play"
 POOL_COST = 1
 BURN_TRANSFER_COST = 4
 BURN_POOL_GAIN = 2
+CARD_TYPE = "Master"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Master" docstring fact above -- set only on
+clause 1's own play (`_provide_wider_view_master_phase_play`); clauses 2/3
+are this already-in-play card's own standing abilities, not a fresh card
+play, so they leave `HookOption.played_card_type` at its default `None`
+(see that field's own docstring)."""
 
 
 def _own_in_play_instances(state: GameState, player: str) -> list[MasterCardInPlay]:
@@ -134,6 +141,7 @@ def _provide_wider_view_master_phase_play(
         HookOption(
             choice=Choice("wider_view_play", f"Play {NAME} (1 pool)"),
             apply=_apply,
+            played_card_type=CARD_TYPE,
         )
     ]
 

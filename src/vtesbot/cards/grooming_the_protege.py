@@ -83,6 +83,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 KRCG_ID = 100860
 MASTER_PHASE_PLAY_HOOK = "master_phase_play"
 MAX_BLOOD = 3
+CARD_TYPE = "Master"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Master" docstring fact above."""
 
 
 def _sources(player_state) -> list[VampireInPlay]:
@@ -132,6 +135,7 @@ def _provide_grooming_the_protege(state: GameState, context: Mapping[str, Any]) 
                             f"{source.card.name} to {target.card.name}",
                         ),
                         apply=_apply,
+                        played_card_type=CARD_TYPE,
                     )
                 )
     return options

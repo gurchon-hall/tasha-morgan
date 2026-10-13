@@ -97,6 +97,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 101501
 USED_BY_KEY = "protection_racket_used_by"
+CARD_TYPE = "Reaction"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+this module's own "Card type: Reaction" docstring fact above."""
 
 
 def _eligible_vampires(state: GameState, player: str, used_by: set[str]) -> list[VampireInPlay]:
@@ -154,6 +157,7 @@ def _provide_protection_racket(state: GameState, context: Mapping[str, Any]) -> 
                 f"Protection Racket: +{bonus} intercept ({vampire.card.name})",
             ),
             apply=_make_apply(vampire),
+            played_card_type=CARD_TYPE,
         )
         for vampire in eligible
     ]

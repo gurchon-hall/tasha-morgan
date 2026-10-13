@@ -205,6 +205,63 @@ def test_a_minion_cannot_play_the_same_reaction_card_twice_in_one_action():
     defender.assert_exhausted()
 
 
+def test_a_cancellation_still_pays_cost_but_suppresses_the_bleed_reduction():
+    """`docs/OPEN_QUESTIONS.md` OQ-32, resolved -- `rules-auditor` finding on
+    that entry's own review: this card's `"bleed_amount_modifier"` hook is
+    dispatched through `engine/phases/minion.py::_perform_bleed` ->
+    `hooks.resolve_impulse_window`, which resolves a chosen option via
+    `engine/hooks.py::apply_chosen_option`. A toy always-cancel `CANCEL_
+    AS_PLAYED_HOOK` provider (standing in for a future card like Diana
+    Iadanza's own clause 1 -- not itself implemented here) proves the
+    `cost`/`apply` split added to this module survives real play: the card
+    still leaves the defender's hand and is replaced (`cost`), the bleed is
+    *not* reduced (`apply` suppressed), and the same vampire cannot be
+    offered a second copy of the card again this action -- the SS8 "same
+    reaction card" `used_by` bookkeeping, also folded into `cost`, still ran
+    even though the effect itself was canceled, per the on-file ruling "the
+    canceled card has still been played... cannot be played again by the
+    same minion" [ANK 20190104]."""
+    from vtesbot.engine import hooks
+    from vtesbot.engine.decision import Choice
+
+    def always_cancel(state, context):
+        return [
+            hooks.HookOption(choice=Choice("toy_cancel", "Toy cancel"), apply=lambda s: None)
+        ]
+
+    hooks.register(hooks.CANCEL_AS_PLAYED_HOOK, always_cancel)
+    try:
+        builder = _bleed_scenario()
+        p2 = builder._players["P2"]
+        p2.ready_vampire("V2", capacity=3, blood=0, disciplines=("aus",))
+        p2.hand.append(_telepathic_counter_card())
+        p2.hand.append(_telepathic_counter_card())  # a second copy: proves used_by, not just hand
+        game = builder.build()
+        actor = ScriptedAgent("P1")
+        actor.expect("minion_phase_choice", "act_with:V1")
+        actor.expect("action_choice", "bleed")
+        # The acting (bleeding) Methuselah is the side offered the cancellation
+        # (`engine/hooks.py::apply_chosen_option`'s `may_cancel`): the
+        # non-choosing side at the impulse-window moment the defender's
+        # option was picked.
+        actor.expect(hooks.CANCEL_AS_PLAYED_HOOK, "toy_cancel")
+        game.state.agents["P1"] = actor
+        defender = ScriptedAgent("P2")
+        defender.expect("block_attempt", "decline")
+        defender.expect("bleed_amount_modifier", "telepathic_counter:basic:V2")
+        game.state.agents["P2"] = defender
+
+        minion_phase(game.state, "P1")
+
+        assert game.pool_of("P2") == 29  # bleed NOT reduced: apply was suppressed
+        assert len(game.state.players["P2"].hand) == 1  # the played copy still left hand (cost)
+        assert [c.name for c in game.state.players["P2"].ash_heap] == ["Telepathic Counter"]
+        actor.assert_exhausted()
+        defender.assert_exhausted()  # not re-offered the second copy: used_by still marked V2
+    finally:
+        hooks.unregister(hooks.CANCEL_AS_PLAYED_HOOK, always_cancel)
+
+
 def test_two_different_minions_may_each_play_their_own_copy_in_one_action():
     """The SS2 "same reaction card" restriction is per-minion, not
     per-Methuselah: a second, *different* eligible minion may still play a
