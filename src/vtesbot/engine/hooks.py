@@ -120,6 +120,44 @@ def ensure_unique_choice_values(choices: Iterable[Choice], *, decision_kind: str
         )
 
 
+PENDING_CONTEXT_KEY = "pending"
+"""The project-wide convention key (OQ-11, `docs/OPEN_QUESTIONS.md`) a hook
+`context` carries its shared, action-scoped scratch dict under -- see
+`sanitize_decision_context` below for why it is excluded from every
+`Decision.context`."""
+
+
+def sanitize_decision_context(context: Mapping[str, Any]) -> dict[str, Any]:
+    """Build the `dict` a `Decision.context` may safely copy from a hook
+    `context` -- every call site that builds a `Decision` from a `Mapping`
+    sourced from `offer(...)`'s own `context` must use this, never a bare
+    `dict(context)`.
+
+    CLAUDE.md "Information hiding": `Decision.context` reaches an agent
+    directly (`GameState.ask` -> `Agent.decide`, `engine/decision.py`'s own
+    "for logging/agent reasoning" purpose) with no filtering of its own.
+    `context[PENDING_CONTEXT_KEY]` (OQ-11) is a live, engine-internal,
+    per-action scratch dict threaded to every hook *provider* so a card play
+    spanning two phases of the same action can carry state between them --
+    it is not itself meant for an agent's own reasoning about the choice at
+    hand, and sharing the identical live object across every hook offer for
+    the whole action means mutating it later (e.g. a different provider's
+    later `apply`) would retroactively change what an *earlier*, already-
+    logged `Decision.context` appears to show, and a
+    `ReplayLog.record_decision` snapshot of it is only a shallow copy, not a
+    true snapshot, for the same reason. Since OQ-30 (`docs/OPEN_QUESTIONS.md`,
+    resolved) it may also hold a `Callable` (`engine/action.py::
+    ActiveInterceptDecrease.qualifies`) -- not serializable for a persisted
+    replay log, and a sharper information-hiding violation than the plain
+    data `pending` held before (a closure can capture a live `VampireInPlay`
+    or other engine-internal state). This function strips
+    `PENDING_CONTEXT_KEY` from what reaches `Decision.context`; the full,
+    unfiltered `context` (including `pending`) is still exactly what every
+    hook `offer(...)` call passes to the trusted, engine-registered provider
+    functions themselves -- only the agent-visible copy is affected."""
+    return {key: value for key, value in context.items() if key != PENDING_CONTEXT_KEY}
+
+
 def offer_until_pass(
     state: GameState,
     hook: str,
@@ -143,7 +181,10 @@ def offer_until_pass(
         by_value = {o.choice.value: o for o in options}
         choices = tuple(o.choice for o in options) + (Choice(PASS_VALUE, "Pass"),)
         decision = Decision(
-            player=player, kind=decision_kind or hook, choices=choices, context=dict(context)
+            player=player,
+            kind=decision_kind or hook,
+            choices=choices,
+            context=sanitize_decision_context(context),
         )
         answer = state.ask(decision)
         if answer.value == PASS_VALUE:
@@ -180,7 +221,10 @@ def resolve_impulse_window(
         by_value = {o.choice.value: o for o in options}
         choices = tuple(o.choice for o in options) + (Choice(PASS_VALUE, "Pass"),)
         decision = Decision(
-            player=turn, kind=decision_kind or hook, choices=choices, context=dict(context)
+            player=turn,
+            kind=decision_kind or hook,
+            choices=choices,
+            context=sanitize_decision_context(context),
         )
         answer = state.ask(decision)
         if answer.value == PASS_VALUE:

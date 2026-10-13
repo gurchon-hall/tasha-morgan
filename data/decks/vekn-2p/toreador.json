@@ -117,8 +117,7 @@
       "type": "Action Modifier",
       "count": 4,
       "krcg_id": 101387,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "implementation_status": "implemented"
     },
     {
       "name": "Voter Captivation",

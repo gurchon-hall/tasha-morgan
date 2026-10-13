@@ -1,0 +1,202 @@
+{
+  "id": 101387,
+  "printed_name": "Perfect Paragon",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Perfect Paragon"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Ejemplo de perfección"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Parangon de perfection"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/perfectparagon.jpg"
+    },
+    {
+      "set": {
+        "id": 320002,
+        "code": "KoTR"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "B",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition-reprint/perfectparagon.jpg"
+    },
+    {
+      "set": {
+        "id": 300030,
+        "code": "SP"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "LB",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-preconstructed/perfectparagon.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/perfectparagon.jpg"
+    },
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/perfectparagon.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Ejemplo de perfección",
+      "text": "[pre] Sólo utilizable durante la fase de votación de una acción política. Este vampiro consigue +3 votos.\n[PRE] Los aliados y vampiros menores obtienen -1 de intercepción.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/perfectparagon.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Parangon de perfection",
+      "text": "[pre] Seulement utilisable durant l'étape de vote d'une action politique. Ce vampire reçoit +3 voix.\n[PRE] Les alliés et les vampires plus jeunes reçoivent -1 en interception.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/perfectparagon.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/perfectparagon.jpg",
+  "types": [
+    "Action Modifier"
+  ],
+  "formats": [],
+  "artists": [
+    "Jeremy McHugh"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "[pre]Cannot be used during a referendum that is automatically passing. [PIB 20150105] [LSJ 19980107]",
+      "group": "Usable during the polling step",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[PIB 20150105]",
+          "label": "PIB 20150105",
+          "url": "https://www.vekn.net/forum/rules-questions/68465-voting-is-complicated#68493"
+        },
+        {
+          "text": "[LSJ 19980107]",
+          "label": "LSJ 19980107",
+          "url": "https://usenet.krcg.org/t/aUUs4VCR_Ec/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[pre]",
+          "symbol": "r",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "[PRE]Can be played any time during the action before resolution; a block attempt is not required. [LSJ 20020612]",
+      "group": "Minus Intercept",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20020612]",
+          "label": "LSJ 20020612",
+          "url": "https://usenet.krcg.org/t/sC0pTtJJDj4/#m2"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[PRE]",
+          "symbol": "R",
+          "count": ""
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "text": "[pre] Only usable during the polling step of a political action. This vampire gets +3 votes.\n[PRE] Allies and younger vampires get -1 intercept.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2008-12-19",
+  "banned": null,
+  "cost": {
+    "type": "Blood",
+    "value": 1
+  },
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "pre"
+    ]
+  }
+}

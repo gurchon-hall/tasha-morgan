@@ -50,6 +50,17 @@ class Hook(StrEnum):
     number of transfers consumed."""
     STEALTH_MODIFIER = "stealth_modifier"
     INTERCEPT_MODIFIER = "intercept_modifier"
+    INTERCEPT_DECREASE = "intercept_decrease"
+    """Acting-side Action Modifier reducing a blocking candidate's
+    intercept, offered to `actor` both proactively (top of `engine/
+    action.py::attempt_block`'s retry loop) and reactively (merged into
+    `_duel_stealth_intercept`'s `STEALTH_MODIFIER` decision) --
+    `docs/OPEN_QUESTIONS.md` OQ-30/OQ-31 (both resolved; OQ-31 needed the
+    project owner's own ruling on the reactive point). A provider appends
+    an `ActiveInterceptDecrease(delta, qualifies)` to `pending[engine/
+    action.py::PENDING_INTERCEPT_DECREASE_KEY]`, re-evaluated against
+    whichever candidate is fixed on every call; `apply()`'s return value is
+    ignored."""
     BLEED_AMOUNT_MODIFIER = "bleed_amount_modifier"
     BLEED_AMOUNT_FIXED_MODIFIER = "bleed_amount_fixed_modifier"
     DAMAGE_PREVENTION = "damage_prevention"

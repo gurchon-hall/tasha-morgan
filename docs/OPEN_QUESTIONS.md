@@ -9,279 +9,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-5: Does a failed block attempt lock the blocker?   (status: resolved)
-
-- Situation: `src/vtesbot/engine/action.py::attempt_block` locks the
-  blocking vampire only when the block *succeeds* (intercept >= stealth,
-  leading to combat), not when an attempt is made but fails to connect
-  (stealth exceeds intercept).
-- Resolution: confirmed by `rules-auditor` on a follow-up pass, re-fetching
-  the rulebook's "Resolve the Action" step verbatim: "If the action is
-  blocked, then any card played to perform the action is burned and the
-  block is resolved with these two simultaneous consequences: the blocking
-  minion is locked and enters combat with the acting minion... The effects
-  of the action do not take place when the action is blocked." Locking is
-  stated as a consequence tied strictly to the action *being blocked*, i.e.
-  a successful block — combined with "If one attempt to block fails,
-  another can be made as often as the blocking Methuselah wishes" (a locked
-  minion could not retry), this confirms reading A (implemented) over
-  reading B.
-- No code change needed: `attempt_block` already implements reading A
-  correctly.
-- Impacted code: `src/vtesbot/engine/action.py` (`attempt_block`).
-
-## OQ-6: Referendum vote-tally/pass-fail for two Methuselahs (status: resolved)
-
-- Situation: the `vtes-rules-reference` skill's condensed mapping of
-  Rulebook §4 Politics gives *where votes come from* ("1 from a political
-  action card (max 1 per Methuselah), titles (primogen 1, prince/baron 2,
-  justicar 3, Inner Circle 4; Sabbat and other sects per §6–7), burning the
-  Edge = 1. Only ready minions vote. Ties fail.") and *when terms are
-  chosen* ("Terms chosen only after success"), but does not state what a
-  referendum's cast votes are compared against to decide pass/fail, nor what
-  "ties fail" is relative to. This pool's own three Political Action cards
-  additionally surfaced a related, unexplained state: card rulings for
-  Perfect Paragon and Scalpel Tongue both read "[c]annot be used during a
-  referendum that is automatically passing" [PIB 20150105] [LSJ 19980107],
-  raising the question of whether that's a duel-specific mechanic (only one
-  possible opposing voter).
-- Resolution: `rules-auditor` re-fetched both primary sources directly
-  (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>, Politics/
-  Referendum subsection, and the 2P variant page) and settled all three
-  bundled questions:
-  1. **What are votes compared against, what does "ties fail" mean?**
-     Quoted verbatim: "all Methuselahs may now cast any votes and ballots
-     they have... in any order... there is no obligation to cast"; "Each
-     vote or ballot cast is cast either 'for' or 'against' the referendum";
-     "If there are more votes for the referendum than against, it passes...
-     Otherwise, the referendum fails... Tied referendums fail." Votes are a
-     straight for/against tally across whatever sources each Methuselah
-     chooses to use (political-action card, titled ready vampires,
-     burning the Edge, other cards — "Methuselahs have no inherent votes or
-     ballots") — not "Methuselah vs Methuselah". This degrades cleanly to
-     two players: an uncontested referendum is simply 0-for/0-against,
-     which ties, which fails, same as with any player count. **Reading A
-     confirmed.**
-  2. **Does the 2P variant override this?** No — re-fetched directly;
-     confirmed no referendum-procedure override exists, only the
-     already-known title-contest exception.
-  3. **Is "automatically passing" a duel-specific mechanic?** No —
-     **reading B was wrong.** The actual General Ruling [PIB 20150105],
-     fetched from the forum post krcg cites
-     (<https://www.vekn.net/forum/rules-questions/68465-voting-is-complicated#68493>):
-     "If a referendum will pass automatically (e.g., Cryptic Rider,
-     Charming Lobby, Malkavian Rider Clause, Día de los Muertos), then no
-     casting votes or ballots occurs during the automatic referendum." This
-     is a card-text-triggered category (specific cards whose own printed
-     text declares their called referendum passes automatically), entirely
-     unrelated to player count. Confirmed via krcg that none of this
-     pool's three Political Action cards (Disputed Territory, Kine
-     Resources Contested, Parity Shift) carry this text themselves, so the
-     mechanic does not apply to any card in the current pool.
-- Engineering follow-up (done): `political_action` now calls
-  `resolve_referendum` (`src/vtesbot/engine/politics.py`), which runs the
-  pre-cast `"polling_step"` hook window (CLAUDE.md rule 4 impulse model),
-  enumerates every vote source (acting Methuselah's own 1-vote
-  political-action-card vote, each ready titled vampire per
-  `TITLE_VOTES`, an Edge-burn source if held, plus whatever a
-  `"polling_step"` hook provider adds), lets each source's controller cast
-  it for/against/hold back in an impulse-style window, dispatches a
-  post-tally hook, and tallies (ties/0-0 fail). Scenario tests: `tests/
-  rules/test_politics.py`. This replaces the former
-  `UnresolvedRulingError("OQ-6")` raise entirely — `political_action` no
-  longer raises it.
-  - `rules-auditor` follow-up review (done): found, and this entry's own
-    engineering has since fixed, three issues in the first landing.
-    1. The acting Methuselah's political-action-card vote was hardcoded as
-       1 vote cast "for", never offered as a `Decision`, even though the
-       verbatim source allows declining it or casting it against one's own
-       referendum. **Fixed**: it is now an ordinary `VoteSource`
-       (`source_id` = `f"political_action_card:{caller_player}"`), offered
-       through the same cast-or-abstain `Decision` machinery as any other
-       source, in `_collect_vote_sources`/`_cast_votes`. Proven by
-       `tests/rules/test_politics.py::
-       test_the_acting_methuselah_may_decline_their_own_political_action_
-       card_vote` and
-       `test_the_acting_methuselah_may_cast_their_own_political_action_
-       card_vote_against`.
-    2. `_cast_votes`'s own docstring asserted its strict two-sided
-       alternating-impulse casting procedure "mirrors" Rulebook SS2
-       Sequencing's impulse model, overclaiming a citation the source does
-       not actually give (the rule only says casting happens "in any
-       order," with no turn structure specified). **Fixed by documentation,
-       not by behaviour change**: the procedure itself is unchanged (still
-       legal under "in any order"), but its docstring and this entry no
-       longer claim it is sourced — tracked instead as its own open
-       question, OQ-20.
-    3. `resolve_referendum`/the hook contexts it builds carried only
-       `caller_player` (a player id), not the acting `VampireInPlay` itself
-       — blocking Queen Anne's and Marcos Belegrad's actual trigger
-       condition ("a referendum called by *Anne*/*Marcos* specifically," not
-       just "any referendum called by this card's controller," who might
-       control both Marcos and some other titled vampire). **Fixed**:
-       `resolve_referendum` now takes and threads a `caller_vampire`
-       parameter into both the pre-cast `"polling_step"` hook context and
-       the new post-tally hook context (`context["caller_vampire"]`).
-       Proven by `tests/rules/test_politics.py::
-       test_the_pre_cast_and_post_tally_hook_contexts_both_carry_the_
-       calling_vampires_identity`.
-  - Post-tally dispatch (done, same `rules-auditor` follow-up): a new hook,
-    `REFERENDUM_TALLIED_HOOK` (`"referendum_tallied"`,
-    `cards/registry.py::Hook.REFERENDUM_TALLIED`), is now dispatched by
-    `resolve_referendum` immediately after `_cast_votes` returns and before
-    the tally is handed back to `political_action` — i.e. before any
-    pass/fail effect of the referendum takes place, matching Marcos
-    Belegrad's own "once results are tallied" timing. Dispatched via a new
-    `engine/hooks.py::run_effects` helper (sibling of `sum_modifiers`/
-    `union_modifiers`: every registered provider is called once with the
-    live `state` and may mutate it directly — no `Decision`, since there is
-    nothing for a player to choose). No provider is registered against it
-    yet (no behaviour change today; proven by
-    `tests/rules/test_politics.py::
-    test_referendum_tallied_hook_fires_with_no_providers_registered`), but
-    Marcos Belegrad's own reaction is now genuinely buildable by a future
-    `card-implementer` pass against `context["casts"]`/
-    `context["caller_vampire"]`, correcting the earlier, overstated claim
-    that this needed an as-yet-uninvented engine-hooks primitive — it only
-    needed this one dispatch call site reusing the existing registration
-    machinery.
-  - `REFERENDUM_RESOLVED` (`cards/registry.py::Hook.REFERENDUM_RESOLVED`) is
-    a second, newly reserved hook name for Voter Captivation's own, later,
-    fully-post-resolution trigger moment (after any combat, after the
-    referendum's pass/fail and effects) — distinct from both
-    `"polling_step"` (before any vote) and `REFERENDUM_TALLIED_HOOK` (during
-    the tally, before pass/fail effects). It is named for classification
-    only, same as `POLLING_STEP` was before this entry's own engineering
-    landed: no dispatch call site exists for it yet, and none is built by
-    this pass (no card in the current pool needs the call site itself built
-    yet, only correctly classified).
-  - Of the cards below, Disputed Territory, Kine Resources Contested,
-    Parity Shift, Alexa Draper and Diana Iadanza's "+1 bleed" clause now
-    have everything `engine/` needs (`CryptCard.title`, the `"polling_step"`
-    hook, the tally); they remain registered `blocked` until a
-    `card-implementer` pass actually implements and tests them (CLAUDE.md
-    §6: effect code + tests + registry entry, not just an unblocked engine
-    path) — this rules-engineer pass does not change any card's registry
-    status. Perfect Paragon and Queen Anne additionally need card-specific
-    work against the `"polling_step"` hook shapes noted above before they
-    can move from `blocked`. Marcos Belegrad can now be built against
-    `REFERENDUM_TALLIED_HOOK` (no further engine primitive needed); Voter
-    Captivation needs `REFERENDUM_RESOLVED`'s own dispatch call site built
-    first (not yet done, tracked above, not a ruling gap) before it can move
-    from `blocked`. Neither Marcos Belegrad nor Voter Captivation belongs in
-    the earlier "needs a new primitive" bucket any more — that framing was
-    specific to Marcos and has been corrected here.
-- Note for later: if a card entering the 2P pool ever prints its own
-  "this referendum passes automatically" text (none currently do), that
-  card's own text is authoritative per the Golden Rule for Cards (CLAUDE.md
-  §2) and needs no new Open Question — it's a plain card-text clause, not
-  an unsettled ruling.
-- Note for later (found implementing Modius, 2026-10-11): several
-  polling-step cards carry the same general ruling Perfect Paragon's and
-  Scalpel Tongue's own entries above already quote — "[c]annot be used
-  during a referendum that is automatically passing" [PIB 20150105]
-  [LSJ 19980107] — including Modius (verbatim in `src/vtesbot/cards/
-  modius.py`'s module docstring). `engine/politics.py::resolve_referendum`
-  has no "automatically passing" code path at all today (no card in this
-  pool triggers one, per the note directly above), so this restriction is
-  currently unreachable on every such card and is not covered by a test —
-  not a silently-dropped ruling, just one with no scenario to construct
-  against yet. Whichever future pass first implements a card whose own
-  text makes a referendum pass automatically (Cryptic Rider, Charming
-  Lobby, Malkavian Rider Clause, Día de los Muertos are the named examples
-  in the general ruling) must also re-check every already-implemented
-  polling-step card/ability for this same clause and gate it accordingly,
-  rather than assuming an already-`implemented` card already handles it.
-- Third `rules-auditor` follow-up (round 3, done): found two further MAJOR
-  issues in the round-2 fix above, both now fixed.
-  4. `_run_pre_cast_hook_window`'s `"polling_step"` hook context put the
-     live `caller_vampire` (a `VampireInPlay`) directly into the context
-     dict that reaches `hooks.resolve_impulse_window` → `Decision.context` →
-     `agent.decide(observation, decision)` — i.e. straight into agent-visible
-     code, violating CLAUDE.md "Information hiding" ("agents receive an
-     `Observation`... never the raw `GameState`") the same way every other
-     hook/decision context in the engine already avoids by passing an
-     `instance_id` string instead (`engine/contests.py`, `engine/combat.py`,
-     `engine/damage.py`, `engine/phases/minion.py::_perform_bleed`).
-     **Fixed**: that context now carries `caller_vampire_id` (`caller_
-     vampire.instance_id`, a plain `str`) instead. `_dispatch_referendum_
-     tallied`'s `REFERENDUM_TALLIED_HOOK` context is unchanged — it is
-     dispatched via `hooks.run_effects`, never raises a `Decision`, and only
-     ever reaches trusted provider code, the same tier as `sum_modifiers`/
-     `union_modifiers` providers — so keeping the live object there is fine.
-  5. A whole vote-source category was missing: re-fetching the rulebook's
-     "Political Action Cards" clause live
-     (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>, Politics >
-     Gaining Votes) in full (the round-1/2 engineering had only ever quoted
-     its first half) gives: *"Each Methuselah may gain 1 vote by using a
-     political action card. These cards say '1 vote' to indicate this. If a
-     political action card was used to call the referendum, that card
-     provides 1 vote for the acting vampire's controller. Other political
-     action cards used for votes are simply burned without regard to the
-     text on the cards. Each Methuselah can gain no more than 1 vote from
-     political action cards."* Two independent clauses: (1) the calling
-     card's own automatic vote for the caller (already implemented), and
-     (2) a *separate* source — any Methuselah may burn a different political
-     action card from their own hand during polling purely for 1 vote, "with
-     no regard to the text on the cards." Since the caller's only
-     political-action-card vote source is clause (1)'s automatic one (the
-     card that called the referendum already supplies it), clause (2) is, in
-     practice, a vote source for the *non-calling* Methuselah only — not a
-     shared cap the caller could fill via either clause. **Fixed**: the
-     engine already modeled the needed data (`PlayerState.hand: list[
-     LibraryCard]`, `LibraryCard.card_type`, confirmed against real 2P deck
-     data using the exact string `"Political Action"`,
-     `data/decks/vekn-2p/*.json`) — no missing data-model gap, so this was
-     built for real, not flagged as an open question. `_collect_vote_sources`
-     now also offers `other_player` a `VoteSource` (`source_id =
-     f"political_action_card_hand:{other_player}"`, `burns_pac_from_hand=
-     True`) whenever `other_player` holds at least one `"Political Action"`-
-     type card in hand; casting it burns one such card from hand to the ash
-     heap (`_cast_votes`, which specific card is irrelevant per the card text
-     itself, so no extra `Decision` is raised for that choice). `caller_
-     player` is never offered this source, unconditionally (not via a
-     shared-cap check): the rules text gives the caller no path to clause 2
-     at all, since calling a referendum always means playing a political
-     action card, which always triggers clause 1 for them. Proven by new
-     scenario tests in `tests/rules/test_politics.py`.
-- Addendum (`User Ruling`, fourth politics.py fix round, settled by the
-  project's user): a third `rules-auditor` round raised a potential gap in
-  finding 5's own closure above -- the rules text's only textual link
-  between clause 1 and clause 2 is the shared "no more than 1 vote from
-  political action cards" cap, not an explicit statement that the caller may
-  only ever use clause 1; concretely, does declining the clause-1 vote (legal
-  -- "no obligation to cast") free the caller to use clause 2 instead,
-  reachable today with existing test machinery via
-  `tests/rules/test_politics.py::
-  test_the_calling_methuselah_is_never_offered_the_burn_from_hand_political_
-  action_card_source`? This has been settled by the user, not left open and
-  not spawning a new OQ: **no** -- the calling card consumes the Methuselah's
-  one political-action-card-vote slot the moment it is used to call the
-  referendum, regardless of whether the automatic vote it grants is
-  subsequently cast or declined. Declining clause 1 does not unlock clause 2
-  for the caller. No code change was needed: `_collect_vote_sources`'s
-  existing unconditional caller-exclusion already implements this correctly.
-  See `src/vtesbot/engine/politics.py`'s module docstring for the same
-  ruling, documented alongside the clause-2 discussion it corrects.
-- Impacted code: `src/vtesbot/engine/politics.py` (`political_action`,
-  `resolve_referendum`, `_run_pre_cast_hook_window`,
-  `_dispatch_referendum_tallied` (new), `_collect_vote_sources`,
-  `_cast_votes`, `_has_political_action_card_in_hand` (new),
-  `_burn_one_political_action_card_from_hand` (new)),
-  `src/vtesbot/engine/hooks.py` (`run_effects`, new),
-  `src/vtesbot/cards/registry.py` (`Hook.REFERENDUM_TALLIED`,
-  `Hook.REFERENDUM_RESOLVED`, both new), `src/vtesbot/cards/
-  voter_captivation.py` and `src/vtesbot/cards/marcos_belegrad.py`
-  (registration hook tags corrected/updated; neither module's `Status` or
-  `blocked_reason` changed). Impacted cards (all still registered `blocked`,
-  reason `OQ-6`, pending a `card-implementer` pass): Disputed Territory, Kine
-  Resources Contested, Parity Shift (call a referendum); Perfect Paragon,
-  Scalpel Tongue, Voter Captivation, Oxford University, England (only
-  usable during/after a referendum's polling step or resolution);
-  crypt-vampire printed abilities Alexa Draper, Diana Iadanza, Fiorenza
-  Savona, Marcos Belegrad, Modius, Queen Anne (each reads or modifies a
-  referendum's polling step or who called it).
-
 ## OQ-7: No ally-in-play entity -- 47th St. Royals (102217) (status: resolved)
 
 - Situation: card text (verbatim, via krcg, 2026-10-09): "Unique mortal with
@@ -4389,3 +4116,369 @@ up an OQ number or the highest one used so far.
     `"implemented"`). No further `engine/` change was needed -- the
     mechanisms the earlier `rules-engineer` pass built were already
     sufficient.
+
+## OQ-30: No intercept-decrease hook -- Perfect Paragon (101387)  (status: resolved)
+
+- Situation: Perfect Paragon's (krcg id 101387) card text (verbatim, via the
+  installed `krcg` 5.14+ package and cross-checked live against
+  `https://api.krcg.org/card/101387`, 2026-10-13, both matching
+  `data/cards/101387.json` byte-for-byte): "[pre] Only usable during the
+  polling step of a political action. This vampire gets +3 votes.\n[PRE]
+  Allies and younger vampires get -1 intercept." The basic `[pre]` clause is
+  now buildable against OQ-6's own `"polling_step"` hook (resolved); this
+  entry is about the *separate* superior-only clause, which carries its own
+  on-file ruling: "[PRE] Can be played any time during the action before
+  resolution; a block attempt is not required." [LSJ 20020612]. `types ==
+  ["Action Modifier"]`; the rulebook glossary's own definition ("Action
+  Modifier: A card that the acting minion can play to modify the action they
+  are performing," `data/sources/rulebook/2026-10-09/8-glossaries.md:15-16`)
+  fixes who plays it: the vampire currently performing whatever action is in
+  progress -- never a defending/blocking vampire's controller. Since "Allies
+  and younger vampires" names potential *blockers*, not the acting vampire
+  itself, the clause's own effect is: the acting player's own acting vampire
+  plays it to reduce the intercept of any ally or vampire younger than
+  itself that attempts to block this action, for the rest of the action.
+- Confirmed not a one-off: the identical "Allies and younger vampires get -1
+  intercept" sentence also appears verbatim on The Missing Voice's own
+  `[mel]` clause (krcg id 101226), and the same *shape* -- an acting-side,
+  intercept-decreasing Action Modifier, sometimes additionally gated by its
+  own printed "Only usable if a minion attempts to block," sometimes not --
+  recurs across a wide family of other Action Modifier cards cross-checked
+  live via `krcg.load()`, 2026-10-13: Mole's Tunneling `[ani]` (101234),
+  Dominant Personality (102316, both clauses), Forced Confessional `[dom]`
+  (102250), Council of Seraphim (100433), Call of the Hungry Dead `[nec]`
+  (100279), Random Patterns `[AUS][DEM]` (101540), Stygian Shroud `[obl]`
+  (102282), Suppressing Fire (101907), Zapaderin (102204), Smoke and Mirrors
+  `[obt]` (101813), Safe Passage `[for]`/`[obe]`/`[OBE]` ("Allies get -1
+  intercept", 101673), Squirrel Balance (101858), Unthinkable Humiliation
+  (102346), Nightshades (101286), Will-o'-the-Wisp (102183), Obedient Flesh
+  `[dom][pro]` (102255). None of these is implemented in this project yet
+  (confirmed by grep across `src/vtesbot/cards/` for each krcg id above), so
+  this is the first `card-implementer` pass to hit this family's own missing
+  engine mechanism.
+- What is blocked: `engine/action.py::_duel_stealth_intercept` is the sole
+  call site for `INTERCEPT_MODIFIER_HOOK` (confirmed by grep, one call site,
+  `src/vtesbot/engine/action.py:120`), and it *always* offers that hook with
+  `player=defender` -- never `player=actor` (`defender = state.other_player(
+  actor_player)` always in a 2P duel, so these are always two different
+  players; the function's own `else` branch offers `STEALTH_MODIFIER_HOOK` to
+  `actor` instead, never `INTERCEPT_MODIFIER_HOOK`). Every provider already
+  registered against `INTERCEPT_MODIFIER_HOOK` (`organized_resistance.py`,
+  `protection_racket.py`) documents this explicitly in its own code comment
+  ("`INTERCEPT_MODIFIER_HOOK` is only ever offered to the defender"), and
+  both are, correctly, defender-side "+1 intercept to my own blocker" cards.
+  There is no call site anywhere that offers an intercept-*decreasing*
+  option to the *acting* player. Implementing Perfect Paragon's `[PRE]`
+  clause against the existing hook with `player=defender` would be wrong in
+  two independent ways:
+  1. **Ownership.** The card lives in the *actor's* hand, played by the
+     *acting* vampire (per the glossary definition quoted above), never the
+     defender's; raising a `Decision(player=defender, ...)` for a card the
+     defending agent does not control, and would never voluntarily choose to
+     use against their own blocker, would be a structural misattribution of
+     agency (CLAUDE.md "Information hiding": an agent only ever picks from
+     choices built out of its own resources), not merely a cosmetic issue.
+  2. **Timing/duration.** The hook's existing call site only ever fires once
+     a specific blocking candidate has already been chosen, exactly once per
+     candidate, during the "stealth > intercept" ping-pong phase. Perfect
+     Paragon's own on-file ruling ("[c]an be played any time during the
+     action before resolution; a block attempt is not required") and the
+     rulebook's own general sentence restricting only *adding* (not
+     *decreasing*) stealth/intercept to the "only when needed" ping-pong
+     ("intercept can be added during an action only when needed, only by a
+     blocking minion when...", `data/sources/rulebook/2026-10-09/
+     4-detailed-turn-sequence.md:561-563`) both show this card is not
+     subject to that per-candidate, only-when-needed gating at all -- it can
+     be played proactively, before any block attempt exists, and per the
+     rulebook's own stealth/intercept duration sentence ("all modifications
+     ... remain in effect for the duration of the action", same file lines
+     565-567) its effect should then persist and auto-apply to *every*
+     later-chosen qualifying candidate (an ally, or a vampire younger than
+     the acting vampire) for the rest of the action, not just one
+     already-fixed candidate re-decided fresh each time.
+  Modeling it instead as a `STEALTH_MODIFIER_HOOK` provider (mathematically
+  equivalent to a +1 stealth bonus for *this one* block-attempt comparison)
+  would dodge the ownership problem (that hook is already offered to
+  `actor`) but would still misrepresent which minion's stat the printed card
+  text actually modifies (intercept, a property of the blocker, not
+  stealth, a property of the actor) and would still only fire once per
+  already-chosen candidate, never persisting across the whole action the
+  way the rulebook's own duration sentence requires -- not a faithful
+  implementation of the printed text, so not built as a workaround
+  (CLAUDE.md "No engine patches ... do not hack around it inside the card
+  module").
+- What would be needed (`rules-engineer` scope, `engine/action.py`,
+  mirroring OQ-26/OQ-28's own two-step "engine mechanism first, card module
+  later" pattern): (1) a way for the *acting* player to play an
+  intercept-decreasing Action Modifier at any point from announce to
+  resolution, independent of whether a block attempt is currently in
+  progress or which phase of the "only when needed" ping-pong is active --
+  e.g. a new hook offered to `actor` once per `attempt_block` call (or
+  threaded through `pending` so it can be offered repeatedly across retries,
+  OQ-11), not gated on `stealth > intercept`/`intercept >= stealth` at all;
+  (2) a persistent, action-scoped record (in the shared `pending: dict[str,
+  Any]` scratch container already threaded through `attempt_block`/
+  `_duel_stealth_intercept`) of which such modifiers have been activated
+  this action, each carrying its own qualifying-candidate predicate (e.g.
+  "is an Ally, or is younger than vampire X") rather than a flat numeric
+  delta, so `_duel_stealth_intercept` can re-evaluate it against *whichever*
+  candidate is currently fixed, every time a block attempt is retried with a
+  new candidate within the same action -- not just the one candidate that
+  happened to be fixed at the moment the modifier was first played. Given
+  how many other printed cards share this exact "acting side decreases a
+  (some, or any future) blocking candidate's intercept" shape (see above), a
+  generic mechanism covering the whole family is likely worth more than a
+  one-off special case for Perfect Paragon alone, but that scoping call
+  belongs to `rules-engineer`, not this entry.
+- Resolution (`rules-engineer` pass, engine mechanism only -- **Perfect
+  Paragon itself stays `blocked`**, see "Impacted code" below): built
+  exactly the "What would be needed" mechanism above, generically (not
+  Perfect-Paragon-specific), mirroring OQ-26/OQ-28's own two-step "engine
+  mechanism first, card module later" pattern, so a future
+  `card-implementer` pass can wire Perfect Paragon -- and the rest of the
+  family named above -- against it directly:
+  - A new hook, `INTERCEPT_DECREASE_HOOK` (`"intercept_decrease"`,
+    `src/vtesbot/cards/registry.py::Hook.INTERCEPT_DECREASE`, new) --
+    correcting this entry's own earlier "Impacted code" guess that "no new
+    `Hook` entry is needed... `Hook.INTERCEPT_MODIFIER` already exists":
+    `INTERCEPT_MODIFIER_HOOK`'s own contract (`apply(state) -> int`, a
+    one-shot delta, offered only to `defender`, only once a candidate is
+    already fixed, gated by the "only when needed" ping-pong) cannot carry
+    a persistent, re-evaluated-per-candidate predicate record without
+    breaking every provider already registered against it
+    (`organized_resistance.py`, `protection_racket.py`) -- this needed a
+    genuinely different hook, not a reuse.
+  - Offered to `actor` (never `defender`) via `hooks.offer_until_pass`, at
+    the very top of `engine/action.py::attempt_block`'s own retry loop --
+    *before* `defender`'s candidate pool is even computed, let alone before
+    the "no candidates at all -> return `None`, no decision raised"
+    short-circuit -- so it fires even when "a block attempt is not
+    required" applies literally (no block possible at all yet, per the
+    on-file ruling quoted above). Offering it at the top of every loop
+    iteration (rather than once per `attempt_block` call) gives OQ-11's
+    "re-offered on a retried attempt" for free, with no separate plumbing.
+  - A provider's `apply(state)` return value is ignored (same contract as
+    every other `offer_until_pass` consumer); the provider's own `apply`
+    closure must instead append one `ActiveInterceptDecrease` (new frozen
+    dataclass, `engine/action.py`: `delta: int`, `qualifies: Callable[
+    [VampireInPlay], bool]`) to `pending[PENDING_INTERCEPT_DECREASE_KEY]`
+    (new key, same `pending` scratch container OQ-11 built) -- a
+    persistent record, not a one-shot numeric delta, matching this card
+    family's printed "remain in effect for the duration of the action"
+    behaviour. `qualifies` is a plain function over a `VampireInPlay`; it
+    is never itself placed into a `Decision.choices`/`.context` reachable
+    by an agent (CLAUDE.md "Information hiding"), only called from trusted
+    engine arithmetic (`_active_intercept_decrease`, new).
+  - `_duel_stealth_intercept`'s own intercept baseline (previously always
+    `0`) is now `_active_intercept_decrease(pending, blocker)` -- the sum of
+    every recorded modifier's `delta` whose `qualifies(blocker)` predicate
+    matches the specific candidate currently fixed, recomputed fresh every
+    call, never cached, so one activation correctly re-applies to each
+    later-chosen or retried (OQ-11) candidate independently. Per the
+    rulebook's own "some cards and other effects can be used to increase or
+    decrease (even below 0) a minion's stealth or intercept"
+    (`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:
+    556-557`), this baseline is deliberately never floored at 0. No other
+    change was needed anywhere in the "only when needed" ping-pong itself:
+    ordinary `INTERCEPT_MODIFIER_HOOK` additions on top of this new
+    baseline, and the final `intercept >= stealth` comparison, are
+    untouched.
+  - Zero-regression by construction: with no provider registered for
+    `INTERCEPT_DECREASE_HOOK` (every existing card and test today),
+    `_active_intercept_decrease` returns `0` and `hooks.offer_until_pass`
+    asks nothing, so every call site's behaviour is byte-for-byte unchanged
+    from before this pass.
+  - Proven by `tests/rules/test_intercept_decrease.py` (new, 7 tests), using
+    a trivial fake provider (not Perfect Paragon itself, which stays
+    registered `blocked`/`OQ-30` until a `card-implementer` pass builds it
+    against this capability): activation before any candidate exists; a
+    decrease applying only to a qualifying candidate and leaving a
+    non-qualifying one unaffected; OQ-11's own "retried attempt with a
+    different candidate" case (one activation, independently re-evaluated
+    against two different candidates within the same `attempt_block` call);
+    two independently-activated modifiers stacking; activation-or-decline
+    even when the defender has no candidate to block with at all (proving
+    "a block attempt is not required" is honoured structurally, not just by
+    claim); and an end-to-end proof through the real `perform_minion_action`
+    call site. Full suite green (675 passing,
+    `uv run pytest -q --ignore=tests/cards/test_octane.py
+    --ignore=tests/cards/test_siarhei_levchenko.py` -- those two ignored
+    files still fail to *collect* on the same pre-existing, unrelated
+    `ModuleNotFoundError: No module named 'krcg.vtes'` OQ-28's own
+    resolution already documented, confirmed unrelated to and untouched by
+    this pass), `ruff check`/`ruff format --check` clean on every file this
+    pass touched.
+  - Card registration (this engine-mechanism-only pass) was left unchanged:
+    Perfect Paragon stays `blocked`/`OQ-30` in the registry, exactly like
+    OQ-26's own engine-level resolution left Organized Resistance and
+    OQ-28's own left Slam, both pending their own later `card-implementer`
+    pass. `src/vtesbot/cards/perfect_paragon.py`'s own docstring, written
+    while this entry was still open, is now stale in places (it still
+    describes `Hook.INTERCEPT_MODIFIER` as the blocking hook and this entry
+    as "open") -- left uncorrected here, deliberately out of this pass's
+    scope (not a card module change); a future `card-implementer` pass
+    implementing this card corrects it then, the same way OQ-28's own
+    later card-level follow-up corrected Slam's own stale wording.
+- Impacted code: `src/vtesbot/engine/action.py` (`INTERCEPT_DECREASE_HOOK`,
+  `PENDING_INTERCEPT_DECREASE_KEY`, `ActiveInterceptDecrease`,
+  `_active_intercept_decrease` (new), `_duel_stealth_intercept`,
+  `attempt_block`), `src/vtesbot/cards/registry.py` (`Hook.
+  INTERCEPT_DECREASE`, new), `tests/rules/test_intercept_decrease.py` (new).
+  Card registration is unchanged: Perfect Paragon stays `blocked`, reason
+  `OQ-30`. Impacted cards (unchanged by this pass, all still unregistered
+  or `blocked`): Perfect Paragon; any future `card-implementer` pass on The
+  Missing Voice, Mole's Tunneling, Dominant Personality, Forced
+  Confessional, Council of Seraphim, Call of the Hungry Dead, Random
+  Patterns, Stygian Shroud, Suppressing Fire, Zapaderin, Smoke and Mirrors,
+  Safe Passage, Squirrel Balance, Unthinkable Humiliation, Nightshades,
+  Will-o'-the-Wisp, Obedient Flesh would hit the same gap (none currently
+  registered in this project) and can now be built against this mechanism.
+  See OQ-31 for a scoping sub-question `rules-auditor` raised on this
+  entry's first landing, about exactly *where* `INTERCEPT_DECREASE_HOOK`
+  is offered to the actor, deliberately not resolved as part of this entry.
+
+## OQ-31: Proactive-only or also reactive -- OQ-30 follow-up (status: resolved)
+
+- Situation: found by `rules-auditor` reviewing OQ-30's own engine
+  mechanism (`INTERCEPT_DECREASE_HOOK`, `src/vtesbot/engine/action.py`).
+  The rulebook's own "Summary of the Course of an Action" states, verbatim
+  (re-fetched live against <https://www.vekn.net/rulebook/4-detailed-turn-sequence>,
+  matching the local cache `data/sources/rulebook/2026-10-09/
+  4-detailed-turn-sequence.md:460-462`): "Action modifiers and reaction
+  cards can be played at any time before resolution during an action, with
+  the acting Methuselah getting the opportunity to play first." This is a
+  general statement about every Action Modifier (not specific to the
+  intercept-decrease family OQ-30 names), and does not itself distinguish
+  "before any blocking candidate is chosen" from "reactively, once a
+  specific candidate is already fixed, at the moment impulse would
+  otherwise return to the acting Methuselah mid-ping-pong."
+- What the built mechanism actually offers: `attempt_block` offers
+  `INTERCEPT_DECREASE_HOOK` to `actor` only at the top of its own outer
+  retry loop -- i.e. either before any candidate exists yet, or after a
+  fully-failed attempt is about to be retried with a (possibly different)
+  candidate. It is never offered inside `_duel_stealth_intercept`'s own
+  ping-pong itself, specifically at the point in that loop's `else` branch
+  (`stealth <= intercept`, where impulse already returns to the acting
+  Methuselah with *this specific, now-known* candidate fixed) -- that
+  moment currently only offers `STEALTH_MODIFIER_HOOK`, never
+  `INTERCEPT_DECREASE_HOOK`. Concretely: if the defender's very first
+  candidate choice already succeeds (intercept >= stealth, no retry ever
+  happens), the actor only ever had the earlier, "blind" proactive window
+  (before that candidate was even chosen) to decrease *that* candidate's
+  intercept -- never a later, reactive chance once the candidate was
+  already known and the block was already about to succeed against it.
+- Why this was not resolved as part of OQ-30: OQ-30's own analysis (and
+  Perfect Paragon's own on-file ruling, "[c]an be played any time during
+  the action before resolution; a block attempt is not required" [LSJ
+  20020612]) only establishes that a block attempt is *not required* for
+  the play to be legal at all -- it does not itself settle whether the
+  rulebook's "any time before resolution" additionally entitles the actor
+  to a *reactive* offer once a specific candidate is already fixed and the
+  impulse is already at the acting Methuselah's own turn in the ping-pong,
+  as opposed to only a proactive, blind offer before any candidate exists.
+  Per CLAUDE.md's no-guessing rule, this is not decided silently.
+- Candidate readings:
+  - **A (implemented today):** the proactive-only window built by OQ-30 is
+    sufficient -- "any time before resolution... acting Methuselah getting
+    the opportunity to play first" is satisfied by *an* opportunity to play
+    before resolution (which the top-of-retry-loop offer provides), not
+    necessarily one offered again at every later impulse-return moment
+    within the same action for a hook whose own gating is not itself tied
+    to the "only when needed" ping-pong's turn structure.
+  - **B:** the actor must also be offered `INTERCEPT_DECREASE_HOOK`
+    reactively inside `_duel_stealth_intercept`'s own ping-pong, at the
+    exact point impulse already returns to the acting Methuselah with a
+    specific candidate fixed (today's `else` branch, alongside
+    `STEALTH_MODIFIER_HOOK`) -- since the general "any time before
+    resolution" sentence draws no proactive/reactive distinction, and the
+    rulebook's own impulse rule (`data/sources/rulebook/2026-10-09/
+    8-glossaries.md:86-89`, "[i]f two or more Methuselahs want to play a
+    card or effect, the acting Methuselah plays first... [a]t every stage,
+    the acting Methuselah always has the impulse") is written generically
+    for every stage of an action, not only the proactive, pre-candidate
+    moment this entry's engine mechanism currently covers.
+- What would be needed to resolve: re-fetch the rulebook's Action Modifier
+  timing rule and the Rulebook SS2 Sequencing/impulse section together
+  (both cited above) and determine whether "any time before resolution"
+  is satisfied by a single proactive opportunity per action, or requires a
+  reactive offer at every later impulse-return point too; if still
+  unsettled by the primary sources, this may need the project owner's own
+  call, the same way OQ-20's own casting-order ambiguity did.
+- Resolution (`User Ruling`, settled by the project's owner, same
+  precedent as OQ-20's own casting-order call): **Reading B**. The actor
+  must also be offered `INTERCEPT_DECREASE_HOOK` reactively inside
+  `_duel_stealth_intercept`'s own ping-pong, at the exact impulse-return
+  moment where a specific blocking candidate is already fixed (the `else`
+  branch, `stealth <= intercept`) -- not only proactively at `attempt_
+  block`'s own outer retry-loop top. Both opportunities coexist: Reading B
+  adds a reactive offer, it does not remove the proactive one.
+  - Engineering follow-up (`rules-engineer` pass, done): `_duel_stealth_
+    intercept`'s `else` branch now offers both `STEALTH_MODIFIER_HOOK`'s
+    and `INTERCEPT_DECREASE_HOOK`'s own currently-legal options to `actor`,
+    merged into *one* `Decision` via a new helper, `_ask_stealth_or_
+    decrease` (`src/vtesbot/engine/action.py`) -- mirroring `engine/
+    combat.py::_ask_strike`'s own precedent for merging two distinct hooks'
+    choices into one offer for the same player at the same impulse moment
+    (`COMBAT_STRIKE_OPTION_HOOK`/`COMBAT_DODGE_OPTION_HOOK`), rather than
+    two sequential asks: nothing in the rules orders one Action Modifier
+    ahead of another at a single impulse point, so there is no principled
+    basis for picking a priority order between the two hooks, only for
+    offering both at once (same reasoning `_ask_strike` already
+    established for strike vs. dodge). The merged `Decision` is kept under
+    the *pre-existing* `STEALTH_MODIFIER_HOOK` kind (`"stealth_modifier"`),
+    not a third name: whenever no `INTERCEPT_DECREASE_HOOK` provider is
+    registered (every card implemented before this entry), `decrease_
+    options` is always empty and the `Decision` built is byte-for-byte
+    identical to the pre-OQ-31 one -- confirmed by the full suite (including
+    every `"stealth_modifier"`-scripted test across `tests/cards/
+    test_bonding.py`, `test_enchant_kindred.py`, `test_line_brawl.py`, and
+    `tests/rules/test_pending_modifier.py`, `test_action_discriminator.py`,
+    `test_action_card_play.py`, `test_hooks.py`) passing unmodified, with no
+    test file other than `tests/rules/test_intercept_decrease.py` touched by
+    this pass.
+  - Choosing a decrease option calls its `apply(state)` (ignoring the return
+    value, per `INTERCEPT_DECREASE_HOOK`'s own contract) and then
+    recomputes `intercept` fresh from `_active_intercept_decrease(pending,
+    blocker)` (never cached, same as the baseline computed at the top of
+    `_duel_stealth_intercept`); choosing a stealth option still adds its
+    `apply(state)` return value to `stealth`, unchanged. Either way the
+    outer `while True:` loop naturally re-evaluates `if stealth > intercept`
+    on the next iteration, which is what correctly hands the turn back to
+    the defender's own `INTERCEPT_MODIFIER_HOOK` offer the moment a reactive
+    decrease (or a stealth increase) flips the comparison -- no separate
+    "which side's turn is it now" bookkeeping was needed beyond what the
+    existing loop structure already provided.
+  - A reactively-activated modifier is recorded into the exact same
+    `pending[PENDING_INTERCEPT_DECREASE_KEY]` list a proactively-activated
+    one would be (same hook, same provider contract, same persistent-record
+    mechanism, OQ-30) -- so it composes identically with OQ-11's "retried
+    attempt with a different candidate" case regardless of which call site
+    activated it; no separate code path was needed for this.
+  - Proven by four new tests in `tests/rules/test_intercept_decrease.py`:
+    `test_actor_may_decline_proactively_and_still_play_the_modifier_
+    reactively` (the motivating scenario: the defender's first and only
+    candidate would otherwise succeed outright; the actor declines the
+    proactive offer, then activates the same modifier reactively once that
+    candidate is fixed, turning the would-have-succeeded block into a
+    failure); `test_reactive_offer_is_merged_with_stealth_modifier_into_
+    one_decision` (both a stealth provider and a decrease provider
+    registered; the actor picks the decrease option specifically out of a
+    `Decision` that also legally offered the stealth option, proving the
+    merge, not a replacement); `test_zero_regression_reactive_point_
+    unaffected_when_no_decrease_provider_registered` (the pre-existing
+    stealth-only shape, byte-for-byte); and the pre-existing `test_the_
+    defender_never_sees_the_activated_modifiers_qualifies_predicate`
+    (unmodified, still green) continuing to confirm the information-hiding
+    fix holds at this new offer point too (`_ask_stealth_or_decrease`
+    builds `Decision.context` via `hooks.sanitize_decision_context`, same
+    as `_ask_modifier`). Full suite green (682 passing), `ruff check`/
+    `ruff format --check`/`pymarkdown` clean.
+- Impacted code: `src/vtesbot/engine/action.py` (`_duel_stealth_intercept`,
+  new `_ask_stealth_or_decrease`), `src/vtesbot/cards/registry.py`
+  (`Hook.INTERCEPT_DECREASE`'s docstring updated to describe both offer
+  points), `tests/rules/test_intercept_decrease.py` (three new tests).
+  Impacted cards: none yet (Perfect Paragon and the rest of OQ-30's own
+  named family all stay unregistered/`blocked` pending a `card-implementer`
+  pass) -- a future pass wiring any of them against `INTERCEPT_DECREASE_
+  HOOK` now has both offer points available with no further engine work
+  needed.

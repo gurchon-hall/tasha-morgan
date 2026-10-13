@@ -128,10 +128,11 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
     # University, England (101341) have since been implemented (OQ-6 and
     # OQ-23 both resolved; `engine/politics.py::resolve_referendum`,
     # `src/vtesbot/cards/oxford_university_england.py`) and are checked
-    # separately below, not here.
+    # separately below, not here. Perfect Paragon (101387) is also checked
+    # separately below: OQ-6 and OQ-30/OQ-31 are all resolved, so it is now
+    # `implemented` too (`cards/perfect_paragon.py`).
     for krcg_id in (
         100557,  # Disputed Territory
-        101387,  # Perfect Paragon
         101686,  # Scalpel Tongue
         102131,  # Voter Captivation
         201529,  # Alexa Draper
@@ -148,6 +149,7 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
         101056,  # Kine Resources Contested
         101353,  # Parity Shift
         101341,  # Oxford University, England
+        101387,  # Perfect Paragon
     ):
         reg = registry.get(krcg_id)
         assert reg is not None, f"expected a registry entry for krcg_id {krcg_id}"

@@ -210,6 +210,88 @@ def test_resolve_impulse_window_snaps_back_to_the_acting_player_after_any_use():
     p2.assert_exhausted()
 
 
+def test_sanitize_decision_context_strips_pending_but_keeps_everything_else():
+    """Direct unit test of the helper itself (`rules-auditor` finding, OQ-30,
+    `docs/OPEN_QUESTIONS.md`): `"pending"` is removed, every other key is
+    passed through unchanged, and the input `context` is not mutated."""
+    context = {"actor": "P1", "pending": {"stashed": object()}, "action": "bleed"}
+
+    sanitized = hooks.sanitize_decision_context(context)
+
+    assert sanitized == {"actor": "P1", "action": "bleed"}
+    assert "pending" in context  # the input mapping itself is untouched
+
+
+def test_offer_until_pass_never_exposes_pending_in_the_decisions_context():
+    """`rules-auditor` finding (OQ-30): `offer_until_pass` must build
+    `Decision.context` via `sanitize_decision_context`, not a bare
+    `dict(context)` -- the provider itself still receives the full
+    `context` (including `pending`), only the agent-visible `Decision`
+    must not."""
+    from vtesbot.engine.decision import Choice
+
+    seen_by_provider = {}
+
+    def provider(state, context):
+        seen_by_provider.update(context)
+        return [hooks.HookOption(choice=Choice("tick", "Tick"), apply=lambda s: None)]
+
+    hooks.register("fake_loop_pending", provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    seen_contexts = []
+
+    class RecordingAgent(ScriptedAgent):
+        def decide(self, observation, decision):
+            seen_contexts.append(decision.context)
+            return super().decide(observation, decision)
+
+    agent = RecordingAgent("P1")
+    agent.expect("fake_loop_pending", "pass")
+    game.state.agents["P1"] = agent
+
+    live_pending = {"stashed": 1}
+    hooks.offer_until_pass(game.state, "fake_loop_pending", "P1", context={"pending": live_pending})
+
+    assert seen_by_provider["pending"] is live_pending  # provider still gets the real object
+    assert all("pending" not in ctx for ctx in seen_contexts)  # agent never does
+    agent.assert_exhausted()
+
+
+def test_resolve_impulse_window_never_exposes_pending_in_the_decisions_context():
+    """Same `rules-auditor` finding (OQ-30) for the two-sided impulse window."""
+    from vtesbot.engine.decision import Choice
+
+    def provider(state, context):
+        if context.get("player") != "P1":
+            return []
+        return [hooks.HookOption(choice=Choice("tick", "Tick"), apply=lambda s: None)]
+
+    hooks.register("fake_window_pending", provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    seen_contexts = []
+
+    class RecordingAgent(ScriptedAgent):
+        def decide(self, observation, decision):
+            seen_contexts.append(decision.context)
+            return super().decide(observation, decision)
+
+    p1 = RecordingAgent("P1")
+    p1.expect("fake_window_pending", "pass")
+    p2 = ScriptedAgent("P2")
+    game.state.agents["P1"] = p1
+    game.state.agents["P2"] = p2
+
+    hooks.resolve_impulse_window(
+        game.state, "fake_window_pending", "P1", "P2", context={"pending": {"stashed": 1}}
+    )
+
+    assert all("pending" not in ctx for ctx in seen_contexts)
+    p1.assert_exhausted()
+    p2.assert_exhausted()
+
+
 def test_block_attempt_offers_no_stealth_or_intercept_decision_without_providers():
     """Zero-regression check: with no stealth/intercept provider registered,
     `attempt_block` behaves exactly as before this pass's hook wiring (see
