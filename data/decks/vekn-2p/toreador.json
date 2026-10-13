@@ -10,8 +10,7 @@
       "capacity": 9,
       "group": 7,
       "krcg_id": 201694,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-33"
+      "implementation_status": "implemented"
     },
     {
       "name": "Marcos Belegrad",
@@ -35,7 +34,7 @@
       "capacity": 6,
       "group": 6,
       "krcg_id": 201561,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Maila",
@@ -43,7 +42,7 @@
       "capacity": 6,
       "group": 6,
       "krcg_id": 201633,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Carmelita Neillson",

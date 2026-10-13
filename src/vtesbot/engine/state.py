@@ -57,6 +57,24 @@ class VampireInPlay:
     """Cards physically on this vampire (discipline/archetype master cards,
     equipment, retainers -- CLAUDE.md SS5/SS6 "equipment"/"retainer" hook
     categories; see `engine/cards.py::CardAttachment`)."""
+    ability_used_turn: dict[str, int] = field(default_factory=dict)
+    """Generic "once per X" scratch for a printed ability capped by Rulebook
+    SS3 "Wording templates" > "During X, do Y" ("only one Y can be done per
+    X with this card") when X is a whole turn -- e.g. Maila (krcg id 201633,
+    `src/vtesbot/cards/maila.py`), "If Maila is ready during your turn, you
+    can discard a political action card to give a minion you control +1
+    stealth for the current action," capped "once during each of your
+    turns" [RBK wording-templates] [ANK 20230122]. Keyed by a provider-chosen
+    string (e.g. `"maila_discard_for_stealth"`), storing the
+    `GameState.turn_number` the ability was last used on; a provider checks
+    `vampire.ability_used_turn.get(key) == state.turn_number`. Neither of the
+    engine's two existing scratch containers is turn-scoped: `pending`
+    (`engine/action.py::perform_minion_action`) spans one *action*, and
+    `apply_chosen_option`'s `cancel_context["pending"]` spans one
+    *referendum* -- so this is a new, minimal, generic field, not a
+    repurposing of either. Default-valued like every other field here
+    (`blood`/`zone`/`locked`/`wounded`/`contested_with`); adding it changes
+    no existing behaviour."""
 
     @property
     def is_ready_unlocked(self) -> bool:
