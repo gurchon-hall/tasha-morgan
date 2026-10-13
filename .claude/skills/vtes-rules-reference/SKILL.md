@@ -212,3 +212,51 @@ If an archived entry (`OQ-<n>` in `docs/open_questions_archive/`)
 later needs a resolution update (e.g. a `rules-auditor` follow-up),
 edit it in place in its archive file — do not move it back to
 `docs/OPEN_QUESTIONS.md` just to append to it.
+
+## Closing an entry (mandatory trim)
+
+The instant an entry's status flips to `resolved` (whether that
+happens in `docs/OPEN_QUESTIONS.md` or directly in an archive file via
+the update path above), rewrite its body down to exactly three
+bullets — drop everything else (audit-round play-by-play, rejected
+alternatives, full "impacted code" file lists, test-file enumerations,
+pass counts): this is an editorial trim of the same entry, not a
+re-litigation, so no fact may change, only its length.
+
+```text
+## OQ-<n> - <Card/Topic name> - <short description>   (status: resolved)
+- Situation:
+- Rules/interactions:
+- Solution:
+```
+
+- **Title**: `OQ-<n> - <Card or Topic name, if one exists> - <short
+  description>`. Tie the title to the specific card that was blocked
+  wherever one exists (e.g. `OQ-32 - Diana Iadanza - No "cancel as
+  played" hook`); fall back to a plain topic description only for an
+  entry with no associated card (e.g. `OQ-2 - Interface target`).
+- **Situation**: the problem found, in enough detail to stand alone —
+  what card/text/rule prompted it, why it blocked something.
+- **Rules/interactions**: the sourced reading that settles it — the
+  governing rule/ruling/citation, condensed to what it actually says,
+  not the research narrative that led there.
+- **Solution**: what was built or decided, and what (if anything) is
+  deliberately still left open for a future pass. Name the lasting
+  pointers (new hooks, modules, functions) a future implementer needs;
+  drop the rest.
+- An entry still `open` is never trimmed this way — only a `resolved`
+  one, the moment it closes.
+
+This applies whether the entry is being newly resolved, or archived
+later still in its original, untrimmed form (archive it after trimming
+first — the trim is not part of the archive-move step itself, it
+happens as soon as the status flips to `resolved`, which may be well
+before that entry's own turn to be archived).
+
+### Archive index summary
+
+`docs/open_questions_archive/INDEX.md` lists one row per archived
+`OQ-<n>` (not grouped into ranges), with columns `OQ | Archive file |
+Summary`. `Summary` is that entry's own title (everything after the
+number in its heading) — update it in the same change that moves an
+entry into an archive file.

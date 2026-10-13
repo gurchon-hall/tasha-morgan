@@ -2,1083 +2,146 @@
 
 Rules or card interactions that the official sources do not settle.
 Nothing listed here may be implemented by guessing. Format and
-procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`.
+procedure: see `.claude/skills/vtes-rules-reference/SKILL.md`. A
+resolved entry is trimmed to Situation / Rules & interactions /
+Solution only, with its title tied to the card it blocked wherever
+one exists.
 
 Capped at 25 entries (`docs/DECISIONS.md` D-6). Older `resolved`
 entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-9: stealth_modifier omits action type -- Bonding (status: resolved)
+## OQ-9 - Bonding - stealth_modifier omits action type (status: resolved)
 
-- Situation: card text (verbatim, via krcg, 2026-10-09): "Only usable during
-  a bleed action. [dom] +1 bleed (limited). [DOM] +1 stealth and +1 bleed
-  (limited)." Rulings (verbatim): "[DOM] Cannot be used if you do not need
-  the stealth at the time you play it." [TOM 19951109]; "[DOM] Cannot be
-  used to increase the stealth of a non-bleed action." [LSJ 19980824] [RTR
-  19941109]. Not a ruling ambiguity -- both the printed restriction and the
-  ruling are explicit and consistent. The block is a missing engine
-  capability.
-- The basic-level clause ("[dom] +1 bleed (limited)") is clean and would be
-  implementable exactly like `src/vtesbot/cards/threats.py` (same
-  `"bleed_amount_modifier"` hook, only ever offered from `_perform_bleed`,
-  so "only usable during a bleed action" is automatically satisfied for that
-  clause with no extra check).
-- What is blocked: the superior-level clause additionally grants "+1
-  stealth," which must go through the already-wired `"stealth_modifier"`
-  hook (`engine/action.py::_duel_stealth_intercept`) to have any actual
-  effect on whether a block attempt succeeds (the `"bleed_amount_modifier"`
-  window only opens *after* the bleed is already unblocked, per
-  `telepathic_counter.py`'s own documented timing note, so applying "+1
-  stealth" there would be too late to matter -- not a legal substitute).
-  However, `_duel_stealth_intercept` is called identically by both
-  `engine/phases/minion.py::_perform_bleed` and `_perform_hunt` (both route
-  through `engine/action.py::perform_minion_action`), and the context dict
-  it builds (`actor`, `defender`, `acting_vampire`, `blocking_vampire`,
-  `stealth`, `intercept`) carries no field saying which action (bleed vs.
-  hunt) is currently being attempted. A provider registered against
-  `"stealth_modifier"` therefore cannot tell whether "Only usable during a
-  bleed action" / "[DOM] Cannot be used to increase the stealth of a
-  non-bleed action" is satisfied. The only available proxy -- the numeric
-  `base_stealth` the window started from (0 for bleed, 1 for hunt, per
-  `engine/phases/minion.py`'s `BLEED_STEALTH`/`HUNT_STEALTH` constants) --
-  is an implementation-detail coincidence, not sourced from the card text or
-  a ruling, and would break silently if any other stealth-modifying card
-  ever changed a hunt's stealth before Bonding is offered, or if those
-  constants changed; relying on it would be exactly the "no guessing" the
-  project forbids.
-- Because the card's superior clause cannot be correctly gated, and the
-  registry/CLAUDE.md model a card as either fully `implemented` (all of its
-  text, with basic/superior tested separately) or `blocked` -- not a partial
-  implementation of only the clean clause -- the whole card is blocked
-  pending the fix below.
-- What would be needed: thread an action-type discriminator (e.g. `action:
-  Literal["bleed", "hunt"]`, or equivalently the resolved action's own
-  identity) through `engine/action.py::perform_minion_action` /
-  `attempt_block` / `_duel_stealth_intercept` into the context passed to
-  `hooks.offer(STEALTH_MODIFIER_HOOK, ...)` (and, for symmetry/future cards,
-  probably `INTERCEPT_MODIFIER_HOOK` too). This is `rules-engineer` scope
-  (it touches `engine/action.py` and its callers in `engine/phases/
-  minion.py`).
-- Impacted code (at the time this was opened): `src/vtesbot/engine/
-  action.py`, `src/vtesbot/engine/phases/minion.py`. Impacted cards: Bonding
-  (registered `blocked`, reason `OQ-9`).
-- Resolution (`rules-engineer` pass): `engine/action.py::perform_minion_
-  action`, `attempt_block` and `_duel_stealth_intercept` all gained an
-  `action: str | None = None` parameter, forwarded unchanged into the
-  `"stealth_modifier"`/`"intercept_modifier"` hook context (`context
-  ["action"]`) and into the `"block_attempt"` decision's own context. Used a
-  plain `str | None` rather than a closed `Literal["bleed", "hunt"]`:
-  `engine/politics.py::political_action` already calls `attempt_block`
-  directly for a third action kind (`"political_action"`), and a closed
-  Literal would need editing again for every future default minion action
-  (equip, leave torpor, etc.) -- an open string name avoids re-touching
-  `engine/action.py` for that reason alone, while still giving a provider
-  something concrete to check instead of guessing from `base_stealth`'s
-  numeric value. Production call sites updated: `engine/phases/minion.py::
-  _perform_bleed` passes `action="bleed"`, `_perform_hunt` passes
-  `action="hunt"`, `engine/politics.py::political_action` passes
-  `action="political_action"`. Existing callers that do not pass `action`
-  (all pre-existing tests) default to `None` -- a zero-regression change
-  (confirmed: all 113 previously-passing tests still pass unmodified).
-  Proven end-to-end (production call sites, not just the lower-level
-  helpers) by `tests/rules/test_action_discriminator.py`, including a fake
-  "only during a bleed" provider (stand-in for Bonding's superior clause)
-  that fires for a bleed and is silent for a hunt.
-- Follow-up (`rules-auditor` finding, same pass): the three producing call
-  sites (`engine/phases/minion.py`'s two, `engine/politics.py`'s one) passed
-  bare string literals (`"bleed"`, `"hunt"`, `"political_action"`) into
-  `action=...` -- a future typo (e.g. `"Bleed"`) would not raise, it would
-  just silently fail to match a hook provider's own `context.get("action")
-  == ...` check, exactly the "never mis-resolves a card" risk CLAUDE.md
-  warns against. Fixed by adding named, open-string constants
-  `ACTION_BLEED = "bleed"`, `ACTION_HUNT = "hunt"`,
-  `ACTION_POLITICAL = "political_action"` to `engine/action.py` itself (kept
-  as plain module-level `str` constants, not a closed `Literal` or a new
-  `StrEnum`, for the same "more default actions are coming" reason the
-  parameter type stayed an open `str | None`); the three call sites, and the
-  `Choice`/comparison in `engine/phases/minion.py::
-  _choose_and_perform_action`, now import and use them instead of
-  re-typing the strings. Any future hook provider gating on a specific
-  action should import and compare against these constants too, rather than
-  hard-coding its own copy. Zero-regression (same 135 tests pass).
-- Impacted code: `src/vtesbot/engine/action.py`,
-  `src/vtesbot/engine/phases/minion.py`, `src/vtesbot/engine/politics.py`.
-  Card registration is unchanged (Bonding stays `blocked`/`OQ-9` in the
-  registry; re-implementing it against this capability is
-  `card-implementer`'s job).
+- Situation: Bonding (100236)'s superior clause grants "+1 stealth,"
+  usable only during a bleed action — but the `"stealth_modifier"`
+  hook context carried no field saying which action (bleed vs. hunt)
+  was in progress, so a provider could not correctly gate on it.
+- Rules/interactions: card text and rulings ([TOM 19951109],
+  [LSJ 19980824]/[RTR 19941109]) are explicit and consistent — not a
+  ruling ambiguity, a missing engine capability.
+- Solution: threaded an `action: str | None` discriminator through
+  `perform_minion_action`/`attempt_block`/`_duel_stealth_intercept`
+  into the stealth/intercept hook context and the block-attempt
+  decision; production call sites pass named constants
+  `ACTION_BLEED`/`ACTION_HUNT`/`ACTION_POLITICAL` (added so a future
+  typo can't silently fail to match a provider's own check). Card
+  itself stays `blocked` (see OQ-11 for the remaining gap).
 
-## OQ-10: Contested unique allies lack hidden state (status: resolved)
+## OQ-10 - Contested unique allies lack hidden state (status: resolved)
 
-- Situation: found by `rules-auditor` while re-reviewing OQ-7's ally
-  Observation fix. `AllyView`/`build_observation`
-  (`src/vtesbot/engine/observation.py`) show every in-play ally
-  unconditionally to both players, on the premise that an ally has no
-  face-down state. That premise is correct for a *non-unique* ally, but not
-  in general. Not a ruling ambiguity -- the text is plain. The block is a
-  missing engine representation, same category as OQ-7/8/9.
-- Sources: Rulebook SS4 ("ADVANCED RULES > Contested Cards", live-fetched
-  and cross-checked against the local cache
-  `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`): "Some of
-  the cards in the game represent unique resources, such as specific
-  locations, equipment, or people. These cards will be identified as
-  'unique' in their card text... If more than one unique card with the same
-  name is brought into play, that means control of the card is being
-  contested. For the duration of the contest, all of the contested cards
-  are turned face down and are out of play." The 2P variant's
-  contested-crypt-card override (stay in play, usable, 1 pool/unlock phase
-  or yield) is scoped to crypt cards only -- re-checked live, the variant
-  page's own section is titled "Contested crypt cards" and never mentions
-  allies, equipment or locations. So a contested *unique* ally follows the
-  unmodified rulebook rule: face down, out of play, for both copies, for
-  the contest's duration.
-- What's missing: `AllyInPlay` (`engine/state.py`) has no `contested_with`
-  field (unlike `VampireInPlay`, which has one, consumed by
-  `engine/contests.py::detect_contest_on_reveal`/`resolve_one_contest`);
-  `recruit_ally` (`engine/allies.py`) never checks for an opposing
-  same-name unique ally already in play; `AllyView`/`build_observation`
-  have no branch to hide a contested ally's identity.
-- Why this is open, not yet fixed: practical impact today is zero -- no
-  code path can create two controllers' copies of the same unique ally (no
-  "recruit ally" minion action exists yet, and the only unique-ally card in
-  the pool, 47th Street Royals, is still `blocked`/OQ-7). This is a latent
-  gap flagged before it becomes live, not an active information leak.
-- What would be needed: extend `AllyInPlay` with contest tracking mirroring
-  `VampireInPlay.contested_with`/`engine/contests.py`, and give
-  `AllyView`/`build_observation` a hidden/anonymized branch for a contested
-  ally, analogous to how an opponent's face-down uncontrolled vampire is
-  anonymized today. `rules-engineer` scope.
-- Also worth a quick sweep (not done yet): whether any other card in the 2P
-  allowed list is a unique Ally, Equipment, or Location -- the same gap
-  would apply to any of them, not just 47th Street Royals.
-- Impacted code: `src/vtesbot/engine/observation.py` (`AllyView`,
-  `build_observation`), `src/vtesbot/engine/state.py` (`AllyInPlay`),
-  `src/vtesbot/engine/allies.py` (`recruit_ally`). Impacted cards: 47th
-  Street Royals (already `blocked`/OQ-7; this is an additional prerequisite
-  before unblocking it), and any future unique Ally/Equipment/Location card.
-- Status update (`card-implementer`, 2026-10-09, see OQ-14): no longer
-  latent -- confirmed live and reachable now that OQ-12 and OQ-13 are both
-  resolved (47th Street Royals' own recruit side is otherwise ready to wire).
-- Resolution (`rules-engineer` pass, 2026-10-09): re-fetched the full
-  Rulebook SS4 "Advanced Rules > Contested Cards" section live (cross-checked
-  against the local cache, `data/sources/rulebook/2026-10-09/
-  4-detailed-turn-sequence.md`, lines 38-56) and the 2P variant's own
-  "Contested crypt cards" section (`data/sources/2p-variant/2026-10-09/
-  variant.md`), not just the single sentence this entry originally quoted.
-  Two findings refine, but do not reverse, this entry's own framing:
-  1. The base rulebook rule is one unified mechanism for *every* unique card
-     (crypt or not): "turned face down and are out of play" for the
-     contest's duration, resolved by "1 pool, which you pay during each of
-     your unlock phases. Instead of paying ... you may choose to yield the
-     card ... [burned] ... If all other cards contesting your unique card
-     are yielded, then the card is unlocked and turned face up during your
-     next unlock phase." The 2P variant's "Contested crypt cards" section
-     overrides *only* the face-down/out-of-play half, and only for crypt
-     cards -- confirmed by its own title and its own aside, "(Note: this
-     means that contested crypt cards are no longer out of play)", which by
-     negation leaves the face-down/out-of-play treatment (and the identical
-     pay-1-pool-or-yield cost) in force, unmodified, for an Ally/Equipment/
-     Location. So the contest-*resolution* mechanism for an ally is **not**
-     a genuine ruling ambiguity after all, contrary to what this entry and
-     OQ-14 anticipated when they were filed -- it is directly sourced, and
-     is the same cost structure `engine/contests.py::resolve_one_contest`
-     already applies to crypt cards.
-  2. Despite the base rule's "turned face down" wording, a contested ally's
-     *identity* is never actually secret from either player: "Recruit Ally"
-     is itself played face up at announce time (Rulebook SS4; `engine/
-     allies.py::RecruitAllySpec`'s own docstring), so a contest can only
-     ever arise the instant a *second* same-named ally is recruited, already
-     face up, against a first copy that was itself recruited face up earlier
-     -- both identities are mutually known to both players from the moment
-     the contest is created. So, unlike `VampireView`'s `visible_identity`
-     branch (which hides a genuinely-unrevealed, still-face-down
-     *uncontrolled* crypt card), no name/stat-anonymizing branch is sourced
-     or needed for `AllyView`; "face down" for an ally is a zone/usability
-     marker, not an information-hiding mechanic.
-  Built, matching this entry's own "what would be needed" almost exactly:
-  `AllyInPlay.contested_with` (`engine/state.py`, mirrors
-  `VampireInPlay.contested_with`) and a third `zone` value, `"contested"`
-  (alongside `"ready"`/`"burned"`) to represent "out of play" (distinct from
-  the crypt-card case, where the 2P override means `zone` never has to
-  change); `engine/allies.py::detect_contest_on_recruit` (mirrors
-  `engine/contests.py::detect_contest_on_reveal`'s shape: checks only the
-  opponent's allies, matches by printed name, flags both sides) -- but,
-  unlike the vampire-side function, also moves *both* colliding allies'
-  `zone` to `"contested"`, since (per finding 1 above) the ally case is not
-  shielded by any 2P "stays usable" override. Wired into the one real
-  production call site, `engine/phases/minion.py::_perform_recruit_ally`'s
-  own `resolve()`, immediately after `recruit_ally(...)` succeeds -- mirrors
-  `engine/phases/influence.py`'s own `detect_contest_on_reveal` call site
-  after a vampire's reveal. `AllyView` gained a `contested: bool` field
-  (populated from `contested_with is not None`); its docstring and
-  `build_observation`'s were corrected to no longer claim an ally has
-  nothing to hide unconditionally, while explaining (per finding 2) why no
-  anonymization branch is needed even so. Exported via `engine/__init__.py`.
-  Proven by `tests/rules/test_ally_contests.py`: two same-named allies, one
-  per player, both get `contested_with` set and `zone` moved to
-  `"contested"` (both the lower-level `detect_contest_on_recruit` call and,
-  separately, the real `_perform_recruit_ally` minion-phase path, the same
-  "production call site, not just the lower-level helper" bar OQ-13's own
-  resolution set); differently-named allies and a single player's own two
-  same-named allies (mirrors `detect_contest_on_reveal`'s identical,
-  pre-existing scope boundary -- not a new gap) are confirmed *not* to
-  contest; the `Observation` branch is proven both for a contested ally
-  (full identity still visible, `zone == "contested"`, `contested is True`)
-  and, as a zero-regression check, for an uncontested one (`contested is
-  False`, matching every pre-existing ally-visibility test unmodified). Full
-  suite green, 185 passing (up from 178; 7 new, 0 regressions), `ruff check`/
-  `ruff format --check` clean.
-  Also ran the "quick sweep" this entry flagged as not yet done: queried
-  every `Library`-type card in the active 2P allowed list
-  (`data/formats/2p/2026-10-03.json`, 198 entries) against `krcg.load()`
-  for `types` and printed text. 47th Street Royals is not the only unique
-  Ally in the pool -- six more are already 2P-legal and unimplemented (seven
-  unique allies total):
-  Double Deuce (102220), Heartrender (102327), Political Ally (101411),
-  Vagabond Mystic (102087), The Vozhd of Juiz de Fora (102364), The Vozhd of
-  Sofia (102267) -- plus one unique Equipment, Shilmulo Tarot (101767,
-  "Unique."). The fix above is general (keyed on `AllyInPlay`/`AllyView`,
-  not this specific card), so all six unique allies are covered by it the
-  moment any of them is wired. Shilmulo Tarot (Equipment) is **not**
-  covered: equipment lives in `CardAttachment` (`engine/cards.py`), a wholly
-  different representation with no `contested_with` tracking of its own --
-  that remains an open gap for a future pass, not addressed here (no card
-  module needs it yet, same "no guessing ahead of a sourced need" boundary
-  this entry itself was opened under).
-  Deliberately **not** built, and **not** a ruling ambiguity (see finding 1
-  above) -- see OQ-15: the unlock-phase pay-1-pool-or-yield loop that would
-  ever let a contested ally's controller actually resolve (end) the
-  contest. A contested ally can now be correctly detected and marked out of
-  play, but nothing yet offers either player a decision to pay or yield it,
-  so once created, a contest never ends in this engine today. Scoped out of
-  this pass deliberately (CLAUDE.md "small commits, one rule mechanism per
-  change"; this entry's own "Impacted code" list, and the task that reopened
-  it, both named `engine/state.py`/`engine/allies.py`/`engine/observation.py`
-  specifically, not `engine/phases/unlock.py`) -- tracked, not silently
-  dropped, as OQ-15.
-- Impacted code: `src/vtesbot/engine/state.py` (`AllyInPlay`), `src/vtesbot/
-  engine/allies.py` (`detect_contest_on_recruit`), `src/vtesbot/engine/
-  observation.py` (`AllyView`, `build_observation`), `src/vtesbot/engine/
-  phases/minion.py` (`_perform_recruit_ally`'s call site), `src/vtesbot/
-  engine/__init__.py` (export). Card registration is unchanged: 47th Street
-  Royals stays `blocked`/`OQ-14` (superseded reason tracked there, now
-  pointing at OQ-15 for the remaining prerequisite) -- re-implementing it,
-  and the five other now-confirmed unique allies plus Shilmulo Tarot, is
-  `card-implementer`'s job.
-  OQ-14 documents the specific re-confirmation and keeps 47th Street Royals
-  blocked on this entry until it is resolved; this entry's own analysis and
-  "what would be needed" above are unchanged and still the actual fix needed.
+- Situation: `AllyView`/`build_observation` showed every in-play ally
+  unconditionally to both players — correct for a non-unique ally but
+  not for a contested unique one.
+- Rules/interactions: Rulebook §4 Advanced Rules > Contested Cards is
+  one unified mechanism for every unique card, crypt or not (face
+  down, out of play, 1 pool/unlock-phase or yield); the 2P variant's
+  "stays in play, usable" override is scoped to crypt cards only (by
+  its own title and aside) — so a contested ally follows the
+  unmodified rulebook rule. A recruited ally is itself played face up,
+  so unlike an uncontrolled vampire a contested ally's identity is
+  never actually secret — no anonymization branch is needed, only a
+  zone/usability marker.
+- Solution: added `AllyInPlay.contested_with` and a `"contested"` zone
+  value; `engine/allies.py::detect_contest_on_recruit` (mirrors the
+  vampire-side function), wired into `_perform_recruit_ally`;
+  `AllyView.contested: bool`. A pool sweep found six more unique
+  allies plus one unique Equipment (Shilmulo Tarot) sharing this gap.
+  The resolution loop itself (pay/yield) was deliberately left to
+  OQ-15; Equipment-side tracking is left open (no card needs it yet).
 
-## OQ-11: Carrying an early hook effect forward -- Bonding (status: resolved)
+## OQ-11 - Bonding - carrying an early hook effect forward (status: resolved)
 
-- Situation: found by `card-implementer` while re-attempting Bonding after
-  OQ-9's resolution. Card text (verified live via `krcg.load()`, card id
-  `100236`, 2026-10-09, matching `data/cards/100236.json`): "Only usable
-  during a bleed action.\n[dom] +1 bleed (limited).\n[DOM] +1 stealth and
-  +1 bleed (limited)." Rulings (verbatim): "[DOM] Cannot be used if you do
-  not need the stealth at the time you play it." [TOM 19951109]; "[DOM]
-  Cannot be used to increase the stealth of a non-bleed action." [LSJ
-  19980824] [RTR 19941109]. Not a ruling ambiguity -- the text and rulings
-  are explicit and consistent. The block is a missing engine capability,
-  distinct from OQ-9
-  (which is fully resolved and is necessary but not sufficient here).
-- The basic clause ("[dom] +1 bleed (limited)") is clean and would be
-  implementable exactly like `src/vtesbot/cards/threats.py`
-  (`"bleed_amount_modifier"` hook only, no cross-window issue) -- but the
-  registry models a card as either fully implemented or blocked, not a
-  partial implementation of only the clean clause (see below), so this
-  clause is not wired either while the card as a whole stays blocked.
-- The superior clause is one single card play that must produce *two*
-  effects at once: "+1 stealth" (which can only matter if applied during
-  the block-attempt phase, before the bleed is known to be unblocked) and
-  "+1 bleed" (which can only be read by `_perform_bleed`'s `resolve()`,
-  which runs *after* the block-attempt phase concludes, per
-  `engine/action.py::perform_minion_action`'s "announce (lock) -> block
-  attempt -> resolve" ordering). OQ-9 added the `action` discriminator to
-  the `"stealth_modifier"`/`"intercept_modifier"` hook context, which lets a
-  provider correctly gate the stealth half on `action == ACTION_BLEED` --
-  but it does not give a provider any way to also deliver the bleed half
-  from that same hook application, because:
-  1. `"stealth_modifier"`'s `apply(state) -> int` contract is consumed by
-     `_duel_stealth_intercept`'s `stealth += delta`; nothing else reads its
-     return value, so a second number cannot be smuggled back through it.
-  2. The only object that models "the pending bleed amount for this
-     action", `amount_box`, does not exist yet at the time the stealth
-     window runs: `_perform_bleed`'s `resolve()` closure (the only place
-     that constructs `amount_box = [base_amount]`) is not invoked until
-     *after* `attempt_block` (and therefore the entire stealth/intercept
-     ping-pong) has already returned, per `perform_minion_action`'s own
-     body (`blocker = attempt_block(...); ...; resolve()`). There is no
-     shared, mutable, per-action container reachable from *both* the
-     stealth window's `apply()` and the later `resolve()`/amount-window
-     computation -- confirmed by reading `engine/action.py`,
-     `engine/phases/minion.py`, and grepping `engine/` for any existing
-     per-vampire/per-action scratch field (`scratch`, `pending`, `metadata`
-     all return no hits besides an unrelated comment in `combat.py`).
-  3. Applying the "+1 bleed" as an *immediate*, separate `lose_pool` call at
-     stealth-apply time (bypassing the later amount window entirely) was
-     considered and rejected: it desynchronizes from `resolve()`'s own
-     floor-at-0 clamp (`amount = max(0, amount_box[0])`) and from the
-     Edge-holder check (`if amount >= 1: state.edge_holder = player`, which
-     only inspects `resolve()`'s own locally-computed `amount`). Worked
-     example: base bleed 1, Bonding superior +1 (applied immediately,
-     unclamped) = 1 pool already lost; a later Telepathic Counter -2 in the
-     amount window reduces `resolve()`'s own `amount_box` (starting from
-     the *un-bumped* base of 1, since Bonding's +1 never reached it) to
-     `max(0, 1-2) = 0`. Total pool lost = 1 (immediate) + 0 (window) = 1,
-     and no Edge transfer -- but the *correct*, single combined total per
-     the rules would be `max(0, 1+1-2) = 0` pool lost, same Edge result.
-     The split-call approach overcharges the defender by 1 pool in this
-     case: a real mis-resolution, not merely an equivalent re-ordering (this
-     is the same category of "byte-for-byte equivalent timing" reasoning
-     `telepathic_counter.py`'s own docstring uses to justify a *different*
-     timing simplification for a card with no stealth-window interaction --
-     it does not extend to Bonding, precisely because Bonding's early
-     half has an effect, the stealth bump, that the late window cannot
-     reproduce, which is exactly why OQ-9 existed).
-  4. Storing the pending flag on `VampireInPlay.attachments` (an existing,
-     engine-exposed field) was also considered and rejected: that field's
-     documented semantics (`engine/cards.py::CardAttachment`,
-     `engine/attachments.py`) are for a *persistent* attached card
-     (Discipline/archetype masters, equipment, retainers), consulted by
-     `effective_capacity`/`effective_disciplines` every time either is
-     read anywhere in the engine (e.g. by a wholly unrelated vampire's
-     discipline check); misusing it as a one-shot transient marker for an
-     Action Modifier card (which Rulebook SS2 says goes to the ash heap
-     immediately on play, never stays "on" anything) would leak a fake
-     discipline-level/capacity contribution into every other read of that
-     vampire's effective stats for as long as the marker lived, and is
-     exactly the "hack around a missing engine mechanism inside the card
-     module" CLAUDE.md forbids.
-- What would be needed: a per-minion-action pending-modifier carryover --
-  e.g., `perform_minion_action`/`_perform_bleed` constructing one shared
-  mutable scratch container *before* `attempt_block` runs (not only inside
-  `resolve()`, as today), threading it into both the
-  `"stealth_modifier"`/`"intercept_modifier"` hook context and the later
-  `"bleed_amount_modifier"` hook context, so a provider's earlier `apply()`
-  can leave something for its own later provider call to pick up and fold
-  into the *same* clamped `amount_box` computation. This is `rules-engineer`
-  scope (`engine/action.py` and its caller `engine/phases/minion.py`), not
-  something a card module may build around.
-- Impacted code: `src/vtesbot/engine/action.py`,
-  `src/vtesbot/engine/phases/minion.py`. Impacted cards: Bonding (registered
-  `blocked`, reason `OQ-11` -- superseding the now-resolved `OQ-9` as this
-  card's blocking reason; OQ-9's own fix remains necessary groundwork,
-  reused once this gap closes).
-- Resolution (`rules-engineer` pass): built exactly the "what would be
-  needed" mechanism described above, with no new ruling required (the block
-  was always an engineering gap, not an unsettled rule). `engine/
-  action.py::perform_minion_action` now constructs one shared, mutable
-  `pending: dict[str, Any] = {}` *before* `attempt_block` runs (not only
-  inside `resolve`, which was the point of failure OQ-11 identified), and
-  threads the same object through two paths: into `attempt_block` ->
-  `_duel_stealth_intercept`, whose hook context already carried `action`
-  (OQ-9) and now also carries `pending` (`context["pending"]`) for every
-  `"stealth_modifier"`/`"intercept_modifier"` offer of that block attempt;
-  and into `resolve` itself, whose signature changed from
-  `Callable[[], None]` to `Callable[[dict[str, Any]], None]` so a caller's
-  own later hook window can read the same object back.
-  `engine/phases/minion.py::_perform_bleed`'s `resolve` closure folds
-  `pending.get(PENDING_BLEED_AMOUNT_KEY, 0)` (a new named scratch-key
-  constant, `PENDING_BLEED_AMOUNT_KEY = "bleed_amount_bonus"`) into
-  `base_amount` *before* building `amount_box`, so an earlier stealth-window
-  stash participates in the exact same `max(0, amount_box[0])` clamp-at-0
-  and `if amount >= 1: state.edge_holder = player` check as every other
-  bleed-amount contribution -- resolving the overcharge OQ-11's point 3
-  identified (the rejected "apply immediately" alternative lost 1 extra
-  pool in that worked example; this fix reproduces the correct combined
-  total). `pending` is also threaded into the `"bleed_amount_modifier"`
-  window's own context (`context={"vampire": ..., "amount": amount_box,
-  "pending": pending}`), so a provider registered there can inspect it too,
-  not only a provider registered on the earlier stealth/intercept hooks.
-  `_perform_hunt`'s `resolve` closure gained the same `pending` argument
-  (required by the shared `perform_minion_action` call-site signature) but
-  ignores it, since hunt has no later window needing it. `attempt_block` and
-  `_duel_stealth_intercept` both accept `pending` as an optional parameter
-  defaulting to a fresh empty dict, so `political_action`
-  (`engine/politics.py`, which calls `attempt_block` directly with no later
-  window of its own to feed) and every pre-existing test that does not pass
-  `pending` are unaffected -- confirmed zero-regression: all 146
-  previously-passing tests still pass unmodified.
-  Proven end-to-end by `tests/rules/test_pending_modifier.py`: a fake
-  `"stealth_modifier"` provider (stand-in for Bonding's superior clause)
-  that both bumps stealth and stashes a bleed bonus from the *same*
-  `apply()` call, with the stashed value surviving into `_perform_bleed`'s
-  `resolve` and correctly combining with a later `"bleed_amount_modifier"`
-  reduction under one shared clamp (the exact worked example from this
-  entry's point 3, confirming the overcharge no longer occurs), plus
-  zero-regression checks (default-empty `pending`, no-providers-registered,
-  and hunt ignoring the new argument without error).
-  **Not** touched, per this task's explicit scope: `src/vtesbot/cards/
-  bonding.py` stays `blocked`/`OQ-11` in the registry -- wiring Bonding
-  itself against this capability (its two providers: one on
-  `"stealth_modifier"` gated on `action == ACTION_BLEED` that both adds +1
-  stealth and stashes +1 under `PENDING_BLEED_AMOUNT_KEY`, and the basic
-  clause's existing clean `"bleed_amount_modifier"` pattern) is
-  `card-implementer`'s job in a follow-up pass.
-- `rules-auditor` review (independent, read-only): confirmed the fix is
-  correct and a genuine same-object thread end-to-end (hand-traced, not just
-  trusted from the test), confirmed zero regression to the existing
-  stealth/intercept alternation and to `political_action`, re-verified the
-  worked numeric example against the actual clamp/edge-holder code, found no
-  Bonding-specific logic in `engine/`, and re-ran the full suite/lints
-  itself (152 passed, clean). No blockers, no majors. Two minor,
-  non-blocking notes for future vigilance when the next card uses `pending`:
-  (1) `Decision.context` for `"stealth_modifier"`/`"intercept_modifier"`
-  now carries the live, still-mutable `pending` dict (a shallow `dict(context)`
-  copy, but the nested object is shared) -- harmless today since no stashed
-  value is anything other than "this card was played," already public once
-  chosen, but a future card whose stash encodes something not otherwise
-  public would leak it into the *opposing* player's own hook `Decision` one
-  window early; (2) relatedly, `pending` is a live reference, not a
-  defensive per-offer snapshot, so a future `Agent.decide` implementation
-  that mutated `decision.context` as scratch space of its own would corrupt
-  it. Neither applies to any card in the pool today; flag for
-  `rules-engineer`/`rules-auditor` to re-check once a second card registers
-  against `pending`.
-- `card-implementer` follow-up (Bonding, krcg 100236, now wired): built
-  exactly the two providers the `rules-engineer` resolution above named --
-  a `"stealth_modifier"` provider for the superior clause, gated on
-  `context.get("action") != ACTION_BLEED`, whose `apply()` both returns `1`
-  (stealth) and stashes `pending[PENDING_BLEED_AMOUNT_KEY] =
-  pending.get(PENDING_BLEED_AMOUNT_KEY, 0) + 1` (bleed), and a clean
-  `"bleed_amount_modifier"` provider for the basic clause, byte-for-byte
-  `threats.py`'s own pattern. One correction to the resolution's own
-  phrasing: the basic clause is *not* gated on `action == ACTION_BLEED` --
-  verified directly against `engine/phases/minion.py::_perform_bleed`'s
-  `resolve()` closure, the `"bleed_amount_modifier"` hook's context carries
-  no `"action"` key at all (only `"stealth_modifier"`/`"intercept_modifier"`
-  do, per OQ-9); such a gate would silently read `None != "bleed"` and
-  suppress the clause entirely. It relies on hook selection alone (the hook
-  is only ever offered from a bleed's own resolution step), exactly as
-  `threats.py` already documented for itself. Re rules-auditor's two flagged
-  vigilance notes above (Bonding being the second card to register against
-  `pending`): neither materializes here -- Bonding's own stash is just an
-  integer bleed bonus tied to a play that is already public the instant it
-  is chosen, not otherwise-hidden information, so the `Decision.context`
-  leak note does not expose anything new, and no `Agent.decide`
-  implementation in the pool mutates `decision.context`.
-  Additionally closed a related, previously-undiscovered "(limited)"
-  cross-card gap found while wiring the superior clause's interaction with
-  Threats (both are bleed-increasing "(limited)" action modifiers, but
-  Bonding's superior clause acts in the *earlier* stealth window while
-  Threats only ever acts in the *later* `"bleed_amount_modifier"` window):
-  `vtesbot.cards._shared.bleed_bookkeeping` previously keyed its "(limited)"
-  bookkeeping off `_perform_bleed`'s `resolve()`-local `amount_box`, which
-  only exists during the later window and so could not see a "(limited)"
-  increase played earlier in the same action from the stealth window --
-  Threats could have silently stacked its own +1/+2 on top of Bonding's
-  superior stash, a real rules violation (SS8 "cannot be played to increase
-  the bleed if the bleed amount is already being increased by another
-  action modifier card"), not merely a hypothetical one, since both cards
-  are implemented and legal together. Fixed by re-keying `bleed_bookkeeping`
-  off `pending` instead (same per-action lifetime, now spanning both hook
-  windows instead of only the later one) and updating `threats.py`/
-  `telepathic_counter.py`'s own calls accordingly -- a small, behaviour-
-  preserving refactor for both already-implemented cards (no test for either
-  exercises `bleed_bookkeeping` directly, and both cards' existing test
-  suites still pass unmodified). Proven by
-  `tests/cards/test_bonding.py::test_bonding_superior_blocks_a_later_threats_play_via_the_shared_limited_flag`.
-  All clauses/rulings covered by `tests/cards/test_bonding.py` (16 tests);
-  full suite green (168 passed), `ruff check`/`ruff format --check` clean.
-  Bonding is now `Status.IMPLEMENTED` in the registry; this OQ stays closed.
+- Situation: Bonding's superior clause must produce two effects from
+  one play — "+1 stealth" (usable only in the earlier block-attempt
+  window) and "+1 bleed" (only readable by the later bleed-amount
+  window) — and nothing in the engine let one hook application leave
+  something for a later one to pick up within the same action.
+- Rules/interactions: not a ruling ambiguity (OQ-9 already settled the
+  action-type gating); a missing engine primitive. Applying the bleed
+  bonus immediately instead (bypassing the later clamp) was rejected:
+  it desynchronizes from the amount-window's floor-at-0 clamp and
+  Edge-holder check, overcharging the defender in a worked example.
+- Solution: `perform_minion_action` now builds a shared, mutable
+  `pending: dict` before `attempt_block` runs, threaded into both the
+  stealth/intercept hook context and the later bleed-amount-modifier
+  context; `_perform_bleed` folds `pending[PENDING_BLEED_AMOUNT_KEY]`
+  into the base amount before the clamp. Bonding was then implemented
+  against both providers; a related cross-card "(limited)" bookkeeping
+  gap (Threats vs. Bonding's superior clause) was fixed by re-keying
+  `bleed_bookkeeping` off `pending` instead of the later-window-only
+  `amount_box`. `Status.IMPLEMENTED`.
 
-## OQ-12: "Recruit ally" action not wired -- 47th St. Royals (status: resolved)
+## OQ-12 - 47th Street Royals - recruit-ally action not wired (status: resolved)
 
-- Situation: found by `card-implementer` while re-attempting 47th Street
-  Royals after OQ-7's resolution. OQ-7 landed `AllyInPlay`
-  (`engine/state.py`), `recruit_ally`/`burn_ally` (`engine/allies.py`), and
-  full `Observation` visibility (`engine/observation.py`) for an ally
-  already in play -- enough for a *scenario test* to put the card's ally in
-  play directly (`tests/rules/test_allies.py`) and prove its own burn-to-
-  reduce-bleed reaction. But nothing in a real game ever calls
-  `recruit_ally` for a player-controlled card: `src/vtesbot/engine/phases/
-  minion.py`'s own module docstring states "all other minion actions
-  (equip, political action, leave torpor, diablerie, become Anarch, etc.)
-  are out of scope and are never offered" -- a milestone-2 scope limit
-  confirmed still in force by reading `_choose_and_perform_action`, whose
-  only two offered choices are `ACTION_BLEED`/`ACTION_HUNT`
-  (`engine/action.py`'s named constants); "recruit ally" is not among them,
-  and no other call site in `engine/` offers it either. This is distinct
-  from OQ-7 (which is fully resolved -- the ally *representation* exists and
-  works) and is a new, more precise gap: there is still no legal way for a
-  player to actually play this card from hand into the ready region in a
-  real game, independent of the ally representation itself.
-- What would be needed: a "recruit ally" minion action, offered alongside
-  bleed/hunt in `_choose_and_perform_action` (or as its own library-card
-  play analogous to a master-phase play, since recruiting an ally is itself
-  how the ally *enters* play -- Rulebook SS4 default actions: "recruit ally
-  (undirected, +1 stealth; recruited ally cannot act this turn)"), with its
-  own announce/block-attempt window mirroring
-  `engine/action.py::perform_minion_action`, whose `resolve()` would call
-  the already-built `recruit_ally`. This is `rules-engineer` scope (`engine/
-  phases/minion.py` and/or `engine/action.py`), not something a card module
-  may build around -- `card-implementer` does not attempt to wire this
-  itself per CLAUDE.md "No engine patches."
-- Impacted code (at the time this was opened): `src/vtesbot/engine/phases/
-  minion.py`, `src/vtesbot/engine/action.py`. Impacted cards: 47th Street
-  Royals (registered `blocked`, reason `OQ-12` -- superseding the now-resolved
-  `OQ-7` as this card's blocking reason; OQ-7's own fix remains necessary
-  groundwork, reused once this gap closes). Also relevant to OQ-10 (contested
-  unique allies), which is itself gated on this same missing action ever
-  becoming reachable.
-- Sources re-read before implementing (`rules-engineer` pass, per this
-  entry's own mandatory procedure): the local rulebook cache,
-  `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`
-  ("Recruit Ally" section and "Action Card (or Card in Play)"/"Summary of the
-  Course of an Action"/"Announce the Action"/"Resolve the Action"
-  subsections), quoted verbatim below where load-bearing.
-  1. **Who/cost/target/stealth** (the "Recruit Ally" section itself): "Who
-     can recruit an ally: Any ready minion." / "Cost: As listed on the ally
-     card." / "Default target: None. Undirected action." / "Default
-     stealth: +1 stealth." / "Effect: Allies are action cards that become
-     minions in their own right ... If the action is successful, the ally is
-     placed in your ready region, but they cannot act this turn. When an
-     ally is brought into play, they receive blood counters from the blood
-     bank to represent their life (listed on the ally's card)."
-  2. **When the card leaves hand, and what happens on a block** ("Announce
-     the Action" / "Resolve the Action", general to *every* action built
-     from a played card, not specific to allies): "Any card required for the
-     action is played (face up) at this time, but is temporarily set aside
-     (out of play) until the action resolves." / "If the action is
-     successful ..., then the cost of the action is paid and the effects of
-     the successful action take place. If the action is blocked, then any
-     card played to perform the action is burned ... Note that the action's
-     cost, if any, is only paid if the action succeeds; the cost is not paid
-     if the action is blocked."
-  3. **Worked example in the same section** (Dowager/Underbridge Stray,
-     "Recruit Ally" section and "Announce the Action"): confirms "undirected"
-     concretely ("It can be blocked by the ready unlocked minions of Sarah's
-     prey or Sarah's predator") and that the cost is deferred ("The blood is
-     not paid until the action succeeds").
-- Resolution (`rules-engineer` pass): built the "recruit ally" minion action
-  on top of OQ-7's `AllyInPlay`/`recruit_ally` (`engine/state.py`,
-  `engine/allies.py`), mirroring `engine/phases/master.py`'s
-  `"master_phase_play"` hook pattern (CLAUDE.md SS6: the engine exposes a
-  hook, card-specific stats/identity are supplied by the registering
-  `src/vtesbot/cards/` module, never guessed or special-cased by the
-  engine) rather than extending `engine/cards.py::LibraryCard` with new
-  generic stat fields -- no other part of the engine parses a library
-  card's own printed numbers yet (no deck-import pipeline exists per
-  CLAUDE.md's own milestone order), and the hook-based design needed no such
-  pipeline: a future Ally card module supplies its own life/strength/bleed/
-  cost directly, the same way `celerity.py`/`life_in_the_city.py` already
-  supply their own numeric effects.
-  - `engine/action.py`: added `ACTION_RECRUIT_ALLY` (OQ-9's discriminator
-    family) and a new `on_blocked: Callable[[dict[str, Any]], None] | None`
-    parameter on `perform_minion_action`, generalizing (not recruit-ally-
-    specific; reusable by a future equip/employ-retainer action) source 2
-    above: called -- instead of `resolve` -- if the action is blocked,
-    *after* `run_combat` (source 2's "burned"/"simultaneous consequences"
-    text does not mandate a code ordering relative to combat resolution
-    itself; `run_combat` has no dependency on whether the played card has
-    been burned yet, so this ordering is implementation detail, not a rules
-    question). Bleed/hunt pass nothing (default `None`), so this is
-    zero-regression for them.
-  - `engine/allies.py`: added `RecruitAllySpec` (`card: LibraryCard, life:
-    int, strength: int = 0, bleed: int = 0, pay_cost: Callable[[GameState],
-    None] | None = None`) -- the contract a `"recruit_ally_play"` hook
-    option's `apply(state)` must return. `recruit_ally`/`burn_ally`
-    themselves are unchanged.
-  - `vtesbot/cards/_shared.py`: added `play_from_hand_pending` (pop from
-    hand + draw replacement, but do *not* yet append to the ash heap --
-    source 2's "temporarily set aside ... until the action resolves");
-    `play_from_hand` is now a thin wrapper (`play_from_hand_pending` +
-    immediate ash-heap append), a behaviour-preserving refactor for every
-    existing caller (Life in the City, Bonding, Threats, Telepathic
-    Counter), since a play with no block-attempt window of its own always
-    had a certain fate the instant it was played.
-  - `engine/phases/minion.py`: added `RECRUIT_ALLY_PLAY_HOOK =
-    "recruit_ally_play"` and `RECRUIT_ALLY_STEALTH = 1` (source 1's "+1
-    stealth"), and `_perform_recruit_ally`, which calls the chosen hook
-    option's `apply(state)` immediately (source 2's announce-time card
-    removal, via `play_from_hand_pending` inside the provider), then runs
-    `perform_minion_action` with a `resolve` that pays the spec's
-    `pay_cost` (if any) and calls `recruit_ally` only on success, and an
-    `on_blocked` that appends the already-removed card to the ash heap on a
-    block (source 2's "burned"; "cost ... is not paid"). `_choose_and_
-    perform_action` folds every currently-offered `"recruit_ally_play"`
-    option directly into the same top-level `action_choice` decision
-    alongside `ACTION_BLEED`/`ACTION_HUNT` (one choice per recruitable Ally
-    card already identifies its own action, same granularity bleed/hunt
-    already have -- no separate "pick action type, then pick which ally"
-    step was needed). With no Ally card module registered against the hook
-    yet, `hooks.offer` returns `[]` and `action_choice` degrades to exactly
-    the pre-OQ-12 bleed/hunt pair (confirmed zero-regression: all 168
-    previously-passing tests still pass unmodified).
-  - Scope boundary carried over from OQ-7, re-confirmed rather than
-    silently extended: source 1's "Who can recruit an ally: Any ready
-    minion" literally includes a ready unlocked *ally*, not only a vampire.
-    `_perform_recruit_ally` is reachable only from `_choose_and_perform_
-    action`, which `minion_phase` calls only for ready unlocked *vampires*;
-    extending this to allies-as-actor is not done here, both because no card
-    in the pool needs it and because `engine/phases/unlock.py` does not
-    unlock allies at all yet (a recruited ally, entered `locked=True`, can
-    in practice never become ready-unlocked under current code regardless),
-    so building it now would be guessing ahead of a sourced need (CLAUDE.md
-    rule 2) rather than resolving one. Documented explicitly in
-    `engine/allies.py`'s and `engine/phases/minion.py`'s module docstrings
-    as a known, deliberate limit, not an oversight.
-  - Proven by `tests/rules/test_recruit_ally_action.py`: eligibility (not
-    offered with no provider registered; not offered when the provider's
-    own card is not yet in hand; offered once it is), the full success path
-    (card leaves hand immediately, never reaches the ash heap, cost paid
-    only on success, ally enters play `zone="ready"`/`locked=True`), the
-    full blocked path (card burned to the ash heap, cost never paid, no
-    `AllyInPlay` created, the blocking vampire genuinely locks and enters
-    combat -- using a fake `"intercept_modifier"` reaction provider to make
-    the block actually succeed against the +1 stealth baseline, the same
-    technique `test_action_discriminator.py`'s hunt test already needed),
-    the +1 stealth baseline itself via `perform_minion_action` directly, and
-    `on_blocked`'s generic contract (fires exactly on a block, `resolve`
-    exactly otherwise, never both) independent of recruit ally specifically.
-  - **Not** touched, per this task's explicit scope: `src/vtesbot/cards/
-    forty_seventh_street_royals.py` stays `blocked`/`OQ-12` in the registry
-    -- wiring its own `"recruit_ally_play"` provider (and its own cost,
-    which is `None` per krcg, so no `pay_cost` closure is actually needed for
-    this specific card) against this capability is `card-implementer`'s job
-    in a follow-up pass. OQ-10 (contested unique allies) remains open and is
-    now live rather than latent once that follow-up pass lands, since
-    `recruit_ally` is reachable from a real game for the first time; OQ-10's
-    own text already anticipated this.
-  - Flagged for `rules-auditor`: this is a core engine sequencing change
-    (`perform_minion_action`'s new `on_blocked` branch, a new top-level
-    minion-phase action, and a refactor of `play_from_hand`/addition of
-    `play_from_hand_pending` touching every existing card module that plays
-    a card) and should get an independent read-only review before
-    `card-implementer` touches 47th Street Royals, per CLAUDE.md SS7.
+- Situation: OQ-7 built the ally representation, but no minion action
+  let a player actually recruit one in a real game —
+  `_choose_and_perform_action` only ever offered bleed/hunt.
+- Rules/interactions: Rulebook §4 "Recruit Ally": any ready minion,
+  cost as listed on the card, undirected, +1 stealth; a played card is
+  set aside (not yet ash-heaped) until the action resolves, burned
+  only on a block (cost not paid).
+- Solution: added a "recruit ally" minion action generalizing
+  `perform_minion_action` with an `on_blocked` callback (fires instead
+  of `resolve` on a block, after combat), `RecruitAllySpec` as the
+  hook-option contract, and `play_from_hand_pending` (card leaves hand
+  immediately but isn't ash-heaped until the action resolves). Folded
+  into the same top-level action-choice decision as bleed/hunt. 47th
+  Street Royals' own card module stays `blocked` (its own provider is
+  a follow-up); deliberately not extended to allies-as-actor (no card
+  needs it, and allies aren't unlocked by the engine yet).
 
-## OQ-13: recruit_ally_play omits acting-vampire id (status: resolved)
+## OQ-13 - 47th Street Royals - recruit_ally_play omits acting vampire (status: resolved)
 
-- Situation: found by `card-implementer` while re-attempting 47th Street
-  Royals now that OQ-12 is resolved. Card text (verified live via
-  `krcg.load()`, card id `102217`, 2026-10-09, matching
-  `data/cards/102217.json`):
-  "Unique mortal with 2 life. 1 strength, 0 bleed. You can burn 47th Street
-  Royals to reduce a bleed against you by 3." `rulings == []`.
-  `clan_requirement == ["Brujah"]` per krcg -- not itself a ruling ambiguity
-  (the printed field and the rulebook's general rule for what a clan
-  requirement on a library card means, below, are both explicit and
-  consistent); the block is a missing piece of engine context, distinct from
-  OQ-12 (which only resolved whether a "recruit ally" action exists at all).
-- Who the clan requirement binds to (not a guess -- Rulebook SS2 "Card
-  Types", live-fetched and cross-checked against the local cache
-  `data/sources/rulebook/2026-10-09/2-card-types.md`, quoted verbatim):
-  "**Requirements for Playing Cards** ... Only a minion who meets the
-  requirements given on a minion card can play it, whereas only a
-  Methuselah who controls a ready minion who meets the requirements of a
-  master card can play it." The rulebook draws this contrast deliberately,
-  in the same sentence: a *minion* card's requirement binds to the specific
-  acting minion that plays it; a *master* card's requirement binds only to
-  "the Methuselah controls a ready minion meeting it", not to which minion
-  is "acting" (master cards are not played by a specific minion at all). Ally
-  cards are explicitly categorized as minion cards, not master cards: "Minion
-  Cards: Minion cards are cards that your vampires and allies (collectively
-  referred to as 'minions') play" (same source), and "Recruit Ally" (Rulebook
-  SS4, quoted in OQ-12's own resolution) is itself performed by "any ready
-  minion" -- i.e. recruiting 47th Street Royals is playing a minion card,
-  and the specific minion attempting the recruit (not merely some other
-  vampire the Methuselah happens to also control) must itself be Brujah.
-  This settles the ruling question the task that opened this entry flagged
-  as needing care ("controls a vampire of the required clan" vs. "is played
-  by a vampire of the required clan"): the correct, sourced reading is the
-  latter.
-- What's missing structurally: `_choose_and_perform_action`
-  (`src/vtesbot/engine/phases/minion.py`) already has the specific acting
-  vampire in scope (its own `vampire: VampireInPlay` parameter -- the one the
-  player already committed to via the earlier `"act_with:<id>"` choice in
-  `minion_phase`'s loop) at the point it calls `hooks.offer(
-  RECRUIT_ALLY_PLAY_HOOK, state, player=player)`, but does not forward it:
-  the context built for that `offer()` call is `{"player": player}` only.
-  Multiple vampires can be simultaneously ready-unlocked for one Methuselah
-  (`state.ready_unlocked_vampires(player)` can return more than one), and
-  `vampire.locked` is not set `True` until *after* this `offer()` call
-  returns (inside `perform_minion_action`, called later by
-  `_perform_recruit_ally`) -- so nothing reachable from `GameState` at
-  `offer()` time identifies which of possibly several ready-unlocked
-  vampires is the one currently attempting to act. A `"recruit_ally_play"`
-  provider therefore cannot correctly gate on the acting vampire's own clan:
-  checking "does `player` control *some* ready-unlocked Brujah vampire
-  anywhere" instead would silently offer the recruit option even when the
-  player chose to act with a *different*, non-Brujah vampire this impulse
-  (a real mis-resolution, not a hypothetical edge case -- two ready-unlocked
-  vampires of different clans is an ordinary mid-game state), and the
-  opposite shortcut (only ever offering it when *every* ready-unlocked
-  vampire happens to be Brujah) would incorrectly withhold a legal recruit
-  attempt whenever an unrelated non-Brujah vampire also happens to be ready.
-  Neither approximation is correct; this is not something a card module may
-  work around internally (CLAUDE.md "No engine patches").
-- What would be needed: thread the acting vampire's identity (e.g.
-  `vampire=vampire.instance_id`, mirroring how `_perform_bleed` already
-  passes `"vampire": vampire.instance_id` into `BLEED_AMOUNT_MODIFIER_HOOK`'s
-  own context) into `_choose_and_perform_action`'s
-  `hooks.offer(RECRUIT_ALLY_PLAY_HOOK, state, player=player)` call, so a
-  provider can look the vampire up (`state.players[player].vampires[...]`)
-  and check its `card.clan` before deciding whether to offer anything. This
-  is `rules-engineer` scope (`engine/phases/minion.py`), not something
-  `card-implementer` may add itself.
-- Impacted code (at the time this was opened):
-  `src/vtesbot/engine/phases/minion.py` (`_choose_and_perform_action`'s
-  `hooks.offer(RECRUIT_ALLY_PLAY_HOOK, ...)` call site). Impacted cards:
-  47th Street Royals (registered `blocked`, reason `OQ-13` -- superseding
-  the now-resolved `OQ-12` as this card's blocking reason, the same way
-  `OQ-12` superseded `OQ-7` and `OQ-11` superseded `OQ-9`; none of OQ-7's,
-  OQ-12's or this entry's own groundwork is wasted -- all three remain
-  necessary, just not yet sufficient).
-- Not blocked by this gap, and not re-litigated: the card's own reaction
-  ("You can burn 47th Street Royals to reduce a bleed against you by 3") has
-  no dependency on which vampire recruited it or on `RECRUIT_ALLY_PLAY_HOOK`
-  at all -- it remains fully provable against the already-wired
-  `"bleed_amount_modifier"` hook exactly as OQ-7's and OQ-12's own entries
-  already documented (`tests/rules/test_allies.py::
-  test_ally_burned_as_a_bleed_reduction_reaction_cost`). Per the registry's
-  established all-or-nothing convention (CLAUDE.md SS6; see OQ-9's own entry:
-  "the registry models a card as either fully implemented or blocked, not a
-  partial implementation of only the clean clause"), this clean half is
-  still not wired into the real `src/vtesbot/cards/
-  forty_seventh_street_royals.py` module while the recruit side stays
-  blocked -- exactly the precedent OQ-9/OQ-11 already set for Bonding's own
-  clean basic clause.
-- OQ-10 (contested unique allies): re-read in full while revisiting this
-  card. Still correctly out of scope/latent, not live: OQ-10's own text
-  anticipated it would become live "once [the OQ-12 follow-up] pass lands,
-  since `recruit_ally` is reachable from a real game for the first time" --
-  but with 47th Street Royals itself still blocked (now on this entry
-  instead of OQ-12), no card in the pool can actually be recruited by either
-  Methuselah in a real game yet, so nothing can create two controllers'
-  copies of the same unique ally. OQ-10 remains open but latent until both
-  this entry and OQ-10 itself are resolved.
-- Resolution (`rules-engineer` pass): threaded the acting vampire's own
-  identity into the one call site this entry identified --
-  `src/vtesbot/engine/phases/minion.py::_choose_and_perform_action`'s
-  `hooks.offer(RECRUIT_ALLY_PLAY_HOOK, state, player=player)` now also
-  passes `vampire=vampire.instance_id` (`vampire` was already the function's
-  own parameter -- the acting vampire the player committed to via the
-  earlier `"act_with:<id>"` choice in `minion_phase`'s loop), mirroring the
-  pattern `_perform_bleed` already used for `BLEED_AMOUNT_MODIFIER_HOOK`'s
-  own context. No new ruling was needed -- this entry's own "What's missing
-  structurally"/"What would be needed" paragraphs had already settled the
-  reading (Rulebook SS2 "Card Types" > "Requirements for Playing Cards") and
-  identified the exact fix; this pass is pure plumbing, deliberately scoped
-  to that one context key and nothing else.
-  - A `"recruit_ally_play"` provider can now call
-    `state.players[context["player"]].vampires[context["vampire"]]` to
-    recover the specific acting `VampireInPlay` and inspect its
-    `card.clan` before deciding whether to offer anything -- the capability
-    47th Street Royals' own clan requirement (`clan_requirement ==
-    ["Brujah"]` per krcg) needs, distinguishing "the acting vampire is
-    Brujah" from the incorrect "the Methuselah controls *some* Brujah
-    vampire" or "every ready-unlocked vampire happens to be Brujah"
-    approximations this entry's situation paragraph ruled out.
-  - Proven by `tests/rules/test_recruit_ally_action.py::
-    test_recruit_ally_play_hook_context_carries_the_acting_vampires_
-    identity`: two simultaneously ready-unlocked vampires on the same
-    Methuselah, a stub provider gated on `context["vampire"]` matching one
-    specific `instance_id` -- acting with the *other* ready-unlocked vampire
-    first does not surface the option at all; acting with the matching one
-    does. Confirms the exact mis-resolution this entry flagged (an
-    unrelated ready-unlocked vampire silently unlocking the option) cannot
-    happen. Full suite re-run green (175 passing, up from 174 -- one new
-    test, zero regressions) alongside `ruff check`/`ruff format --check`.
-  - **Not** touched, per this task's explicit scope and this entry's own
-    "Impacted code" note: `src/vtesbot/cards/forty_seventh_street_royals.py`
-    stays `blocked`/`OQ-13` in the registry -- wiring its own
-    `"recruit_ally_play"` provider against this now-available context is
-    `card-implementer`'s job in a follow-up pass (same handoff shape as
-    OQ-9 -> OQ-11 -> Bonding and OQ-7 -> OQ-12 -> the recruit-ally action
-    itself). OQ-10 (contested unique allies) remains open and latent for the
-    same reason OQ-12's own resolution already gave: no card in the pool can
-    yet actually be recruited by either Methuselah in a real game until that
-    follow-up card-implementer pass lands.
-  - Flagged for `rules-auditor`: engineering-gap fix on the same core
-    sequencing surface (`engine/phases/minion.py`) that OQ-9/OQ-11/OQ-12
-    already had independently reviewed; recommend review before
-    `card-implementer` touches 47th Street Royals again, per CLAUDE.md SS7.
+- Situation: a card's clan requirement (47th Street Royals requires
+  Brujah) binds to the specific minion playing it, not merely "the
+  Methuselah controls some vampire of that clan" — but the
+  `"recruit_ally_play"` hook's context carried no identifier for which
+  of possibly several ready-unlocked vampires was acting.
+- Rules/interactions: Rulebook §2 "Requirements for Playing Cards"
+  draws the minion-card vs. master-card distinction explicitly; a
+  minion card (which Ally cards are) binds to the acting minion
+  itself.
+- Solution: `_choose_and_perform_action` now also passes
+  `vampire=vampire.instance_id` into the hook's offer context, letting
+  a provider look up the specific acting vampire and check its clan.
+  Card module itself stays `blocked` for a future pass.
 
-## OQ-14: 47th St. Royals recruit makes OQ-10 live (status: resolved, see OQ-15)
+## OQ-14 - 47th Street Royals - recruit makes contested-ally gap live (status: resolved)
 
-- Situation: found by `card-implementer` while re-attempting 47th Street
-  Royals now that both OQ-12 (the recruit-ally action itself) and OQ-13 (the
-  acting-vampire identity needed for this card's own clan gate) are resolved.
-  Card text re-verified live this pass (`krcg.load()`, a fresh in-process
-  fetch, 2026-10-09, cross-checked byte-for-byte against `data/cards/
-  102217.json` and against the active 2P list `data/formats/2p/
-  2026-10-03.json`, which lists `krcg_id: 102217`): "Unique mortal with 2
-  life. 1 strength, 0 bleed. You can burn 47th Street Royals to reduce a
-  bleed against you by 3." `rulings == []`. `clan_requirement ==
-  ["Brujah"]`. `cost is None`. `burn_option is False`. Unchanged from OQ-7/
-  OQ-12/OQ-13's own quotes. Not a ruling ambiguity -- the printed "Unique"
-  and the already-settled Rulebook SS4 Advanced Rules > Contested Cards text
-  (quoted verbatim in OQ-10's own entry: "If more than one unique card with
-  the same name is brought into play, that means control of the card is
-  being contested. For the duration of the contest, all of the contested
-  cards are turned face down and are out of play") are both explicit. The
-  block is that wiring this specific card's own `"recruit_ally_play"`
-  provider now makes OQ-10's already-filed, already-open gap reachable in an
-  ordinary legal game for the first time, not merely a latent/future concern
-  as OQ-10's and OQ-12's own entries both explicitly anticipated it would
-  eventually become.
-- Why this is reachable now, not hypothetical: 2P decks are built
-  independently (CLAUDE.md SS3), exactly like the crypt-side contested-
-  vampire scenario the 2P variant already handles explicitly
-  (`engine/contests.py`). "Unique" restricts a single Methuselah to at most
-  one copy of a given card in their own deck (ordinary VTES deck-
-  construction convention), not across the whole format -- nothing stops
-  each player from independently including their own single copy of 47th
-  Street Royals in their own 60-card library, each with their own eligible
-  ready-unlocked Brujah vampire recruiting it on their own turn. With OQ-12
-  and OQ-13 both resolved, two ordinary 2P-legal decks (no unusual or illegal
-  build required) can now reach this sequence of in-game decisions for the
-  first time.
-- Re-confirmed by grep, this pass, not assumed, that the engine still has
-  zero uniqueness enforcement for an ally, unlike a vampire:
-  - `engine/contests.py::detect_contest_on_reveal`'s only call site, project-
-    wide, is `engine/phases/influence.py` (a vampire's reveal into the
-    ready/torpor region); it is never called from `engine/allies.py::
-    recruit_ally` or `engine/phases/minion.py::_perform_recruit_ally`.
-  - `engine/state.py::AllyInPlay` has no `contested_with` field at all
-    (unlike `VampireInPlay.contested_with`).
-  - `recruit_ally` performs no check against any existing ally already in
-    play (either player's) by name/krcg_id before creating a new
-    `AllyInPlay`.
-  - `engine/observation.py::AllyView`/`build_observation` show every in-play
-    ally unconditionally to both players (OQ-7's own follow-up note), with
-    no hidden/anonymized branch for a contested ally (unlike `VampireView`'s
-    `contested` field and the uncontrolled-vampire anonymization already in
-    place for vampires).
-- Consequence if shipped as-is: if both Methuselahs each recruit their own
-  copy of 47th Street Royals, the engine would silently create two
-  independent, fully-visible `AllyInPlay` instances both named "47th Street
-  Royals" under two different controllers -- not the Rulebook-mandated "face
-  down and out of play for the duration of the contest" treatment. This is a
-  genuine mis-resolution of the Unique rule (CLAUDE.md "never mis-resolves a
-  card"), not a hypothetical edge case, the moment this card's own recruit-
-  eligibility provider is wired into a real game.
-- Not something this module may work around: CLAUDE.md "No engine patches"
-  / "Do not hack around it inside the card module" -- a card-module-level
-  same-name check would be an unsanctioned, incomplete substitute for OQ-10's
-  own already-specified fix (contest tracking plus face-down/hidden
-  treatment), not a legal implementation of the Rulebook's actual contested-
-  card procedure, and would still miss the face-down/out-of-play visibility
-  requirement entirely even if it somehow prevented a second recruit.
-- What would be needed: OQ-10's own resolution, verbatim ("extend
-  `AllyInPlay` with contest tracking mirroring `VampireInPlay.
-  contested_with`/`engine/contests.py`, and give `AllyView`/
-  `build_observation` a hidden/anonymized branch for a contested ally"),
-  plus wiring `recruit_ally`/`_perform_recruit_ally` to call the ally-side
-  equivalent of `detect_contest_on_reveal` once an ally is recruited. This is
-  `rules-engineer` scope (`engine/state.py`, `engine/allies.py`,
-  `engine/observation.py`), not something `card-implementer` may build
-  around.
-- Resolution (`rules-engineer` pass, 2026-10-09): OQ-10 itself is now
-  resolved -- see its own entry for the full writeup (sourcing re-check,
-  what was built, the quick sweep confirming six more unique allies (seven
-  total) plus one unique Equipment are already 2P-legal and share this
-  exact gap, and the one piece deliberately left for OQ-15). The specific
-  mis-resolution this entry raised the alarm about -- "the engine would
-  silently create two
-  independent, fully-visible `AllyInPlay` instances ... not the
-  Rulebook-mandated face down and out of play treatment" -- no longer
-  happens: `recruit_ally`'s own production call site now detects the
-  collision and both copies move to `zone == "contested"`, out of the
-  usable ready region, proven end-to-end (not just at the lower-level
-  helper) by `tests/rules/test_ally_contests.py::
-  test_recruit_ally_action_end_to_end_detects_the_contest`.
-  Not fully unblocked by this alone, though: OQ-10's own resolution
-  deliberately left the unlock-phase pay-1-pool-or-yield resolution loop
-  unbuilt (tracked as OQ-15, not a ruling ambiguity -- the cost/mechanism
-  itself turned out to be directly sourced on the re-check, just not yet
-  wired). Concretely, that means a contested ally today can correctly enter
-  and remain "out of play," but no player can ever pay to keep contesting it
-  or yield it -- the contest never ends. Whether that remaining gap is
-  acceptable to ship against (a correctly-represented-but-permanently-stuck
-  contest state is not a *mis*-resolution, just an incomplete one) or
-  whether OQ-15 should land first is left for `card-implementer`'s own
-  follow-up pass to weigh per this card's specific registration, per
-  CLAUDE.md's "do not touch `forty_seventh_street_royals.py`" scope boundary
-  this task was given. 47th Street Royals therefore stays `blocked` in the
-  registry; its `blocked_reason` is `card-implementer`'s call to update
-  (superseding to `OQ-15`, or something else) in that follow-up pass, not
-  changed here.
-- Not blocked by this gap, and not re-litigated: the card's own reaction
-  ("You can burn 47th Street Royals to reduce a bleed against you by 3")
-  still has no dependency on the recruit side or on uniqueness at all, and
-  remains fully proven at the mechanism level by `tests/rules/
-  test_allies.py::test_ally_burned_as_a_bleed_reduction_reaction_cost`
-  (already exercising this card's own exact krcg_id and printed stats via a
-  stand-in provider). Per the registry's established all-or-nothing
-  convention (CLAUDE.md SS6; OQ-9/OQ-11's own precedent for Bonding's clean
-  basic clause), this clean half stays unwired in the real module while the
-  recruit side is unsafe to ship -- the registry models a card as either
-  fully implemented or blocked, never a partial implementation of only its
-  clean clause.
-- Impacted code (at the time this was opened): none -- no engine files were
-  touched by this entry itself (the gap was the one OQ-10 already named;
-  this entry only re-confirmed it was live and named the specific card it
-  blocks). Superseded by OQ-10's own resolution pass, which did touch
-  `src/vtesbot/engine/state.py`, `engine/allies.py`, `engine/observation.py`,
-  `engine/phases/minion.py` and `engine/__init__.py` -- see OQ-10's own
-  "Impacted code". `src/vtesbot/cards/forty_seventh_street_royals.py`
-  remains unchanged by this pass (out of scope, per this task's own
-  instruction not to touch it) -- it still reads `Status.BLOCKED`,
-  `blocked_reason="OQ-14"` in the registry; `card-implementer` decides, in
-  the follow-up pass this entry's own Resolution note hands off to, whether
-  to update that reason (e.g. to `OQ-15`) when reassessing the card.
-  Impacted cards: 47th Street Royals (registered `blocked`, reason
-  `OQ-14`, pending that follow-up); the five other unique allies and one
-  unique Equipment OQ-10's quick sweep found (Double Deuce, Heartrender,
-  Political Ally, Vagabond Mystic, The Vozhd of Juiz de Fora, The Vozhd of
-  Sofia, Shilmulo Tarot) share the same now-resolved underlying gap, not yet
-  registered at all.
+- Situation: with OQ-12/OQ-13 resolved, two independently-built
+  2P-legal decks could both recruit their own copy of 47th Street
+  Royals — making OQ-10's then-still-open uniqueness gap reachable in
+  an ordinary game, not merely latent.
+- Rules/interactions: same Contested Cards rule as OQ-10; shipping
+  as-is would have silently created two independent, fully-visible
+  `AllyInPlay` instances under two controllers instead of the
+  mandated face-down/out-of-play treatment.
+- Solution: resolved by OQ-10's own fix landing (contest detection on
+  recruit). The remaining piece — actually *resolving* a contest once
+  created (pay/yield) — was deliberately left to OQ-15. Card stays
+  `blocked`.
 
-## OQ-15: Ally/Equipment contest *resolution* loop not wired (status: resolved)
+## OQ-15 - Ally contest resolution loop not wired (status: resolved)
 
-- Situation: found by `rules-engineer` while resolving OQ-10. Not a ruling
-  ambiguity -- re-fetched live and cross-checked against the local cache
-  (`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`, "Advanced
-  Rules > Contested Cards"), the base rulebook rule gives the contest-
-  resolution mechanism for *every* unique card in one unified paragraph: "The
-  cost to contest a card is 1 pool, which you pay during each of your unlock
-  phases. Instead of paying the cost to contest the card, you may choose to
-  yield the card. A yielded card is burned ... If all other cards contesting
-  your unique card are yielded, then the card is unlocked and turned face up
-  during your next unlock phase, ending the contest." The 2P variant's own
-  "Contested crypt cards" override (`data/sources/2p-variant/2026-10-09/
-  variant.md`) changes only the face-down/out-of-play half of this, and only
-  for crypt cards -- its own cost/resolution wording for crypt cards is
-  identical pay-1-pool-per-unlock-or-yield. So for an ally (or equipment or
-  location), the *same* mechanism already engine-side implemented for crypt
-  cards (`engine/contests.py::resolve_one_contest`, wired into
-  `engine/phases/unlock.py::_resolve_optional_effects_in_chosen_order`)
-  applies, unmodified, with one difference: the contested copies are also
-  out of play (not usable) for the whole duration, where a contested crypt
-  card in 2P stays usable throughout.
-- What's missing: nothing in `engine/phases/unlock.py` looks at
-  `state.players[player].allies` at all -- `_pending_effect_ids` only
-  iterates `vampires`. A contested ally (`AllyInPlay.contested_with` set,
-  `zone == "contested"`, OQ-10's resolution) has no way to ever be offered a
-  pay-or-yield decision, so once a contest begins it never ends in this
-  engine today. This is a gap in engineering completeness, not an
-  unresolved rules question -- deliberately scoped out of OQ-10's own pass
-  (CLAUDE.md "small commits, one rule mechanism per change"; that task's own
-  file list named `engine/state.py`/`engine/allies.py`/`engine/
-  observation.py` specifically, not `engine/phases/unlock.py`).
-- What would be needed: extend `engine/phases/unlock.py::_pending_effect_ids`
-  to also surface one `f"contest_ally:{a.instance_id}"` entry per
-  `player`'s own contested ally (mirroring the existing
-  `f"contest:{v.instance_id}"` vampire entries), and an ally-side resolution
-  function analogous to `engine/contests.py::resolve_one_contest` -- except
-  yielding must leave the ally burned (same as the crypt-card case) while
-  *paying* must keep the ally in `zone == "contested"` (not restore it to
-  `"ready"`, unlike the crypt-card case, since the ally is still out of play
-  while any contest persists) and only the side whose opponent's copy was
-  the one yielded should restore to `"ready"` on its own next unlock phase
-  (per the rulebook's "unlocked and turned face up during your next unlock
-  phase, ending the contest" -- note this is a *further* unlock phase after
-  the yield, not instantaneous, mirroring how `resolve_one_contest`'s own
-  "yield" branch already clears the opponent's `contested_with` immediately
-  but the opponent's crypt card needed no further unlocking step only
-  because the 2P override already kept it `zone == "ready"` throughout).
-  Whether that same one-unlock-phase-later nuance needs its own dedicated
-  engine step for the ally case (since, unlike the crypt-card case, the
-  surviving copy's `zone` must actually change from `"contested"` back to
-  `"ready"` on that later unlock, not merely drop a flag) should be checked
-  carefully against the rulebook's exact wording before building --
-  `rules-engineer` scope.
-- Also relevant: Shilmulo Tarot (101767, unique Equipment, OQ-10's own quick
-  sweep) needs an analogous fix on the `CardAttachment` side (`engine/
-  cards.py`), which has no `contested_with` tracking of its own at all --
-  out of this entry's scope (no card module needs it yet) but flagged so it
-  is not lost.
-- Impacted code (not yet touched): `src/vtesbot/engine/phases/unlock.py`,
-  `src/vtesbot/engine/allies.py` or `engine/contests.py` (an ally-side
-  resolution function). Impacted cards: 47th Street Royals and the five
-  other unique allies OQ-10's sweep found all need this before any of them
-  can safely leave a contest once entered; `card-implementer` should treat
-  this as a prerequisite (alongside OQ-10's own now-resolved detection half)
-  when deciding whether to unblock any of them.
-- Resolution (`rules-engineer` pass): confirmed, re-fetching live and
-  cross-checking the local cache again, that this was always an engineering
-  gap, not a ruling ambiguity -- the rulebook's own "Contested Cards"
-  paragraph (quoted in full above) is one unified pay-1-pool-per-unlock-
-  phase-or-yield mechanism for every unique card, and the 2P variant's
-  "Contested crypt cards" override changes only the face-down/out-of-play
-  half, only for crypt cards (re-confirmed against `data/sources/
-  2p-variant/2026-10-09/variant.md`'s own title and its own aside). Built
-  exactly what this entry's own "what would be needed" described, reusing
-  `engine/contests.py::resolve_one_contest`'s shape rather than reinventing
-  it:
-  1. `src/vtesbot/engine/allies.py` gained `resolve_one_ally_contest(state,
-     player, ally)`, mirroring `resolve_one_contest`'s two branches
-     ("pay": `lose_pool(state, player, 1)`; "yield": burn the yielding
-     ally, clear the opponent's own `contested_with`) with the one
-     deliberate difference this entry flagged as needing care: because an
-     ally has no 2P "stays usable" override (unlike a crypt card), *neither*
-     branch restores `zone` to `"ready"` -- "pay" leaves the ally at
-     `zone == "contested"` (still out of play, per `AllyInPlay`'s own
-     docstring), and "yield"'s surviving opponent copy also stays at
-     `zone == "contested"` even though its `contested_with` is cleared
-     immediately. Also added `_find_ally_instance`, the ally-side analogue
-     of `engine/contests.py::_find_instance`.
-  2. The one-unlock-phase-later nuance is handled by a new, separate,
-     mandatory step, `src/vtesbot/engine/phases/unlock.py::
-     _unlock_own_allies(state, player)`, run once per `unlock_phase` call
-     alongside (immediately after) the existing `_unlock_own_vampires` --
-     *before* the optional pay-or-yield loop, not inside it. It scans the
-     acting player's own allies for exactly the state `resolve_one_ally_
-     contest`'s "yield" branch leaves behind on the surviving side
-     (`zone == "contested"` and `contested_with is None`) and only then
-     flips `zone` to `"ready"` and clears `locked`. This correctly models
-     "unlocked and turned face up during your next unlock phase, ending the
-     contest" as a further event on the *surviving controller's own* next
-     `unlock_phase` call -- which, per 2P's alternating turns, may not run
-     until after the opponent's own next turn too, since `unlock_phase` is
-     only ever invoked for the currently-active player
-     (`engine/phases/turn.py::play_turn`). An ally still actively contested
-     (`contested_with` still set) is left untouched by this step, since it
-     is instead surfaced by the pay-or-yield loop below.
-  3. `_pending_effect_ids` (`engine/phases/unlock.py`) now also yields one
-     `f"contest_ally:{a.instance_id}"` entry per the player's own
-     currently-contested ally (`contested_with is not None`, `zone !=
-     "burned"`), mirroring the existing `f"contest:{v.instance_id}"` vampire
-     entries exactly; `_resolve_optional_effects_in_chosen_order` dispatches
-     a `"contest_ally:"`-prefixed id to `resolve_one_ally_contest` (checked
-     before the generic vampire-id branch, since both share a `:`-separated
-     shape).
-  Proven by `tests/rules/test_ally_contest_resolution.py`: a contested
-  ally's controller is offered `"ally_contest_resolution"` (pay/yield)
-  during their own `unlock_phase` call; paying costs 1 pool and leaves
-  *both* copies at `zone == "contested"` (still out of play, unlike the
-  crypt-card case); yielding burns the yielding ally, costs no pool, and
-  leaves the surviving opponent copy's `contested_with` cleared but its
-  `zone` still `"contested"` immediately afterward (not yet restored); a
-  follow-up `unlock_phase` call for the *surviving* controller only then
-  restores that ally to `zone == "ready"`, `locked is False`,
-  `contested_with is None`, with no further decision asked of either
-  player (zero pending effects remain); plus a zero-regression check that
-  an uncontested ally's `zone`/`contested_with` are left untouched by
-  `unlock_phase`.
-  Zero-regression: the pre-existing crypt-card contest-resolution tests
-  (`tests/rules/test_unlock.py`) and OQ-10's own ally-detection tests
-  (`tests/rules/test_ally_contests.py`) are untouched and still pass
-  unmodified. Full suite green: 190 passing (up from 185; 5 new, 0
-  regressions), `ruff check`/`ruff format --check` clean.
-  Deliberately **not** built, confirmed still out of scope (no card module
-  needs it yet, same boundary this entry already drew): an analogous
-  contest-resolution mechanism for Shilmulo Tarot (101767, unique
-  Equipment) on the `CardAttachment` side (`engine/cards.py`), which still
-  has no `contested_with` tracking of its own at all -- left as a
-  separately-flagged future gap, not addressed here.
-- Impacted code: `src/vtesbot/engine/allies.py`
-  (`resolve_one_ally_contest`, `_find_ally_instance`),
-  `src/vtesbot/engine/phases/unlock.py` (`_unlock_own_allies`,
-  `_pending_effect_ids`, `_resolve_optional_effects_in_chosen_order`,
-  `unlock_phase`). Card registration is unchanged (47th Street Royals and
-  the five other unique allies OQ-10's sweep found stay `blocked` in the
-  registry; this closes a prerequisite for `card-implementer`, who should
-  still get a `rules-auditor` review of this change -- core engine/unlock-
-  phase mechanics -- before wiring any of the six unique-ally card
-  modules against it).
+- Situation: OQ-10 added contest *detection* for allies but nothing
+  let either player ever pay-or-yield to end one — once a contest
+  began, it never ended.
+- Rules/interactions: Rulebook §4 Advanced Rules > Contested Cards
+  gives one unified pay-1-pool-per-unlock-phase-or-yield mechanism for
+  every unique card; the 2P variant's crypt-card override does not
+  change this cost/resolution half, only the face-down/usable half,
+  and only for crypt cards.
+- Solution: added `engine/allies.py::resolve_one_ally_contest` (pay
+  keeps `zone="contested"`, no 2P "stays usable" exception for
+  allies; yield burns the yielding copy, clears the opponent's
+  `contested_with` but leaves its `zone` at `"contested"` until that
+  opponent's own next unlock phase) and `_unlock_own_allies` to
+  perform that delayed restore; extended the unlock phase's
+  pending-effect loop to surface `"contest_ally:"` ids. Shilmulo
+  Tarot's own (Equipment-side) contest tracking is flagged as a
+  separate, still-open gap, out of scope here.
 
 ## OQ-16: "Cannot contest yourself" unimplemented on both paths (status: open)
 
@@ -1126,3386 +189,400 @@ up an OQ number or the highest one used so far.
   cards: none yet reachable (tracked ahead of need, same spirit as OQ-10's
   own original "latent, flagged before live" framing).
 
-## OQ-17: No action-card entry point -- Enchant Kindred (100640) (status: resolved)
+## OQ-17 - Enchant Kindred - no action-card entry point (status: resolved)
 
-- Situation: card text (verbatim, via krcg 4.18 `VTES['Enchant Kindred'].card_text`
-  and cross-checked against the live `https://api.krcg.org/card/100640`,
-  2026-10-10, matching the raw snapshot `data/cards/100640.json`): "[pre] Ⓓ
-  Bleed with +1 bleed.\n[PRE] +1 stealth action. Add 2 blood to a younger
-  vampire in your uncontrolled region." `types == ["Action"]` (not "Action
-  Modifier"); `discipline_requirement == {"type": "Mono", "disciplines":
-  ["pre"]}`; `clan_requirement == []`; `cost is None`; `burn_option is
-  False`; `trifle is False`. Rulings: none on file (`rulings == []`, both via
-  the installed `krcg` package and the live API). Not a ruling ambiguity --
-  the text is plain (see below for the one textual-convention point this
-  entry deliberately does *not* block on). The block is a missing engine
-  representation.
-- The rulebook glossary defines the "Ⓓ" icon's referent directly:
-  "**Directed Action:** An action of one Methuselah's minion that targets
-  one or [more → only one in 2P] other Methuselah['s minions]"
-  (`data/sources/rulebook/2026-10-09/8-glossaries.md:59`), with
-  "**Undirected Action:** An action that is not directed" immediately below
-  it (same file, line 197). So the basic clause ("[pre] Ⓓ Bleed with +1
-  bleed") is a *directed* action -- mechanically a bleed, amount 2 instead of
-  the default 1 -- and the superior clause ("+1 stealth action. Add 2 blood
-  to a younger vampire in your uncontrolled region") is *undirected* (it
-  names no target Methuselah at all; its own effect only ever touches the
-  acting player's own uncontrolled region). Both already collapse cleanly to
-  the existing single-opponent block-attempt model `engine/action.py`'s own
-  module docstring documents for the 2P duel (not OQ-1 -- that structural
-  collapse is already settled), so neither clause raises a *fresh*
-  prey/predator question.
-- What is blocked: `types == ["Action"]` means this card itself constitutes
-  the acting vampire's one minion action for the turn (Rulebook SS2 Card
-  Types; distinct from an "Action Modifier," which only ever decorates an
-  *already-chosen* default action). The only place a card can inject a new,
-  self-contained minion action alongside the built-in "Bleed"/"Hunt" choices
-  is `engine/phases/minion.py::_choose_and_perform_action`'s top-level
-  `action_choice` decision, and the only hook that call site currently
-  splices options from is `RECRUIT_ALLY_PLAY_HOOK` (`"recruit_ally_play"`,
-  OQ-12) -- which is Ally-specific (its `apply()` contract returns an
-  `engine/allies.py::RecruitAllySpec`, consumed only by
-  `_perform_recruit_ally`, not a bleed/undirected-action shape at all).
-  There is no generic "this library card is itself an alternate minion
-  action" hook: confirmed by reading every entry in
-  `src/vtesbot/cards/registry.py`'s `Hook` enum (both the "wired this pass"
-  group and the "named for classification, no wiring yet" group) -- none of
-  them represent "a played Action card supplies its own base stealth,
-  directed/undirected shape, and resolve() to `perform_minion_action`,
-  spliced into the same top-level choice `_choose_and_perform_action`
-  offers." Implementing either clause today would mean either (a) misusing
-  `BLEED_AMOUNT_MODIFIER_HOOK`/`BLEED_AMOUNT_FIXED_MODIFIER_HOOK` to fake an
-  "Action" card as if it were an Action Modifier layered onto a *separately,
-  already-chosen* free default Bleed -- wrong card type, and for the basic
-  clause specifically it would also wrongly let a player bleed for free (no
-  card played, no hand cost) and *additionally* play Enchant Kindred as a
-  bonus on top, when the real card text is itself the only bleed this
-  vampire's action performs -- or (b) inventing a new top-level choice/call
-  site inside the card module by reaching into `engine/phases/minion.py`
-  directly, which is exactly the "hack around a missing engine mechanism
-  inside the card module" CLAUDE.md forbids. Neither clause can be
-  correctly wired without new, generic engine-side scope; per CLAUDE.md
-  §6's "implemented only when ... fully tested" bar (no partial
-  implementation of only one clause), the whole card is blocked.
-- What would be needed (`rules-engineer` scope, `engine/phases/minion.py`
-  and `engine/action.py`, mirroring the existing `recruit_ally_play`
-  pattern but generalized beyond Allies): a new hook (e.g.
-  `"action_card_play"`) offered at `_choose_and_perform_action`'s top level
-  alongside `ACTION_BLEED`/`ACTION_HUNT`/the recruit-ally options, whose
-  provider contract lets a registering card module supply (1) the base
-  stealth for its own action, (2) whether it is directed (at the single 2P
-  opponent) or undirected, (3) a `resolve(pending)` callback run by
-  `perform_minion_action` exactly like `_perform_bleed`/`_perform_hunt`'s
-  own closures, and (4) how/when its card is consumed from hand (for a plain
-  one-shot "Action" card such as this one, immediately via
-  `vtesbot.cards._shared.play_from_hand` at the moment the choice is made --
-  unlike Recruit Ally's Ally card, an "Action" card's own text has no
-  "put into play" destination that depends on the later block outcome, so
-  `play_from_hand_pending`'s two-destination dance is not needed here,
-  though a future, different "Action" card might need it; the new hook's
-  contract should accommodate both). Once that hook/call site exists,
-  Enchant Kindred's own two providers become straightforward: the basic
-  clause's `resolve()` mirrors `_perform_bleed`'s, with `amount = 1 + 1`
-  baked in; the superior clause's `resolve()` is undirected and, once
-  unblocked, raises a new `Decision` (the existing `Decision`/`Choice`
-  machinery already supports an arbitrary "pick one of your own eligible
-  minions" choice with no further engine change -- only the top-level
-  action-card hook itself is the actual gap) letting the acting player pick
-  one of their own `zone == "uncontrolled"` vampires, then calls the
-  already-existing `engine/damage.py::add_blood(state, chosen, 2)`.
-- Textual-convention point, deliberately *not* blocking (noted for whoever
-  unblocks this card next): the superior clause's "a younger vampire" names
-  no explicit comparison target ("younger than *what*"). The rulebook
-  glossary states capacity "is also a relative measure of the vampire's age"
-  (`data/sources/rulebook/2026-10-09/8-glossaries.md:47-48`), and a broad
-  cross-section of other printed card texts using the identical unqualified
-  "younger vampire"/"a younger vampire" phrasing (e.g. Danny Larkshill:
-  "gets +1 strength in combat with a younger vampire"; Apolonia Czarnecki:
-  "can steal 1 blood from a younger vampire as a Ⓓ action" -- both checked
-  live via `krcg.load()`, 2026-10-10) are uniformly read, by the same
-  unqualified-comparative convention, as relative to the one vampire the
-  ability belongs to (the acting/printed-ability vampire), not some other
-  unnamed reference. This is corroborating pattern evidence, not itself an
-  official ruling for *this* card, so it is flagged rather than silently
-  assumed -- but it does not change this entry's blocking reason (the
-  missing engine hook blocks implementation regardless of how "younger" is
-  ultimately read), so it is not filed as its own, separate Open Question.
-  Confirmed by the project owner (2026-10-10): read "a younger vampire" in
-  the superior clause as younger than the acting vampire (the vampire using
-  the [PRE] ability), consistent with the convention above. Whoever
-  unblocks this card once OQ-17's engine hook exists should implement the
-  superior clause's target filter against that reading directly, with no
-  further ruling lookup needed on this specific point.
-- Impacted code (at the time this was opened): none yet (no generic
-  "Action"-card entry point exists to extend). Impacted cards: Enchant
-  Kindred (registered `blocked`, reason `OQ-17`); any future 2P-legal card
-  of `types == ["Action"]` (as opposed to "Action Modifier") would hit the
-  same gap.
-- Resolution (`rules-engineer` pass): built the generic "Action"-card entry
-  point this entry's own "What would be needed" paragraph specified, mirroring
-  (and generalizing beyond Allies) `RECRUIT_ALLY_PLAY_HOOK`/`RecruitAllySpec`'s
-  own OQ-12 pattern.
-  - `src/vtesbot/engine/phases/minion.py`: new `ACTION_CARD_PLAY_HOOK =
-    "action_card_play"` (`HookOption`-based, same shape as
-    `RECRUIT_ALLY_PLAY_HOOK`), a new frozen `ActionCardSpec` dataclass (a
-    registered provider's `apply(state)` must return one), and a new
-    `_perform_action_card` function that runs `spec.resolve`/`spec.
-    on_blocked` through `perform_minion_action` under `spec.action`.
-    `_choose_and_perform_action` now also offers `hooks.offer(ACTION_
-    CARD_PLAY_HOOK, ...)` options at its top-level `action_choice`
-    decision, alongside `ACTION_BLEED`/`ACTION_HUNT`/the recruit-ally
-    options, threading the same `vampire=vampire.instance_id` context
-    OQ-13 already required for `RECRUIT_ALLY_PLAY_HOOK`.
-  - `ActionCardSpec`'s contract (`base_stealth: int`, `directed: bool`,
-    `resolve: Callable[[dict[str, Any]], None]`, `on_blocked:
-    Callable[[dict[str, Any]], None] | None = None`, `action: str =
-    ACTION_ACTION_CARD`) deliberately does not hard-code *how* the
-    provider's own card leaves hand: a plain one-shot Action card (e.g.
-    Enchant Kindred) consumes it immediately via `vtesbot.cards._shared.
-    play_from_hand` inside its own `apply(state)`, since both of Rulebook
-    SS4 "Resolve the Action"'s branches end the same way (ash heap) for
-    such a card; a future Action card whose own placement *does* depend on
-    the later block outcome can instead use `vtesbot.cards._shared.
-    play_from_hand_pending` and supply its own `on_blocked`, exactly like
-    `RecruitAllySpec` already does -- proven generically (not just
-    asserted, and with two genuinely distinct destinations rather than both
-    branches landing on the ash heap) by `tests/rules/
-    test_action_card_play.py::test_action_card_play_supports_the_two_
-    destination_dance_generically`.
-  - Rules-auditor finding (fixed in the same pass, before this entry was
-    marked resolved): the first draft of this hook tagged *every*
-    `ActionCardSpec` with the fixed `ACTION_ACTION_CARD` discriminator,
-    regardless of what the clause's own card text mechanically is. Enchant
-    Kindred's own basic clause prints the word "Bleed" ("[pre] Ⓓ Bleed with
-    +1 bleed" -- confirmed directly via krcg, CLAUDE.md SS2 card-text
-    precedence, no ruling needed), so tagging it `"action_card"` instead of
-    `"bleed"` would have silently and wrongly suppressed an existing
-    bleed-gated provider sharing the same hook window (e.g. `cards/
-    bonding.py`'s superior clause, gated on `context.get("action") ==
-    ACTION_BLEED`) once Enchant Kindred is wired up -- exactly the "never
-    mis-resolves a card" bar CLAUDE.md sets. Fix: `ActionCardSpec` gained
-    an `action: str = ACTION_ACTION_CARD` field so a provider can declare
-    the real mechanical action identity its own clause matches (defaulting
-    to the generic fallback for a clause that is genuinely sui generis,
-    e.g. Enchant Kindred's own superior clause, "Add 2 blood to a younger
-    vampire," which is not textually a bleed/hunt/etc.); `_perform_action_
-    card` forwards `spec.action` instead of the fixed constant. Proven by
-    `tests/rules/test_action_card_play.py::test_action_card_play_can_
-    declare_itself_a_real_bleed_so_bonding_still_fires`, which registers
-    `cards/bonding.py`'s own real, unmodified `"stealth_modifier"` provider
-    directly and shows its superior clause is correctly *not* offered when
-    `action` is left at the generic default, and correctly *is* offered
-    once a fake provider declares `action=ACTION_BLEED` for its clause.
-  - `src/vtesbot/engine/action.py`: added the `ACTION_ACTION_CARD = "action_
-    card"` discriminator (OQ-9's family) and a new `directed: bool | None =
-    None` parameter threaded through `_duel_stealth_intercept`/
-    `attempt_block`/`perform_minion_action` into both the `"block_attempt"`
-    decision's own context and the stealth/intercept hook context (mirroring
-    how `action` is already threaded) -- the Rulebook glossary's "Directed
-    Action"/"Undirected Action" distinction this entry's own "What is
-    blocked" paragraph already confirmed collapses to the same single-
-    opponent block-attempt call in 2P, so this changes no block-attempt
-    mechanics; it exists purely so a provider can supply, and a future
-    hook/decision consumer (or the replay log) can read, which of the two
-    an action-card play actually is. `_perform_bleed`/`_perform_hunt`/
-    `_perform_recruit_ally` were updated to pass their own already-sourced
-    `directed=True`/`False` values for consistency (no behaviour change: no
-    existing hook provider reads this key).
-  - `src/vtesbot/cards/registry.py`: moved `Hook.ACTION_CARD_PLAY` from the
-    "named for classification, no wiring yet" group into the "wired this
-    pass" group, now that `ACTION_CARD_PLAY_HOOK` has a real call site.
-  - Tests: `tests/rules/test_action_card_play.py` (new) -- zero-regression
-    (not offered without a registered provider, or without a matching hand
-    card), offered-and-succeeds (immediate consumption, `resolve` fires),
-    blocked (card already consumed, `resolve` does not fire, combat still
-    happens), the `action`/`directed` discriminators threaded into the
-    block-attempt hook context, the OQ-13-style `vampire` context binding,
-    and the two-destination-dance generality case above.
-  - Not done by this pass, deliberately: Enchant Kindred's own card module
-    (registering against `ACTION_CARD_PLAY_HOOK` and flipping its own
-    registry entry from `blocked` to `implemented`) -- a separate
-    `card-implementer` pass, per this entry's own "Impacted cards" line
-    above (left unchanged).
-- `card-implementer` follow-up (Enchant Kindred, krcg 100640, now wired):
-  re-verified the card text/rulings/legality against both the installed
-  `krcg` package's own cached snapshot and a fresh live fetch of
-  `https://api.krcg.org/card/100640` (2026-10-10) -- unchanged, matching
-  `data/cards/100640.json` byte-for-byte. `src/vtesbot/cards/
-  enchant_kindred.py` now registers two `ACTION_CARD_PLAY_HOOK` providers
-  (mirroring the "basic vs superior, two providers for one physical card"
-  shape already used by `bonding.py`): the basic clause ("[pre] Ⓓ Bleed
-  with +1 bleed") declares `ActionCardSpec.action=ACTION_BLEED` (the
-  rules-auditor-fixed requirement this entry's own resolution flagged, since
-  its own text literally prints "Bleed") and its `resolve()` mirrors
-  `_perform_bleed`'s own closure byte-for-byte with the base amount
-  hardcoded to 2; the superior clause ("+1 stealth action. Add 2 blood to a
-  younger vampire in your uncontrolled region") is undirected, bakes in its
-  own printed "+1 stealth" as `base_stealth=1`, and -- confirming this
-  entry's own "what would be needed" paragraph was correct, no further
-  engine change was needed -- raises a plain `Decision`/`Choice` directly
-  inside its own `resolve()` to let the acting player pick among their own
-  `zone == "uncontrolled"` vampires strictly lower in printed capacity (the
-  project owner's confirmed reading of "younger," per this entry's own
-  textual-convention note above), clamped to only those with room for at
-  least 1 of the printed 2 blood (`engine/attachments.py::
-  effective_capacity`, OQ-8), then calls `engine/damage.py::add_blood`;
-  with exactly one eligible target the amount is applied with no decision
-  raised at all (mirrors `engine/phases/unlock.py::
-  _resolve_optional_effects_in_chosen_order`'s own "only when needed"
-  len-1-auto-apply convention), confirming the "no further engine change
-  needed" claim end-to-end rather than merely asserting it. Both clauses
-  gate on basic/superior Presence (`"pre"`/`"PRE"`) the same way `bonding.py`
-  gates on Dominate. Proven by `tests/cards/test_enchant_kindred.py` (18
-  tests, one per clause/qualifier plus a worked integration proof that the
-  basic clause's `ACTION_BLEED` tagging lets Bonding's own real, unmodified
-  superior clause still fire during the same window, mirroring `tests/
-  rules/test_action_card_play.py::test_action_card_play_can_declare_itself_a_
-  real_bleed_so_bonding_still_fires`). Full suite green (238 passed, up from
-  220; zero regressions), `ruff check`/`ruff format --check` clean. No
-  engine code touched by this pass -- the hook this entry built already
-  covered everything needed.
-
-## OQ-18: No sect, no dodge/extra strike -- Dust Up (100597) (status: resolved)
-
-- Resolution (2026-10-10): both gaps closed and independently confirmed by a
-  final `rules-auditor` pass (full suite 259 passed, `ruff`/`pymarkdown`
-  clean): Gap 1 (vampire sect, `Sect`/`CryptCard.sect`/`derive_sect` in
-  `src/vtesbot/engine/cards.py`) and Gap 2 (dodge + same-round additional
-  strike in `src/vtesbot/engine/combat.py`, including the dodge-proof
-  `StrikeDamage.ignore_dodge` override needed for Dust Up's own `[ani]`
-  clause). The auditor hand-traced `_resolve_strike_pair`'s arithmetic
-  directly (not just the tests) and confirmed it correctly lets a
-  dodge-proof strike deal damage through a dodge while leaving the dodging
-  combatant's own simultaneous counter-strike unaffected. Dust Up itself is
-  ready for a `card-implementer` pass covering all three clauses
-  (`[ani]`/`[cel]`/`[pot]`) plus the "Requires an Anarch" sect gate; see the
-  Gap 1/Gap 2 sub-notes below for the full build history and sourcing.
-
-- Situation: card text (verbatim, re-verified via the installed `krcg` 4.18
-  package's own `VTES["Dust Up"].to_json()` and cross-checked live against
-  `https://api.krcg.org/card/100597`, 2026-10-10, saved to
-  `data/cards/100597.json`): "Requires an Anarch.\n[ani] Strike: hand strike
-  at +1 damage. This strike cannot be dodged.\n[cel] Strike: dodge, with 1
-  additional strike (limited).\n[pot] Strike: hand strike at +2 damage."
-  `types == ["Combat"]`; live API `discipline_requirement == {"type":
-  "Choice", "disciplines": ["ani", "cel", "pot"]}` (any *one* of the three,
-  all lowercase -- basic/inferior level satisfies the requirement to play
-  the card at all; confirmed by the installed package's own `multidisc ==
-  True` and lowercase-only `disciplines == ["ani", "cel", "pot"]`, no
-  uppercase/superior variant printed anywhere on the card); `clan_requirement
-  == []`; `path_requirement == []`; `cost is None`; `burn_option is False`;
-  `trifle is False`. Confirmed on the active 2P allowed list
-  (`data/formats/2p/2026-10-03.json`, krcg id 100597) and in the suggested
-  2P decklist `data/decks/vekn-2p/brujah.json` (6 copies; not also present in
-  `toreador.json`/`ventrue.json`, correcting the task's framing that the 6
-  copies were spread across all three -- all 6 are in the Brujah list alone).
-  Rulings (verbatim, via krcg, both the installed package and the live API
-  agree):
-  - "[ani] [pot] Additional damage inherits all of the properties of the
-    base damage." [TOM 19960225]
-  - "[cel] The additional strike is not optional: you cannot play it for the
-    dodge only if you already played it for a (limited) additional strike
-    this round." [ANK 20220204]
-  - "When played, a multi-Disciplines card counts as requiring the
-    Discipline(s) being used. In the hand, library, or ash heap, the card is
-    considered to require any and/or all Disciplines listed on it." [LSJ
-    20011204-3] [PIB 20130704]
-  - "[ani] Does not prevent the opponent from dodging, the dodge just has no
-    effect." [LSJ 20030902-2] [LSJ 20060808-1]
-  Not a ruling ambiguity -- the text and rulings are plain and mutually
-  consistent. The block is two independent missing-engine-representation
-  gaps, either one alone sufficient to block the whole card (CLAUDE.md §6: a
-  card is implemented only when *all* of its text is tested; no partial
-  implementation of only the clauses one gap happens not to touch).
-- Gap 1 -- "Requires an Anarch" (blocks the card's playability entirely,
-  regardless of discipline clause): sect (Camarilla / Anarch / Sabbat /
-  Independent / Laibon) is a genuine, persistent, rules-significant per-
-  vampire trait, not flavour text -- re-fetched the Rulebook live
-  (<https://www.vekn.net/rulebook/6-vampire-sects>, cross-checked against the
-  local cache `data/sources/rulebook/2026-10-09/6-vampire-sects.md`), quoted
-  verbatim: "A vampire always belongs to one and only one sect." / "Some
-  cards can only be played by Anarch vampires." / "An untitled non-Anarch
-  vampire can become an Anarch as a +1 stealth undirected action that costs
-  2 blood, or 1 blood if the controller controls at least 1 other ready
-  Anarch. A vampire can also be made an Anarch by certain card effects.
-  Becoming Anarch constitutes a change of sect." `src/vtesbot/engine/
-  cards.py::CryptCard` (the engine's own vampire-identity dataclass) has no
-  `sect` field at all -- only `krcg_id`, `name`, `capacity`, `group`,
-  `clan`, `title`, `disciplines`, each explicitly documented as "plain
-  printed stats"; sect is conspicuously absent from that list, and no other
-  engine module (`state.py`, `attachments.py`, `setup.py`) carries it either
-  (confirmed by grep across `engine/` for "sect"/"Anarch": zero hits besides
-  an unrelated comment naming "become Anarch" as future out-of-scope minion
-  action text in `engine/phases/minion.py`). Nor does krcg itself expose a
-  structured sect field to read from: neither the installed package's
-  `Card.to_json()` (sampled `VTES["Victoria Ash"]`, `VTES["Jeremy
-  MacNeil"]` -- no `sect` key in either) nor the live API's own structured
-  requirement fields (`clan_requirement`/`discipline_requirement`/
-  `path_requirement`, present on this very card and on Enchant Kindred's
-  cached snapshot, `data/cards/100640.json`) have a `sect_requirement` or
-  equivalent counterpart. Sect is only ever embedded as free text at the
-  very start of a vampire's own printed `card_text` (e.g. Jeremy MacNeil:
-  `"Camarilla."`; a live sample of vampires matching `"Anarch"` in their own
-  text: Aluc Romas de Leon `"Anarch."`, Anita Wainwright `"Anarch."`, Ariane
-  `"Anarch: Ariane gets -1 stealth during undirected actions."`, several
-  "Anarch Baron of \<city\>" titled vampires) -- a free-text convention, not
-  a parseable field, and reliably classifying it (distinguishing a sect
-  preamble from the rest of a vampire's own printed ability text, handling
-  vampires with no sect preamble at all = Independent) is itself a non-
-  trivial text-classification task that must be solved once, generically, in
-  the engine's own vampire-identity model -- not invented ad hoc inside this
-  one card's module (CLAUDE.md "no hacking around a missing engine
-  mechanism"). Separately, milestone 1's deck-import pipeline does not exist
-  yet at all (confirmed: no `CryptCard(` construction site anywhere in
-  production code outside `engine/cards.py`'s own definition, `engine/
-  state.py`, `engine/attachments.py`, `engine/setup.py`, and scenario-test
-  helpers), so there is currently no path, even a manual one, by which a
-  real vampire's sect would reach a `CryptCard` instance in the first place.
-- Gap 2 -- the `[cel]` clause ("dodge, with 1 additional strike (limited)")
-  needs two further combat mechanics that do not exist anywhere in
-  `engine/combat.py`, independent of Gap 1: re-read the module in full
-  (2026-10-10) and confirmed its own docstring is explicit about this scope
-  boundary: "Maneuvers, ranged strikes, and additional strikes remain out of
-  scope this pass (no combat card in the current pool's classification
-  needs them *without* also needing the maneuver/range mechanic itself...)."
-  Concretely: (a) **no dodge mechanic** -- `_ask_strike`'s only two built-in
-  choices are `"hand_strike"` and `"no_strike"`; "no_strike" means "I do not
-  attack this round" but does *not* prevent the opponent's simultaneous
-  strike from damaging me (`run_combat`'s "Simultaneous" comment, both
-  `damage_to_blocking`/`damage_to_acting` are applied unconditionally from
-  each side's own independently-chosen strike). A genuine "dodge" (avoid
-  taking damage from the opponent's strike this round, per the [ani] ruling
-  above confirming dodge is a real, distinct choice the opponent can still
-  make against a [ani] strike, "the dodge just has no effect" implying it
-  normally *does* have an effect) has no engine representation at all. (b)
-  **no same-round additional strike** -- `run_combat`'s round loop calls
-  `_ask_strike`/`_strike_damage` exactly once per combatant per round; there
-  is no mechanism for a combatant to resolve a second strike within the same
-  round (confirmed: grep across `engine/` for "additional strike"/"extra
-  strike"/"multiple strike" returns only this module's own docstring
-  sentence naming the gap). `COMBAT_STRIKE_OPTION_HOOK`'s own contract
-  (`apply(state) -> int`, consumed by `_strike_damage` as "the damage this
-  strike-substitute inflicts," module docstring: "a card-granted strike
-  option's `apply(state)` must return the damage it inflicts, so it can
-  fully stand in for a hand strike") can only ever express a single,
-  ordinary damage-dealing hand-strike substitute -- it has no way to signal
-  "no damage to me this round regardless of what the opponent strikes with"
-  or "resolve a second, independent strike within this same round." So even
-  a hypothetical sect-agnostic version of this card could only ever
-  implement its `[ani]`/`[pot]` clauses through this already-wired hook; its
-  `[cel]` clause cannot be implemented against the engine as it stands
-  today, a second, independent block.
-- **Gap 2 resolved (2026-10-10, `rules-engineer`).** Re-fetched live
-  <https://www.vekn.net/rulebook/4-detailed-turn-sequence> and cross-checked
-  against the local cache `data/sources/rulebook/2026-10-09/
-  4-detailed-turn-sequence.md` (verbatim match, no drift) before building
-  anything. `engine/combat.py` now wires two further hooks, generalized the
-  same way `COMBAT_STRIKE_OPTION_HOOK`/`COMBAT_STRENGTH_MODIFIER_HOOK`
-  already generalize "a card grants an alternate strike"/"a card grants a
-  passive strength bonus" -- not Dust-Up-specific, since any future dodge-
-  or extra-strike-granting combat card hits the identical gap:
-  - `COMBAT_DODGE_OPTION_HOOK` (`"combat_dodge_option"`, `registry.Hook.
-    COMBAT_DODGE_OPTION`): offered alongside `COMBAT_STRIKE_OPTION_HOOK` at
-    the strike step (`_ask_strike`). Per Rulebook SS4 Combat > Choose
-    Strike, dodge is only ever "from any other card providing this minion a
-    strike," never a base/default option every vampire has -- confirmed no
-    built-in dodge choice is offered without a registered provider. Per
-    Strike Effects > Dodge ("A dodge strike deals no damage, but it
-    protects the dodging minion ... from the effects of the opposing
-    strike"), the engine enforces both halves directly in
-    `_resolve_one_strike`/`_resolve_strike_pair` (not via a provider's
-    `apply` return value): choosing it always deals 0 damage from that
-    strike and always zeroes whatever damage the opponent's *simultaneous*
-    strike this round would otherwise deal to the dodging combatant.
-  - `COMBAT_ADDITIONAL_STRIKE_HOOK` (`"combat_additional_strike"`,
-    `registry.Hook.COMBAT_ADDITIONAL_STRIKE`): offered once per combatant
-    after the normal strike pair (and after each additional-strike pair,
-    acting combatant asked first) via `_ask_additional_strike`; using one
-    re-enters the *full* strike-choice machinery (`_ask_strike`, including
-    `COMBAT_STRIKE_OPTION_HOOK`/`COMBAT_DODGE_OPTION_HOOK`) for that
-    combatant's additional strike, exactly like a normal strike -- an
-    additional strike is never a fixed/hardcoded hand strike (per Rulebook
-    SS4 Combat > Additional Strikes: "another choose strike step ... in
-    which only the minions with additional strikes may play strike cards";
-    Choose Strike places no narrower restriction on what an additional
-    strike can be chosen from). A combatant with no available/unused grant
-    does not strike in that pair at all (not even offered "no_strike"),
-    matching "only the minions with additional strikes may play strike
-    cards." The loop repeats "as necessary" while either combatant still
-    has an unused grant, reproducing the Wauneka/Flávio Gonçalves worked
-    example's shape (one side runs out before the other).
-  **Amendment (2026-10-10, `rules-auditor` finding, fixed same pass):** the
-  first version of this fix enforced dodge *unconditionally* -- any dodge
-  always zeroed the opponent's damage, with no way for a specific strike to
-  override that, even though the Golden Rule for Cards (CLAUDE.md SS2 /
-  Rulebook SS3: "whenever the cards contradict the rules, the cards take
-  precedence") lets a strike's own printed text do exactly that. Dust Up's
-  own `[ani]` clause ("This strike cannot be dodged") is the sourced
-  example, confirmed by its ruling: "[ani] Does not prevent the opponent
-  from dodging, the dodge just has no effect." [LSJ 20030902-2] [LSJ
-  20060808-1] -- the opponent may still *choose* to dodge, but that dodge
-  has zero effect against this one, specifically-flagged strike (the
-  dodging combatant's own simultaneous strike against the attacker is
-  unaffected either way). Added `combat.StrikeDamage` (a small frozen
-  dataclass, `amount: int, ignore_dodge: bool = False`): a
-  `COMBAT_STRIKE_OPTION_HOOK` provider's `apply(state)` may return this
-  instead of a plain `int` to flag its strike dodge-proof; `_resolve_one_
-  strike`/`_resolve_strike_pair` now track an `ignore_opponent_dodge` flag
-  per strike and only zero a dodging combatant's incoming damage when the
-  attacking strike did *not* set it. Hand strikes, `no_strike`, and dodge
-  itself never carry this (only a card-granted strike option plausibly
-  needs it). Documented as a known future gap (not built, no current card
-  needs it): dodge here still only nullifies numeric damage, not a future
-  non-damage strike effect (e.g. a Steal Blood-style strike) -- Strike
-  Effects > Dodge protects from "effects" more broadly than just damage.
-  Scenario tests: `tests/rules/test_combat_dodge_and_additional_strike.py`
-  (5 tests) -- dodge nullifying the opponent's simultaneous strike; a
-  dodge-proof strike still damaging a dodging opponent (the amendment
-  above); no dodge choice offered without a provider (regression guard); an
-  additional strike resolving via a card-granted `combat_strike_option`
-  rather than a hand strike (proving the full choice surface, not a
-  shortcut); the defender not being asked a second `strike_choice` when it
-  has no grant. All use fake, test-only providers registered/unregistered
-  within the test (`docs/DECISIONS.md` D-5), via the named hook constants
-  (not raw hook-name strings, per OQ-9's same typo-risk fix), independent of
-  Dust Up's own wording -- per the [LSJ 20030902-2]/[LSJ 20060808-1] rulings
-  quoted above, dodge is its own real, generic mechanic, not something that
-  should only exist in service of one card. `cards/dust_up.py` is left
-  untouched (still `blocked` on Gap 1; wiring its own `[cel]` clause against
-  these two new hooks is a future `card-implementer` pass once Gap 1 also
-  closes).
-- Gap 1 remained outstanding at the time Gap 2 (above) was resolved --
-  see the separate `rules-engineer` pass's own "Gap 1 update" note below
-  (working in parallel on `engine/cards.py` sect modeling, not this pass's
-  scope) for its status. Gap 1 blocks the card outright regardless of which
-  discipline clause a controlling vampire would use, independent of Gap 2's
-  resolution above -- so Dust Up itself remains `blocked` until Gap 1 is
-  also resolved (per whichever of the two notes below is current) and a
-  future `card-implementer` pass wires its `[ani]`/`[cel]`/`[pot]` clauses
-  against both passes' results.
-- Impacted code: `src/vtesbot/engine/cards.py` (`CryptCard`), `src/vtesbot/
-  engine/combat.py`. No deck-import pipeline yet exists to extend for Gap 1.
-  Impacted cards (at the time this was opened): Dust Up (registered
-  `blocked`, reason `OQ-18`; now `implemented`, see the `card-implementer`
-  note at the end of this entry); any future
-  2P-legal card gated on a vampire's sect ("Requires a/an \<Sect\>",
-  "Camarilla only," a Sabbat-only effect, etc.) would hit Gap 1; any future
-  card granting a dodge or a same-round additional strike would hit Gap 2.
-  Not yet swept (unlike OQ-10's explicit "quick sweep" of the pool for
-  similarly-shaped cards): whether any other 2P-legal card has its own
-  sect requirement or grants a dodge/additional strike -- left for a future
-  pass, same "no guessing ahead of a sourced need" boundary this entry
-  itself is opened under.
-- **Gap 1 update (2026-10-10, `rules-engineer`): resolved.** Re-fetched
-  Rulebook SS6 "Vampire Sects" <https://www.vekn.net/rulebook/6-vampire-sects>
-  live (matches the local cache's `dateModified`, confirming Camarilla,
-  Anarch, Sabbat, Independent) and, since SS6 alone does not mention Laibon,
-  also checked Rulebook SS7 "Legacy Sets" > "Other Vampire Sects"
-  <https://www.vekn.net/rulebook/7-legacy-sets> (also live, matching cache),
-  which documents Laibon as the fifth sect verbatim: "Only Laibon can hold
-  the laibon titles kholo and magaji." -- confirming the five sects named in
-  this entry's own "what would be needed" list, just split across two
-  Rulebook sections rather than one. Built:
-  1. `Sect` (`StrEnum`, `src/vtesbot/engine/cards.py`): `CAMARILLA`,
-     `ANARCH`, `SABBAT`, `INDEPENDENT`, `LAIBON`.
-  2. `CryptCard.sect: Sect | None = None` (same file) -- a new, optional
-     field alongside the dataclass's existing `clan`/`title`/`disciplines`
-     "plain printed stats" fields, documented the same way. Defaults to
-     `None` ("not modeled for this instance," e.g. a synthetic test
-     vampire, an Imbued, or a real vampire not yet run through
-     `derive_sect`), never to a guessed `Sect` member; a future card
-     gating on sect must treat `None` as "does not qualify."
-  3. `derive_sect(card_text: str) -> Sect` (same file): the generic,
-     reusable classifier this entry called for, instead of ad hoc per-card
-     logic. krcg has no structured sect field (confirmed again on the
-     installed krcg 5.14 package, both `Card.to_json()` and the live API's
-     requirement fields), so sect is derived from the free-text preamble at
-     the very start of a vampire's own printed `card_text`. Checked against
-     *every* crypt card in the installed krcg 5.14 dataset (`krcg.load()`),
-     not just a hand sample: all 1765 vampire printings (Imbued excluded --
-     see below) match a single regex, `^(?:Advanced,\s*)?(Camarilla|Anarch|
-     Sabbat|Independent|Laibon)\b`, 100% hit rate, zero manual overrides
-     needed. This also corrects an assumption in this entry's own "Gap 1"
-     write-up above: there is currently no vampire with *no* sect preamble
-     at all -- Independent vampires are not identified by the absence of a
-     preamble, their own printed text literally starts with "Independent."
-     (374 of the 1765 do). `derive_sect` still refuses to guess: text that
-     does not match the regex (a future printing with a malformed/omitted
-     preamble, or an Imbued's own text, which never carries a sect preamble
-     since Imbued are not vampires and have no sect) raises
-     `UnresolvedRulingError("OQ-18", ...)` rather than defaulting to
-     Independent.
-  4. Deliberately **not** built (confirmed still out of scope for unblocking
-     Dust Up, which only reads an existing sect via "Requires an Anarch," a
-     static playability gate, not an effect that grants one): Rulebook SS6's
-     "become Anarch" undirected minion action, and the real krcg-to-
-     `CryptCard` deck-import pipeline itself (still doesn't exist --
-     unchanged from this entry's own finding above). `derive_sect` is built
-     as a standalone, tested unit specifically so that pipeline has a
-     ready-made sect-derivation function to call once it exists; this pass
-     does not claim deck import works end-to-end.
-  Tests: `tests/rules/test_sect.py` (new) -- `Sect`'s five members;
-  `CryptCard.sect` defaults to `None` and can carry a `Sect`;
-  `derive_sect` against real, verbatim krcg card text for all five sects
-  (including OQ-18's own three named Anarch examples, Aluc Romas de Leon,
-  Anita Wainwright, Ariane, plus an "Advanced," printing and a title-
-  qualifier case), the Imbued no-preamble case, and the generic
-  malformed/empty-text case, all raising `UnresolvedRulingError`. Full
-  suite green (254 passed; the two combat-file tests concurrently in
-  progress under Gap 2 are out of this pass's scope), `ruff check`/`ruff
-  format --check` clean.
-  **This resolves Gap 1 only.** Gap 2 (the `[cel]` clause's dodge/same-
-  round-additional-strike mechanics in `engine/combat.py`) was handled
-  separately, in parallel, by a second `rules-engineer` pass -- see its own
-  "Gap 2 resolved" note earlier in this entry, which reports it resolved as
-  well. Dust Up itself still remains `blocked`: neither pass wired
-  `cards/dust_up.py` itself against the newly-available sect field or
-  combat hooks (both left that to a future `card-implementer` pass, by
-  design -- CLAUDE.md §6's all-or-nothing bar means the card is not
-  "implemented" merely because its blocking gaps are closed). This entry's
-  overall header status is left as **open** by both passes deliberately
-  (per each pass's own instructions not to unilaterally mark the whole
-  entry resolved) pending a single reconciling pass (e.g. `rules-auditor`
-  or the user) confirming both gap-resolution notes together, then flipping
-  the header and handing the card to `card-implementer`.
-- **Note on this entry's own header vs. its last paragraph (2026-10-10,
-  `card-implementer`):** the header above already read "(status:
-  resolved)" by the time this pass started (per the task that assigned this
-  pass: "OQ-18 ... is now fully resolved and re-audited ... status:
-  resolved, confirmed closed"), even though the immediately preceding
-  paragraph still says the header was "left as open ... pending a single
-  reconciling pass." Not re-litigated or second-guessed here (this pass
-  did not itself re-audit Gap 1/Gap 2's own resolutions, only built on top
-  of them, exactly as both gap-resolution notes above anticipated); flagged
-  so a future reader does not mistake the stale "left as open" sentence for
-  this entry's current status.
-- **`card-implementer` pass (2026-10-10): Dust Up implemented**
-  (`src/vtesbot/cards/dust_up.py`, `tests/cards/test_dust_up.py`, 18 tests).
-  Re-verified the card text/rulings against the live krcg API and the
-  cached `data/cards/100597.json` snapshot -- unchanged, matching this
-  entry's own earlier quotes. All three clauses wired: `[ani]`/`[pot]` as
-  `"combat_strike_option"` providers (base hand-strike damage, i.e.
-  `HAND_STRIKE_STRENGTH` plus any live `"combat_strength_modifier"`
-  contribution, so the "additional damage inherits all of the properties of
-  the base damage" ruling holds structurally, not by coincidence; `[ani]`
-  additionally flags `StrikeDamage(ignore_dodge=True)`); `[cel]` as a paired
-  `"combat_dodge_option"` (the dodge, plus recording an additional-strike
-  grant) and `"combat_additional_strike"` (claiming that grant) provider.
-  "Requires an Anarch" gates all three clauses via `vampire.card.sect is
-  Sect.ANARCH` (treating `None` as "does not qualify," never guessing a
-  default sect, per `CryptCard`'s own docstring).
-  One deliberate, documented granularity simplification, flagged here rather
-  than guessed at silently: `engine/combat.py`'s three combat hooks carry no
-  round-boundary (or even combat-boundary) signal in their context (unlike
-  `pending`, the per-minion-action scratch container OQ-11 built for bleed
-  actions) -- re-confirmed by re-reading `_ask_strike`/`_resolve_strike_
-  pair`/`_ask_additional_strike`/`run_combat` in full before concluding this,
-  not assumed. Building one would be genuine new `engine/combat.py` scope
-  (CLAUDE.md "No engine patches ... hand off to rules-engineer"), out of
-  bounds for this pass. So the `[cel]` clause's "(limited)" restriction
-  ("you cannot play it for the dodge only if you already played it for a
-  (limited) additional strike this round" [ANK 20220204]) is enforced at
-  "once per vampire instance, for as long as that instance exists" (in
-  practice, once per game) granularity instead of precisely "once per
-  round" -- strictly *more* restrictive than the sourced ruling, never less:
-  it can never produce the rules-forbidden outcome (re-granting an
-  additional strike, or replaying `[cel]` for the dodge only, within the
-  same round), only the safe-direction cost of also disallowing a later,
-  separate, legitimate replay (a different physical copy, in a later round
-  of the same combat, or an entirely later combat) that the rules would in
-  fact allow. Tracked card-module-side only (`dust_up.py::_cel_book`, keyed
-  by `id(vampire)` with a `weakref.finalize` cleanup callback to avoid any
-  cross-test/cross-game id-reuse leak -- `VampireInPlay` itself is
-  unhashable, per its own plain `@dataclass` decorator with no
-  `frozen=True`/`unsafe_hash=True`, so it cannot be used as a `dict`/
-  `WeakKeyDictionary` key directly); no `engine/` file was touched. Flagged
-  as a candidate for a future `rules-engineer` pass (a round-scoped scratch
-  container threaded through `run_combat`'s three hook contexts, mirroring
-  `pending`'s role for minion actions) if exact per-round fidelity is ever
-  wanted; no test in `tests/cards/test_dust_up.py` exercises or claims
-  correct round-2 re-availability, only the same-round restriction the
-  ruling actually describes. Full suite green (277 passed, up from 259;
-  `ruff check`/`ruff format --check` clean).
-
-## OQ-19: Cross-card "(limited)" additional-strike cap not pooled (status: resolved)
-
-- Situation: found by the orchestrating session auditing `engine/combat.py`
-  plus `cards/dust_up.py`/`cards/side_strike.py` (the two cards using its
-  additional-strike machinery) and the bleed-side equivalent
-  (`cards/_shared.py::bleed_bookkeeping`, `cards/threats.py`,
-  `cards/bonding.py`). Not a ruling ambiguity -- the SS8 glossary rule is
-  plain and was already quoted verbatim in `engine/combat.py`'s own module
-  docstring (re-fetched live by the OQ-18 `rules-engineer` pass, 2026-10-10,
-  from <https://www.vekn.net/rulebook/4-detailed-turn-sequence>, matching
-  the local cache `data/sources/rulebook/2026-10-09/
-  4-detailed-turn-sequence.md`; not re-fetched again here, since this pass
-  settles no new ruling, only closes an engineering gap): "A minion cannot
-  use more than one card or effect to gain additional strikes per round of
-  combat." Dust Up's own ruling on exactly where the check belongs is
-  likewise already on file (`data/cards/100597.json`, `card-implementer`'s
-  OQ-18 follow-up): "[cel] The additional strike is not optional: you
-  cannot play it for the dodge only if you already played it for a
-  (limited) additional strike this round." [ANK 20220204].
-- The block was a missing engine capability, exactly as OQ-18's own
-  `card-implementer` note flagged when it landed Dust Up: "`engine/
-  combat.py`'s three combat hooks carry no round-boundary (or even
-  combat-boundary) signal in their context ... Flagged as a candidate for a
-  future `rules-engineer` pass (a round-scoped scratch container threaded
-  through `run_combat`'s three hook contexts, mirroring `pending`'s role
-  for minion actions) if exact per-round fidelity is ever wanted." Both
-  `dust_up.py` and `side_strike.py` had each built their own private,
-  per-card, per-vampire-*instance* (`id(vampire)` + `weakref.finalize`)
-  bookkeeping instead -- strictly more restrictive than the rule (never
-  re-granting within one round), but with two real consequences flagged in
-  this entry's opening brief: (1) **illegal-play risk**: each card's
-  tracking only ever disabled *that card's own* clause, so nothing stopped
-  a single vampire holding both Dust Up and Side Strike from using *both*
-  cards' "(limited)" grants in the same round -- a genuine milestone-1
-  "always legal" violation, not merely an over-restriction; and (2) no
-  round reset at all (a vampire's `[cel]`/`[CEL]` clause, once played, was
-  blocked for the rest of the game, never just the rest of that round).
-- Resolution (`rules-engineer` pass, 2026-10-10): `src/vtesbot/engine/
-  combat.py` now creates one fresh, shared `round_state: dict[str, Any]` at
-  the top of every round of `run_combat`'s outer loop (reset every round,
-  never carried into the next, matching `pending`'s own per-action lifetime
-  precedent for OQ-11), threaded under the new `ROUND_STATE_CONTEXT_KEY`
-  context key into both `COMBAT_DODGE_OPTION_HOOK`'s offer (inside
-  `_ask_strike`) and `COMBAT_ADDITIONAL_STRIKE_HOOK`'s offer (inside `_ask_
-  additional_strike`) -- the two, and only two, hooks where a "(limited)"
-  additional-strike grant can originate; `COMBAT_STRIKE_OPTION_HOOK`'s own
-  plain alternate-strike grants never grant an *additional* strike, so
-  `_ask_strike` does not thread it into that offer. Two new module-level
-  helpers, `additional_strike_limit_used(context)` / `mark_additional_
-  strike_limit_used(context)`, read/write a shared `ADDITIONAL_STRIKE_
-  LIMIT_KEY` flag inside that dict and degrade gracefully (treat a missing
-  `round_state` -- a hook offered directly, bypassing `run_combat`, as
-  several scenario tests do to probe one hook in isolation -- as "not used
-  yet"/a no-op, rather than raising), exactly mirroring `cards/_shared.py::
-  bleed_bookkeeping`'s existing opt-in convention for the bleed-side cap. A
-  card module implementing a "(limited)" clause calls both from its own
-  grant's own `offer`/`apply`; a card implementing an *exempt* clause (per
-  its own printed text, e.g. a future Quickness 101532/Hell-for-Leather
-  100910 "additional strike that does not count against the limit" --
-  neither implemented, `card-implementer` scope, not built by this pass)
-  simply never calls either, by design -- the cap remains the granting
-  card's own choice to consult/record, same as before, just now backed by a
-  real shared container instead of nothing.
-  `cards/dust_up.py`'s `[cel]` clause and `cards/side_strike.py`'s `[CEL]`
-  clause were both migrated off their private `_CEL_BOOKKEEPING`-style
-  per-vampire-instance dicts onto these two helpers, closing the
-  illegal-play gap directly (migration detail: Dust Up's own clause still
-  needs one small piece of genuinely private, per-vampire state beyond the
-  shared flag -- *which* vampire currently has an unclaimed dodge-bundled
-  grant to claim via its own second provider -- now stored correctly keyed
-  by vampire instance id *inside* the same shared `round_state` dict, since
-  that dict is one single object offered to *both* combatants' hook calls
-  each round and a flat, un-keyed boolean would have wrongly conflated one
-  vampire's grant with the other's; Side Strike's `[CEL]` clause needed no
-  such extra state, since its one provider *is* the `COMBAT_ADDITIONAL_
-  STRIKE_HOOK` offer itself, with no separate claim step). Both modules'
-  docstrings were corrected: the "deliberately more restrictive, per-
-  instance-forever" caveats are removed (no longer true) and replaced with
-  a description of the shared, round-scoped, cross-card mechanism they now
+- Situation: Enchant Kindred (100640, `types==["Action"]`) is itself
+  the acting vampire's whole minion action for the turn — but the
+  engine had no generic way for a played library card to supply its
+  own alternate minion action (only Bleed/Hunt/Recruit-Ally were
+  wired into `_choose_and_perform_action`).
+- Rules/interactions: plain text; faking it as an Action-Modifier on a
+  separately-chosen bleed would wrongly let the vampire bleed for free
+  and play the card as a bonus. "A younger vampire" (superior clause)
+  reads, per the project owner, as younger than the acting vampire,
+  matching the unqualified-comparative convention other cards' texts
   use.
-  Also built, bleed side (secondary, per this pass's own task scope):
-  `cards/_shared.py::bleed_bookkeeping`'s docstring now documents the
-  already-latent "exempt clause" convention explicitly (a provider that
-  wants to contribute to the bleed amount while opting out of the shared
-  `LIMITED_USED_KEY` check/set simply never touches that key in the dict
-  the function returns -- no code change to the function itself was needed,
-  since this was already structurally possible, just undocumented).
-  Command of the Beast (100381), Power of One (101429) and Leverage
-  (101098) are deliberately **not** implemented by this pass (named only as
-  the motivating, not-yet-built examples of an exempt bleed clause --
-  `card-implementer` scope).
-  Tests: `src/vtesbot/engine/combat.py`'s new mechanism is proven generically
-  with fake providers in `tests/rules/test_combat_dodge_and_additional_
-  strike.py` (`test_additional_strike_limit_resets_every_round_of_the_same_
-  combat`, `test_additional_strike_limit_is_shared_across_two_unrelated_
-  providers`); the real-card cross-card closure is proven with the two
-  actual implemented cards in the new `tests/cards/
-  test_dust_up_side_strike_interaction.py`; `tests/cards/test_dust_up.py`'s
-  and `tests/cards/test_side_strike.py`'s own pre-existing direct-`hooks.
-  offer` "(limited)" tests were updated to thread an explicit shared
-  `round_state` dict across both calls (a zero-regression, mechanical
-  update: these tests probe the hook directly, bypassing `run_combat`, so
-  they must now supply the round-scoped container `run_combat` would
-  otherwise supply); the `run_combat`-driven end-to-end tests in both files
-  needed no change (the mechanism is transparent to them). The bleed-side
-  exemption convention is proven with fake stand-in providers in
-  `tests/rules/test_pending_modifier.py::
-  test_bleed_bookkeeping_lets_an_exempt_provider_skip_the_shared_limited_flag`.
-- Impacted code: `src/vtesbot/engine/combat.py`, `src/vtesbot/cards/
-  dust_up.py`, `src/vtesbot/cards/side_strike.py`, `src/vtesbot/cards/
-  _shared.py` (docstring only). Card registration is unchanged for both
-  cards (both remain `implemented`); this pass only replaced their internal
-  "(limited)" bookkeeping mechanism, not their card text/rulings coverage.
-  Flags for a future `card-implementer` pass: Quickness (101532),
-  Hell-for-Leather (100910), Command of the Beast (100381), Power of One
-  (101429), Leverage (101098) -- the engine mechanism they will each need
-  (a limited clause, and, for the first two, an exempt clause alongside it)
-  is now ready and documented, but none of the five cards themselves are
-  implemented by this pass.
-- `rules-auditor` review (independent, read-only; found a real regression,
-  fixed same pass): the first landing of this fix stored
-  `ADDITIONAL_STRIKE_LIMIT_KEY` as a single flat boolean inside the shared
-  `round_state` dict. Since `round_state` is one object `run_combat` passes
-  to *both* combatants' hook calls each round, that flat flag wrongly
-  pooled the cap jointly across the whole fight: once *either* combatant
-  used *any* "(limited)" additional-strike grant, the engine silently
-  stopped offering the *other*, completely unrelated combatant's own
-  "(limited)" card for the rest of that round. This directly contradicted
-  SS8's own per-*minion* wording ("a minion cannot use more than one card
-  or effect ... per round of combat", not "the combatants") and the
-  Wauneka/Flávio Gonçalves worked example already quoted in `engine/
-  combat.py`'s own module docstring two paragraphs above the fix (two
-  different minions, same round, each using their own additional-strike
-  card) -- confirmed by the auditor via a reproduction script and a
-  worktree diff against pre-fix code, with no existing test (old or new)
-  having exercised two different vampires each holding a different
-  "(limited)" card in the same round. This was a regression introduced by
-  this fix, not a pre-existing gap: before it, each card's own private
-  per-vampire-instance tracking never let two different vampires interfere
-  with each other at all; the fix correctly closed the within-one-vampire
-  cross-card pooling gap but newly broke the cross-combatant case.
-  Fixed by partitioning the flag by `context["vampire"]` inside
-  `round_state` (`round_state.setdefault(ADDITIONAL_STRIKE_LIMIT_KEY,
-  {})[context["vampire"]]`, the same per-vampire-id-keyed pattern `cards/
-  dust_up.py`'s own `CEL_GRANTS_KEY` already used for its own, narrower,
-  per-card state) -- so `additional_strike_limit_used`/`mark_additional_
-  strike_limit_used` are now correctly per-minion, not joint. `engine/
-  combat.py`'s module docstring and both helpers' own docstrings were
-  corrected to state this explicitly, including a one-line warning at
-  `additional_strike_limit_used`'s own docstring that calling either helper
-  for an *exempt* clause out of copy-paste habit would silently defeat that
-  clause's own printed exemption, with no test failure to catch it (flagged
-  by the auditor as a minor, non-blocking note for whoever implements
-  Quickness/Hell-for-Leather next).
-  New regression tests: `tests/rules/test_combat_dodge_and_additional_
-  strike.py::test_additional_strike_limit_is_independent_per_combatant`
-  (two fake providers, one per combatant, both legally get their own grant
-  in the same round -- the auditor's own repro shape) and `tests/cards/
-  test_dust_up_side_strike_interaction.py::test_side_strike_cel_grant_
-  blocks_dust_up_cel_grant_in_the_same_round` (the reverse play order of
-  the existing Dust-Up-then-Side-Strike test, confirming the cap gates
-  symmetrically regardless of which card is played first -- a minor gap
-  the auditor also flagged). Full suite green (296 passed, up from 294;
-  `ruff check`/`ruff format --check`/`pymarkdown` clean). The pre-existing
-  `hooks.clear()` autouse-fixture fragility in `tests/rules/test_combat_
-  dodge_and_additional_strike.py` (wipes *every* registered hook provider,
-  including real card modules', not just this file's own fakes) was
-  confirmed by the auditor to be pre-existing and out of scope for this
-  pass -- left untouched, not silently fixed on the side.
-- This entry is left at `status: resolved` per the fix (and now its
-  regression fix) having been built and tested; a further independent
-  `rules-auditor` pass remains welcome per CLAUDE.md's standing "high-stakes
-  changes are reviewed by `rules-auditor`" policy, as with any core-engine
-  change.
+- Solution: added `ACTION_CARD_PLAY_HOOK`/`ActionCardSpec` (base
+  stealth, directed/undirected, `resolve`, optional `on_blocked`, and
+  an `action` field so a clause can declare its real mechanical
+  identity, e.g. `ACTION_BLEED`, so it doesn't silently suppress
+  another card's bleed-gated provider sharing the window), offered
+  alongside the existing top-level choices. Enchant Kindred was then
+  implemented: basic clause as a +2 bleed tagged `ACTION_BLEED`;
+  superior clause raises a plain "pick an eligible uncontrolled
+  vampire" decision and adds blood via `effective_capacity` (OQ-8).
+  `Status.IMPLEMENTED`.
 
-## OQ-20: Vote/ballot casting order for exactly two Methuselahs (status: resolved)
+## OQ-18 - Dust Up - no sect, no dodge/extra strike (status: resolved)
 
-- Situation: found by `rules-auditor` reviewing OQ-6's `engine/politics.py::
-  _cast_votes` implementation. Rulebook SS4 "The Referendum" step 2 (quoted
-  verbatim in OQ-6's own entry and in `engine/politics.py`'s module
-  docstring): "all Methuselahs may now cast any votes and ballots they have
-  ... at this time, in any order. They call out their votes and ballots
-  freely, and there is no obligation to cast votes or ballots." No turn
-  structure, priority, or alternation is specified for *which* Methuselah
-  casts next at any given moment during this one step -- only that casting
-  happens "in any order." Rulebook SS2 Sequencing's impulse-return rule
-  ("after any effect is used the impulse returns to the acting Methuselah")
-  is written for the course of an action (announce/block/resolve), and is
-  not itself stated to extend to vote-casting order during the separately
-  named polling step.
-- Why this is open: the previous `_cast_votes` pass's own docstring asserted
-  that its strict two-sided alternating-impulse procedure "mirrors" the
-  impulse model and CLAUDE.md rule 4 as though that were a sourced reading.
-  Re-checking the verbatim quote above, no such turn structure is actually
-  specified by the source -- "in any order" is explicitly looser than a
-  fixed ping-pong alternation, and the strict "impulse always returns to the
-  calling Methuselah" rule gives the calling Methuselah a real tactical edge
-  (the non-caller can never cast two sources back-to-back without the caller
-  getting an intervening look at the running tally) that nothing in the
-  quoted text supports or rules out.
-- Resolution (`User Ruling`, settled by the project's user from real-table
-  play experience, fourth politics.py fix round): votes are cast in table
-  order (seating order) -- each Methuselah decides, on their turn in that
-  fixed rotation, which vampire(s)/source(s) contribute votes for/against,
-  or passes, and the table goes around for a second and (if needed) third
-  lap, continuing until a full lap completes with nobody casting anything.
-  In this 2P engine, that is a fixed rotation of exactly two seats: the
-  caller goes first each lap (they are the one who called the referendum),
-  then the other player, which completes one lap; laps repeat until one
-  full lap passes with no casts by either player (or no sources remain for
-  anyone).
-  - Engineering follow-up (done): `_cast_votes`
-    (`src/vtesbot/engine/politics.py`) was rewritten to implement this as a
-    genuine procedure change, not a docstring-only fix. The former
-    "`turn = caller_player` after any cast" rule (which returned the
-    impulse to the caller even after the *other* player cast, giving the
-    caller the ability to cast every one of their own sources back-to-back
-    before the other Methuselah ever got a look -- the exact unsourced
-    tactical edge this entry originally flagged) is gone; `turn` now simply
-    alternates between `caller_player` and `other_player` after *every*
-    step, cast or pass, with no special-casing of who just acted.
-    `consecutive_passes` (unchanged mechanism, reused) still counts
-    consecutive no-cast turns and still closes the window at 2 -- and this
-    is still correct under the new alternation specifically *because*
-    `turn` always strictly alternates: any two consecutive turns are always
-    one from each player, i.e. exactly one full lap, so "`consecutive_passes`
-    reaches 2" is exactly "a full lap completes with nobody casting
-    anything," regardless of which player happens to start the count. A
-    cast resets the counter to 0, requiring a fresh full lap to close the
-    window afterward. The loop still also exits immediately once no sources
-    remain for anyone, without waiting out one final idle lap.
-  - Tests: the existing scenario tests in `tests/rules/test_politics.py`
-    were re-checked one by one against the new alternation, not just run
-    and left to pass; every pre-existing scenario has at most one vote
-    source per player still live at any point where the other player also
-    still has one (either one side has zero sources, or both sides are each
-    down to a single source before the other casts), so the old
-    "return-to-caller" and the new "strict alternation" rules happen to
-    produce the identical decision sequence in all of them -- confirmed by
-    re-deriving each test's trace, not merely by the suite being green.
-    `test_a_polling_step_hook_provider_adds_a_vote_source_and_it_is_cast`
-    is the one pre-existing test with two sources for the same player, but
-    the other player has zero sources in that scenario, so the opponent's
-    turns are silent, no-decision skips under both rules alike and the
-    visible sequence is unaffected.
-    A new test,
-    `test_a_player_no_longer_gets_to_cast_two_sources_back_to_back_ahead_of_
-    the_other_players_turn`, was added specifically to prove the new
-    behaviour where it actually differs from the old one: the caller
-    controls *two* live vote sources (their own political-action-card vote
-    and a titled acting vampire's vote) while the other player controls one
-    (a titled vampire). Under the new rule the global decision order is
-    caller, other, caller (the other player gets an intervening turn between
-    the caller's two casts); under the old rule it would have been caller,
-    caller, other (the caller exhausts both sources before the other player
-    is ever consulted). The test records the actual player-by-player call
-    order (not just each agent's own local script, which cannot observe
-    interleaving) and asserts it is `["P1", "P2", "P1"]`, which would fail
-    under the old rule -- a real behavioural difference, not a cosmetic one
-    (casting *two* sources back-to-back in one lap is still impossible under
-    either rule; what changed is whether the *other* player gets a turn
-    between the caller's two separate laps).
-- Impacted code: `src/vtesbot/engine/politics.py` (`_cast_votes`). Impacted
-  cards: none directly blocked by this (the alternation choice does not
-  prevent any card's own text from being correctly applied); any future
-  card whose own printed text depends on vote-casting *order* specifically
-  (not merely the final for/against tally) should be implemented against
-  this resolved procedure.
+- Situation: Dust Up (100597, "Requires an Anarch", three discipline
+  clauses) was blocked by two independent gaps: (1) the engine had no
+  vampire-sect concept at all, and (2) the `[cel]` clause ("dodge,
+  with 1 additional strike (limited)") needed dodge and same-round
+  additional-strike mechanics `engine/combat.py` didn't have.
+- Rules/interactions: Rulebook §6 Vampire Sects + §7 (Laibon) name the
+  five sects; §4 Combat's Choose Strike / Additional Strikes sections
+  cover dodge and repeat strikes; [LSJ 20030902-2]/[LSJ 20060808-1]
+  confirm a dodge-proof strike ("cannot be dodged") still lets the
+  opponent dodge, it just has no effect against that one strike.
+- Solution: added `Sect` enum + `CryptCard.sect` + `derive_sect
+  (card_text)` (a regex classifier over the printed sect preamble,
+  100% hit rate across the full krcg crypt dataset; raises
+  `UnresolvedRulingError` rather than guessing on a non-match). Added
+  `COMBAT_DODGE_OPTION_HOOK` (zeroes the opponent's simultaneous
+  damage unless the attacking strike is flagged
+  `StrikeDamage(ignore_dodge=True)`) and
+  `COMBAT_ADDITIONAL_STRIKE_HOOK` (re-enters the full strike-choice
+  machinery). Dust Up was then implemented (all three clauses, gated
+  on `sect is Sect.ANARCH`); the `[cel]` "(limited)" cap was initially
+  enforced per-vampire-forever rather than per-round (stricter than
+  the rule, never looser) until OQ-19 fixed this properly with shared
+  round-scoped state. `Status.IMPLEMENTED`.
 
-## OQ-21: Action-card target: announce-time vs. resolve-time (status: resolved)
+## OQ-19 - Cross-card "(limited)" additional-strike cap not pooled (status: resolved)
 
-- Situation: found by `rules-auditor` reviewing `src/vtesbot/cards/
-  line_brawl.py`'s `[pot]` clause ("Ⓓ Enter combat with a minion") right
-  after a `card-implementer` pass landed it. That landing raised the
-  "which of the opponent's ready vampires to force into combat" `Decision`
-  inside `resolve()`, which `engine/action.py::perform_minion_action` only
-  calls *after* `attempt_block` has already run to completion -- i.e. the
-  defending Methuselah was asked "do you block?" before the specific minion
-  that would be forced into combat, if they decline, was ever fixed.
-- Sources (both already fully settle the *code-contract* question, no
-  guessing involved):
-  1. Rulebook SS4 "1. Announce the Action" (`data/sources/rulebook/
-     2026-10-09/4-detailed-turn-sequence.md:468-474`), quoted verbatim by
-     `rules-auditor`: "All details of the action are defined when the
-     action is announced, including the target(s), the cost, the effects,
-     and so on."
-  2. This engine's own documented contract for the hook this card is built
-     on, `engine/phases/minion.py::ActionCardSpec`/`_perform_action_card`:
-     "`option.apply(state)` is invoked right away, *before* the
-     block-attempt window opens" -- `line_brawl.py`'s `[pot]` clause (and,
-     the same `rules-auditor` pass found, `enchant_kindred.py`'s own
-     superior clause, lower stakes there since its target is the acting
-     player's own uncontrolled vampire, never shaping an opposing block
-     decision) silently violated this already-documented contract by
-     picking its target one step later than the contract says to.
-- Resolution: both clauses now choose their target inside `apply()`, at
-  announce time, with `resolve()` simply looking up the already-chosen
-  instance id from closure (defensively treating a target that somehow
-  stopped qualifying between announce and resolve as "nothing to do,"
-  though nothing in this engine's current scope can actually cause that
-  today). Fixed together per `rules-auditor`'s own recommendation, since
-  the contract violation itself was identical in both, independent of
-  which way the narrower residual question below eventually resolves.
-  `tests/cards/test_line_brawl.py::
-  test_pot_blocked_enters_combat_with_the_blocker_instead_via_the_generic_
-  path` is the regression proof: it now asserts the `"line_brawl_combat_
-  target"` decision is raised between `"action_choice"` and
-  `"block_attempt"`, which would fail under the old (resolve-time)
-  placement (there, that decision is never raised at all when the action
-  ends up blocked, since `resolve()` never runs).
-- Narrower residual, closed: `rules-auditor`'s own pass could not find a
-  VEKN ruling specific to this exact card-text shape ("Ⓓ Enter combat with
-  a minion," or any similarly-worded directed ability) stating *when* the
-  specific enemy-minion target must be chosen, as distinct from the
-  general "Announce the Action" rule above. A follow-up krcg live-query
-  survey (2026-10-11) of every one of the 168 library/crypt cards whose
-  text contains "enter combat with" settles it anyway, via two broader
-  general rulings that are not specific to this clause shape but apply
-  across the whole card pool, not just a hand-picked precedent or two:
-  1. "An action directed at a card controlled by another Methuselah is
-     directed at that Methuselah." [RBK who-may-attempt-to-block]
-     [LSJ 20090324] -- confirms (independently of `rules-auditor`'s own
-     citation of the same general rule) that block eligibility is tied to
-     the *Methuselah*, never to the specific minion, so fixing the minion
-     target at announce time changes nothing about who may attempt to
-     block.
-  2. The general "fizzle" ruling, cross-referenced by krcg against well
-     over 100 otherwise-unrelated cards across many different Disciplines
-     and effect shapes (verbatim, one representative tagging among
-     several near-identical ones found): "If the action is unblocked when
-     it resolves and the target is unlocked, the action 'fizzles' (cost,
-     if any, is paid, and it is considered successful, but has no
-     effect)." [ANK 20210124] [LSJ 20070411] [LSJ 20090514] -- this is the
-     single general mechanism VTES uses whenever an unblocked action's
-     target no longer meets its printed condition by the time it
-     resolves: the action still "happens" (cost paid, counts as
-     successful) but produces no effect. Nowhere in this ruling, or in any
-     of the 100+ cards it is attached to, is there a "choose a new target
-     now instead" branch -- the *same* target chosen at announce is only
-     ever re-validated at resolve, never re-picked. Confirmed directly
-     against Barachiel (201781, krcg id confirmed via `krcg.load()`), one
-     of the two "Ⓓ ... enter combat with a minion" crypt-text precedents
-     this card's own module cites, and against the other "fizzle"-tagged
-     cards this search surfaced -- none carve out an exception for this
-     ability shape.
-  Together these two rulings leave no realistic alternative reading: a
-  card's target, including this ability shape's own enemy-minion target,
-  is always fixed at announce and only ever re-validated (never re-chosen)
-  at resolve, exactly matching the engine-contract fix already made.
-  `line_brawl.py`'s and `enchant_kindred.py`'s own `resolve()` closures'
-  "target no longer eligible -> do nothing" branches, originally written
-  as a defensive fallback for a case thought unreachable, are retroactively
-  confirmed to already implement the real "fizzles" rule correctly, not
-  merely to degrade gracefully.
-- Impacted code: `src/vtesbot/cards/line_brawl.py` (`_provide_line_brawl_
-  pot`), `src/vtesbot/cards/enchant_kindred.py`
-  (`_provide_enchant_kindred_superior`). Impacted cards: any future Action
-  card whose own clause targets a specific minion/vampire (not just "the
-  opponent" as a whole, which never needed a target-choice `Decision` in
-  the first place) must choose that target inside its `ActionCardSpec`
-  provider's `apply()`, never inside `resolve()`.
+- Situation: Dust Up and Side Strike each tracked their own
+  "(limited)" additional-strike cap privately per-card,
+  per-vampire-instance — so nothing stopped one vampire from using
+  *both* cards' grants in the same round (an illegal-play risk), and
+  the cap never reset between rounds.
+- Rules/interactions: SS8 glossary, verbatim: "A minion cannot use
+  more than one card or effect to gain additional strikes per round
+  of combat."
+- Solution: `run_combat` now creates a fresh, round-scoped
+  `round_state` dict threaded into the dodge/additional-strike hook
+  contexts; `additional_strike_limit_used`/
+  `mark_additional_strike_limit_used` read/write a shared flag in it
+  (degrading gracefully when offered outside `run_combat`). Both cards
+  were migrated onto the shared helpers. A `rules-auditor` follow-up
+  found and fixed a regression in the first landing: the flag was
+  briefly a single flat boolean shared across *both* combatants,
+  wrongly pooling the cap jointly instead of per-minion — fixed by
+  keying it per `context["vampire"]`.
 
-## OQ-22: Contested Cards gap beyond crypt/ally -- Fame (100698) (status: resolved)
+## OQ-20 - Vote/ballot casting order for two Methuselahs (status: resolved)
 
-- Situation: implementing Fame (Master, krcg id 100698, in the active 2P
-  Brujah suggested decklist `data/decks/vekn-2p/brujah.json`) surfaced that
-  Fame is printed "Unique." and is "put ... on a ready vampire" as a
-  `CardAttachment` (`engine/cards.py::CardAttachment`), the same attachment
-  shape Celerity (100312) uses (OQ-8). Not a ruling ambiguity -- the base
-  rule is plain, and was already confirmed once by this document's own
-  OQ-10 resolution (re-fetched live against
-  <https://www.vekn.net/rulebook/4-detailed-turn-sequence>, "Advanced Rules
-  > Contested Cards", cross-checked against the local cache
-  `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`, lines
-  36-52): "If more than one unique card with the same name is brought into
-  play, that means control of the card is being contested. For the
-  duration of the contest, all of the contested cards are turned face down
-  and are out of play ... The cost to contest a card is 1 pool, which you
-  pay during each of your unlock phases. Instead of paying the cost ... you
-  may choose to yield the card. A yielded card is burned." OQ-10 already
-  established this is "one unified mechanism for *every* unique card
-  (crypt or not)," and that the 2P variant's "Contested crypt cards"
-  override (stay in play, usable, 1 pool/unlock or yield, no face-down) is
-  scoped to crypt cards only -- re-confirmed by that section's own title
-  and its own aside ("this means that contested crypt cards are no longer
-  out of play"), which by negation leaves an Ally/Equipment/Location/other
-  Unique master card under the *un*-modified base rule: face down, out of
-  play, for the contest's duration.
-- What's missing: `engine/cards.py::CardAttachment` has no
-  `contested_with` field (unlike `VampireInPlay`/`AllyInPlay`, both of
-  which do, per OQ-8/OQ-10's own resolutions); nothing checks, at the
-  moment a Unique master card like Fame is about to be attached, whether a
-  same-named `CardAttachment` is already live anywhere in play (either
-  controller) the way `engine/contests.py::detect_contest_on_reveal` and
-  `engine/allies.py::detect_contest_on_recruit` do for vampires/allies;
-  there is no face-down/out-of-play representation for an attachment; and
-  `engine/phases/unlock.py`'s pay-1-pool-or-yield ordering loop
-  (`_pending_effect_ids`/`_resolve_optional_effects_in_chosen_order`) only
-  resolves vampire (`"contest:"`) and ally (`"contest_ally:"`) pending
-  ids, nothing for an attached master card.
-- Why this matters now, not latent: unlike OQ-10 when it was first filed,
-  this is live today, not merely anticipated ahead of need. Fame is a real
-  card in the active 2P pool's own Brujah suggested decklist with exactly
-  one copy (correctly, per deck-construction uniqueness), but nothing
-  stops the *other* Methuselah in a duel from independently including and
-  playing their own separate copy of Fame -- from their own, separately
-  built deck (e.g. a mirror match using the same suggested Brujah
-  decklist, or any other user-supplied deck that happens to include it) --
-  onto a different vampire while the first copy is still attached and
-  un-contested. This is the ordinary, unremarkable "two Methuselahs, two
-  decks" situation this project explicitly scopes for (CLAUDE.md SS1,
-  "The user supplies a deck; the bot pilots it against a human (or another
-  bot)"), not a contrived edge case.
-- What would be needed (`rules-engineer` scope): generalize the
-  crypt/ally Contested Cards machinery to `CardAttachment` -- a
-  `contested_with`-shaped field, a detection check at the moment of
-  attachment (mirroring `detect_contest_on_reveal`/
-  `detect_contest_on_recruit`), a face-down/out-of-play representation (an
-  attached card has no existing "zone" of its own the way a vampire/ally
-  does, so this needs its own modelling decision), and a generalized
-  branch in `unlock.py`'s own pending-effect loop to resolve it
-  (pay-1-pool-or-yield, mirroring `resolve_one_contest`/
-  `resolve_one_ally_contest`).
-- Decision: per CLAUDE.md SS2 no-guessing rule and the project's own "one
-  registration = one status for the whole effect module" convention
-  (`src/vtesbot/cards/diana_iadanza.py`'s own docstring, which registers an
-  otherwise-partially-implementable card `blocked` wholesale rather than
-  splitting one card across two registry statuses), Fame is registered
-  `blocked` entirely rather than implementing its torpor-entry/unlock-phase
-  pool burns while silently leaving its own "Unique" clause unenforced.
-- Resolution (`rules-engineer` pass): re-fetched the Rulebook SS4 "Advanced
-  Rules > Contested Cards" section live again
-  (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>, cross-checked
-  against the local cache `data/sources/rulebook/2026-10-09/
-  4-detailed-turn-sequence.md`, lines 36-56) and the 2P variant's own
-  "Contested crypt cards" section (`data/sources/2p-variant/2026-10-09/
-  variant.md`) one more time before building, to confirm this situation's
-  own framing was still accurate: it was -- no new reading needed, this is
-  the same already-settled "one unified mechanism for every unique card"
-  rule OQ-10/OQ-15 already applied to allies, now applied a third time to an
-  attached master card. Built exactly what this entry's own "what would be
-  needed" described, reusing `engine/allies.py`'s own shape (itself a mirror
-  of `engine/contests.py`'s crypt-card shape) rather than reinventing a
-  fourth variant:
-  1. `engine/cards.py::CardAttachment` is no longer `frozen` (it must now
-     mutate `zone`/`contested_with` over a contest's lifetime, exactly like
-     `VampireInPlay`/`AllyInPlay`) and gained `controller: str | None = None`,
-     `instance_id: str | None = None`, `zone: str = "attached"` and
-     `contested_with: str | None = None`. `controller` is the Methuselah who
-     *played* the card (Rulebook SS2 Card Types: "controlled by the
-     Methuselah who played it, even if it is played on a card controlled by
-     another Methuselah"), independent of the vampire it sits on -- needed
-     because a contest and its unlock-phase resolution are tracked against
-     *that* Methuselah, not against the host vampire's own controller.
-     `controller`/`instance_id` default to `None` deliberately, not made
-     mandatory fields: a non-unique attachment such as Celerity (100312) can
-     never be contested in the first place and keeps constructing
-     `CardAttachment` directly with no change at all (`src/vtesbot/cards/
-     celerity.py` and every pre-existing `tests/rules/test_attachments.py`/
-     `tests/cards/test_celerity.py` fixture are untouched, zero-regression);
-     only an attachment built through the new `attach_card` entry point
-     below (none exist in the pool yet -- Fame stays `blocked`) ever has
-     them populated.
-  2. `src/vtesbot/engine/state.py::PlayerState.new_attachment_instance_id`
-     (new), mirroring `new_ally_instance_id`'s own per-player counter and
-     namespace convention (`"<player>-AT<n>"`, distinct from a vampire's
-     `"<player>-V<n>"` and an ally's `"<player>-A<n>"`).
-  3. `src/vtesbot/engine/attachments.py` (already the home of the OQ-8
-     `effective_capacity`/`effective_disciplines` machinery) gained four new
-     functions: `attach_card` (mirrors `engine/allies.py::recruit_ally`:
-     mints an `instance_id`, sets `controller`, appends the `CardAttachment`
-     to the given vampire's `attachments` list); `detect_contest_on_attach`
-     (mirrors `detect_contest_on_recruit` exactly: matches by `name`, checks
-     only the opponent of `attachment.controller` -- not the host vampire's
-     controller -- flags `contested_with` on both sides and moves both to
-     `zone == "contested"`); `resolve_one_attachment_contest` (mirrors
-     `resolve_one_ally_contest`'s two branches exactly: "pay" costs 1 pool
-     and leaves `zone == "contested"`, since -- as OQ-15 already established
-     for an ally -- there is no 2P "stays usable" override for this card
-     type either; "yield" burns the yielding copy and clears the opponent's
-     `contested_with` immediately but deliberately leaves the opponent's own
-     `zone` at `"contested"`, per the rulebook's "unlocked and turned face up
-     during your *next* unlock phase" wording); and two lookup helpers,
-     `iter_attachments`/`find_attachment_by_instance_id`, needed because
-     (unlike `VampireInPlay`/`AllyInPlay`) a `CardAttachment` has no
-     top-level `PlayerState` dict of its own to index into directly -- it is
-     nested inside whichever vampire's own `attachments` list it was put on,
-     which may belong to either player.
-  4. `src/vtesbot/engine/phases/unlock.py` gained `_unlock_own_attachments`
-     (mirrors `_unlock_own_allies`'s own delayed-restore step exactly, run
-     once per `unlock_phase` call alongside it, before the optional
-     pay-or-yield loop) and extended both `_pending_effect_ids` (a
-     `f"contest_attachment:{a.instance_id}"` entry per the player's own
-     currently-contested attachment, found via `iter_attachments` and
-     filtered by `a.controller == player`, not by whose vampire it sits on)
-     and `_resolve_optional_effects_in_chosen_order` (a new
-     `"contest_attachment:"`-prefixed dispatch branch, checked alongside the
-     existing `"contest_ally:"` one, before the vampire-contest fallback
-     branch).
-  5. `src/vtesbot/engine/__init__.py` exports `attach_card`,
-     `detect_contest_on_attach`, `find_attachment_by_instance_id` and
-     `iter_attachments` alongside the pre-existing `effective_capacity`/
-     `effective_disciplines` (`resolve_one_attachment_contest` is not
-     exported at the top level, mirroring `resolve_one_ally_contest`'s own
-     identical choice -- callers only ever reach it indirectly through
-     `unlock_phase`).
-  Proven by `tests/rules/test_attachment_contests.py` (detection: both
-  copies get `contested_with` set to each other and `zone` moved to
-  `"contested"`; differently-named attachments and a single player's own two
-  same-named attachments are confirmed *not* to contest, mirroring
-  `detect_contest_on_reveal`/`detect_contest_on_recruit`'s identical
-  pre-existing scope boundary, OQ-16; and a dedicated test proving the
-  contest is tracked against `attachment.controller`, not the host vampire's
-  own controller, by having one Methuselah attach copies onto both their own
-  and the opponent's vampire) and `tests/rules/test_attachment_contest_
-  resolution.py` (pay keeps both copies `zone == "contested"`; yield burns
-  the yielding copy and leaves the opponent's own `zone` unrestored until
-  that opponent's own next `unlock_phase` call; a zero-regression check for
-  an uncontested attachment; and a resolution-side companion to the
-  controller-vs-host-vampire test above, proving the *correct* player's
-  unlock phase is the one offered the decision). Full suite green: 389
-  passing (11 new, 0 regressions), `ruff check`/`ruff format --check` clean.
-  Deliberately **not** built, confirmed still out of scope (CLAUDE.md "one
-  rule mechanism per change"; no card module needs either yet, same
-  boundary OQ-15 itself drew for Shilmulo Tarot on this exact
-  `CardAttachment` side): (a) any Observation-level visibility for an
-  attachment at all -- `engine/observation.py`'s `VampireView` has no
-  `attachments` field today, contested or not, a pre-existing gap this pass
-  does not widen or narrow; (b) the rulebook's own "cannot contest yourself"
-  DECK CONSTRUCTION caution box (OQ-16) -- `detect_contest_on_attach` only
-  ever checks the opponent of `attachment.controller`, the same scope
-  boundary `detect_contest_on_reveal`/`detect_contest_on_recruit` already
-  have, tracked once already by OQ-16 for all three paths alike, not a new
-  gap introduced here; (c) any filtering of a contested/burned attachment's
-  own hook contributions (e.g. `CAPACITY_MODIFIER_HOOK`) -- today's only
-  numeric-attachment card, Celerity, is never Unique and so can never reach
-  `zone != "attached"` in the first place, so this has no live consequence
-  yet, but a future `card-implementer` pass building a *Unique* numeric/
-  discipline-granting attachment on top of this mechanism must have its own
-  hook provider check `attachment.zone == "attached"` before contributing a
-  bonus, rather than assume the engine already excludes a contested copy's
-  effects for it.
-- Impacted code: `src/vtesbot/engine/cards.py::CardAttachment`,
-  `src/vtesbot/engine/state.py` (`PlayerState.new_attachment_instance_id`),
-  `src/vtesbot/engine/attachments.py` (`attach_card`,
-  `detect_contest_on_attach`, `resolve_one_attachment_contest`,
-  `iter_attachments`, `find_attachment_by_instance_id`),
-  `src/vtesbot/engine/phases/unlock.py` (`_unlock_own_attachments`,
-  `_pending_effect_ids`, `_resolve_optional_effects_in_chosen_order`,
-  `unlock_phase`), `src/vtesbot/engine/__init__.py` (exports). Card
-  registration is unchanged: Fame stays `blocked`/`OQ-22` in the registry
-  (re-implementing it against this capability, and flagging any future
-  Unique attached master card -- the engine's own `CardAttachment` docstring
-  already names "Perfectionist" as a hypothetical future example of this
-  same category -- is `card-implementer`'s job); this change should get a
-  `rules-auditor` review (core engine/unlock-phase mechanics) before any
-  card module is wired against it, same bar OQ-15's own resolution set for
-  the ally-side mechanism it mirrors.
-- Addendum (`rules-engineer`, 2026-10-11, follow-up to a `rules-auditor`
-  MAJOR finding on the resolution above): `CardAttachment.controller`'s and
-  `attach_card`'s own docstrings cited Rulebook SS2 Card Types' "Master
-  Cards" subsection ("A master card in play is controlled by the Methuselah
-  who played it, even if it is played on a card controlled by another
-  Methuselah") as if it were the controller rule for every `CardAttachment`
-  -- but `CardAttachment`'s own class docstring names three attachment
-  categories in scope (a discipline/archetype master card, "a piece of
-  combat equipment (Weighted Walking Stick)," or "a retainer"), and the same
-  rulebook page's "Minion Cards" subsection (re-fetched live and
-  cross-checked against the local cache, `data/sources/rulebook/
-  2026-10-09/2-card-types.md`, lines 254-299) states the opposite rule for
-  that second and third category: "A minion card in play is controlled by
-  the controller of the minion it is on." (Equipment is "put into play on
-  the acting minion" and "burned when the minion they are played on ...
-  is burned"; a Retainer card is likewise "put into play on the acting
-  minion.") The Master-card citation was accurate for Fame itself (a Master
-  card, the only live user of `attach_card` today, still `blocked`/OQ-22),
-  but overclaimed it as a blanket rule reaching the Equipment/Retainer
-  categories the same docstring already names as in scope -- concretely
-  wrong for a future Equipment attachment such as Shilmulo Tarot (krcg id
-  101767, "Unique.", `types == ["Equipment"]`, confirmed live via krcg;
-  already named as a likely next unique-attachment target in OQ-10's own
-  text).
-  No behaviour changed, and no type-based branching was added to
-  `attach_card`: `controller` is, and was already, a plain caller-supplied
-  parameter (`attach_card(..., *, controller: str, ...)`) -- the function
-  never derived it from the attachment's own card type, it only stored
-  whatever the caller passed. Since no production call site exists yet
-  (Fame stays `blocked`; every real caller today is a test), there is no
-  live wrong behaviour to fix, only an overclaimed/incomplete citation and
-  contract. Fixed by documentation only: `CardAttachment.controller`'s
-  docstring (`src/vtesbot/engine/cards.py`) and `attach_card`'s own
-  docstring (`src/vtesbot/engine/attachments.py`), plus that module's own
-  top-of-file docstring, now state plainly that the Master-card rule only
-  covers a Master-type attachment, quote the Minion Cards rule for
-  Equipment/Retainer, and make explicit that a future caller wiring an
-  Equipment- or Retainer-type attachment (naming Shilmulo Tarot) is
-  responsible for passing that attachment's host vampire's own current
-  controller (`vampire.controller`) as `controller`, not whoever played the
-  card -- `attach_card` itself will not catch a caller that gets this wrong.
-  Threading real type-based branching into `attach_card` itself was
-  considered and deliberately not done: no card in the pool calls it with
-  an Equipment/Retainer card yet, so adding that branch now would be
-  speculative plumbing for a hypothetical caller (CLAUDE.md "no guessing
-  ahead of a sourced need" / "one rule mechanism per change") rather than a
-  fix driven by a live need; the correct rule for that case is settled and
-  sourced above, not an open ruling question, so it does not need its own
-  new OQ entry -- it is recorded here, against the function whose contract
-  it corrects, for whichever future `card-implementer` pass wires Shilmulo
-  Tarot or a similar Equipment/Retainer attachment to find before copying
-  the Fame pattern uncritically.
-  Impacted code (this addendum only): `src/vtesbot/engine/cards.py`
-  (`CardAttachment.controller` docstring), `src/vtesbot/engine/
-  attachments.py` (`attach_card` docstring, module docstring). No test
-  changes (no behaviour changed); `tests/rules/test_attachment_contests.py`
-  and `tests/rules/test_attachment_contest_resolution.py` are unaffected.
+- Situation: the rulebook's "cast ... in any order" leaves the actual
+  turn structure unspecified; the engine's first implementation
+  asserted its own strict "impulse always returns to the caller"
+  procedure was sourced from the general impulse rule, when it was
+  not — that procedure in fact gave the caller an unsourced tactical
+  edge (casting every source back-to-back before the opponent ever
+  got a look).
+- Rules/interactions: no official text specifies an
+  alternation/priority rule for vote-casting order beyond "in any
+  order."
+- Solution (user ruling, from real-table play experience): votes are
+  cast in table order — seating order, repeating laps until a full
+  lap passes with nobody casting. In this 2P engine: a fixed two-seat
+  rotation, caller first each lap, alternating strictly after every
+  step (cast or pass) regardless of who just acted; a full lap
+  completing with no casts (`consecutive_passes` reaching 2) closes
+  the window.
 
-## OQ-23: No standalone master-card entity -- Oxford University (status: resolved)
+## OQ-21 - Action-card target chosen at announce vs. resolve time (status: resolved)
 
-- Situation: Oxford University, England is the only `blocked` card in the
-  active 2P Brujah suggested decklist (`data/decks/vekn-2p/brujah.json`).
-  Card text (verbatim, via `krcg.load()`, krcg id 101341, re-confirmed live
-  2026-10-11): "Unique location.\n You can lock this card and burn X pool
-  during the polling step of a political action to get +2X votes." Type
-  `Master`, clan `Brujah`, `pool_cost=None`, no rulings on file. Its own
-  module (`src/vtesbot/cards/oxford_university_england.py`) registers it
-  `blocked`/`OQ-6`, citing two independent gaps: the polling-step/vote-tally
-  machinery (OQ-6, since resolved) and "a 'location' card, a generic entity
-  the engine does not model at all" (`Hook.LOCATION_ENTITY`
-  (`src/vtesbot/cards/registry.py`), "named for classification; no engine
-  wiring exists yet," confirmed by grep across `src/vtesbot/engine/`: no
-  equivalent entity existed anywhere). Not a ruling ambiguity -- the text is
-  plain. This is the same category of gap as OQ-7 (no `AllyInPlay` entity):
-  a missing engine representation, not an unsettled rule.
-- Correction to the premise, found before building anything (CLAUDE.md "no
-  guessing" -- checked rather than assumed): "location" is **not** a
-  structured krcg card type. Oxford's own `krcg.load()` entry (krcg id
-  101341) reports `types == [Type.MASTER]` (confirmed live, krcg 5.14,
-  matching this project's pinned dependency) -- there is no `Type.LOCATION`
-  value in krcg's own `Type` enum at all (every member: `ACTION, ALLY,
-  COMBAT, CONVICTION, EQUIPMENT, EVENT, IMBUED, MASTER, MODIFIER, POLITICAL,
-  POWER, REACTION, RETAINER, VAMPIRE`). "Unique location." is free text
-  within an ordinary Master card's own printed text, the same status as
-  "Unique." or "Trifle." on any other Master card -- not a distinct card
-  type the way "Ally" is.
-- Second correction, found by the project's user after this entry's first
-  landing (which had generalized only as far as "a standalone *Unique*
-  Master card," still scoped to the location-flavoured/Unique subset,
-  pointing at Wider View, krcg id 102180, as a counter-example): the real
-  gap is broader still -- any standalone Master card that stays in a
-  player's own play area rather than attaching to a vampire
-  (`CardAttachment`) or resolving once into the ash heap (ordinary Master
-  plays such as Life in the City), **whether or not it is printed
-  "Unique."** Wider View's own text ("Trifle.\nPut this card in play. You
-  can use 1 transfer to draw 1 card from your crypt and then remove a
-  crypt card in your uncontrolled region from the game. You can use 4
-  transfers to burn this card and gain 2 pool.") carries no "Unique" clause
-  at all, yet needs the exact same "a Master card the player keeps a live,
-  mutable in-play instance of" representation Oxford does. So the entity
-  built below (and the module/functions around it) is named and framed
-  generically -- `MasterCardInPlay`/`engine/master_cards.py` -- not scoped
-  to "location" or to "Unique" in either its name or its own contract; only
-  `detect_contest_on_bring_into_play` (the Contested Cards half) is
-  restricted to actually-"Unique" cards, as a documented contract on that
-  one function, not a flag on the entity itself (see "Resolution" below).
-- Quick sweep (OQ-10/OQ-22's own precedent: check for other live users
-  before building, not just the one named card -- re-run and widened after
-  the second correction above): queried every `Library`-type card in the
-  active 2P allowed list (`data/formats/2p/2026-10-03.json`, 198
-  Library-type entries out of 311 total) against `krcg.load()` for
-  `card.types == [Type.MASTER]` *and* free-text containing "put this card
-  in play" or "unique location" (case-insensitive). 18 hits, all Master
-  type, matching `MasterCardInPlay`'s own shape exactly:
-  Oxford University, England (101341), The Barrens (100135), Chantry
-  (100329), Dummy Corporation (100594), Elder Library (100620), Fragment of
-  the Book of Nod (100785), The Line (101110), Ravnos Cache (101552),
-  Ravnos Carnival (101553), The Rumor Mill (101662), Wasserschloss Anif,
-  Austria (102152), WMRH Talk Radio (102189), Powerbase: Munich (102301),
-  Forward Momentum (102323), Fleshforge Chamber (102354), Cursed Abattoir
-  (102313), Tension in the Ranks (101958), and Wider View (102180). 17 of
-  these 18 are printed "Unique location.", "Unique Nod fragment." or plain
-  "Unique." -- only Wider View carries no uniqueness clause at all,
-  confirming the user's own counter-example and that a non-unique instance
-  of this entity is a real, live case, not hypothetical.
-  Noteworthy sub-shapes, read off each card's own text, none built here
-  beyond the base entity (CLAUDE.md "one rule mechanism per change"):
-  several need a counter-bearing variant with no `counters` field on
-  `MasterCardInPlay` (Ravnos Cache, Ravnos Carnival, Wasserschloss Anif,
-  Forward Momentum, Cursed Abattoir, and Fleshforge Chamber, which hosts a
-  face-up ghoul card on itself -- a further, different attachment-like
-  shape of its own); several let the *opponent* burn or steal the card as
-  their own action (The Line, Wasserschloss Anif, Fragment of the Book of
-  Nod, Powerbase: Munich -- "Vampires/Any minion can steal/burn this card
-  as a [D] action"), needing a reaction/control-transfer primitive this
-  entry does not build; Elder Library (100620, "Unique location.\n+1 hand
-  size.") and Dummy Corporation (100594, "...burn this card if a minion is
-  bleeding you...") are the simplest fits, needing nothing beyond what is
-  built below. A further five "put this card in play" hits were found and
-  deliberately excluded as a *different* category, not this entity's scope:
-  Army of Rats (100093), Creeping Sabotage (102213), Augury of Doom
-  (102310) (all `Action`-type, played as the acting minion's own action,
-  burnable by the *opponent* as an undefined "? action", with their own
-  recurring per-unlock-phase pool-burn effect), Loup (102273, `Action
-  Modifier`, self-burns at end of turn) and Morbidity (102332, `Combat`,
-  burns at the end of one combat) -- none is a Master card, none persists
-  the way a standalone Master card does, and none is needed by any card
-  this pass unblocks; flagged here so a future sweep does not have to
-  re-discover that these five are out of scope.
-  Also re-confirmed Disputed Territory (100557, Political Action, "Choose
-  a location and a Methuselah...") and Cold War (102312, Political Action,
-  "...the chosen location is burned") from this entry's first landing:
-  both reference "a location" generically and would read/mutate a
-  `MasterCardInPlay` instance's `controller`/`zone`, but neither is itself
-  a standalone Master card, so neither is counted in the 18 above.
-- What's missing (`rules-engineer` scope, mirroring OQ-7's own "what would
-  be needed" almost exactly, a fourth time after crypt cards
-  (`engine/contests.py`), allies (`engine/allies.py`, OQ-7/10/15) and
-  attached master cards (`engine/attachments.py`, OQ-22)): a generic
-  standalone-Master-card entity (identity, `controller`, a lock flag,
-  Contested Cards tracking for the subset actually printed "Unique" --
-  Oxford is itself one such card, so the identical unmodified Rulebook SS4
-  Advanced Rules > Contested Cards mechanism OQ-10/OQ-15/OQ-22 already
-  quote in full applies here too, not overridden by the 2P variant's
-  crypt-card-only "Contested crypt cards" section), a way to bring one into
-  play from a master-phase play, Observation support, and -- the piece
-  specific to Oxford's own ability, not shared by any of the three existing
-  precedents -- a polling-step vote-source primitive whose vote count
-  scales with a controller-chosen pool-burn amount X, distinct from Perfect
-  Paragon's fixed "+3 votes" shape the `POLLING_STEP_HOOK` machinery (OQ-6)
-  was originally built to support.
-- Resolution (`rules-engineer` pass):
-  1. `src/vtesbot/engine/state.py::MasterCardInPlay` (new dataclass,
-     originally landed as `LocationInPlay`, renamed after the second
-     correction above) -- mirrors `AllyInPlay`'s shape as far as this card
-     category needs: no `life`/`strength`/`bleed` (this kind of card is not
-     a minion: it never acts, blocks, bleeds or fights), only
-     `instance_id`, `krcg_id`, `name`, `controller`, `zone` (`"in_play"` |
-     `"contested"` | `"burned"` -- `"in_play"` is the default, this
-     entity's analogue of an ally's `"ready"`), `locked` (defaults to
-     `False`: unlike Recruit Ally's own specific "cannot act this turn"
-     clause, nothing in the generic Master Phase play rule locks a
-     newly-played Master card -- Rulebook SS3 "Locking and Unlocking" only
-     ever describes locking as something an effect *does*, never a default
-     starting state) and `contested_with` (stays `None` for the whole
-     lifetime of a non-unique instance such as Wider View's, since nothing
-     ever calls `detect_contest_on_bring_into_play` for one -- see point 2;
-     no separate "is this card unique" flag was added to the dataclass
-     itself, deliberately: whether contest tracking applies falls out of
-     which functions a future card module chooses to call, exactly how
-     `CardAttachment`, OQ-22, already works). `PlayerState.master_cards:
-     dict[str, MasterCardInPlay]` and `PlayerState.new_master_card_
-     instance_id()` (own `"<player>-M<n>"` namespace, distinct from a
-     vampire's `"-V<n>"`, an ally's `"-A<n>"` and an attachment's
-     `"-AT<n>"`).
-  2. `src/vtesbot/engine/master_cards.py` (new module, originally landed as
-     `engine/locations.py`): `bring_master_card_into_play(state, player, *,
-     krcg_id, name) -> MasterCardInPlay` (the minimal "bring into play"
-     primitive, mirrors `engine/allies.py::recruit_ally`);
-     `detect_contest_on_bring_into_play(state, brought_in)` (mirrors
-     `detect_contest_on_recruit` exactly: matches by `name`, checks only the
-     opponent, moves both colliding copies' `zone` to `"contested"` --
-     documented, as this entry's own second correction requires, as only
-     ever correct to call for a card printed "Unique"; a non-unique card's
-     own future module simply never calls it); and
-     `resolve_one_master_card_contest(state, player, card)` (mirrors
-     `resolve_one_ally_contest`'s two branches exactly -- "pay" 1 pool keeps
-     `zone == "contested"`, no 2P "stays usable" override for this card
-     type either; "yield" burns the yielding copy and clears the opponent's
-     `contested_with` immediately but leaves the opponent's own `zone` at
-     `"contested"` until that opponent's own next unlock phase). Not
-     exported at the top level, mirroring `resolve_one_ally_contest`'s own
-     identical choice -- reached only through `unlock_phase`.
-  3. `src/vtesbot/engine/phases/unlock.py` gained `_unlock_own_master_
-     cards`, run once per `unlock_phase` call alongside `_unlock_own_
-     vampires`/`_unlock_own_allies`/`_unlock_own_attachments`, doing *two*
-     independent things (both sourced by the same generic Unlock Phase
-     rule, "you must unlock all of your cards," which is not restricted to
-     minions): (a) unlocking a `locked` `"in_play"` card -- genuinely
-     needed, unlike the ally/attachment cases, because nothing else ever
-     reads an ally's lock back off and an attachment is never locked at
-     all, but Oxford's whole point (and several of the 18-card sweep's own
-     "lock this card to..."/"lock this location to..." abilities, e.g. The
-     Barrens, Chantry, The Line, Wasserschloss Anif, WMRH Talk Radio,
-     Powerbase: Munich) is a *repeatable* lock ability that must become
-     usable again; and (b) the same delayed-restore-from-contest half
-     `_unlock_own_allies`/`_unlock_own_attachments` already have, reachable
-     only for a card that was actually run through `detect_contest_on_
-     bring_into_play` (so never for Wider View's own non-unique instance).
-     Extended `_pending_effect_ids`/`_resolve_optional_effects_in_chosen_
-     order` with a `"contest_master_card:"`-prefixed branch alongside the
-     existing `"contest_ally:"`/`"contest_attachment:"` ones.
-  4. `src/vtesbot/engine/observation.py` gained `MasterCardView` (mirrors
-     `AllyView` minus `life`/`strength`/`bleed`) and `Observation.master_
-     cards: tuple[MasterCardView, ...]`, populated unconditionally for both
-     players in `build_observation` -- a Master card is played face up
-     (Rulebook SS2 Card Types), so by the same reasoning `AllyView`'s own
-     docstring gives (OQ-10), a contest (for the Unique subset) can only
-     ever arise the instant a second same-named copy is brought into play,
-     already face up, against a first copy brought in face up earlier;
-     both identities are always mutually known, so no `visible_identity`-
-     style anonymization branch is needed even while contested.
-  5. `src/vtesbot/engine/politics.py` gained
-     `variable_pool_burn_vote_options(state, player, *, source_id_prefix,
-     label, votes_per_pool, pending, on_burn=None) -> list[HookOption]`: the
-     reusable primitive Oxford's own variable-X shape needs, distinct from
-     every existing `POLLING_STEP_HOOK` shape the module docstring already
-     catalogued (Perfect Paragon's fixed vote grant, Queen Anne's forced
-     abstain, Marcos Belegrad's post-tally reaction). Builds one
-     `HookOption` per legal pool-burn amount X from 1 to `player`'s current
-     pool (never X = 0: burning 0 pool for 0 votes is not a meaningful
-     choice, CLAUDE.md "only when needed" -- confirmed this is a judgement
-     call, not sourced either way by the card text, which is silent on
-     whether X = 0 is "a burn"; offering it would only ever be a no-op
-     choice for an agent, so it is excluded the same way every other hook
-     in this engine excludes a vacuous option); choosing X burns that much
-     pool (`engine/pool.py::lose_pool`), runs an `on_burn` callback if given
-     (where a future card module locks the source card itself -- kept
-     caller-supplied rather than built in, since locking is specific to
-     *this* ability's own cost, not universal to the "burn X pool for Y*X
-     votes" shape -- none of the other 17 sweep cards need this helper at
-     all, confirmed above), then appends a `{"source_id", "player", "votes",
-     "label"}` descriptor to `pending["extra_sources"]` (the existing
-     Perfect Paragon convention) with `votes = votes_per_pool * X`. No new
-     kind of engine-level window was needed: `resolve_impulse_window`
-     already turns every `HookOption` a provider returns into one choice of
-     the same `Decision`, so a provider offering several options for
-     different X values (instead of Perfect Paragon's single fixed option)
-     already worked with zero engine change -- only the enumerate-X/burn/
-     append bookkeeping was new, and is now a single reusable function
-     instead of something every future "burn X pool for Y*X votes" card
-     would duplicate.
-  6. `src/vtesbot/engine/__init__.py` exports `bring_master_card_into_play`,
-     `detect_contest_on_bring_into_play`, `MasterCardInPlay`,
-     `MasterCardView` alongside the pre-existing ally/attachment
-     equivalents.
-  Proven by `tests/rules/test_master_cards.py` (16 tests: `bring_master_
-  card_into_play`'s unlocked-by-default entry state and instance-id
-  namespacing; a dedicated non-unique case proving two players'
-  independently-played copies of the *same* non-unique card (Wider View's
-  own id, reused as a stand-in) never contest each other, by construction,
-  simply because no test code calls `detect_contest_on_bring_into_play` for
-  them; `detect_contest_on_bring_into_play`'s two-sided flagging, zone
-  move, differently-named and same-player-same-name non-contest cases
-  (Oxford's own id reused as the Unique stand-in), mirroring
-  `test_ally_contests.py`'s own structure; `Observation` visibility for
-  both a contested and an uncontested card; the unlock-phase lock/unlock
-  mechanic specific to this entity; the full pay/yield contest-resolution
-  cycle including the delayed-restore-on-next-unlock-phase case and a
-  zero-regression uncontested check, mirroring `test_ally_contest_
-  resolution.py`'s/`test_attachment_contest_resolution.py`'s own structure;
-  and a production-call-site end-to-end test through the real
-  `"master_phase_play"` hook, mirroring `test_ally_contests.py::
-  test_recruit_ally_action_end_to_end_detects_the_contest`'s own bar) and
-  by eight new tests appended to `tests/rules/test_politics.py`
-  (`variable_pool_burn_vote_options`'s own option enumeration, pool-burn/
-  vote-scaling/`on_burn`-callback behaviour, and the zero-pool empty-list
-  case; a full Oxford-shaped fake `POLLING_STEP_HOOK` provider proven
-  end-to-end through `political_action` itself -- offering the burn-X-pool
-  choice, burning the right amount of pool, locking the card, and adding
-  the right scaled vote count to the final tally; and a companion test
-  proving an already-`locked` card's own provider offers nothing at all, so
-  no `POLLING_STEP_HOOK` decision is raised a second time until that card
-  is unlocked again). Full suite green: 447 passing (22 new, 0 regressions,
-  confirmed by running the pre-existing suite both with and without this
-  pass's changes via `git stash -u`), `ruff check`/`ruff format --check`
-  clean on every touched file and on the full repository.
-- Deliberately **not** built, confirmed out of scope by the quick sweep
-  above (CLAUDE.md "one rule mechanism per change" / "no guessing ahead of
-  a sourced need"): a `counters` field on `MasterCardInPlay` (needed by at
-  least six of the 18 sweep cards); a reaction/control-transfer primitive
-  for an opponent to burn or steal a standalone master card as their own
-  action (needed by four more of the 18, and by Disputed Territory/Cold
-  War); and any card module wiring any of the 18 sweep cards, or Oxford
-  itself, against any of this entry's new primitives -- that is
-  `card-implementer`'s job, per this task's own explicit scope boundary.
-- Impacted code: `src/vtesbot/engine/state.py` (`MasterCardInPlay`,
-  `PlayerState.master_cards`/`new_master_card_instance_id`),
-  `src/vtesbot/engine/master_cards.py` (new; supersedes the first landing's
-  `engine/locations.py`, deleted/renamed in place), `src/vtesbot/engine/
-  phases/unlock.py` (`_unlock_own_master_cards`, `_pending_effect_ids`,
-  `_resolve_optional_effects_in_chosen_order`, `unlock_phase`),
-  `src/vtesbot/engine/observation.py` (`MasterCardView`,
-  `build_observation`), `src/vtesbot/engine/politics.py`
-  (`variable_pool_burn_vote_options`), `src/vtesbot/engine/__init__.py`
-  (exports), `tests/rules/test_master_cards.py` (new; supersedes the first
-  landing's `tests/rules/test_locations.py`), `tests/rules/test_politics.py`.
-  Card registration is unchanged: Oxford University, England stays
-  `blocked`/`OQ-23` in the registry (superseding its own module's previous
-  `blocked_reason="OQ-6"` citation -- updating the registration itself,
-  including the `blocked_reason` string, is `card-implementer`'s job, not
-  this pass's, per this task's own explicit scope boundary); the 17 other
-  sweep cards (found by this entry's own quick sweep, all still
-  unimplemented, none touched here) can each be picked up by a future
-  `card-implementer` pass against these same primitives, with the
-  counter-bearing and opponent-burn/steal subsets each needing one further,
-  still-open engine primitive of their own first (noted above, not tracked
-  as a separate new OQ since neither is a ruling ambiguity -- both are
-  plain, sourced "what would be needed" notes, the same status this
-  entry's own "What's missing" section had before today).
+- Situation: `line_brawl.py`'s `[pot]` clause ("Enter combat with a
+  minion") picked its target inside `resolve()`, after the
+  block-attempt window had already run — the defender was asked to
+  block before the specific minion that would be forced into combat
+  was ever fixed.
+- Rules/interactions: Rulebook §4 "Announce the Action": "All details
+  of the action are defined when the action is announced, including
+  the target(s)"; this engine's own `ActionCardSpec` contract already
+  documented the same. The general "fizzle" ruling (target no longer
+  eligible at resolve time ⇒ cost paid, successful, no effect — never
+  re-picked) confirms a target is fixed once, at announce, and only
+  re-validated later.
+- Solution: both `line_brawl.py` and `enchant_kindred.py`'s own
+  clauses now choose their target inside `apply()` (announce time),
+  with `resolve()` only looking up the already-chosen id. Any future
+  Action card targeting a specific minion must do the same.
 
-## OQ-24: No influence-phase hook, no removed-from-game zone (status: resolved)
+## OQ-22 - Fame - contested cards gap beyond crypt/ally (status: resolved)
 
-- Situation: Wider View (krcg id 102180) appears in both active 2P
-  suggested decklists (`data/decks/vekn-2p/brujah.json`, `data/decks/
-  vekn-2p/toreador.json`), `implementation_status: "not_implemented"` in
-  both, not yet registered at all in `src/vtesbot/cards/`. Card text
-  (verbatim, via `krcg.load()`'s own `card_text` field for id 102180,
-  re-confirmed live 2026-10-11): "Trifle.\nPut this card in
-  play. You can use 1 transfer to draw 1 card from your crypt and then
-  remove a crypt card in your uncontrolled region from the game. You can use
-  4 transfers to burn this card and gain 2 pool." One ruling on file: "Cards
-  removed from the game are public. [LSJ 20080314]". Not a ruling ambiguity
-  -- the text and the ruling are both plain. This is the same category of
-  gap as OQ-7/8/9/10/22/23: a missing engine representation.
-- Clause 1 ("Trifle."/"Put this card in play") needed no further work at
-  all: OQ-23's own `MasterCardInPlay`/`engine/master_cards.py::
-  bring_master_card_into_play` already names Wider View by id, in both
-  `MasterCardInPlay`'s own docstring and `engine/master_cards.py`'s own
-  module docstring, as the motivating *non-unique* example (a standalone
-  Master card that stays in play but is never run through
-  `detect_contest_on_bring_into_play`) -- wiring it against
-  `"master_phase_play"` is a direct copy of `src/vtesbot/cards/
-  oxford_university_england.py`'s own `_provide_oxford_master_phase_play`,
-  with `apply()` returning `True` this time (this card *is* printed
-  "Trifle."). Deliberately not built here -- that is `card-implementer`'s
-  job, not this pass's (see "Impacted code" below).
-- What was missing, clause 2 (two gaps, both in `rules-engineer` scope):
-  1. **The Influence phase was not card-hookable.**
-     `src/vtesbot/engine/phases/influence.py`'s `influence_phase`/
-     `_available_choices`/`_apply` were a closed, hardcoded implementation
-     of the Rulebook's three standard transfer types (1 transfer = pool ->
-     uncontrolled vampire blood; 2 transfers = blood -> pool; 4 transfers + 1
-     pool = move the next crypt card to uncontrolled) plus the free reveal
-     action, with no hook dispatch at all -- confirmed by reading the whole
-     module and by grep (no `hooks.offer` call anywhere in it), unlike
-     `src/vtesbot/engine/phases/master.py::master_phase`'s own
-     `hooks.offer(MASTER_PHASE_PLAY_HOOK, ...)` call. Wider View's own two
-     "You can use N transfers to..." clauses need two *additional*
-     transfer-costed options available during this same phase, which no
-     existing hardcoded `kind` branch in `_apply` could express without
-     special-casing this card's name inside the engine (CLAUDE.md SS6: "Do
-     not special-case card names in the engine").
-  2. **No "removed from the game" zone existed for a crypt card.**
-     `src/vtesbot/engine/state.py::Zone` was `"uncontrolled" | "ready" |
-     "torpor" | "burned"` (confirmed by grep: nothing anywhere in `src/`
-     represented "removed from the game" as distinct from `"burned"`). The
-     ruling on file ("Cards removed from the game are public.") only
-     matters, and was only worth stating by LSJ at all, for a card that may
-     still be face-down and unrevealed (`"uncontrolled"`) at the moment it
-     is removed -- a `"burned"` vampire (torpor/diablerie/contest-yield) is
-     always already-revealed, so its own public status was never in
-     question the same way. Checked, not assumed, whether a separate
-     `Observation` branch was also needed: `engine/observation.py::
-     build_observation`'s own `visible_identity = v.zone != "uncontrolled"
-     or v.controller == viewer` already treats *any* zone value other than
-     `"uncontrolled"` as fully public to both players -- so a new zone
-     string automatically inherits full visibility with zero `Observation`
-     change, confirmed by reading the function rather than assumed.
-     `PlayerState.crypt_deck` (`engine/state.py`; populated by
-     `engine/setup.py`'s own shuffle/cut/deal) is confirmed to be the single
-     undrawn-crypt-pile concept in the engine -- the same deck
-     `influence_phase`'s own existing `"bring_crypt"` branch already pops
-     from -- so Wider View's "draw 1 card from your crypt" needs no second
-     crypt-deck concept.
-- Resolution (`rules-engineer` pass):
-  1. `src/vtesbot/engine/phases/influence.py` gained
-     `INFLUENCE_PHASE_ACTION_HOOK = "influence_phase_action"`, offered via
-     `hooks.offer` inside `influence_phase`'s own loop, alongside (not
-     replacing) the three hardcoded transfer types -- mirrors
-     `master_phase`'s own offer/by-value/dispatch shape exactly. A
-     provider's `HookOption.apply(state)` must return an `int`: the number
-     of transfers the chosen option consumed (the same "`apply`'s return
-     value documents the hook's own contract" pattern `master_phase`'s own
-     module docstring already uses for its `bool` "is this a trifle"
-     contract). Chose to keep the three existing transfer types hardcoded
-     (not reimplemented as the first hook providers against the new hook
-     point) rather than moving them into provider functions: they are
-     generic rulebook mechanics, not any card's text, so CLAUDE.md SS6's
-     "card-specific behaviour lives in `src/vtesbot/cards/`" does not
-     compel moving them, and simply unioning the hook's own options
-     alongside the existing hardcoded choices is the smaller diff, leaving
-     every pre-existing transfer-type test (and its exact byte-for-byte
-     behaviour) untouched. Legality of each offered hook option (e.g.
-     Wider View's own 1-transfer draw option needing both a non-empty
-     `crypt_deck` *and* at least one uncontrolled vampire to remove) is the
-     registering provider's own responsibility, per `GameState.ask`'s
-     "legality by construction" invariant (`engine/state.py` module
-     docstring) -- the engine never second-guesses what a provider offers,
-     the same contract every other hook in this engine already has.
-  2. `src/vtesbot/engine/state.py::Zone`'s type-alias comment and
-     `VampireInPlay`'s own docstring gained a fourth value,
-     `"removed_from_game"` -- reusing the existing `zone` field rather than
-     adding a new field or a boolean, deliberately kept distinct from
-     `"burned"` (not reused for it) for the documented reason above (the
-     ruling's own "still possibly face-down at removal time" scope, unlike
-     an already-revealed burned vampire). `src/vtesbot/engine/damage.py`
-     gained `remove_vampire_from_game(state, player, vampire)`, mirroring
-     `burn_vampire`'s own one-line shape (`zone = "removed_from_game"`,
-     `locked = False`). `src/vtesbot/engine/observation.py`'s
-     `VampireView.zone` comment and `build_observation`'s own docstring
-     were updated to name the new zone value and confirm (not merely
-     assert) that no further `Observation` code change was needed, per
-     finding 2 above.
-  3. `src/vtesbot/cards/registry.py::Hook` gained `INFLUENCE_PHASE_ACTION =
-     "influence_phase_action"` in the "wired this pass" group, matching the
-     new hook's string value.
-  Proven by six new tests appended to `tests/rules/test_influence.py`
-  (fake providers mirroring each of Wider View's own two clauses, exercised
-  through the real, production `influence_phase` call site, not just a
-  lower-level helper -- same bar OQ-7/OQ-13/OQ-23's own resolutions set):
-  the 1-transfer draw-and-remove option offered/costed/applied correctly,
-  and confirmed *not* offered once the crypt deck is empty even with an
-  uncontrolled vampire still available (the provider's own legality check);
-  the 4-transfer burn-for-pool option offered/costed/applied correctly, and
-  confirmed not offered during the 3-transfer first influence phase of the
-  game; a vampire moved to `"removed_from_game"` confirmed fully visible
-  (identity, zone, locked) to the *opponent* via `build_observation`,
-  proving the ruling's own "public" requirement; and a zero-regression test
-  proving the three hardcoded transfer types are offered and costed
-  identically with an unrelated hook provider also registered. Full suite
-  green: 472 passing (466 before this pass, 6 new, 0 regressions, confirmed
-  by running the full suite both with and without this pass's changes via
-  `git stash -u`), `ruff check`/`ruff format --check` clean on every touched
-  file and on the full repository.
-- Impacted code: `src/vtesbot/engine/phases/influence.py`
-  (`INFLUENCE_PHASE_ACTION_HOOK`, `influence_phase`), `src/vtesbot/engine/
-  state.py` (`Zone`, `VampireInPlay`), `src/vtesbot/engine/damage.py`
-  (`remove_vampire_from_game`, new), `src/vtesbot/engine/observation.py`
-  (`VampireView`, `build_observation` docstrings), `src/vtesbot/cards/
-  registry.py` (`Hook.INFLUENCE_PHASE_ACTION`), `tests/rules/
-  test_influence.py`. Card registration is unchanged: neither deck JSON's
-  `implementation_status` for Wider View was touched, and no `src/vtesbot/
-  cards/wider_view.py` module was written -- both are `card-implementer`'s
-  job, per this task's own explicit scope boundary, now that both engine
-  gaps this entry tracked are resolved.
-- Addendum (`rules-auditor` follow-up, same pass): two findings, both fixed.
-  1. **MAJOR**: `influence_phase` unioned the engine-hardcoded `kind:rest`-
-     prefixed choices (`"add_blood:{id}"`, `"remove_blood:{id}"`,
-     `"bring_crypt"`) with hook-provided `Choice`s into one `Decision` with
-     no uniqueness check across the two sources. `GameState.ask`'s own
-     `legal = {c.value: c for c in decision.choices}` keeps only the *last*
-     value on a collision, and the routing (`if choice in by_value: ...
-     else: _apply(...)`) meant a hook-provided `Choice.value` that happened
-     to collide with one of the three hardcoded patterns would silently
-     take over that exact action -- the real hardcoded transfer type became
-     unreachable for that value, with no error raised. Low practical risk
-     today (every card module namespaces its own choice values by card
-     name), but nothing enforced it, and the failure mode is silent
-     mis-resolution -- exactly what CLAUDE.md's "always plays legally and
-     never mis-resolves a card" milestone exists to prevent. **Fixed**:
-     `engine/hooks.py` gained `ensure_unique_choice_values(choices, *,
-     decision_kind)`, a general duplicate-value guard (not scoped to the
-     three named hardcoded patterns, so it also catches a collision against
-     the fixed `"end_phase"` choice, or between two future hook providers of
-     the same hook) raising `ValueError` the instant any two `Choice`s among
-     the full set about to be offered share a `.value` -- called once by
-     `influence_phase`, on the complete unioned-plus-`"end_phase"` choice
-     list, immediately before constructing the `Decision`. Chose the
-     general "assert no duplicates across the full offered set" approach
-     over "reserve the three hardcoded value patterns and reject a
-     collision against just those": the general check also protects
-     against a collision with `"end_phase"` itself and against two
-     *different* future hook providers of this same hook colliding with
-     each other, neither of which the narrower, pattern-specific approach
-     would have caught, for the same amount of code. `master_phase` has the
-     analogous risk for its own two-or-more-hook-provider case (two card
-     modules both registering against `"master_phase_play"` and
-     coincidentally choosing the same `Choice.value`) -- deliberately
-     **not** fixed here: it is a separate, not-yet-triggered gap (no card
-     module registers against `"master_phase_play"` with another that could
-     collide today), out of this addendum's own scope (CLAUDE.md "one rule
-     mechanism per change"); `hooks.ensure_unique_choice_values` is written
-     generically enough that wiring it into `master_phase` later is a
-     one-line addition, not a new primitive, whenever that pass happens.
-     Proven by a new regression test,
-     `tests/rules/test_influence.py::
-     test_a_colliding_hook_choice_value_raises_instead_of_silently_misrouting`:
-     a fake provider offers `Choice("add_blood:V1", ...)` with a no-op
-     `apply` (consumes 1 transfer, touches no pool/blood); before this fix
-     the fake option would have silently won the `by_value` lookup (pool/
-     blood unchanged, no error); after the fix, `influence_phase` raises
-     `ValueError` before ever building the `Decision`.
-  2. **MINOR**: `engine/damage.py::remove_vampire_from_game` did not guard
-     `contested_with`. Traced every code path and confirmed genuinely inert
-     today -- nothing can set `contested_with` on a still-`"uncontrolled"`
-     vampire (`engine/contests.py::detect_contest_on_reveal`, the only
-     writer of `contested_with`, only ever runs on a vampire already being
-     revealed to `"ready"`), the only zone this function is ever called
-     from -- but nothing enforced that invariant going forward. **Fixed**:
-     the function now raises `ValueError` if `vampire.contested_with is not
-     None`, turning the currently-true-by-construction invariant into an
-     enforced one; doubles as documentation for whoever builds the real
-     Wider View module next. Proven by two new tests in
-     `tests/rules/test_damage.py`: the ordinary zone-move/unlock behaviour,
-     and the guard itself (forcing the otherwise-impossible precondition
-     directly, since no production path can reach it).
-  Full suite green: 475 passing (472 before this addendum, 3 new, 0
-  regressions), `ruff check`/`ruff format --check` clean on every touched
-  file and on the full repository, `pymarkdown scan docs/ CLAUDE.md` clean.
-  Impacted code (this addendum only): `src/vtesbot/engine/hooks.py`
-  (`ensure_unique_choice_values`, new), `src/vtesbot/engine/phases/
-  influence.py` (`influence_phase`'s own call site), `src/vtesbot/engine/
-  damage.py` (`remove_vampire_from_game`'s own guard), `tests/rules/
-  test_influence.py`, `tests/rules/test_damage.py`.
+- Situation: Fame (100698, Unique master card attached via
+  `CardAttachment`) has the same "two independently-built decks could
+  both play a copy" exposure OQ-10 already fixed for allies, but
+  `CardAttachment` had no contest tracking of its own at all.
+- Rules/interactions: the same unified Contested Cards mechanism
+  (OQ-10/OQ-15) applies unmodified to an attached Unique master card —
+  the 2P crypt-card override does not reach it.
+- Solution: `CardAttachment` gained `controller`/`instance_id`/`zone`/
+  `contested_with` (no longer frozen); `engine/attachments.py::
+  attach_card`/`detect_contest_on_attach`/
+  `resolve_one_attachment_contest` mirror the ally-side functions;
+  `unlock.py` extended with a `"contest_attachment:"` branch. A
+  contest is tracked against the attachment's own *controller* (who
+  played it), not the host vampire's controller — clarified in a
+  follow-up addendum after a `rules-auditor` finding that the initial
+  docstring overclaimed the Master-card controller rule as if it
+  covered a future Equipment/Retainer attachment too (it doesn't —
+  those follow the Minion-card controller rule instead; corrected by
+  documentation only, no card uses this yet). Fame itself stays
+  `blocked`.
 
-## OQ-25: No pre-combat maneuver grant -- Fleetness (100747) (status: resolved)
+## OQ-23 - Oxford University - standalone master-card entity (status: resolved)
 
-- Situation: card text (verbatim, via the installed `krcg` package's own
-  `CardDict`, `krcg.load()`, indexed by name "Fleetness", `.text` field,
-  2026-10-12, matching the raw snapshot `data/cards/100747.json`,
-  cross-checked live against `https://api.krcg.org/card/100747`):
-  "+1 stealth action.\n[cel] Ⓓ Bleed.\n[CEL] Ⓓ Enter combat with a locked
-  minion. This acting vampire gets 1 optional maneuver during that combat."
-  One ruling on file: "[CEL]If the action is unblocked when it resolves and
-  the target is unlocked, the action \"fizzles\" (cost, if any, is paid, and
-  it is considered successful, but has no effect)." [ANK 20210124]
-  [LSJ 20070411] [LSJ 20090514]. Not a ruling ambiguity -- both the text and
-  the ruling are plain, and the ruling is itself just a restatement of the
-  already-generalized OQ-21 fizzle convention. The block is a missing
-  engine representation, same category as OQ-7/8/9/22/23/24.
-- What is clean and directly buildable (named here so a future unblocking
-  pass does not have to re-derive it): the basic `[cel]` clause (a plain
-  directed, default-amount bleed with a printed "+1 stealth" baseline,
-  `ACTION_CARD_PLAY_HOOK`/`ActionCardSpec`, structurally identical to
-  `enchant_kindred.py`'s own basic `[pre]` clause) and the "Enter combat
-  with a locked minion" half of the superior `[CEL]` clause (identical shape
-  to `line_brawl.py`'s `[pot]` clause, with one extra "must be locked"
-  target filter, and the OQ-21 fizzle convention already covering a target
-  that stops being locked between announce and resolve). The card's own
-  printed 1-blood cost (Rulebook SS2 Card Types > "Requirements for Playing
-  Cards": "Only a vampire with enough blood on them can play a card with a
-  blood cost"; Rulebook SS4 Minion Phase, quoted by `engine/action.py`'s own
-  module docstring, step 3: "If unblocked -> pay cost, resolve. If blocked
-  -> ... cost not paid") needs no new engine hook either -- gated at offer
-  time on the acting vampire's own blood, paid via a direct `vampire.blood
-  -= 1` inside `resolve()` only on the unblocked branch, the same pattern
-  `grooming_the_protege.py`'s `source.blood -= amount` already uses.
-- What is blocked: "This acting vampire gets 1 optional maneuver during
-  that combat" is a once-per-*this-specific-combat* grant, textually the
-  same shape as Saku Pihlajamäki's printed "gets 1 optional maneuver each
-  combat" (`src/vtesbot/cards/saku_pihlajamaki.py`, krcg id 201658) -- except
-  Saku's own grant is checked/recorded entirely *inside* `run_combat`'s own
-  `combat_state: dict[str, Any]` scratch dict (`engine/combat.py::
-  COMBAT_STATE_CONTEXT_KEY`), which `run_combat` always creates fresh and
-  empty the instant it is called, *before* its per-round loop -- fine for
-  Saku, since her own vampire is already a live combatant by the time any
-  `"maneuver"` hook offer happens, so nothing needs to reach `run_combat`
-  before it starts. Fleetness's own grant must exist from the moment the
-  card is played, at *announce time* -- strictly before the block-attempt
-  window even opens (Rulebook SS4 "Announce the Action": "All details of the
-  action are defined when the action is announced"; this engine's own
-  `ActionCardSpec` contract requires the same) -- i.e. before whichever
-  combat this one action produces has even started. Two distinct paths both
-  reach `run_combat` from that earlier point, and neither has anywhere to
-  put a pre-combat grant: (1) unblocked, this card's own `resolve()` would
-  call `run_combat` directly (mirrors `line_brawl.py`'s `[pot]` clause), but
-  `run_combat`'s signature (`engine/combat.py`) takes no parameter at all for
-  a caller to pre-seed its freshly-created, always-`{}`-at-the-top
-  `combat_state`; (2) blocked, `engine/action.py::perform_minion_action`'s
-  own blocked branch calls `run_combat` *itself*, internally, with no
-  `ActionCardSpec` field, no `resolve`/`on_blocked` callback, and no hook
-  offer of any kind between "block succeeds" and `run_combat` starting --
-  confirmed by reading the function: `on_blocked` only runs *after*
-  `run_combat` returns, too late to matter for a maneuver usable at any
-  point during that already-finished combat. A card-module-only workaround
-  (a bare module-level `dict` tracking "this vampire has a pending grant")
-  was considered and rejected: it would live outside `GameState` entirely,
-  breaking this engine's determinism/replay invariant (CLAUDE.md SS5) and
-  departing from this codebase's own established convention that every
-  comparable per-combat grant (Dust Up's `CEL_GRANTS_KEY`, Saku's own "used"
-  flag) is nested *inside* an engine-threaded scratch dict, never a bare
-  module global -- CLAUDE.md's "No engine patches ... do not hack around it
-  inside the card module" rule directly forbids that workaround.
-- Because the registry/CLAUDE.md model a card as either fully `implemented`
-  (every clause) or `blocked` -- never a partial implementation of only the
-  clean clauses (`src/vtesbot/cards/registry.py::Status` has exactly two
-  values; same framing as OQ-9's own history for Bonding) -- the whole card
-  is blocked pending the fix below, even though the clauses named above are
-  individually buildable today.
-- What would be needed: a way for a card's own `ActionCardSpec` to pre-grant
-  a one-shot, this-combat-only maneuver (or, more generally, a pre-combat
-  grant of any kind) to a named vampire, honored by both paths that can lead
-  into a combat from one action: (1) `engine/combat.py::run_combat` gaining
-  an optional parameter (e.g. `initial_combat_state: dict[str, Any] | None =
-  None`) to seed its local `combat_state` instead of always starting from
-  `{}`, under a documented key/shape a `"maneuver"` hook provider can
-  recognize; (2) `engine/phases/minion.py::ActionCardSpec` gaining a field
-  carrying that same pre-seed (e.g. `maneuver_grant: str | None`), and
-  `engine/action.py::perform_minion_action`'s blocked branch threading it
-  into its own internal `run_combat` call -- a genuine new parameter on
-  `perform_minion_action` itself, not merely a new optional argument nobody
-  has to pass. This is `rules-engineer` scope (it touches `engine/combat.py`
-  and `engine/action.py`, not just `cards/`).
-- Impacted code (at the time this was opened): `src/vtesbot/engine/
-  combat.py` (`run_combat`), `src/vtesbot/engine/action.py`
-  (`perform_minion_action`), `src/vtesbot/engine/phases/minion.py`
-  (`ActionCardSpec`, `_perform_action_card`). Impacted cards: Fleetness
-  (registered `blocked`, reason `OQ-25`); any future card whose own text
-  grants a maneuver (or other per-combat effect) that must exist *before*
-  the combat it applies to has started would hit the same gap.
-- Resolution (`rules-engineer` pass): built exactly the two-part primitive
-  this entry's own "What would be needed" section described. (1)
-  `engine/combat.py::run_combat` gained an optional `initial_combat_state:
-  dict[str, Any] | None = None` parameter, used *directly* (not copied) as
-  its local `combat_state` instead of always starting from `{}`; `None`
-  (every pre-existing call site) reproduces the previous behaviour exactly.
-  `PRE_COMBAT_MANEUVER_GRANT_KEY` is the generic (not Fleetness-specific)
-  key this seed is recognized under, nested inside `combat_state` exactly
-  like Dust Up's own `CEL_GRANTS_KEY` and Saku Pihlajamäki's own per-combat
-  "used" flag -- a `dict[str, int]` keyed by vampire instance id, each entry
-  counting that vampire's still-unclaimed pre-granted maneuvers (an `int`
-  count, not a bool, so a future card printing more than one pre-combat
-  maneuver, or two independently-granting cards stacking on the same
-  vampire, compose by addition rather than one overwriting the other).
-  `seed_pre_combat_maneuver_grant(vampire_id, count=1)`/
-  `pre_combat_maneuver_available(context)`/`consume_pre_combat_maneuver_
-  grant(context)` are the shared helpers a `"maneuver"` hook provider uses,
-  mirroring `additional_strike_limit_used`/`mark_additional_strike_limit_
-  used`'s own degrade-gracefully contract (a hook offered directly, with no
-  `combat_state` in its context at all, is treated as "nothing granted,"
-  not an error). (2) `engine/phases/minion.py::ActionCardSpec` gained a
-  `maneuver_grant: str | None = None` field (the vampire instance id to
-  pre-grant), and `engine/action.py::perform_minion_action` gained a new
-  `maneuver_grant: str | None = None` parameter, forwarded unchanged from
-  `_perform_action_card`; its blocked branch now builds `seed_pre_combat_
-  maneuver_grant(maneuver_grant)` and passes it as `initial_combat_state`
-  to its own internal `run_combat` call when `maneuver_grant` is not `None`
-  (`None`, every pre-existing call site, changes nothing). The unblocked
-  path needed no engine change: a card's own `resolve()` already calls
-  `run_combat` directly (mirrors `cards/line_brawl.py`'s `[pot]` clause) and
-  can pass `initial_combat_state=seed_pre_combat_maneuver_grant(...)` to
-  that same call itself. Proven end-to-end, not just as isolated plumbing,
-  by `tests/rules/test_pre_combat_maneuver_grant.py`: a generic fake
-  `"maneuver"` provider recognizing `PRE_COMBAT_MANEUVER_GRANT_KEY` is
-  exercised through (a) a direct `run_combat(..., initial_combat_state=...)`
-  call, proving the grant is offered from round one, before Determine Range
-  has otherwise done anything; (b) `perform_minion_action`'s unblocked
-  branch, with `resolve()` seeding the grant on its own direct `run_combat`
-  call; (c) `perform_minion_action`'s blocked branch, with `maneuver_grant=`
-  passed directly, and a regression check that `maneuver_grant=None` (the
-  default) offers nothing even with the provider registered; and (d) a full
-  `ActionCardSpec`-based fake `"action_card_play"` provider (a Fleetness-
-  shaped stand-in, not Fleetness itself) driven through the real
-  `minion_phase` entry point for both the unblocked and blocked cases,
-  proving `ActionCardSpec.maneuver_grant` threads all the way from a card's
-  own hook option to the resulting combat. Zero-regression: the full
-  pre-existing suite (501 tests before this file's own 9 additions) passes
-  unmodified. `pytest`, `ruff check`, `ruff format --check` and
-  `pymarkdown scan docs/OPEN_QUESTIONS.md` all pass. Card registration is
-  unchanged (Fleetness stays `blocked`/`OQ-25` in the registry;
-  re-implementing it against this capability is `card-implementer`'s job).
-- Impacted code (this pass): `src/vtesbot/engine/combat.py` (`run_combat`,
-  `PRE_COMBAT_MANEUVER_GRANT_KEY`, `seed_pre_combat_maneuver_grant`,
-  `pre_combat_maneuver_available`, `consume_pre_combat_maneuver_grant`),
-  `src/vtesbot/engine/action.py` (`perform_minion_action`),
-  `src/vtesbot/engine/phases/minion.py` (`ActionCardSpec.maneuver_grant`,
-  `_perform_action_card`), `tests/rules/test_pre_combat_maneuver_grant.py`
-  (new).
+- Situation: Oxford University, England (101341, "Unique location...
+  lock this card and burn X pool during the polling step... to get
+  +2X votes") needed a generic "a Master card that stays in play,
+  mutable, rather than attaching or resolving once" entity, which did
+  not exist. First widened from "a standalone *Unique* location" to
+  any standalone Master card, Unique or not, after the project owner
+  pointed to Wider View (102180, no "Unique" clause, same shape).
+- Rules/interactions: "location" is not a structured krcg card type —
+  "Unique location." is free text on an ordinary Master card. A sweep
+  of the full 2P allowed list found 18 cards sharing this shape (17 of
+  them Unique). Contested Cards (OQ-10/15/22) applies unmodified to
+  the Unique subset.
+- Solution: added `MasterCardInPlay`/`engine/master_cards.py`
+  (`bring_master_card_into_play`, `detect_contest_on_bring_into_play`
+  — called only for cards actually printed Unique,
+  `resolve_one_master_card_contest`), unlock-phase lock/unlock +
+  delayed-restore wiring, `MasterCardView`/`Observation.master_cards`,
+  and `engine/politics.py::variable_pool_burn_vote_options` (the
+  reusable "burn X pool for Y·X votes" polling-step primitive Oxford's
+  own ability needs). Deliberately not built: a `counters` field
+  (needed by 6 of the 18 sweep cards) and an opponent-burn/steal
+  primitive (needed by 4 more) — flagged for whichever future pass
+  needs them. Oxford itself, and the other 17 sweep cards, stay
+  unimplemented.
 
-## OQ-26: Organized Resistance (102230) -- no forced-block hook   (status: resolved)
+## OQ-24 - Wider View - no influence hook, no removed zone (status: resolved)
 
-- Situation: card text (verbatim, via krcg 5.14, 2026-10-12, matching the raw
-  snapshot `data/cards/102230.json`): "Requires a baron. Usable by a locked
-  baron.\nAn Anarch you control gets +1 intercept. Also usable to unlock a
-  locked Anarch you control; that Anarch attempts to block with +1
-  intercept, even if intercept is not yet needed." Not a ruling ambiguity --
-  the text and every ruling on file are explicit (quoted below). The block
-  is a missing engine representation, same category as OQ-7/8/9.
-- Rulings consulted (verbatim, via krcg):
-  - "Counts as requiring an Anarch (for eg. {Powerbase: Los Angeles})."
-    [LSJ 20080603] [LSJ 20050128]
-  - "If the action lacks a suitable target because of the unlock (e.g.
-    {Ambush}), the block attempt still happens, as does the resulting
-    combat if the block is successful." [LSJ 20090514]
-  - "Can be used by a vampire who is already attempting to block."
-    [ANK 20181122-2]
-  - "Cannot be used if the vampire cannot attempt to block the action (eg.
-    {Daring the Dawn})." [LSJ 20010714-2]
-  - "Does not ignore the normal prey, predator or target restrictions."
-    [ANK 20180623]
-- Card type: Reaction (`types == ["Reaction"]`). No discipline/clan
-  requirement (`disciplines == []`, `clans is None`); legal since
-  2021-12-01; confirmed on the active 2P allowed list
-  (`data/formats/2p/2026-10-03.json`, krcg id 102230).
-- First clause ("An Anarch you control gets +1 intercept") is clean and
-  would be implementable today, exactly like `protection_racket.py` (a
-  plain `"intercept_modifier"` provider, `engine/action.py::
-  INTERCEPT_MODIFIER_HOOK`), gated on (a) the vampire playing the card
-  having printed title "Baron" (`CryptCard.title == "Baron"`) and `zone ==
-  "ready"` regardless of `.locked` (the card's own "usable by a locked
-  baron" clause relaxes the normal reaction-card "ready, unlocked minion"
-  requirement, SS8 glossary, down to just "ready" for this one card), and
-  (b) the player controlling at least one Anarch vampire (`CryptCard.sect
-  is Sect.ANARCH`) to receive the bonus.
-- What is blocked: the second clause ("Also usable to unlock a locked
-  Anarch you control; that Anarch attempts to block with +1 intercept, even
-  if intercept is not yet needed") needs a *forced block attempt from an
-  otherwise-ineligible (locked) candidate*, which `engine/action.py::
-  attempt_block` has no hook for -- its own candidate list is hardcoded to
-  `state.ready_unlocked_vampires(defender)` (the loop's first line), with
-  no way for a card to (i) add a currently-locked vampire as a legal block
-  candidate, (ii) unlock it as part of choosing it, or (iii) grant it a
-  mandatory, non-"only when needed" intercept bonus the instant it is
-  chosen -- bypassing `_duel_stealth_intercept`'s ping-pong entirely, per
-  the first ruling above: the block attempt and any resulting combat
-  happen unconditionally, independent of whether intercept is otherwise
-  needed. `src/vtesbot/cards/registry.py::Hook.BLOCK_CANDIDATE_INJECTION`
-  is, per its own listing, "named for classification; no engine wiring
-  exists yet" -- confirmed by grep across `src/vtesbot/engine/` and
-  `src/vtesbot/cards/`: no call site offers it, no card registers against
-  it.
-- Because the card's second clause cannot be correctly gated or modeled,
-  and the registry/CLAUDE.md model a card as either fully `implemented`
-  (all of its text tested) or `blocked`, not a partial implementation of
-  only the clean clause (same reasoning as OQ-9/Bonding), the whole card is
-  blocked pending the fix below.
-- What would be needed: a new hook point in `attempt_block` (`engine/
-  action.py`), offered alongside (or just before) the existing
-  `"block_attempt"` candidate-selection `Decision`, letting a registered
-  `Hook.BLOCK_CANDIDATE_INJECTION` provider contribute an extra candidate
-  drawn from the defender's own *locked* vampires; choosing that candidate
-  must (a) unlock it, (b) feed it straight into the block-attempt/combat
-  machinery as if it had already won a successful block (no
-  `_duel_stealth_intercept` ping-pong -- the first ruling confirms the +1
-  intercept is a flat, mandatory addition, not an "only when needed"
-  offer), and (c) still respect "the normal prey, predator or target
-  restrictions" (last ruling) -- in this project's 2P collapse (CLAUDE.md
-  §3, OQ-1), that restriction is already structurally satisfied by
-  `attempt_block` only ever being called with the sole opponent as
-  `defender`, so it needs no extra code, only correct scoping of the new
-  candidate to `defender`'s own vampires. This is `rules-engineer` scope
-  (it touches `engine/action.py`, not just `cards/`).
-- Impacted code (at the time this was opened): `src/vtesbot/engine/
-  action.py` (`attempt_block`). Impacted cards: Organized Resistance
-  (registered `blocked`, reason `OQ-26`); any future card with a
-  similarly-shaped "unlock one of your own locked minions to force a block
-  attempt" effect (e.g. Guardian Vigil-style cards, not currently in the 2P
-  pool) would hit the same gap.
-- Resolution (`rules-engineer` pass): added `BLOCK_CANDIDATE_INJECTION_HOOK`
-  (`"block_candidate_injection"`, matching `src/vtesbot/cards/
-  registry.py::Hook.BLOCK_CANDIDATE_INJECTION`'s own string value) to
-  `src/vtesbot/engine/action.py`, offered from inside `attempt_block`'s own
-  retry loop, to `defender`, every time around the loop, alongside the
-  existing hardcoded `state.ready_unlocked_vampires(defender)` candidates --
-  not instead of them. A registered provider's `HookOption.apply(state)`
-  must unlock the locked vampire it is built from (`vampire.locked = False`)
-  and return that same `VampireInPlay` instance; `attempt_block` recognizes
-  the chosen `Choice` via a `by_injected_value` lookup built the same pass as
-  the ordinary candidates' `by_value`-style dict, and returns that `apply`
-  return value *directly* as the blocker -- an immediate, unconditional
-  successful block, never routed through `_duel_stealth_intercept`'s "only
-  when needed" ping-pong, matching the first ruling on file ("the block
-  attempt still happens, as does the resulting combat if the block is
-  successful" [LSJ 20090514]). The new choices are unioned with the
-  hardcoded ones via `hooks.ensure_unique_choice_values` before the
-  `"block_attempt"` `Decision` is built (the same collision guard
-  `engine/phases/influence.py::influence_phase` already uses for its own
-  hook union, OQ-24). `attempt_block`'s own "no candidates -> return `None`
-  with no decision raised" short-circuit now checks the *union* of both
-  sources, so it is unaffected when a provider has nothing to offer either.
-  Zero-regression by construction, not just by testing: with no provider
-  registered (every call site and every other card today, confirmed by the
-  full suite passing unchanged), `hooks.offer(BLOCK_CANDIDATE_INJECTION_HOOK,
-  ...)` returns `[]`, so the candidate list offered, the decision shape and
-  `attempt_block`'s return value are all byte-for-byte the same as before
-  this pass. `perform_minion_action` needed no changes at all: it already
-  treats whatever `attempt_block` returns as "the successful blocker" (locks
-  it, runs combat), exactly the behaviour the task required. The "respect
-  the normal prey, predator or target restrictions" ruling [ANK 20180623]
-  needs no extra code: `attempt_block`'s own `defender` parameter already
-  scopes every candidate -- hardcoded or injected -- to the single 2P
-  opponent, which is structurally both prey and predator (CLAUDE.md §3,
-  OQ-1). Proven by `tests/rules/test_block_candidate_injection.py` (new),
-  using a fake provider (not Organized Resistance itself -- that card stays
-  registered `blocked`/`OQ-26` until a `card-implementer` pass builds it
-  against this hook): a locked vampire injected, unlocked and forced into an
-  unconditional successful block even against a `base_stealth` that would
-  fail every ordinary attempt; the same end-to-end through
-  `perform_minion_action` (combat runs, `resolve()` never fires); and two
-  zero-regression checks (ordinary ready-unlocked block path unaffected, and
-  the "no candidates at all -> no decision raised" short-circuit still
-  firing) with no provider registered.
-- Impacted code: `src/vtesbot/engine/action.py` (`BLOCK_CANDIDATE_
-  INJECTION_HOOK`, `attempt_block`), `tests/rules/
-  test_block_candidate_injection.py` (new). Card registration is unchanged
-  (Organized Resistance stays `blocked`/`OQ-26` in the registry;
-  re-implementing it against this capability is `card-implementer`'s job).
+- Situation: Wider View (102180, Trifle, in-play via OQ-23's new
+  entity)'s two transfer-costed clauses ("use 1 transfer to draw from
+  crypt and remove a crypt card from the game"; "use 4 transfers to
+  burn this card and gain 2 pool") needed the Influence phase to be
+  card-hookable (it was a closed, hardcoded implementation) and a
+  "removed from the game" zone distinct from "burned" (needed because
+  the ruling "[c]ards removed from the game are public" [LSJ
+  20080314] only matters for a card that may still be
+  face-down/unrevealed at removal time).
+- Rules/interactions: plain text and ruling; not an ambiguity.
+- Solution: added `INFLUENCE_PHASE_ACTION_HOOK`, offered in
+  `influence_phase` alongside the three hardcoded transfer types;
+  added `Zone` value `"removed_from_game"` and
+  `engine/damage.py::remove_vampire_from_game` (already public by the
+  existing `visible_identity` rule, confirmed — no further Observation
+  change needed). A `rules-auditor` follow-up found and fixed a MAJOR
+  silent-mis-resolution risk: a hook-provided choice could collide in
+  value with one of the three hardcoded choices and silently take over
+  that action — fixed with a new general `hooks.
+  ensure_unique_choice_values` guard (raises instead of silently
+  misrouting), called wherever hook and hardcoded choices are unioned.
+  Wider View's own card module is not written; both engine gaps are
+  resolved.
 
-## OQ-27: Maneuver bundled with a strike card -- Pursuit (101523)   (status: resolved)
+## OQ-25 - Fleetness - no pre-combat maneuver grant (status: resolved)
 
-- Situation: card text (verbatim, via krcg, 2026-10-12, matching both the
-  installed `krcg` package's own `VTES["Pursuit"].card_text` and the live
-  `https://api.krcg.org/card/101523` response, raw snapshot saved to
-  `data/cards/101523.json`): "[cel] Maneuver.\n[CEL] Additional strike
-  (limited)." Card type Combat, `discipline_requirement == {"type": "Mono",
-  "disciplines": ["cel"]}` (same basic/superior Celerity shape as Side
-  Strike, `src/vtesbot/cards/side_strike.py`). No rulings on file (`rulings
-  == []`, both sources, checked 2026-10-12). Not a ruling ambiguity -- this
-  exact gap was already anticipated and named verbatim, by this card's own
-  name, in `engine/combat.py`'s "Determine Range and maneuvers" docstring
-  section and in `cards/registry.py::Hook.MANEUVER`'s own docstring, both
-  written during the Saku Pihlajamäki/Fleetness engine passes. This entry is
-  that anticipated hit, now formally filed against a real `card-implementer`
-  pass on the named card.
-- Missing mechanism: Rulebook §4 Combat > Determine Range (verbatim, already
-  quoted by `engine/combat.py`'s own module docstring, re-fetched live
-  2026-10-11 and matching the local cache
-  `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`): "To use a
-  maneuver from a strike card, the minion plays the strike card during this
-  [Determine Range] step instead of during the choose strike step. If a
-  minion uses the maneuver from a strike card or a weapon, they are
-  effectively choosing their strike as well. As such, they cannot use a
-  second strike card or weapon to maneuver again in the same round."
-  Pursuit's basic `[cel]` clause ("Maneuver.", with no accompanying strike
-  text on that line) is exactly this shape: a Combat-type card playable for
-  a maneuver at the Determine Range step that simultaneously consumes that
-  combatant's one strike choice for the round -- the same physical card is
-  not also played again at the strike step for a separate strike. The
-  already-wired `MANEUVER_HOOK` (`engine/combat.py::_ask_maneuver`/
-  `_determine_range`) has no way to record "this combatant's strike choice
-  for the round is already spent"; `_ask_strike` (the strike step,
-  `COMBAT_STRIKE_OPTION_HOOK`/`COMBAT_DODGE_OPTION_HOOK`/the built-in hand
-  strike) has no way to read any such flag, and would still offer this
-  combatant a full, independent strike choice later the same round --
-  letting a single physical card illegally double-dip into both a maneuver
-  and an unrelated hand strike. This is a true mis-resolution risk, not
-  merely an unimplemented bonus (CLAUDE.md: "a bot that... never
-  mis-resolves a card").
-- What is clean: Pursuit's superior `[CEL]` clause ("Additional strike
-  (limited).") is the exact same shape as Side Strike's own superior clause
-  -- a plain `COMBAT_ADDITIONAL_STRIKE_HOOK` grant, gated on superior
-  Celerity and the already-built cross-card "(limited)" cap
-  (`additional_strike_limit_used`/`mark_additional_strike_limit_used`,
-  OQ-19) -- and would need no new engine mechanism at all.
-- Because the card's basic clause cannot be correctly gated without risking
-  a mis-resolved strike this round, and the registry/CLAUDE.md model a card
-  as either fully `implemented` (all of its text, with basic/superior
-  tested separately) or `blocked` -- not a partial implementation of only
-  the clean clause -- the whole card is blocked pending the fix below, same
-  precedent as OQ-9 (Bonding).
-- What would be needed: a way for a combatant's strike-choice-for-the-round
-  to be marked "already spent" when claimed through `MANEUVER_HOOK` for a
-  strike-card-sourced (or weapon-sourced) maneuver, consulted by
-  `_ask_strike` to skip that combatant's own strike-step offer for the
-  remainder of the round -- and, per the quoted rule's own last sentence, to
-  also prevent a *second* strike card or weapon from being played for a
-  second maneuver the same round. This is `rules-engineer` scope (touches
-  `engine/combat.py`'s `_ask_maneuver`/`_ask_strike`/round-state shape, not
-  just a `cards/*.py` module).
-- Impacted code (at the time this was opened): `src/vtesbot/engine/
-  combat.py` (`_ask_maneuver`, `_ask_strike`, `ROUND_STATE_CONTEXT_KEY`
-  shape). Impacted cards: Pursuit (registered `blocked`, reason `OQ-27`);
-  `engine/combat.py`'s own docstring and `cards/registry.py::Hook.MANEUVER`'s
-  own docstring additionally name Slam and Dance with the Devil as other
-  printed cards with this same "maneuver from a strike card" shape, neither
-  yet attempted by a `card-implementer` pass.
-- Follow-up (`card-implementer`, 2026-10-12): the project owner raised a lead
-  on this entry before it was first closed out: "Pursuit is either maneuver
-  (to close or long) or additional strike (limited). Pursuit [cel] can be
-  used more than once in the determine range step if the opponent changed
-  the range after giving the impulse." **Explicitly flagged by the owner
-  themselves as their own words, not a verified source** -- treated here as
-  a lead to check, not as a citation, per CLAUDE.md's no-guessing rule.
-  Checked against official sources before touching the implementation or
-  this entry's conclusion:
-  1. Re-fetched Pursuit's own rulings live
-     (`https://api.krcg.org/card/101523`, 2026-10-12): still `rulings == []`
-     -- no card-specific ruling exists for Pursuit confirming or denying the
-     owner's claim, on this or the earlier snapshot date.
-  2. Re-fetched the VEKN **General Rulings** page live
-     (<https://www.vekn.net/general-rulings>, 2026-10-12, a compilation of
-     historical Rules Team rulings per its own "Compilation from the RTR"
-     header) and searched its "Combat:" section for every ruling mentioning
-     "maneuver". Found one directly on point, not previously checked by this
-     entry's first pass (which had only read the Rulebook's own consolidated
-     prose, not the older per-ruling compilation it was built from): "Only
-     maneuvering with a weapon commits you to striking with that weapon.
-     Other effects can be used without striking with the weapon. [LSJ
-     19971215]". No ruling found addressing repeated use of a *strike card's*
-     maneuver across alternating impulse exchanges within one Determine
-     Range step specifically (the owner's exact claim) -- the closest
-     adjacent rulings found are "A maneuver or press gained by a combat card
-     can only be used during the current round of combat ... [TOM 19960521]"
-     (round-scoping, not repeat-count) and "If an effect 'sets' the range of
-     a round ... no other effect can be used to reset the range. [RTR
-     19970630]" (a different mechanic, "setting" vs. maneuvering, not
-     applicable to Pursuit's plain "Maneuver").
-  3. Re-fetched the Rulebook's own Determine Range section live
-     (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>, 2026-10-12,
-     confirmed byte-for-byte identical to the already-quoted local cache) --
-     no additional clause beyond what this entry already quoted. Its own
-     worked example (Ayelech/Colette) *does* show both combatants playing
-     more than one maneuver card each across the same round's alternating
-     exchange, which is already exactly how `engine/combat.py::
-     _ask_maneuver`/`_determine_range`'s own strict-alternation loop already
-     works for *any* registered `MANEUVER_HOOK` provider today (no new
-     mechanism needed for "maneuver more than once per round via alternating
-     turns" in general -- Saku Pihlajamäki's own once-*per-combat*, not
-     once-per-round, grant already exercises multiple rounds of exactly this
-     loop). That worked example's own two maneuver sources are a weapon
-     (.44 Magnum, "allows her to strike ... and gives her an optional
-     maneuver") and "another maneuver card" whose own printed text is never
-     quoted in the example -- not demonstrably a same-card-twice repeat, and
-     not identifiable as a Pursuit-shaped (maneuver with no accompanying
-     strike at that clause) card either way.
-  4. **Assessment: no official source found confirms the owner's claim; if
-     anything, the Rulebook's own plain text runs the other way.** The
-     Rulebook's literal last sentence on this topic -- "they cannot use a
-     second strike card or weapon to maneuver again in the same round" --
-     states a flat prohibition on a *second* strike card doing this, with no
-     stated exception for "the opponent changed the range back after
-     yielding the impulse" (the scenario the owner describes is, if
-     anything, the textbook case that sentence appears written to forbid: a
-     second maneuver attempt later in the same round, using a second
-     physical strike card). The newly found General Ruling [LSJ 19971215]
-     does not help the owner's specific claim either -- it narrows what
-     "committing to a strike" *means* for a **weapon** specifically (you
-     must then strike *with that weapon*, but other effects do not force
-     this), it does not say anything about repeat-use of a non-weapon
-     **strike card's own maneuver** across a round at all, so it neither
-     confirms nor is obviously in conflict with the "cannot use a second
-     strike card" sentence -- they address two different questions (weapon
-     *choice* at the strike step vs. repeat *use* of strike cards during
-     Determine Range).
-  5. This General Ruling is, however, new evidence worth recording for
-     whoever next revisits this entry, since it does create a real,
-     unresolved tension *elsewhere* in the Rulebook's own broader claim that
-     "a strike card **or a weapon**" maneuver equally "effectively
-     [chooses] their strike as well" -- the 1997 ruling says only a *weapon*
-     maneuver commits you to anything (to striking with that weapon
-     specifically), while "other effects" (which would include a plain
-     combat/strike card's own maneuver, e.g. Pursuit's basic clause) "can be
-     used without striking with the weapon" -- arguably implying such other
-     effects do not force a strike-choice lock-in at all, contrary to the
-     Rulebook's own "strike card or a weapon" phrasing. Per this project's
-     own stated precedence (`.claude/skills/vtes-rules-reference/SKILL.md`:
-     "Card text > official card rulings > 2P variant > rulebook"), an
-     official ruling that conflicts with the Rulebook's prose would in
-     principle outrank it -- but this is a genuine conflict between two live
-     official VEKN sources on a point neither is explicit enough about to
-     settle confidently by inference alone (the 1997 ruling is about weapon
-     *choice*, not framed as a general statement about every maneuver
-     source; reading it as settling Pursuit's specific case either way would
-     itself be guessing). **Not resolved by this follow-up**: recorded here,
-     with its own direct citation, for a future pass (ideally with a VEKN
-     judge's input, or a card-specific ruling for Pursuit/Slam/Dance with the
-     Devil if one is ever issued) to weigh, rather than inferred into a
-     decision now.
+- Situation: Fleetness's (100747) superior clause grants a vampire "1
+  optional maneuver during that combat" from the moment the card is
+  played (announce time) — before whichever combat the action
+  produces has even started — but `run_combat` always starts its
+  scratch state fresh and empty, with no way for an action resolving
+  before combat starts to pre-seed a grant into it.
+- Rules/interactions: plain text; the generic OQ-21 fizzle convention
+  already covers the target-unlocked-by-resolve-time case. A
+  card-module-only scratch dict was rejected as it would live outside
+  `GameState`, breaking the determinism/replay invariant.
+- Solution: `run_combat` gained an optional `initial_combat_state`
+  parameter; `seed_pre_combat_maneuver_grant`/
+  `pre_combat_maneuver_available`/`consume_pre_combat_maneuver_grant`
+  are the shared helpers (a count, not a bool, so grants compose by
+  addition). `ActionCardSpec` gained a `maneuver_grant` field threaded
+  through both the unblocked path (a card's own `resolve()` seeds its
+  direct `run_combat` call) and the blocked path
+  (`perform_minion_action` seeds its own internal call). Fleetness's
+  own card module is not written; the primitive is complete.
 
-  - Candidate readings, updated:
-    - **A** (Rulebook's own plain text, as this entry's first pass already
-      read it): Pursuit's basic `[cel]` clause forfeits that combatant's
-      strike choice for the round, and a second physical copy cannot be
-      played to maneuver again the same round either. Status quo; the whole
-      card stays `blocked` under this reading, per this entry's existing
-      "What would be needed"/engine-gap analysis.
-    - **B** (an inference from General Ruling [LSJ 19971215], not an
-      explicit statement of it): only a *weapon's* maneuver forces a
-      strike-choice lock-in; a plain combat/strike card's own maneuver
-      (Pursuit's basic clause) does not, and the "cannot use a second strike
-      card ... to maneuver again" sentence might then need its own separate,
-      narrower reading too. If **B** were ever confirmed by an explicit
-      source, Pursuit's basic clause could likely be implemented today
-      against the existing `MANEUVER_HOOK` with no new engine mechanism at
-      all (same shape as Saku Pihlajamäki's provider), including the
-      owner's own "used more than once if the opponent changes range back"
-      behaviour as a natural consequence of `_determine_range`'s own
-      existing alternating-turns loop -- but **B** is not confirmed by any
-      source found so far, and is **not implemented** on the strength of the
-      owner's statement alone (CLAUDE.md no-guessing rule).
-    - **Owner's lead** (unverified, the owner's own words, not a citation):
-      "Pursuit [cel] can be used more than once in the determine range step
-      if the opponent changed the range after giving the impulse." Recorded
-      here verbatim for traceability; per finding 4 above, no source found
-      confirms it, and the Rulebook's own plain text runs the other way.
-  - Card registration is unchanged: Pursuit stays `blocked`/`OQ-27`. No code
-    (`src/vtesbot/cards/pursuit.py`, `tests/cards/test_pursuit.py`) changed
-    by this follow-up.
-- Second follow-up (`card-implementer`, 2026-10-12, **resolved**): the project
-  owner raised a second, more specific structural lead -- again explicitly
-  their own words, not a cited source: "Pursuit is a non-weapon, non-strike
-  maneuver. This is as plain as it is written. A maneuver in [a] strike
-  [card] is Slam for example. A maneuver in [a] weapon is .44 Magnum's strike
-  for reference[s]." Their argument: the Determine Range restriction is
-  specifically about a card/weapon whose maneuver is *bundled with* a strike
-  in the same clause -- Pursuit's bare "[cel] Maneuver.", textually separate
-  from its own unrelated "[CEL] Additional strike (limited)." clause, is not
-  that shape. Checked before changing anything:
-  1. Fetched Slam's and .44 Magnum's own printed text live (via the installed
-     `krcg` package, re-checked against `https://api.krcg.org/card/101798`
-     and `.../100001`): Slam (krcg id 101798) reads "[pot] Strike: hand
-     strike at +2 damage.\n[POT] As above, with 1 optional maneuver, only
-     usable to get to close range." -- the superior clause's maneuver is
-     explicitly "as above", i.e. part of the very same "Strike:" effect as
-     the basic clause. .44 Magnum (krcg id 100001, `types == ["Equipment"]`)
-     reads "Weapon: gun.\nStrike: 2R damage, with 1 optional maneuver each
-     combat." -- again, the maneuver is printed *inside* the "Strike:"
-     clause itself ("with 1 optional maneuver"). Pursuit's own text, by
-     contrast, has no "Strike:" wording anywhere in its basic clause and no
-     "as above" connecting the two clauses -- they are two independent
-     effects at two different discipline levels, confirmed structurally
-     different from both comparison cards, exactly as the owner described.
-     (Dance with the Devil, krcg id 102315, re-checked the same way: "[obf]
-     or [tha] Maneuver, only usable to get to close range.\n[OBF] or [THA]
-     As above, and once this round, this vampire can burn 1 blood to get 1
-     additional maneuver, only usable to get to close range." -- also a bare
-     maneuver with zero "Strike:" wording at either level, `types ==
-     ["Combat"]`, the same shape as Pursuit's own basic clause, not Slam's or
-     .44 Magnum's.)
-  2. Re-read the Rulebook's **Strike** step (SS4 Combat > 4. Strike > Choose
-     Strike), re-fetched live 2026-10-12
-     (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>) and matching
-     the cached copy (`data/sources/rulebook/2026-10-09/
-     4-detailed-turn-sequence.md:824-828`) -- not previously quoted by this
-     entry's first two passes, which had only read the *Determine Range*
-     section's own restatement. Its own cross-reference to this exact
-     restriction, verbatim: "Each minion chooses their strike. The strike
-     can be from a combat card, from a weapon the minion possesses, by
-     default from a hand strike, or can be from any other card providing
-     this minion a strike. **If a minion has used a maneuver from a strike
-     (either a strike card or a weapon) this round**, then they cannot
-     choose any other strike for their initial strike of the round." This
-     pins down the technical meaning of "a strike card" for this whole SS4
-     mechanism: the maneuver must be "**from a strike**" -- i.e. the very
-     clause granting the maneuver must itself be, or be part of, a strike
-     effect (matching Slam's "as above" and .44 Magnum's "with 1 optional
-     maneuver" *inside* their own "Strike:" clauses) -- not merely "printed
-     on a card that happens to have a strike-capable clause somewhere else,
-     at a different, unconnected discipline level." Pursuit's basic clause
-     grants no strike at all, so it is not "a maneuver from a strike," and
-     neither this Choose-Strike lock nor the Determine-Range "cannot use a
-     second strike card or weapon to maneuver again" cap applies to it.
-  3. Searched the VEKN General Rulings page again (same live fetch as the
-     prior follow-up) for any ruling defining "strike card" or distinguishing
-     a plain-maneuver effect from a maneuver-with-strike effect: found none
-     beyond the already-quoted [LSJ 19971215] ("Only maneuvering with a
-     weapon commits you to striking with that weapon"), which is consistent
-     with, and no longer in any apparent tension with, this resolution --
-     read together, both sources now agree: a maneuver only "commits"
-     anything (to a weapon's own strike, or -- per the Rulebook's Choose
-     Strike wording -- to a strike card's own bundled strike) when the
-     maneuver itself comes from an actual strike effect; a bare, unbundled
-     maneuver (Pursuit's basic clause, Dance with the Devil, Saku
-     Pihlajamäki's innate ability) commits to nothing.
-  4. **Conclusion: the owner's structural reading holds up and is directly
-     supported by the Rulebook's own text, not merely inferred.** Pursuit's
-     basic `[cel]` "Maneuver." clause is a plain maneuver grant, the same
-     category as Saku Pihlajamäki's innate ability or Dance with the Devil's
-     own clauses -- not "a maneuver from a strike" (Slam, .44 Magnum remain
-     correctly unbuilt examples of that other, still-unimplemented shape).
-     It needs no new engine mechanism: the already-wired `MANEUVER_HOOK`
-     (`engine/combat.py::_ask_maneuver`/`_determine_range`) is sufficient,
-     exactly like Saku Pihlajamäki's own provider, with no per-combat
-     "already used" bookkeeping needed either (each physical copy is its own
-     one-shot grant, consumed from hand when played). This also directly
-     confirms the practical substance of the *first* follow-up's "Owner's
-     lead" (repeated use across alternating impulse exchanges): since the
-     basic clause carries no strike-lock and no "cannot use a second strike
-     card" cap (because it is not "a maneuver from a strike" in the first
-     place), nothing stops a second physical copy from maneuvering again
-     later in the same round in response to the opponent's own
-     counter-maneuver -- not via a special exception to the Determine Range
-     restriction (there is no stated exception for "after the opponent
-     yields the impulse," and this entry does not claim one), but because
-     that restriction was never triggered by this card's basic clause to
-     begin with. Candidate reading **A** (this entry's original premise) is
-     now rejected on direct textual evidence (the Choose Strike section's
-     "from a strike" qualifier, not previously consulted); candidate reading
-     **B** is confirmed, upgraded from "an inference from an old general
-     ruling" to "supported by the Rulebook's own current text."
+## OQ-26 - Organized Resistance - no forced-block hook (status: resolved)
 
-  - **Resolved.** `src/vtesbot/cards/pursuit.py` now implements both
-    clauses: the basic `[cel]` "Maneuver." clause against `MANEUVER_HOOK`
-    (plain grant, offered at either Celerity level, no strike-lock, no
-    per-combat bookkeeping), and the superior `[CEL]` "Additional strike
-    (limited)." clause against `COMBAT_ADDITIONAL_STRIKE_HOOK` (unchanged
-    from this entry's own earlier "what is clean" analysis -- the exact
-    shape of Side Strike's own superior clause). Registry status is now
-    `implemented`, `hooks=(Hook.MANEUVER, Hook.COMBAT_ADDITIONAL_STRIKE)`,
-    no `blocked_reason`. Proven by `tests/cards/test_pursuit.py`, including
-    two integration tests specific to this resolution: maneuvering with
-    Pursuit does not lock the strike choice (the acting vampire still lands
-    an ordinary hand strike the same round), and a second physical copy can
-    maneuver again later in the same round after the opponent's own
-    counter-maneuver.
-  - `engine/combat.py`'s own "Determine Range and maneuvers" docstring
-    section and `cards/registry.py::Hook.MANEUVER`'s own docstring, which
-    both named Pursuit (alongside Slam and Dance with the Devil) as an
-    example of the still-unbuilt "maneuver bundled with a strike card" gap,
-    should be corrected by a future pass to drop Pursuit from that list (it
-    turned out not to be an instance of that shape) and keep Slam and .44
-    Magnum (both genuine "maneuver from a strike" cards, confirmed above,
-    still unimplemented) as the motivating examples -- not done as part of
-    this `card-implementer` pass, since it touches `engine/` module
-    docstrings outside this task's own file set; flagged here so the next
-    pass touching that gap does not re-cite Pursuit incorrectly. Dance with
-    the Devil (krcg id 102315), confirmed above to be the same bare-maneuver
-    shape as Pursuit's basic clause (not "from a strike" either), is not
-    itself implemented by this pass -- noted here as a candidate for a future
-    `card-implementer` pass against the same already-sufficient
-    `MANEUVER_HOOK`, not built speculatively now.
-  - Impacted code: `src/vtesbot/cards/pursuit.py`,
-    `tests/cards/test_pursuit.py`,
-    `data/decks/vekn-2p/brujah.json`/`toreador.json` (Pursuit's own
-    `implementation_status` entries updated to `"implemented"`). No
-    `engine/` file was touched -- the existing `MANEUVER_HOOK`/
-    `COMBAT_ADDITIONAL_STRIKE_HOOK` machinery was already sufficient once the
-    card's own correct classification was established.
+- Situation: Organized Resistance (102230)'s second clause unlocks a
+  locked Anarch to force an unconditional block attempt with +1
+  intercept, bypassing the normal "only when needed" ping-pong —
+  `attempt_block`'s candidate list was hardcoded to ready-unlocked
+  vampires only, with no way to inject a locked one, unlock it on
+  choice, or skip the ping-pong.
+- Rules/interactions: rulings on file ([LSJ 20090514],
+  [ANK 20181122-2], [LSJ 20010714-2], [ANK 20180623]) confirm the
+  block and any resulting combat happen unconditionally once chosen,
+  and normal prey/predator/target restrictions still apply (already
+  structurally satisfied by the 2P single-opponent collapse, OQ-1).
+- Solution: added `BLOCK_CANDIDATE_INJECTION_HOOK`, offered inside
+  `attempt_block`'s retry loop alongside the hardcoded ready-unlocked
+  candidates (unioned via `ensure_unique_choice_values`); a chosen
+  injected option's `apply` unlocks the vampire and is returned
+  directly as the blocker, never routed through the stealth/intercept
+  ping-pong. The first clause (+1 intercept to an Anarch) is a plain,
+  clean `"intercept_modifier"` provider needing no new mechanism. Card
+  module itself is not written; the mechanism is complete.
 
-## OQ-28: Maneuver committing a strike -- Slam (101798)   (status: resolved)
+## OQ-27 - Pursuit - maneuver/strike bundling question (status: resolved)
 
-- Situation: card text (verbatim, via the installed `krcg` package's own
-  `VTES["Slam"].card_text` and cross-checked live against
-  `https://api.krcg.org/card/101798`, 2026-10-12, matching the raw snapshot
-  `data/cards/101798.json`): "[pot] Strike: hand strike at +2 damage.
-  [POT] As above, with 1 optional maneuver, only usable to get to close
-  range." Rulings (verbatim, both sources agree): "Additional damage
-  inherits all of the properties of the base damage. [TOM 19960225]";
-  "[POT]The optional maneuver cannot be used if the strike cannot be used
-  (eg. {Hidden Lurker}). [LSJ 20021028]". Card type Combat, `discipline_
-  requirement == {"type": "Mono", "disciplines": ["pot"]}`, `cost ==
-  {"type": "Blood", "value": 1}` (1 blood, printed cost box, independent of
-  which clause is used -- burned to play the card at all, same precondition
-  shape as Fleetness's own 1-blood cost). Legal since 2007-10-26; confirmed
-  on the active 2P allowed list (`data/formats/2p/2026-10-03.json`).
-- What is clean: the basic `[pot]` clause, "Strike: hand strike at +2
-  damage", is a plain `COMBAT_STRIKE_OPTION_HOOK` grant -- the exact same
-  shape Dust Up's own `[pot]` clause (`src/vtesbot/cards/dust_up.py`,
-  identical printed text, "[pot] Strike: hand strike at +2 damage.") already
-  implements: a `StrikeDamage` of the current base hand-strike damage
-  (including any live strength-modifier contribution) plus 2, not flagged
-  `ignore_dodge`, per the "[TOM 19960225]" ruling on file (the additional
-  damage inherits the base damage's own properties, so it stacks with
-  rather than replaces any other strength bonus already in play, computed
-  the same non-hardcoded way `dust_up.py`'s own
-  `_base_hand_strike_damage` helper does).
-- Missing mechanism: the superior `[POT]` clause, "As above, with 1 optional
-  maneuver, only usable to get to close range," bundles the maneuver
-  together with the *same* "Strike: hand strike at +2 damage" effect in one
-  clause ("as above") -- confirmed, per `docs/OPEN_QUESTIONS.md` OQ-27's own
-  resolution (Rulebook SS4 Combat > Strike > Choose Strike: "If a minion has
-  used a maneuver from a strike (either a strike card or a weapon) this
-  round, then they cannot choose any other strike for their initial strike
-  of the round"), to be a genuine instance of "a maneuver from a strike":
-  using this clause's maneuver during the Determine Range step must
-  simultaneously commit that combatant's one strike choice for the round to
-  this same "hand strike at +2 damage" effect -- the combatant does not get
-  an independent, later choice at the strike step at all (not "may also
-  choose this strike," but "this strike card is played now, during
-  Determine Range, instead of during the choose strike step," per the same
-  Rulebook section's own wording, already quoted in full by `cards/
-  pursuit.py`'s own module docstring and `engine/combat.py`'s "Determine
-  Range and maneuvers" docstring section). No such mechanism exists: the
-  already-wired `MANEUVER_HOOK` (`engine/combat.py::_ask_maneuver`/
-  `_determine_range`) has no way for a granted maneuver to also pre-commit
-  the combatant's later strike-step choice, and `_ask_strike` (`engine/
-  combat.py`) unconditionally offers every combatant a full, independent
-  strike choice every round regardless of anything that happened during
-  Determine Range -- confirmed by inspection (no `forced_strike`/
-  `committed_strike`/`pending_strike`-shaped state anywhere in `engine/
-  combat.py`, and `_ask_strike`'s own docstring/body consult no such flag).
-  This is exactly the gap `engine/combat.py`'s own "Determine Range and
-  maneuvers" docstring section and `cards/registry.py::Hook.MANEUVER`'s own
-  docstring already named (Slam listed by name, alongside .44 Magnum and,
-  until OQ-27's resolution, Pursuit) as deliberately left unbuilt: "a
-  maneuver bundled with playing a strike card/weapon... is a separate,
-  larger future engine change... not pre-built or anticipated here." Neither
-  .44 Magnum (the weapon-side example of the same shape) nor any other card
-  in the pool currently implements this mechanism either, so there is no
-  existing working pattern to reuse (checked: `grep -r "44 Magnum" src/
-  vtesbot` finds no implementation, only this entry's and `pursuit.py`'s own
-  comparison citations).
-- Because the superior clause cannot be correctly gated without inventing a
-  new engine mechanism, and the registry/CLAUDE.md model a card as either
-  fully `implemented` (all of its text, with basic/superior tested
-  separately) or `blocked` -- not a partial implementation of only the clean
-  basic clause -- the whole card is registered `blocked`, same precedent as
-  OQ-9 (Bonding) and OQ-27's own original (pre-resolution) analysis for
-  Pursuit.
-- What would be needed: a way for a `MANEUVER_HOOK` grant to, when claimed,
-  both flip the range (as today) *and* record that this combatant's strike
-  choice for the round is already fixed to a specific strike effect (here,
-  "hand strike at +2 damage"); `_ask_strike` would need to consult that
-  record and skip its own normal choice for that combatant this round,
-  resolving the pre-committed strike directly instead. This is
-  `rules-engineer` scope (touches `engine/combat.py`'s `_ask_maneuver`/
-  `_ask_strike`/round-state shape, the same call sites OQ-27's own original
-  "What would be needed" paragraph named for Pursuit, before OQ-27 was
-  resolved the other way for that specific card).
-- The "[POT]The optional maneuver cannot be used if the strike cannot be
-  used (eg. {Hidden Lurker})" ruling further confirms the strike and the
-  maneuver are not independent for this card -- the maneuver's own legality
-  depends on the bundled strike still being usable, the reverse direction of
-  the same coupling the missing mechanism above would need to model; not
-  separately actionable until that mechanism exists.
-- Impacted code (at the time this was opened): `src/vtesbot/engine/
-  combat.py` (`_ask_maneuver`, `_ask_strike`, round-state shape). Impacted
-  cards: Slam (registered `blocked`, reason `OQ-28`); .44 Magnum (krcg id
-  100001, an Equipment, not currently in this project's card pool) remains
-  the weapon-side example of the identical still-unbuilt shape.
-- Resolution (`rules-engineer` pass, engine mechanism only -- **Slam itself
-  stays `blocked`**, see "Impacted code" below): `engine/combat.py` now
-  builds exactly the "What would be needed" mechanism above, generically (not
-  Slam-specific), so a future `card-implementer` pass can wire Slam (and
-  later .44 Magnum) against it directly:
-  - `COMMITTED_STRIKE_KEY`, a new key inside the existing round-scoped
-    `round_state` dict (`ROUND_STATE_CONTEXT_KEY`), holding a
-    `dict[str, hooks.HookOption]` keyed by vampire instance id.
-  - `commit_strike_for_round(context, strike)`: called by a `MANEUVER_HOOK`
-    provider's own grant (from the same closure that applies the maneuver)
-    when, and only when, that provider's printed text bundles the maneuver
-    with a strike. `strike` is a `HookOption` whose `apply(state)` returns an
-    `int`/`StrikeDamage`, invoked later at strike-resolution time, not at
-    maneuver time (so it can read whatever live state, e.g. the current base
-    hand-strike damage, is only settled by then).
-  - `_ask_strike` now pops `COMMITTED_STRIKE_KEY[vampire.instance_id]` before
-    offering anything: if present, it resolves straight to that pre-committed
-    effect with **no `Decision` raised at all** for that combatant's initial
-    strike this round -- not "may also pick this strike," a hard lock, per
-    the Choose Strike quote above. Popping (not merely reading) is what
-    correctly scopes the lock to "their initial strike of the round" only: a
-    later Additional Strikes pair (a separate, later choose-strike step) is
-    unaffected and still gets a full, independent choice.
-  - `MANEUVER_HOOK`'s own context now also carries `round_state=` (previously
-    only `combat_state=`), required reordering `run_combat` to create
-    `round_state` once at the top of each round, before `_determine_range`
-    runs, rather than only afterward (`_ask_maneuver`/`_determine_range` both
-    gained a `round_state` parameter to thread it through). A plain,
-    non-strike-bundled `MANEUVER_HOOK` provider (Saku Pihlajamäki, Pursuit's
-    basic `[cel]` clause, Dance with the Devil, Fleetness) never calls
-    `commit_strike_for_round` and is completely unaffected by any of this --
-    proven by a dedicated regression test.
-  - The companion sentence in the same Rulebook paragraph -- "As such, they
-    cannot use a second strike card or weapon to maneuver again in the same
-    round" -- is covered too: `strike_committed_this_round(context)` lets a
-    strike-bundled `MANEUVER_HOOK` provider gate its own offer (the same
-    "provider consults a shared flag at its own offer-time gate" convention
-    `additional_strike_limit_used` already establishes for the "(limited)"
-    cap, OQ-19 -- not centrally enforced by `_ask_maneuver`/`hooks.offer`
-    itself, since the engine cannot tell which of a provider's own offered
-    options are strike-bundled before that provider's `apply()` actually
-    runs). `commit_strike_for_round` additionally raises `ValueError` if
-    called a second time for the same vampire the same round, as a loud
-    backstop against a provider that forgets that gate, rather than silently
-    overwriting the first commitment (`rules-auditor` finding on this pass).
-  - `rules-auditor` finding, also fixed this pass: `commit_strike_for_round`
-    now also raises `ValueError` if the committed `strike.choice.value`
-    collides with either built-in strike choice (now named
-    `HAND_STRIKE_VALUE`/`NO_STRIKE_VALUE` constants, replacing the previous
-    bare `"hand_strike"`/`"no_strike"` string literals at each use site) --
-    a collision would otherwise have silently mis-resolved
-    `_resolve_one_strike`'s own branching onto the wrong, built-in effect.
-  - Proven by `tests/rules/test_combat_maneuver.py`: a strike-bundled fake
-    maneuver commits the initial strike and skips the strike-choice decision
-    entirely; the lock does not extend to a later additional strike for the
-    same combatant (proving the `.pop()`, not merely read, semantics); a
-    plain fake maneuver is completely unaffected (regression guard); a second
-    strike-bundled fake maneuver for the same vampire is never offered once
-    the first commits (two independent fake providers, simulating two
-    physical copies/cards); and both of `commit_strike_for_round`'s own
-    `ValueError` guards (double-commit, built-in-value collision) are
-    exercised directly. Full suite re-run clean (563 passed,
-    `uv run pytest -q --ignore=tests/cards/test_octane.py
-    --ignore=tests/cards/test_siarhei_levchenko.py` -- those two ignored
-    files fail to *collect* in this environment on an unrelated, pre-existing
-    `ModuleNotFoundError: No module named 'krcg.vtes'` under `uv run`,
-    confirmed pre-existing via `git stash` to the base commit, not caused by
-    or touched by this pass).
-  - Card registration (at the time this engine-mechanism-only pass landed)
-    was left unchanged: Slam stayed `blocked`/`OQ-28` pending a later
-    `card-implementer` pass, mirroring exactly how OQ-9's own engine-level
-    resolution left Bonding itself `blocked`/`OQ-9` pending its own later
-    `card-implementer` pass. Impacted code this pass: `src/vtesbot/engine/
-    combat.py`, `src/vtesbot/cards/registry.py` (`Hook.MANEUVER`'s own
-    docstring updated to describe the now-built mechanism), `tests/rules/
-    test_combat_maneuver.py`.
-- Card-level follow-up (`card-implementer`, 2026-10-12, **fully resolved**):
-  wired Slam against the now-built mechanism above. `src/vtesbot/cards/
-  slam.py`'s own stale "no engine mechanism exists for this" docstring
-  wording (quoted in this entry's own "Missing mechanism" paragraph above)
-  is corrected to describe the resolution instead. Both clauses now
-  implemented:
-  - `[pot]` basic clause: a plain `COMBAT_STRIKE_OPTION_HOOK` grant, exactly
-    as this entry's own "What is clean" paragraph already described --
-    gated on basic-or-superior `"pot"`, the card in hand, and the printed
-    1-blood cost (checked as a precondition, paid in the option's own
-    `apply`, mirroring Fleetness's own 1-blood-cost convention since a
-    Combat card has no block-attempt window of its own to defer payment
-    past).
-  - `[POT]` superior clause: a `MANEUVER_HOOK` provider gated on superior
-    `"POT"`, the card in hand, the 1-blood cost, `not strike_committed_
-    this_round(context)` (OQ-28's own cap), and `state.combat_range ==
-    LONG_RANGE` ("only usable to get to close range" -- offering it only
-    while already at long range guarantees `_ask_maneuver`'s own
-    direction-agnostic flip always goes long -> close, never the other way,
-    with no new engine support needed for this part: the provider's own
-    `state` parameter already exposes `combat_range` live). Choosing it
-    plays the card, pays the blood cost, and calls `commit_strike_for_round`
-    with a `HookOption` wrapping the identical "hand strike at +2 damage"
-    effect the basic clause grants -- per that function's own contract, the
-    wrapped `apply` performs no further side effect (the card and its cost
-    are already spent at maneuver time; the wrapped `apply` exists solely to
-    compute the strike's damage from whatever base hand-strike damage is
-    live when the strike step actually resolves).
-  - "[POT]The optional maneuver cannot be used if the strike cannot be used
-    (eg. {Hidden Lurker})" [LSJ 20021028]: confirmed still unreachable today
-    (Hidden Lurker, krcg id 100916, is not implemented in this project, and
-    no mechanism anywhere makes a combatant's strike "unusable" -- every
-    combatant can always choose at least a plain hand strike), so this
-    precondition is vacuously satisfied by every offer this module makes;
-    a future pass implementing Hidden Lurker (or any "this vampire cannot
-    strike" effect) and finding this clause needs an actual gate against it
-    will need its own new engine hook, not guessed at or pre-built here.
-  - Proven by `tests/cards/test_slam.py` (15 tests): both clauses' own
-    discipline/hand/blood-cost gates; the superior clause's own "only at
-    long range" and "not offered twice in the same round" gates; the
-    committed-strike behaviour end to end through `run_combat` (no
-    `strike_choice` decision is ever raised for the combatant who
-    maneuvered with Slam, while the opponent still gets an ordinary,
-    independent one); and, as a regression guard proving this card's own
-    use of `commit_strike_for_round` does not interfere with Pursuit's own
-    plain, non-strike-bundled `[cel]` maneuver clause (OQ-27) on the same
-    vampire holding both cards, including after Slam's own commitment is
-    already recorded. Registry status is now `implemented`,
-    `blocked_reason` cleared. Full suite green (577 passing). Impacted
-    code: `src/vtesbot/cards/slam.py`, `tests/cards/test_slam.py`,
-    `data/decks/vekn-2p/brujah.json` (Slam's own `implementation_status`
-    entry updated to `"implemented"`). No further `engine/` change was
-    needed -- the mechanism the earlier `rules-engineer` pass built was
-    already sufficient.
+- Situation: Pursuit (101523, "[cel] Maneuver. / [CEL] Additional
+  strike (limited).") was initially assumed to be a "maneuver from a
+  strike card" (Rulebook §4: using such a maneuver commits that
+  combatant's strike choice for the round, and bars a second strike
+  card from maneuvering again the same round) — a shape the engine
+  had no mechanism for.
+- Rules/interactions: two owner-raised leads were checked against
+  sources, and the second held up: the Rulebook's own Choose Strike
+  section specifies the commit/cap only applies to a maneuver "from a
+  strike" — i.e. bundled in the same clause as a strike effect
+  (Slam's "as above", .44 Magnum's "with 1 optional maneuver...
+  Strike:"). Pursuit's bare "[cel] Maneuver." clause, textually
+  separate from its unrelated "[CEL] Additional strike" clause, is not
+  that shape.
+- Solution: Pursuit needed no new engine mechanism after all —
+  implemented directly against the existing `MANEUVER_HOOK` (plain
+  grant, no strike-lock, no per-combat bookkeeping) and
+  `COMBAT_ADDITIONAL_STRIKE_HOOK`. `Status.IMPLEMENTED`. Slam and .44
+  Magnum remain the genuine, still-unbuilt "maneuver from a strike"
+  examples (tracked by OQ-28); `engine/combat.py`'s own docstring
+  should be corrected to drop Pursuit from that list in a future pass.
 
-## OQ-29: No end-of-round window -- Taste of Vitae (101945)   (status: resolved)
+## OQ-28 - Slam - maneuver committing a strike (status: resolved)
 
-- Situation: card text (verbatim, via the installed `krcg` package's own
-  `VTES["Taste of Vitae"].card_text` and cross-checked live against
-  `https://api.krcg.org/card/101945`, 2026-10-12, matching the raw snapshot
-  `data/cards/101945.json`): "Only usable at the end of a round of combat.
-  Not usable by a vampire being burned or going to torpor. A vampire can
-  play only one Taste of Vitae each round.\nThis vampire gains blood equal
-  to the amount of blood lost by the opposing vampire to damage this
-  round." Rulings (verbatim, both sources agree): "Cannot be played against
-  an ally. [PIB 20121028]"; "Must be played after the presses are handled
-  and can be played if the round ends prematurely. [RTR 20001020] [LSJ
-  20001024] [RTR 20030519]"; "Can be played before or after effects that
-  are played at the end of the round or 'when the combat would end' (eg.
-  [AUS] {Telepathic Tracking}). Can be played after [CEL] {Psyche!} [LSJ
-  20021113] [ANK 20191219] [ANK 20180910-1]"; "Can be played if the
-  opponent was burned. [LSJ 20031201-2]". Card type Combat, no discipline/
-  clan requirement (`discipline_requirement == {"type": "Mono",
-  "disciplines": []}`, `clan_requirement == []`), `cost is None`,
-  `burn_option is False`, `trifle is False`. Legal since 1994-09-15;
-  confirmed on the active 2P allowed list (`data/formats/2p/
-  2026-10-03.json`) and in the suggested 2P decklist `data/decks/
-  vekn-2p/brujah.json` (2 copies). No Ⓓ marker/prey-predator/political
-  wording -- a plain Combat card scoped to the current combat's own two
-  combatants, so OQ-1 (CLAUDE.md SS3) does not apply. Not a ruling
-  ambiguity -- the text and rulings are plain and mutually consistent. The
-  block is two missing engine representations.
-- Missing mechanism 1 -- no "End of Round" window at all: Rulebook SS4
-  Combat Sequence names "7. End of Round: End of round cards and effects
-  are played here" as its own step, after Press (step 6); this card's own
-  text ("Only usable at the end of a round of combat") and its own ruling
-  ("Must be played after the presses are handled") both key off exactly
-  this moment. `engine/combat.py::run_combat`'s own round loop has no such
-  step at all today -- confirmed by inspection: the loop's final block is
-  the Press step itself (`_ask_press` for each side, in order), and the
-  loop either continues to a fresh Determine Range step (someone pressed)
-  or `break`s out entirely (nobody pressed) with no intervening hook offer
-  of any kind; every earlier `break` in the same loop (Determine-Range-time
-  and Strike-time "no longer ready" checks) also exits with no such offer.
-  No `"end_of_round"`-shaped hook name exists anywhere in `cards/
-  registry.py::Hook` either (confirmed by grep).
-- Missing mechanism 2 -- no round-scoped "blood lost to damage" tracking:
-  this card's own gain amount is defined precisely as "the amount of blood
-  lost by the opposing vampire to damage this round" -- not simply "the
-  opposing vampire's current blood deficit" (which could also reflect
-  blood lost to something else entirely, e.g. an unrelated master/action
-  card played the same turn) and not merely "how much damage was dealt"
-  (mended damage costs 1 blood per point *actually mended*, but unmended
-  damage left as `wounded` costs no blood at all; aggravated damage against
-  an already-wounded vampire burns 1 blood per point *only while blood
-  remains*, switching to burning the vampire outright once it runs out --
-  `engine/damage.py::apply_damage`'s own mend/aggravated branches, both of
-  which mutate `vampire.blood` directly with no return value and no running
-  total kept anywhere). There is no round-scoped (or any other) "blood
-  lost to damage" accumulator in `engine/damage.py` or `engine/combat.py`
-  today (confirmed by inspection and by grep for `blood_lost`/
-  `damage_this_round`, no matches) -- `apply_damage` would need to record,
-  per vampire, per round, exactly how much of `vampire.blood`'s own
-  decrease was attributable to this round's own mend/aggravated-burn
-  branches specifically (not, e.g., a `pool`/`blood`-moving card effect
-  played the same round for an unrelated reason), reset fresh every round
-  the same way `round_state`'s own "(limited)" additional-strike tracking
-  already is.
-- "Not usable by a vampire being burned or going to torpor": a target-
-  legality check on the *playing* vampire's own zone at offer time (exclude
-  `zone in {"burned", "torpor"}`) -- not itself a missing mechanism (both
-  zones already exist), but only meaningful once mechanism 1 above gives
-  this card a moment to be offered at all, and ruling 2's "can be played if
-  the round ends prematurely" means this check must still correctly exclude
-  the *playing* vampire specifically (not, e.g., a vampire simply offered
-  the window after combat ended early for the *other* reason) once that
-  window is built.
-- "A vampire can play only one Taste of Vitae each round": a third,
-  genuinely separate round-scoped per-vampire cap, distinct from the
-  existing cross-card "(limited)" additional-strike cap (`additional_
-  strike_limit_used`, OQ-19) -- this card's own text never says "(limited)"
-  and has nothing to do with additional strikes; it needs its own private,
-  round-scoped bookkeeping once mechanism 1 exists to host it (same per-
-  round `round_state`-shaped scratch dict pattern, just a different key, not
-  reusing `ADDITIONAL_STRIKE_LIMIT_KEY`).
-- "Cannot be played against an ally" [PIB 20121028]: unreachable today for
-  the same reason OQ-7/OQ-10 already note for ally combat generally -- no
-  ally can currently be a combat participant at all (`engine/allies.py`'s
-  own docstring: ally bleed/block/combat participation is deliberately not
-  built), so "the opposing vampire" in this card's own text is, today,
-  always actually a vampire; noted for completeness, not itself blocking
-  anything additional.
-- "Can be played before or after effects that are played at the end of the
-  round or 'when the combat would end' (eg. [AUS] {Telepathic Tracking}).
-  Can be played after [CEL] {Psyche!}" [LSJ 20021113] [ANK 20191219] [ANK
-  20180910-1]: an ordering/sequencing clarification relative to two other,
-  specific named cards (Telepathic Tracking, krcg id 101950; Psyche!, krcg
-  id 101507), neither implemented in this project's pool -- not separately
-  actionable until at least one of them is, same "not reachable today, but
-  correctly modeled either way" status several other entries' own
-  not-yet-relevant rulings already carry (e.g. OQ-6's "automatically
-  passing" referendum note, `dust_up.py`'s own OQ-21 citation).
-- "Can be played if the opponent was burned" [LSJ 20031201-2]: confirms
-  that mechanism 1's own end-of-round window must still fire, and must
-  still offer this card, even when the *opposing* vampire (not the playing
-  one) ends the round burned rather than merely wounded/in torpor -- the
-  playing vampire's own "not usable by a vampire being burned or going to
-  torpor" restriction above is about itself only, never the opponent;
-  mechanism 2's own per-round blood-loss record for the now-burned opponent
-  must still be readable after the burn (i.e. not cleared or made
-  inaccessible by the zone transition to `"burned"` itself).
-- What would be needed: (1) a new `"end_of_round"`-shaped hook
-  (`cards/registry.py::Hook`), dispatched by `engine/combat.py::run_combat`
-  once per round, after the Press step resolves -- on *every* path out of
-  that round (normal "nobody pressed" ending, a premature "no longer ready"
-  break at any of the loop's existing checkpoints, and the "someone
-  pressed, loop continues" case too, since "end of round" happens
-  regardless of whether a *new* round follows) -- offered to each
-  combatant's controller (order per Rulebook SS2 Sequencing: acting
-  combatant's controller first, same precedent as press/OQ-3); (2) a
-  round-scoped, per-vampire "blood lost to damage this round" accumulator,
-  written by `engine/damage.py::apply_damage`'s own mend/aggravated-burn
-  branches and threaded into the new hook's context, mirroring how
-  `round_state`'s own "(limited)" additional-strike flag is threaded into
-  `COMBAT_DODGE_OPTION_HOOK`/`COMBAT_ADDITIONAL_STRIKE_HOOK` today -- but
-  `apply_damage` is also called directly by scenario tests and (per its own
-  module docstring) is meant to be usable "directly by future card effects"
-  outside of `run_combat` entirely, so this accumulator cannot simply be a
-  new required parameter; it needs its own degrade-gracefully convention
-  (missing context/no round in progress => nothing recorded, same shape
-  `additional_strike_limit_used` already uses for a hook offered outside
-  `run_combat`). This is `rules-engineer` scope (touches `engine/
-  combat.py`'s round loop structure and every one of its "no longer ready"
-  break points, plus `engine/damage.py::apply_damage`'s mend/aggravated-burn
-  branches) -- a card module cannot build either piece without touching
-  `engine/` files, which CLAUDE.md reserves for `rules-engineer`.
-- Impacted code (at the time this was opened): `src/vtesbot/engine/
-  combat.py` (`run_combat`'s round loop, every "no longer ready" break
-  point, the Press step), `src/vtesbot/engine/damage.py` (`apply_damage`'s
-  mend and aggravated-burn branches), `src/vtesbot/cards/registry.py`
-  (a new `Hook` entry). Impacted cards: Taste of Vitae (registered
-  `blocked`, reason `OQ-29`); any future card keying off "end of round"
-  timing or "blood lost to damage" would hit the same two gaps.
-- Resolution (`rules-engineer` pass, engine mechanisms only -- **Taste of
-  Vitae itself stayed `blocked`** pending a later `card-implementer` pass,
-  mirroring OQ-28's own two-step pattern): `engine/combat.py` and
-  `engine/damage.py` now build exactly the two mechanisms "What would be
-  needed" above asked for, generically (not Taste-of-Vitae-specific):
-  1. `Hook.END_OF_ROUND` (`cards/registry.py`) / `END_OF_ROUND_HOOK`
-     (`engine/combat.py`, string value `"end_of_round"`), dispatched by a
-     new `_ask_end_of_round` helper, called exactly once per round from
-     `run_combat`, on *every* path out of a round's own processing. The
-     round loop was restructured around two local booleans, `still_ready`
-     (did both combatants remain ready through the strike pair and any
-     additional-strikes pairs) and `pressed` (only ever asked if
-     `still_ready`), replacing the previous scattered `break` statements
-     with a single, unconditional `_ask_end_of_round` call placed once per
-     round, immediately followed by the loop's own `if not still_ready or
-     not pressed: break` -- guaranteeing exactly one dispatch per round on
-     every exit path (normal end, premature "no longer ready" end, and
-     "someone pressed, round continues" alike), with no duplicate/missing
-     call possible by construction. Dispatched via `hooks.resolve_impulse_
-     window` (the engine's standard two-sided, repeatable, "impulse returns
-     to the acting Methuselah, closes on two consecutive passes" shape --
-     CLAUDE.md rule 4 / Rulebook SS2 Sequencing), *not* `_ask_press`'s own
-     narrower "ask once per side, first yes wins" shape, since an
-     end-of-round card is a real window where either side may act (and
-     re-act) any number of times, not a single binary decision; only the
-     *ordering* precedent (acting combatant's controller offered first) is
-     shared with Press (OQ-3). Context carries `acting_player`/
-     `acting_vampire`/`blocking_player`/`blocking_vampire` as plain `str`
-     ids (never the live object, CLAUDE.md "information hiding") -- deliberately
-     *absolute*, not `vampire`/`opponent`-relative like `MANEUVER_HOOK`'s own
-     context, so a provider must compare `context["player"]` against
-     `acting_player`/`blocking_player` itself to work out which side it is
-     currently being offered to -- plus `round_state=`
-     (`ROUND_STATE_CONTEXT_KEY`), the same shared, round-scoped scratch dict
-     already threaded into every other combat hook this round.
-  2. `engine/damage.py::BLOOD_LOST_TO_DAMAGE_KEY`, a new key inside that
-     same round-scoped `round_state` dict, holding a `dict[str, int]` keyed
-     by vampire instance id. `apply_damage` gained an optional `round_state:
-     dict[str, Any] | None = None` parameter; its own Mend step and its own
-     aggravated-burn step each call the new `record_blood_lost_to_damage(
-     round_state, vampire_id, amount)` helper for exactly the blood *they
-     themselves* spent (and only those two branches -- nothing else in that
-     function decreases blood), summing across both within the same round.
-     `blood_lost_to_damage_this_round(round_state, vampire_id)` is the
-     public query helper (lives in `engine/damage.py`, not `engine/
-     combat.py`, to avoid a circular import, and takes the raw `round_state`
-     dict directly rather than a hook `context` mapping) -- analogous in
-     shape to `additional_strike_limit_used`/`commit_strike_for_round`'s own
-     public-helper convention. `engine/combat.py::_resolve_strike_pair` (the
-     only call site inside a combat) now passes the current round's
-     `round_state` into both of its `apply_damage` calls; every other
-     existing call site (direct card effects, scenario tests) passes
-     nothing and sees byte-for-byte the previous, untracked behaviour. The
-     record is a plain dict entry, untouched by any zone transition, so it
-     remains fully readable after the tracked vampire is burned --
-     directly supporting "Can be played if the opponent was burned" [LSJ
-     20031201-2].
+- Situation: Slam's (101798) superior clause bundles its maneuver with
+  its own "hand strike at +2 damage" effect ("as above") — a genuine
+  "maneuver from a strike" (per OQ-27's resolution): using it must
+  commit that combatant's one strike choice for the round to this same
+  effect, with no independent later choice. No mechanism existed for a
+  maneuver grant to pre-commit the strike step.
+- Rules/interactions: Rulebook §4 Choose Strike, verbatim, quoted in
+  OQ-27's own resolution; [LSJ 20021028] confirms the maneuver and
+  strike are not independent for this card.
+- Solution: added `COMMITTED_STRIKE_KEY` inside the round-scoped
+  `round_state`; `commit_strike_for_round(context, strike)` (called
+  from a strike-bundled `MANEUVER_HOOK` provider's own grant; raises
+  if called twice for the same vampire the same round, or if its
+  choice-value collides with a built-in strike value); `_ask_strike`
+  pops (not reads) the commitment before offering anything, locking
+  only the *initial* strike of the round, not a later additional
+  strike. A plain, non-strike-bundled maneuver (Saku, Pursuit, Dance
+  with the Devil, Fleetness) is unaffected. Slam itself was then
+  implemented against this mechanism (both clauses).
+  `Status.IMPLEMENTED`.
 
-  - Zero-regression by construction: with no `END_OF_ROUND_HOOK` provider
-    registered, `hooks.resolve_impulse_window` returns immediately with no
-    `Decision` ever raised (CLAUDE.md "only when needed"), and `apply_
-    damage`'s new `round_state` parameter defaults to `None` everywhere
-    except the one new call site, reproducing the previous behaviour
-    exactly for every pre-existing caller/test.
-  - Proven generically (fake providers, not Taste of Vitae itself) by the
-    `rules-engineer`/`rules-auditor` passes' own engine-level tests; full
-    suite green before this card-level follow-up landed.
-  - Card registration (at the time this engine-mechanism-only pass landed)
-    was left unchanged: Taste of Vitae stayed `blocked`/`OQ-29` pending a
-    later `card-implementer` pass. Impacted code this pass:
-    `src/vtesbot/engine/combat.py`, `src/vtesbot/engine/damage.py`,
-    `src/vtesbot/cards/registry.py` (`Hook.END_OF_ROUND`, new).
-- Card-level follow-up (`card-implementer`, 2026-10-12, **fully resolved**):
-  wired Taste of Vitae against the mechanisms above. `src/vtesbot/cards/
-  taste_of_vitae.py` registers one `END_OF_ROUND_HOOK` provider, offered to
-  both `acting_player` and `blocking_player` -- for whichever side is being
-  asked, it resolves `context["player"]` against `acting_player`/
-  `blocking_player` to determine "this vampire" (the one that would play the
-  card) and "the opposing vampire" (whose blood-loss record is queried),
-  per the mechanism's own absolute-id context shape.
-  - Gates: the card in the playing vampire's controller's hand; the playing
-    vampire's own `zone not in {"burned", "torpor"}` (never the opponent's
-    own zone, which this provider never even reads -- only the opponent's
-    `instance_id`, directly supporting "[c]an be played if the opponent was
-    burned" with no extra code); a private, round-scoped per-vampire
-    "already played Taste of Vitae this round" cap, keyed under its own
-    `_USED_KEY` nested inside the shared `round_state` dict -- genuinely
-    separate from `ADDITIONAL_STRIKE_LIMIT_KEY` (this card's text never says
-    "(limited)" and has nothing to do with additional strikes), confirmed
-    independent per playing-vampire id (one combatant's own play does not
-    block the other's).
-  - Effect: `blood_lost_to_damage_this_round(round_state, <opponent's own
-    instance id>)`, recomputed fresh inside `apply()` rather than captured
-    at offer time (`END_OF_ROUND_HOOK`'s own window is a real, repeatable
-    impulse window), added to the playing vampire via `add_blood` (capped at
-    effective capacity, OQ-8). An amount of 0 (the opponent lost no blood to
-    damage this round) is not itself a reason to withhold the option -- the
-    card text conditions playability only on the zone/hand/once-per-round
-    gates above, never on a nonzero amount -- so the option is still offered
-    (and still "succeeds," gaining 0 blood) in that case.
-  - "Cannot be played against an ally" [PIB 20121028]: confirmed still
-    unreachable today, same reason OQ-7/OQ-10 already note for ally combat
-    generally -- no ally can currently be a combat participant at all.
-  - "Can be played before or after effects that are played at the end of the
-    round ... Can be played after [CEL] {Psyche!}" [LSJ 20021113] [ANK
-    20191219] [ANK 20180910-1]: Telepathic Tracking (krcg id 101950) and
-    Psyche! (krcg id 101507) remain unimplemented in this project's pool --
-    not separately actionable until at least one of them is;
-    `END_OF_ROUND_HOOK`'s own repeatable, two-sided impulse-window shape
-    already accommodates "before or after, any order" generically, with
-    nothing Taste-of-Vitae-specific needed for it.
-  - Proven by `tests/cards/test_taste_of_vitae.py` (17 tests): the window/
-    hand/zone gates; the per-round cap (including its own fresh-round reset
-    and per-vampire independence); correct acting/blocking side resolution
-    in both directions; the gain amount read correctly across mend-only,
-    aggravated-only and mixed-total scenarios; the zero-amount-still-
-    playable case; surviving the opponent being burned; and one full
-    `run_combat` integration test exercising the entire chain end to end
-    (a real hand strike, a real player-chosen mend amount, a real
-    end-of-round play, a real blood gain). Registry status is now
-    `implemented`, `blocked_reason` cleared. Full suite green (606
-    passing). Impacted code: `src/vtesbot/cards/taste_of_vitae.py`,
-    `tests/cards/test_taste_of_vitae.py`, `data/decks/vekn-2p/brujah.json`
-    (Taste of Vitae's own `implementation_status` entry updated to
-    `"implemented"`). No further `engine/` change was needed -- the
-    mechanisms the earlier `rules-engineer` pass built were already
-    sufficient.
+## OQ-29 - Taste of Vitae - no end-of-round window (status: resolved)
 
-## OQ-30: No intercept-decrease hook -- Perfect Paragon (101387)  (status: resolved)
+- Situation: Taste of Vitae (101945, "only usable at the end of a
+  round of combat... gains blood equal to the amount of blood lost by
+  the opposing vampire to damage this round") needed two missing
+  mechanisms: an End of Round hook/window (Rulebook §4 step 7), and a
+  round-scoped "blood lost specifically to damage this round"
+  accumulator (distinct from a vampire's raw blood deficit, which
+  could reflect unrelated effects).
+- Rules/interactions: rulings on file confirm it's playable after a
+  round ends prematurely, before/after other end-of-round effects, and
+  even if the opponent was burned (so the accumulator must stay
+  readable after a burn).
+- Solution: added `Hook.END_OF_ROUND`/`END_OF_ROUND_HOOK`, dispatched
+  exactly once per round on every exit path via a restructured round
+  loop (`still_ready`/`pressed` booleans replacing scattered
+  `break`s), offered as a real two-sided repeatable impulse window
+  (not a single binary ask like press). Added `BLOOD_LOST_TO_DAMAGE_
+  KEY` inside `round_state`, written by `apply_damage`'s mend and
+  aggravated-burn branches via `record_blood_lost_to_damage`, queried
+  via `blood_lost_to_damage_this_round`. Taste of Vitae itself was
+  then implemented against both (per-round per-vampire play cap,
+  zone/hand gates, reading the opponent's own blood-loss record fresh
+  at apply time). `Status.IMPLEMENTED`.
 
-- Situation: Perfect Paragon's (krcg id 101387) card text (verbatim, via the
-  installed `krcg` 5.14+ package and cross-checked live against
-  `https://api.krcg.org/card/101387`, 2026-10-13, both matching
-  `data/cards/101387.json` byte-for-byte): "[pre] Only usable during the
-  polling step of a political action. This vampire gets +3 votes.\n[PRE]
-  Allies and younger vampires get -1 intercept." The basic `[pre]` clause is
-  now buildable against OQ-6's own `"polling_step"` hook (resolved); this
-  entry is about the *separate* superior-only clause, which carries its own
-  on-file ruling: "[PRE] Can be played any time during the action before
-  resolution; a block attempt is not required." [LSJ 20020612]. `types ==
-  ["Action Modifier"]`; the rulebook glossary's own definition ("Action
-  Modifier: A card that the acting minion can play to modify the action they
-  are performing," `data/sources/rulebook/2026-10-09/8-glossaries.md:15-16`)
-  fixes who plays it: the vampire currently performing whatever action is in
-  progress -- never a defending/blocking vampire's controller. Since "Allies
-  and younger vampires" names potential *blockers*, not the acting vampire
-  itself, the clause's own effect is: the acting player's own acting vampire
-  plays it to reduce the intercept of any ally or vampire younger than
-  itself that attempts to block this action, for the rest of the action.
-- Confirmed not a one-off: the identical "Allies and younger vampires get -1
-  intercept" sentence also appears verbatim on The Missing Voice's own
-  `[mel]` clause (krcg id 101226), and the same *shape* -- an acting-side,
-  intercept-decreasing Action Modifier, sometimes additionally gated by its
-  own printed "Only usable if a minion attempts to block," sometimes not --
-  recurs across a wide family of other Action Modifier cards cross-checked
-  live via `krcg.load()`, 2026-10-13: Mole's Tunneling `[ani]` (101234),
-  Dominant Personality (102316, both clauses), Forced Confessional `[dom]`
-  (102250), Council of Seraphim (100433), Call of the Hungry Dead `[nec]`
-  (100279), Random Patterns `[AUS][DEM]` (101540), Stygian Shroud `[obl]`
-  (102282), Suppressing Fire (101907), Zapaderin (102204), Smoke and Mirrors
-  `[obt]` (101813), Safe Passage `[for]`/`[obe]`/`[OBE]` ("Allies get -1
-  intercept", 101673), Squirrel Balance (101858), Unthinkable Humiliation
-  (102346), Nightshades (101286), Will-o'-the-Wisp (102183), Obedient Flesh
-  `[dom][pro]` (102255). None of these is implemented in this project yet
-  (confirmed by grep across `src/vtesbot/cards/` for each krcg id above), so
-  this is the first `card-implementer` pass to hit this family's own missing
-  engine mechanism.
-- What is blocked: `engine/action.py::_duel_stealth_intercept` is the sole
-  call site for `INTERCEPT_MODIFIER_HOOK` (confirmed by grep, one call site,
-  `src/vtesbot/engine/action.py:120`), and it *always* offers that hook with
-  `player=defender` -- never `player=actor` (`defender = state.other_player(
-  actor_player)` always in a 2P duel, so these are always two different
-  players; the function's own `else` branch offers `STEALTH_MODIFIER_HOOK` to
-  `actor` instead, never `INTERCEPT_MODIFIER_HOOK`). Every provider already
-  registered against `INTERCEPT_MODIFIER_HOOK` (`organized_resistance.py`,
-  `protection_racket.py`) documents this explicitly in its own code comment
-  ("`INTERCEPT_MODIFIER_HOOK` is only ever offered to the defender"), and
-  both are, correctly, defender-side "+1 intercept to my own blocker" cards.
-  There is no call site anywhere that offers an intercept-*decreasing*
-  option to the *acting* player. Implementing Perfect Paragon's `[PRE]`
-  clause against the existing hook with `player=defender` would be wrong in
-  two independent ways:
-  1. **Ownership.** The card lives in the *actor's* hand, played by the
-     *acting* vampire (per the glossary definition quoted above), never the
-     defender's; raising a `Decision(player=defender, ...)` for a card the
-     defending agent does not control, and would never voluntarily choose to
-     use against their own blocker, would be a structural misattribution of
-     agency (CLAUDE.md "Information hiding": an agent only ever picks from
-     choices built out of its own resources), not merely a cosmetic issue.
-  2. **Timing/duration.** The hook's existing call site only ever fires once
-     a specific blocking candidate has already been chosen, exactly once per
-     candidate, during the "stealth > intercept" ping-pong phase. Perfect
-     Paragon's own on-file ruling ("[c]an be played any time during the
-     action before resolution; a block attempt is not required") and the
-     rulebook's own general sentence restricting only *adding* (not
-     *decreasing*) stealth/intercept to the "only when needed" ping-pong
-     ("intercept can be added during an action only when needed, only by a
-     blocking minion when...", `data/sources/rulebook/2026-10-09/
-     4-detailed-turn-sequence.md:561-563`) both show this card is not
-     subject to that per-candidate, only-when-needed gating at all -- it can
-     be played proactively, before any block attempt exists, and per the
-     rulebook's own stealth/intercept duration sentence ("all modifications
-     ... remain in effect for the duration of the action", same file lines
-     565-567) its effect should then persist and auto-apply to *every*
-     later-chosen qualifying candidate (an ally, or a vampire younger than
-     the acting vampire) for the rest of the action, not just one
-     already-fixed candidate re-decided fresh each time.
-  Modeling it instead as a `STEALTH_MODIFIER_HOOK` provider (mathematically
-  equivalent to a +1 stealth bonus for *this one* block-attempt comparison)
-  would dodge the ownership problem (that hook is already offered to
-  `actor`) but would still misrepresent which minion's stat the printed card
-  text actually modifies (intercept, a property of the blocker, not
-  stealth, a property of the actor) and would still only fire once per
-  already-chosen candidate, never persisting across the whole action the
-  way the rulebook's own duration sentence requires -- not a faithful
-  implementation of the printed text, so not built as a workaround
-  (CLAUDE.md "No engine patches ... do not hack around it inside the card
-  module").
-- What would be needed (`rules-engineer` scope, `engine/action.py`,
-  mirroring OQ-26/OQ-28's own two-step "engine mechanism first, card module
-  later" pattern): (1) a way for the *acting* player to play an
-  intercept-decreasing Action Modifier at any point from announce to
-  resolution, independent of whether a block attempt is currently in
-  progress or which phase of the "only when needed" ping-pong is active --
-  e.g. a new hook offered to `actor` once per `attempt_block` call (or
-  threaded through `pending` so it can be offered repeatedly across retries,
-  OQ-11), not gated on `stealth > intercept`/`intercept >= stealth` at all;
-  (2) a persistent, action-scoped record (in the shared `pending: dict[str,
-  Any]` scratch container already threaded through `attempt_block`/
-  `_duel_stealth_intercept`) of which such modifiers have been activated
-  this action, each carrying its own qualifying-candidate predicate (e.g.
-  "is an Ally, or is younger than vampire X") rather than a flat numeric
-  delta, so `_duel_stealth_intercept` can re-evaluate it against *whichever*
-  candidate is currently fixed, every time a block attempt is retried with a
-  new candidate within the same action -- not just the one candidate that
-  happened to be fixed at the moment the modifier was first played. Given
-  how many other printed cards share this exact "acting side decreases a
-  (some, or any future) blocking candidate's intercept" shape (see above), a
-  generic mechanism covering the whole family is likely worth more than a
-  one-off special case for Perfect Paragon alone, but that scoping call
-  belongs to `rules-engineer`, not this entry.
-- Resolution (`rules-engineer` pass, engine mechanism only -- **Perfect
-  Paragon itself stays `blocked`**, see "Impacted code" below): built
-  exactly the "What would be needed" mechanism above, generically (not
-  Perfect-Paragon-specific), mirroring OQ-26/OQ-28's own two-step "engine
-  mechanism first, card module later" pattern, so a future
-  `card-implementer` pass can wire Perfect Paragon -- and the rest of the
-  family named above -- against it directly:
-  - A new hook, `INTERCEPT_DECREASE_HOOK` (`"intercept_decrease"`,
-    `src/vtesbot/cards/registry.py::Hook.INTERCEPT_DECREASE`, new) --
-    correcting this entry's own earlier "Impacted code" guess that "no new
-    `Hook` entry is needed... `Hook.INTERCEPT_MODIFIER` already exists":
-    `INTERCEPT_MODIFIER_HOOK`'s own contract (`apply(state) -> int`, a
-    one-shot delta, offered only to `defender`, only once a candidate is
-    already fixed, gated by the "only when needed" ping-pong) cannot carry
-    a persistent, re-evaluated-per-candidate predicate record without
-    breaking every provider already registered against it
-    (`organized_resistance.py`, `protection_racket.py`) -- this needed a
-    genuinely different hook, not a reuse.
-  - Offered to `actor` (never `defender`) via `hooks.offer_until_pass`, at
-    the very top of `engine/action.py::attempt_block`'s own retry loop --
-    *before* `defender`'s candidate pool is even computed, let alone before
-    the "no candidates at all -> return `None`, no decision raised"
-    short-circuit -- so it fires even when "a block attempt is not
-    required" applies literally (no block possible at all yet, per the
-    on-file ruling quoted above). Offering it at the top of every loop
-    iteration (rather than once per `attempt_block` call) gives OQ-11's
-    "re-offered on a retried attempt" for free, with no separate plumbing.
-  - A provider's `apply(state)` return value is ignored (same contract as
-    every other `offer_until_pass` consumer); the provider's own `apply`
-    closure must instead append one `ActiveInterceptDecrease` (new frozen
-    dataclass, `engine/action.py`: `delta: int`, `qualifies: Callable[
-    [VampireInPlay], bool]`) to `pending[PENDING_INTERCEPT_DECREASE_KEY]`
-    (new key, same `pending` scratch container OQ-11 built) -- a
-    persistent record, not a one-shot numeric delta, matching this card
-    family's printed "remain in effect for the duration of the action"
-    behaviour. `qualifies` is a plain function over a `VampireInPlay`; it
-    is never itself placed into a `Decision.choices`/`.context` reachable
-    by an agent (CLAUDE.md "Information hiding"), only called from trusted
-    engine arithmetic (`_active_intercept_decrease`, new).
-  - `_duel_stealth_intercept`'s own intercept baseline (previously always
-    `0`) is now `_active_intercept_decrease(pending, blocker)` -- the sum of
-    every recorded modifier's `delta` whose `qualifies(blocker)` predicate
-    matches the specific candidate currently fixed, recomputed fresh every
-    call, never cached, so one activation correctly re-applies to each
-    later-chosen or retried (OQ-11) candidate independently. Per the
-    rulebook's own "some cards and other effects can be used to increase or
-    decrease (even below 0) a minion's stealth or intercept"
-    (`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:
-    556-557`), this baseline is deliberately never floored at 0. No other
-    change was needed anywhere in the "only when needed" ping-pong itself:
-    ordinary `INTERCEPT_MODIFIER_HOOK` additions on top of this new
-    baseline, and the final `intercept >= stealth` comparison, are
-    untouched.
-  - Zero-regression by construction: with no provider registered for
-    `INTERCEPT_DECREASE_HOOK` (every existing card and test today),
-    `_active_intercept_decrease` returns `0` and `hooks.offer_until_pass`
-    asks nothing, so every call site's behaviour is byte-for-byte unchanged
-    from before this pass.
-  - Proven by `tests/rules/test_intercept_decrease.py` (new, 7 tests), using
-    a trivial fake provider (not Perfect Paragon itself, which stays
-    registered `blocked`/`OQ-30` until a `card-implementer` pass builds it
-    against this capability): activation before any candidate exists; a
-    decrease applying only to a qualifying candidate and leaving a
-    non-qualifying one unaffected; OQ-11's own "retried attempt with a
-    different candidate" case (one activation, independently re-evaluated
-    against two different candidates within the same `attempt_block` call);
-    two independently-activated modifiers stacking; activation-or-decline
-    even when the defender has no candidate to block with at all (proving
-    "a block attempt is not required" is honoured structurally, not just by
-    claim); and an end-to-end proof through the real `perform_minion_action`
-    call site. Full suite green (675 passing,
-    `uv run pytest -q --ignore=tests/cards/test_octane.py
-    --ignore=tests/cards/test_siarhei_levchenko.py` -- those two ignored
-    files still fail to *collect* on the same pre-existing, unrelated
-    `ModuleNotFoundError: No module named 'krcg.vtes'` OQ-28's own
-    resolution already documented, confirmed unrelated to and untouched by
-    this pass), `ruff check`/`ruff format --check` clean on every file this
-    pass touched.
-  - Card registration (this engine-mechanism-only pass) was left unchanged:
-    Perfect Paragon stays `blocked`/`OQ-30` in the registry, exactly like
-    OQ-26's own engine-level resolution left Organized Resistance and
-    OQ-28's own left Slam, both pending their own later `card-implementer`
-    pass. `src/vtesbot/cards/perfect_paragon.py`'s own docstring, written
-    while this entry was still open, is now stale in places (it still
-    describes `Hook.INTERCEPT_MODIFIER` as the blocking hook and this entry
-    as "open") -- left uncorrected here, deliberately out of this pass's
-    scope (not a card module change); a future `card-implementer` pass
-    implementing this card corrects it then, the same way OQ-28's own
-    later card-level follow-up corrected Slam's own stale wording.
-- Impacted code: `src/vtesbot/engine/action.py` (`INTERCEPT_DECREASE_HOOK`,
-  `PENDING_INTERCEPT_DECREASE_KEY`, `ActiveInterceptDecrease`,
-  `_active_intercept_decrease` (new), `_duel_stealth_intercept`,
-  `attempt_block`), `src/vtesbot/cards/registry.py` (`Hook.
-  INTERCEPT_DECREASE`, new), `tests/rules/test_intercept_decrease.py` (new).
-  Card registration is unchanged: Perfect Paragon stays `blocked`, reason
-  `OQ-30`. Impacted cards (unchanged by this pass, all still unregistered
-  or `blocked`): Perfect Paragon; any future `card-implementer` pass on The
-  Missing Voice, Mole's Tunneling, Dominant Personality, Forced
-  Confessional, Council of Seraphim, Call of the Hungry Dead, Random
-  Patterns, Stygian Shroud, Suppressing Fire, Zapaderin, Smoke and Mirrors,
-  Safe Passage, Squirrel Balance, Unthinkable Humiliation, Nightshades,
-  Will-o'-the-Wisp, Obedient Flesh would hit the same gap (none currently
-  registered in this project) and can now be built against this mechanism.
-  See OQ-31 for a scoping sub-question `rules-auditor` raised on this
-  entry's first landing, about exactly *where* `INTERCEPT_DECREASE_HOOK`
-  is offered to the actor, deliberately not resolved as part of this entry.
+## OQ-30 - Perfect Paragon - no intercept-decrease hook (status: resolved)
 
-## OQ-31: Proactive-only or also reactive -- OQ-30 follow-up (status: resolved)
+- Situation: Perfect Paragon's (101387) superior clause ("Allies and
+  younger vampires get -1 intercept") is played by the *acting*
+  vampire to weaken a potential blocker's intercept, proactively and
+  persisting for the whole action ([LSJ 20020612]: usable any time
+  before resolution, no block attempt required) — but
+  `INTERCEPT_MODIFIER_HOOK` is only ever offered to the *defender*,
+  once a specific candidate is already fixed, as a one-shot delta. A
+  sweep found 16 other unimplemented cards sharing this exact shape.
+- Rules/interactions: the Rulebook glossary's Action Modifier
+  definition and the quoted ruling settle who plays it and when; the
+  rulebook's own stealth/intercept duration sentence means the effect
+  should persist and re-apply to every later-chosen qualifying
+  candidate, not just one fixed at activation time.
+- Solution: added `INTERCEPT_DECREASE_HOOK`, offered to the actor at
+  the top of `attempt_block`'s retry loop (before any candidate
+  exists, giving OQ-11's "re-offered on retry" for free); a provider's
+  `apply` appends an `ActiveInterceptDecrease(delta, qualifies)`
+  predicate (never itself exposed to an agent) to `pending`;
+  `_duel_stealth_intercept`'s intercept baseline is now the sum of
+  every recorded modifier whose predicate matches the currently-fixed
+  candidate, recomputed fresh each call (never floored at 0, per the
+  rulebook). Perfect Paragon itself and the rest of the family stay
+  unimplemented; the mechanism is complete. See OQ-31 for a scoping
+  question this entry's own first landing left open.
 
-- Situation: found by `rules-auditor` reviewing OQ-30's own engine
-  mechanism (`INTERCEPT_DECREASE_HOOK`, `src/vtesbot/engine/action.py`).
-  The rulebook's own "Summary of the Course of an Action" states, verbatim
-  (re-fetched live against <https://www.vekn.net/rulebook/4-detailed-turn-sequence>,
-  matching the local cache `data/sources/rulebook/2026-10-09/
-  4-detailed-turn-sequence.md:460-462`): "Action modifiers and reaction
-  cards can be played at any time before resolution during an action, with
-  the acting Methuselah getting the opportunity to play first." This is a
-  general statement about every Action Modifier (not specific to the
-  intercept-decrease family OQ-30 names), and does not itself distinguish
-  "before any blocking candidate is chosen" from "reactively, once a
-  specific candidate is already fixed, at the moment impulse would
-  otherwise return to the acting Methuselah mid-ping-pong."
-- What the built mechanism actually offers: `attempt_block` offers
-  `INTERCEPT_DECREASE_HOOK` to `actor` only at the top of its own outer
-  retry loop -- i.e. either before any candidate exists yet, or after a
-  fully-failed attempt is about to be retried with a (possibly different)
-  candidate. It is never offered inside `_duel_stealth_intercept`'s own
-  ping-pong itself, specifically at the point in that loop's `else` branch
-  (`stealth <= intercept`, where impulse already returns to the acting
-  Methuselah with *this specific, now-known* candidate fixed) -- that
-  moment currently only offers `STEALTH_MODIFIER_HOOK`, never
-  `INTERCEPT_DECREASE_HOOK`. Concretely: if the defender's very first
-  candidate choice already succeeds (intercept >= stealth, no retry ever
-  happens), the actor only ever had the earlier, "blind" proactive window
-  (before that candidate was even chosen) to decrease *that* candidate's
-  intercept -- never a later, reactive chance once the candidate was
-  already known and the block was already about to succeed against it.
-- Why this was not resolved as part of OQ-30: OQ-30's own analysis (and
-  Perfect Paragon's own on-file ruling, "[c]an be played any time during
-  the action before resolution; a block attempt is not required" [LSJ
-  20020612]) only establishes that a block attempt is *not required* for
-  the play to be legal at all -- it does not itself settle whether the
-  rulebook's "any time before resolution" additionally entitles the actor
-  to a *reactive* offer once a specific candidate is already fixed and the
-  impulse is already at the acting Methuselah's own turn in the ping-pong,
-  as opposed to only a proactive, blind offer before any candidate exists.
-  Per CLAUDE.md's no-guessing rule, this is not decided silently.
-- Candidate readings:
-  - **A (implemented today):** the proactive-only window built by OQ-30 is
-    sufficient -- "any time before resolution... acting Methuselah getting
-    the opportunity to play first" is satisfied by *an* opportunity to play
-    before resolution (which the top-of-retry-loop offer provides), not
-    necessarily one offered again at every later impulse-return moment
-    within the same action for a hook whose own gating is not itself tied
-    to the "only when needed" ping-pong's turn structure.
-  - **B:** the actor must also be offered `INTERCEPT_DECREASE_HOOK`
-    reactively inside `_duel_stealth_intercept`'s own ping-pong, at the
-    exact point impulse already returns to the acting Methuselah with a
-    specific candidate fixed (today's `else` branch, alongside
-    `STEALTH_MODIFIER_HOOK`) -- since the general "any time before
-    resolution" sentence draws no proactive/reactive distinction, and the
-    rulebook's own impulse rule (`data/sources/rulebook/2026-10-09/
-    8-glossaries.md:86-89`, "[i]f two or more Methuselahs want to play a
-    card or effect, the acting Methuselah plays first... [a]t every stage,
-    the acting Methuselah always has the impulse") is written generically
-    for every stage of an action, not only the proactive, pre-candidate
-    moment this entry's engine mechanism currently covers.
-- What would be needed to resolve: re-fetch the rulebook's Action Modifier
-  timing rule and the Rulebook SS2 Sequencing/impulse section together
-  (both cited above) and determine whether "any time before resolution"
-  is satisfied by a single proactive opportunity per action, or requires a
-  reactive offer at every later impulse-return point too; if still
-  unsettled by the primary sources, this may need the project owner's own
-  call, the same way OQ-20's own casting-order ambiguity did.
-- Resolution (`User Ruling`, settled by the project's owner, same
-  precedent as OQ-20's own casting-order call): **Reading B**. The actor
-  must also be offered `INTERCEPT_DECREASE_HOOK` reactively inside
-  `_duel_stealth_intercept`'s own ping-pong, at the exact impulse-return
-  moment where a specific blocking candidate is already fixed (the `else`
-  branch, `stealth <= intercept`) -- not only proactively at `attempt_
-  block`'s own outer retry-loop top. Both opportunities coexist: Reading B
-  adds a reactive offer, it does not remove the proactive one.
-  - Engineering follow-up (`rules-engineer` pass, done): `_duel_stealth_
-    intercept`'s `else` branch now offers both `STEALTH_MODIFIER_HOOK`'s
-    and `INTERCEPT_DECREASE_HOOK`'s own currently-legal options to `actor`,
-    merged into *one* `Decision` via a new helper, `_ask_stealth_or_
-    decrease` (`src/vtesbot/engine/action.py`) -- mirroring `engine/
-    combat.py::_ask_strike`'s own precedent for merging two distinct hooks'
-    choices into one offer for the same player at the same impulse moment
-    (`COMBAT_STRIKE_OPTION_HOOK`/`COMBAT_DODGE_OPTION_HOOK`), rather than
-    two sequential asks: nothing in the rules orders one Action Modifier
-    ahead of another at a single impulse point, so there is no principled
-    basis for picking a priority order between the two hooks, only for
-    offering both at once (same reasoning `_ask_strike` already
-    established for strike vs. dodge). The merged `Decision` is kept under
-    the *pre-existing* `STEALTH_MODIFIER_HOOK` kind (`"stealth_modifier"`),
-    not a third name: whenever no `INTERCEPT_DECREASE_HOOK` provider is
-    registered (every card implemented before this entry), `decrease_
-    options` is always empty and the `Decision` built is byte-for-byte
-    identical to the pre-OQ-31 one -- confirmed by the full suite (including
-    every `"stealth_modifier"`-scripted test across `tests/cards/
-    test_bonding.py`, `test_enchant_kindred.py`, `test_line_brawl.py`, and
-    `tests/rules/test_pending_modifier.py`, `test_action_discriminator.py`,
-    `test_action_card_play.py`, `test_hooks.py`) passing unmodified, with no
-    test file other than `tests/rules/test_intercept_decrease.py` touched by
-    this pass.
-  - Choosing a decrease option calls its `apply(state)` (ignoring the return
-    value, per `INTERCEPT_DECREASE_HOOK`'s own contract) and then
-    recomputes `intercept` fresh from `_active_intercept_decrease(pending,
-    blocker)` (never cached, same as the baseline computed at the top of
-    `_duel_stealth_intercept`); choosing a stealth option still adds its
-    `apply(state)` return value to `stealth`, unchanged. Either way the
-    outer `while True:` loop naturally re-evaluates `if stealth > intercept`
-    on the next iteration, which is what correctly hands the turn back to
-    the defender's own `INTERCEPT_MODIFIER_HOOK` offer the moment a reactive
-    decrease (or a stealth increase) flips the comparison -- no separate
-    "which side's turn is it now" bookkeeping was needed beyond what the
-    existing loop structure already provided.
-  - A reactively-activated modifier is recorded into the exact same
-    `pending[PENDING_INTERCEPT_DECREASE_KEY]` list a proactively-activated
-    one would be (same hook, same provider contract, same persistent-record
-    mechanism, OQ-30) -- so it composes identically with OQ-11's "retried
-    attempt with a different candidate" case regardless of which call site
-    activated it; no separate code path was needed for this.
-  - Proven by four new tests in `tests/rules/test_intercept_decrease.py`:
-    `test_actor_may_decline_proactively_and_still_play_the_modifier_
-    reactively` (the motivating scenario: the defender's first and only
-    candidate would otherwise succeed outright; the actor declines the
-    proactive offer, then activates the same modifier reactively once that
-    candidate is fixed, turning the would-have-succeeded block into a
-    failure); `test_reactive_offer_is_merged_with_stealth_modifier_into_
-    one_decision` (both a stealth provider and a decrease provider
-    registered; the actor picks the decrease option specifically out of a
-    `Decision` that also legally offered the stealth option, proving the
-    merge, not a replacement); `test_zero_regression_reactive_point_
-    unaffected_when_no_decrease_provider_registered` (the pre-existing
-    stealth-only shape, byte-for-byte); and the pre-existing `test_the_
-    defender_never_sees_the_activated_modifiers_qualifies_predicate`
-    (unmodified, still green) continuing to confirm the information-hiding
-    fix holds at this new offer point too (`_ask_stealth_or_decrease`
-    builds `Decision.context` via `hooks.sanitize_decision_context`, same
-    as `_ask_modifier`). Full suite green (682 passing), `ruff check`/
-    `ruff format --check`/`pymarkdown` clean.
-- Impacted code: `src/vtesbot/engine/action.py` (`_duel_stealth_intercept`,
-  new `_ask_stealth_or_decrease`), `src/vtesbot/cards/registry.py`
-  (`Hook.INTERCEPT_DECREASE`'s docstring updated to describe both offer
-  points), `tests/rules/test_intercept_decrease.py` (three new tests).
-  Impacted cards: none yet (Perfect Paragon and the rest of OQ-30's own
-  named family all stay unregistered/`blocked` pending a `card-implementer`
-  pass) -- a future pass wiring any of them against `INTERCEPT_DECREASE_
-  HOOK` now has both offer points available with no further engine work
-  needed.
+## OQ-31 - Perfect Paragon family - proactive-only or also reactive (status: resolved)
 
-## OQ-32: No "cancel as played" hook -- Diana Iadanza (201694) (status: resolved)
+- Situation: OQ-30's mechanism only offers `INTERCEPT_DECREASE_HOOK`
+  proactively (before a candidate is fixed, or on a retry) — never
+  reactively, at the exact impulse-return moment inside the ping-pong
+  where a specific candidate is already fixed and about to succeed.
+  The rulebook's general "any time before resolution" Action Modifier
+  timing rule doesn't itself settle whether that entitles a reactive
+  offer too.
+- Rules/interactions: no source draws the proactive/reactive
+  distinction explicitly; two readings were open (A: proactive-only is
+  sufficient; B: a reactive offer is also required).
+- Solution (user ruling, same precedent as OQ-20): Reading B — both
+  opportunities coexist. `_duel_stealth_intercept`'s reactive branch
+  now offers `INTERCEPT_DECREASE_HOOK`'s options merged into the same
+  `Decision` as `STEALTH_MODIFIER_HOOK` (mirroring how `_ask_strike`
+  already merges strike/dodge options for one offer point), under the
+  pre-existing `"stealth_modifier"` decision kind so every pre-OQ-31
+  test is unaffected when no decrease provider is registered. A
+  reactively-activated modifier is recorded into the same persistent
+  `pending` list as a proactive one, so it composes identically with
+  OQ-11's retry case.
 
-- Situation: Diana Iadanza's printed text (verbatim, via krcg's live API,
-  `https://api.krcg.org/card/201694`, 2026-10-13; raw snapshot `data/cards/
-  201694.json`): "Camarilla Toreador Justicar: During a referendum she
-  calls, Diana can burn 1 blood to cancel a reaction card as it is played
-  (cost is still paid). +1 bleed." Found while implementing this card
-  (`src/vtesbot/cards/diana_iadanza.py`) during a `card-implementer` pass
-  that otherwise built and unblocked the trailing "+1 bleed" clause against
-  OQ-6's now-resolved referendum machinery. This entry covers only the first
-  clause (the reflexive cancellation); the "+1 bleed" clause needed no new
-  engine work and is implemented.
-- Generic rulings on file for "cancel a card as it is played" (not specific
-  to Diana -- the general mechanic her clause invokes), via krcg, same card:
-  - "Cards are not replaced during the 'as played' window. The cancelation
-    must be played immediately: no other effects can be used, except for
-    wakes (eg. neither {The Barrens} nor {Dreams of the Sphinx} can be
-    used)." [LSJ 20061207] [RBK playing-a-card] [LSJ 20061013]
-  - "If the canceled card had a 'do not replace until' clause (or alternate
-    replacement like {Steely Tenacity}), that clause is canceled as well
-    and the card is replaced normally." [LSJ 20080630] [LSJ 20011023]
-  - "The canceled card has still been played. The same reaction or modifier
-    cannot be played again by the same minion. Any card which text
-    prohibits to play more than once cannot be played again." [ANK
-    20190104] [RBK cancel-a-card] [LSJ 19980212]
-  - "If a limited effect is canceled (bleed, additional strike), then the
-    limit is not triggered and another limited effect can be used." [LSJ
-    20030224]
-  - "A card played 'as if from hand' can be canceled 'as played'." [LSJ
-    20060106]
-- Missing mechanism (as originally filed): `src/vtesbot/cards/registry.py`'s
-  `Hook.CANCEL_AS_PLAYED` was named for classification only -- no call site
-  anywhere in `engine/` dispatched it. More fundamentally, every Reaction
-  card implemented so far (`src/vtesbot/cards/organized_resistance.py`,
-  `protection_racket.py`) resolves its *entire* printed effect atomically
-  inside the one `HookOption.apply()` the player's choice selects
-  (`engine/hooks.py::resolve_impulse_window`/`offer_until_pass` invoked
-  `apply()` the instant the choice was picked) -- there was no intervening
-  "announced, not yet resolved" moment at any existing call site where a
-  third party could inject a cancellation, pay its own cost, and suppress
-  that `apply()`'s effect while still (per the rulings above) treating the
-  card as having been played (cost still paid, counts against the SS8
-  "same reaction card once per action" restriction, any "do not replace
-  until" clause still canceled). This was flagged as a cross-cutting
-  dispatch-model gap (how a chosen `HookOption` resolves at every hook, or
-  at least every Reaction-card hook), not a single new hook alongside the
-  existing ones -- not itself a ruling gap, so not something re-fetching
-  live sources could settle; it needed engine work, handed to
-  `rules-engineer`.
-- Resolution: this is a missing engine primitive, not an unsettled ruling
-  (the generic rulings quoted above already fully specify the mechanic);
-  the primitive has now been built, closing this entry without any new
-  ruling needed.
-- Engineering follow-up (done): a new generic interception point,
+## OQ-32 - Diana Iadanza - no "cancel as played" hook (status: resolved)
+
+- Situation: Diana Iadanza (201694): "During a referendum she calls,
+  Diana can burn 1 blood to cancel a reaction card as it is played
+  (cost is still paid). +1 bleed." Found implementing this card (the
+  "+1 bleed" clause needed no new engine work and is implemented
+  separately): `Hook.CANCEL_AS_PLAYED` was named for classification
+  only, with no dispatch call site anywhere — every Reaction card
+  implemented so far resolves its entire effect atomically inside one
+  `HookOption.apply()`, with no "announced, not yet resolved" moment
+  for a third party to inject a cancellation.
+- Rules/interactions: generic rulings on file for "cancel a card as it
+  is played" ([LSJ 20061207]/[RBK playing-a-card]/[LSJ 20061013],
+  [LSJ 20080630]/[LSJ 20011023], [ANK 20190104]/[RBK cancel-a-card]/
+  [LSJ 19980212], [LSJ 20030224], [LSJ 20060106]) already fully
+  specify the mechanic: played immediately, no other effects
+  interleave; cost still paid; a "do not replace until" clause is also
+  canceled; the card still counts as played (same-reaction-once-per-
+  action still applies); a canceled limited effect does not trigger
+  its own limit.
+- Solution: a missing engine primitive, not an unsettled ruling. Added
   `engine/hooks.py::apply_chosen_option(state, option, played_by,
-  may_cancel, context)`, sits between "a `HookOption` is chosen" and "that
-  option's effect runs," for *any* hook dispatched through either of the
-  two generic decision-loop helpers:
-  - `HookOption` gained an optional `cost: Callable[[GameState], Any] |
-    None = None` field (default `None`, so every pre-existing provider's
-    behaviour is unchanged). When set, `cost` runs unconditionally, before
-    any cancellation is even offered -- this is what lets "cost is still
-    paid" hold even when the effect itself ends up suppressed; a provider
-    that folds its own SS8 "once per action" bookkeeping into `cost` rather
-    than `apply` thereby also keeps that bookkeeping correct regardless of
-    cancellation, and a "do not replace until" clause set only inside
-    `apply` is naturally never set at all when `apply` is suppressed --
-    exactly "canceled as well... replaced normally," with no extra code.
-  - After `cost` runs, `apply_chosen_option` offers the *other* side (never
-    the player who just chose, per "one cannot cancel one's own card")
-    `CANCEL_AS_PLAYED_HOOK` (`engine/hooks.py::CANCEL_AS_PLAYED_HOOK =
-    "cancel_as_played"`, mirroring `cards/registry.py::Hook.CANCEL_
-    AS_PLAYED`'s own value) -- a single ask, not a further loop, per "the
-    cancelation must be played immediately: no other effects can be used."
-    If they choose a cancellation, its own `HookOption.apply(state)` runs
-    (paying its own cost, e.g. Diana's "burn 1 blood") and the original
-    option's `apply` is suppressed entirely -- `apply_chosen_option` returns
-    `None`. Declining (or no `CANCEL_AS_PLAYED_HOOK` provider registered,
-    true of every card in the pool today) falls through to the original
-    `option.apply(state)`, unchanged.
-  - `offer_until_pass` (single-sided: the non-choosing side is
-    `state.other_player(player)`, the 2P structural fact) and
-    `resolve_impulse_window` (two-sided: the non-choosing side is whichever
-    of `acting_player`/`other_player` is not `turn`) both now resolve a
-    chosen option via `apply_chosen_option` instead of a bare
-    `.apply(state)` call. With no `CANCEL_AS_PLAYED_HOOK` provider
-    registered anywhere today, `offer(...)` for it always returns `[]`
-    (CLAUDE.md "only when needed": no options => no decision raised), so
-    this is a zero-behaviour-change wiring for every already-implemented
-    card -- proven by the full existing suite passing unchanged, plus a
-    dedicated regression test below.
-  - `context` passed into the nested `CANCEL_AS_PLAYED_HOOK` offer carries
-    `canceled_by`/`canceled_choice` (identifying what is being canceled)
-    alongside whatever the caller's own `context` already held (including
-    `context["pending"]`, if present); the nested `Decision` this may raise
-    is still built via `sanitize_decision_context`, so `pending` never
-    reaches the agent (CLAUDE.md "Information hiding" -- the same trap
-    OQ-6's own round-3 `rules-auditor` finding caught for a different hook
-    context, `docs/open_questions_archive/001.md` lines 299-315; not
-    repeated here).
-  - Scenario tests (new, `tests/rules/test_hooks.py`): generic, fake-hook
-    proofs only, not coupled to Diana's own card module --
-    `test_apply_chosen_option_runs_apply_normally_with_no_cancel_provider`
-    (zero-regression path),
-    `test_apply_chosen_option_pays_cost_but_suppresses_apply_when_canceled`
-    (the actual mechanism: `cost` runs, `apply` is suppressed, the
-    canceler's own `apply` runs instead),
-    `test_apply_chosen_option_passing_the_cancellation_lets_apply_run`
-    (declining a cancellation falls through normally), and
-    `test_apply_chosen_option_is_offered_to_the_non_acting_side_in_an_
-    impulse_window` (same mechanism through `resolve_impulse_window`, the
-    two-sided helper).
-  - `src/vtesbot/cards/registry.py::Hook.CANCEL_AS_PLAYED` moved out of the
-    "named for classification only, no engine wiring exists yet" group into
-    the documented, wired group (its own docstring now points at
-    `apply_chosen_option`), mirroring how `POLLING_STEP`/`REFERENDUM_
-    TALLIED` were each updated the pass their own call sites landed.
-  - Not built, and out of scope for this pass: Diana Iadanza's own card
-    module (`src/vtesbot/cards/diana_iadanza.py`) is untouched -- it stays
-    `Status.BLOCKED`, `blocked_reason="OQ-32"`, for a future
-    `card-implementer` pass to register against `CANCEL_AS_PLAYED_HOOK`
-    (and against `INTERCEPT_MODIFIER_HOOK`/`_ask_modifier`'s own inline
-    "ask + apply" sites in `engine/action.py`, or `BLOCK_CANDIDATE_
-    INJECTION_HOOK`'s own inline resolution, or any other reaction-card
-    hook dispatch site that is *not* one of the two generic
-    `offer_until_pass`/`resolve_impulse_window` helpers this pass touched --
-    `_ask_modifier`/`_ask_stealth_or_decrease` in `engine/action.py` were
-    deliberately left unwired by this pass, since no card currently needs
-    a reaction played through one of them to be cancelable; a future pass
-    adding that need can route through the same `apply_chosen_option`
-    rather than re-inventing cancellation dispatch, but still has that
-    wiring to do). Diana's own "+1 bleed" clause remains implemented and
-    unblocked separately, as before this entry.
-- `rules-auditor` review (done) -- one MAJOR finding, fixed, plus two
-  documented-only structural gaps:
-  1. **Fixed.** Telepathic Counter (`src/vtesbot/cards/
-     telepathic_counter.py`, krcg id 101948) is dispatched through `engine/
-     phases/minion.py::_perform_bleed` -> `hooks.resolve_impulse_window`
-     against `BLEED_AMOUNT_MODIFIER_HOOK` -- a live, already-`implemented`
-     card genuinely routed through `apply_chosen_option`, unlike Organized
-     Resistance/Protection Racket below. Its `HookOption.apply` atomically
-     did three things: `play_from_hand` (discard-and-replace),
-     `amount_box[0] -= delta` (the actual effect), and the SS8 `used_by`
-     registration. With `apply` suppressed on a cancellation, the card would
-     never have left the defender's hand, never been replaced, and the
-     vampire would never have been marked as having used it -- directly
-     contradicting "[t]he canceled card has still been played... cannot be
-     played again by the same minion" [ANK 20190104]. Dormant only because
-     no `CANCEL_AS_PLAYED_HOOK` provider exists yet, but a landmine in an
-     already-live card, not a hypothetical future one. **Fixed**: split into
-     `cost` (`play_from_hand` + `used_by.add`, runs unconditionally) and
-     `apply` (only `amount_box[0] -= delta`, suppressed on cancellation).
-     Proven by new test `tests/cards/test_telepathic_counter.py::
-     test_a_cancellation_still_pays_cost_but_suppresses_the_bleed_reduction`
-     (toy always-cancel `CANCEL_AS_PLAYED_HOOK` provider; asserts the card
-     left hand and was played to the ash heap, the bleed amount was *not*
-     reduced, and a second copy in hand could not be played by the same
-     already-used vampire this action).
-  2. **Confirmed safe, no fix needed, noted explicitly so it is not mistaken
-     for already covered:** Organized Resistance (`src/vtesbot/cards/
-     organized_resistance.py`) and Protection Racket (`protection_racket.py`)
-     have the identical atomic cost+apply pattern, but neither is currently
-     exposed to `apply_chosen_option` -- both dispatch via `_ask_modifier`'s
-     own bare `.apply(state)` call (`engine/action.py`, for `INTERCEPT_
-     MODIFIER_HOOK`) or `attempt_block`'s own inline resolution (for
-     `BLOCK_CANDIDATE_INJECTION_HOOK`), neither of which is one of the two
-     generic helpers this pass touched. Not a live bug today; whoever wires
-     either of those dispatch sites through `apply_chosen_option` in the
-     future must apply the same `cost`/`apply` split to both cards' own
-     providers first.
-  3. **Minor correction to this entry's own prior engineering-follow-up
-     write-up:** an earlier draft of this write-up (relayed in the
-     `rules-engineer` agent's own chat report, not in this file) described
-     `src/vtesbot/cards/registry.py::Hook.CANCEL_AS_PLAYED` as having been a
-     "pre-existing accidental duplicate enum member" fixed by this pass.
-     That was wrong -- `git show HEAD:src/vtesbot/cards/registry.py` shows
-     exactly one definition both before and after this pass; it was a plain
-     relocation (classification-only group -> documented/wired group), never
-     a duplicate. This file's own "Impacted code" line below already said
-     "docstring/placement only, no value change," which was correct; the
-     incorrect "duplicate" claim never appeared in this document, only in
-     the out-of-band chat report, and is corrected here so it cannot stand
-     as evidence of a prior bug that never existed.
-  4. **Documented, not fixed (both dormant -- no current provider hits
-     either):** `engine/hooks.py::apply_chosen_option`'s own docstring now
-     records two structural gaps for whoever builds the first real
-     `CANCEL_AS_PLAYED_HOOK` provider: (a) `cancel_context` carries the
-     canceled option's own `Choice.value` but not which hook produced it,
-     nor any structured "is this a Reaction card" marker -- a provider
-     wanting to cancel only Reaction cards (as Diana's own text requires)
-     has no structured field to check without fragile string-matching on
-     `canceled_choice`; (b) nothing enforces "the cancelation must be played
-     immediately: no other effects can be used" [LSJ 20061207] if a future
-     `cost` or cancel-`apply` itself re-enters `hooks.offer`/
-     `offer_until_pass`/`resolve_impulse_window`. Neither blocks anything in
-     the current pool; both must be addressed (or confirmed moot) by
-     whoever builds the first provider against this hook.
-- Impacted code: `src/vtesbot/engine/hooks.py` (`HookOption.cost` field,
-  new; `CANCEL_AS_PLAYED_HOOK`, new; `apply_chosen_option`, new, including
-  its two documented-gaps section; `offer_until_pass`/
-  `resolve_impulse_window`, both updated to dispatch through it),
-  `src/vtesbot/cards/registry.py` (`Hook.CANCEL_AS_PLAYED` docstring/
-  placement only, no value change), `src/vtesbot/cards/
-  telepathic_counter.py` (`cost`/`apply` split, `rules-auditor` finding),
-  `tests/rules/test_hooks.py` (four new tests), `tests/cards/
-  test_telepathic_counter.py` (one new regression test). Impacted cards:
-  Telepathic Counter (fixed, still `implemented`, no registry change);
-  Diana Iadanza stays registered `blocked`, reason `OQ-32`, for her clause 1
-  only (her "+1 bleed" clause is implemented and unblocked separately,
-  `src/vtesbot/cards/diana_iadanza.py`); Organized Resistance and Protection
-  Racket are unaffected today (not exposed to `apply_chosen_option`, see
-  finding 2 above) but will need the same split applied to their own
-  providers whenever a future pass wires their dispatch sites through it;
-  no other card in the current pool registers against `CANCEL_AS_PLAYED_
-  HOOK`.
+  may_cancel, context)`, sitting between "a `HookOption` is chosen"
+  and "its effect runs," for both generic decision-loop helpers
+  (`offer_until_pass`, `resolve_impulse_window`). `HookOption` gained
+  an optional `cost` callable (runs unconditionally before any
+  cancellation offer, keeping "cost is still paid" true even when the
+  effect itself is suppressed); after `cost` runs, the *other* side is
+  offered `CANCEL_AS_PLAYED_HOOK` once; choosing a cancellation runs
+  its own `apply` and suppresses the original entirely.
+  Zero-behaviour-change with no provider registered. A `rules-auditor`
+  follow-up found and fixed a live landmine: Telepathic Counter's own
+  `apply` atomically combined its cost (play-from-hand, SS8 "used"
+  bookkeeping) with its actual effect — split into `cost`/`apply` so a
+  future cancellation can't also undo the card having been played.
+  Organized Resistance/Protection Racket have the same atomic pattern
+  but aren't yet exposed to `apply_chosen_option` — flagged for
+  whoever wires their dispatch sites through it next. Diana Iadanza's
+  own card module is not written for clause 1 — stays
+  `blocked`/`OQ-32`; her "+1 bleed" clause is implemented separately.
 
-## OQ-33: No card-type marker -- Diana Iadanza clause 1 (201694) (status: resolved)
+## OQ-33 - Diana Iadanza - no cancel-type marker (status: open)
 
 - Situation: OQ-32 (resolved) built `engine/hooks.py::apply_chosen_option`
   but deliberately left one gap dormant (its own docstring, "Two known
@@ -4537,128 +614,13 @@ up an OQ number or the highest one used so far.
   `resolve_impulse_window` call built the canceled option, since no current
   `HookOption` carries one either. Engine-internal plumbing, not a ruling
   question -- `rules-engineer` scope.
-- Ruling check (not the gap, correction): the prior round of this entry
-  checked only the card-specific/generic-mechanic rulings (krcg, same 5
-  "cancel as played" rulings) and found no cap there -- but missed the
-  rulebook's own general wording-template rule, independent of any card
-  ruling: Rulebook SS3 Playing the Game > Wording templates, "'During X,
-  do Y': ... only one Y can be done per X with this card" (verbatim,
-  `data/sources/rulebook/2026-10-09/3-playing-the-game.md` lines 86-91,
-  the Vessel example). Diana's clause 1 is phrased exactly in this
-  template ("During a referendum she calls, Diana can burn 1 blood to
-  cancel a reaction card as it is played") -- X = "a referendum she
-  calls", Y = "burn 1 blood to cancel a reaction card as it is played".
-  **Corrected finding: she may do this only once per referendum she
-  calls**, not an unlimited number of times per her own blood supply as
-  this entry previously concluded. Recorded so a future pass does not
-  re-derive, or repeat, either the template rule or the prior error.
-- Resolution: this is a missing engine primitive, not an unsettled ruling
-  (same status as its own parent entry, OQ-32); the primitive has now been
-  built, closing this entry without any new ruling needed.
-- Engineering follow-up (done): `engine/hooks.py::HookOption` gained a new
-  optional field, `played_card_type: str | None = None`. It identifies
-  *what is being played* when a specific option is chosen: the printed
-  `LibraryCard.card_type` value (e.g. `"Reaction"`, `"Action Modifier"`,
-  `"Master"`, `"Ally"`, `"Combat"`, `"Action"`, `"Political Action"`) of the
-  physical library card that option's own `apply` actually plays/recruits
-  from hand -- the same string `decks/loader.py::_build_library_card`
-  already derives from krcg at deck-import time. `None` (the default) means
-  the option is *not* playing a card at all: a printed vampire/crypt-card
-  ability being activated, a card already in play using its own standing
-  ability, or an option that only resolves/claims an effect some card
-  already played and paid for earlier in the same action/round/combat.
-  `apply_chosen_option` threads it into `cancel_context` as
-  `"canceled_card_type"`, alongside the pre-existing `canceled_by`/
-  `canceled_choice` (OQ-32) -- a `CANCEL_AS_PLAYED_HOOK` provider wanting to
-  cancel only Reaction cards (Diana's own text) now checks
-  `context["canceled_card_type"] == "Reaction"` instead of fragile
-  `canceled_choice` string-matching.
-  - Generic, not Diana-specific (CLAUDE.md §6): the field lives on
-    `HookOption` itself, and every provider that constructs one states its
-    own card's printed type the same way -- a per-module `CARD_TYPE`
-    constant (restating the "Card type: X" fact each card module's own
-    docstring already sources from krcg; CLAUDE.md §2 "card text first",
-    not a new, separately-guessed fact) passed as `played_card_type=
-    CARD_TYPE` at every construction site that is actually a fresh card
-    play. No engine code anywhere branches on a card name or krcg id to
-    decide this.
-  - Backfilled correctly, not left defaulting: every one of the ~24 card
-    modules with an existing `HookOption` construction site (`src/vtesbot/
-    cards/*.py`) plus `engine/politics.py::variable_pool_burn_vote_options`
-    was individually re-read against its own "Card type: X" docstring line
-    and against whether its option is a genuine card play at all (the
-    `rules-auditor`-caught OQ-32 "landmine" pattern -- a field silently
-    defaulting to a wrong value the moment the first real
-    `CANCEL_AS_PLAYED_HOOK` provider exists -- applies identically to a
-    missing `played_card_type` as it did to a missing `cost`/`apply` split).
-    Two categories of site were identified and correctly left at the
-    default `None`, each now documented inline at its own site/module so no
-    future reader mistakes the omission for an oversight:
-    1. A printed vampire/crypt-card ability or a card's own already-in-play
-       standing ability, never a fresh card play: Modius's "discard a
-       master card to get +1 vote" (`modius.py`), Saku Pihlajamäki's innate
-       maneuver (`saku_pihlajamaki.py`), Oxford University, England's
-       polling-step burn (`oxford_university_england.py`, via
-       `variable_pool_burn_vote_options`), Wider View's own
-       transfer-costed clauses 2/3 (`wider_view.py`), 47th Street Royals'
-       burn-the-already-recruited-ally bleed reduction
-       (`forty_seventh_street_royals.py`).
-    2. An option that only resolves/claims an effect some card already
-       played and paid for earlier the same action/round: Slam's deferred,
-       already-committed strike (`slam.py`), Dust Up's claiming of its own
-       already-recorded `[cel]` grant (`dust_up.py`), Fleetness's claiming
-       of its own pre-seeded pre-combat maneuver grant (`fleetness.py`).
-  - Scenario tests (new, `tests/rules/test_hooks.py`, generic fake-hook
-    proofs only, mirroring OQ-32's own tests, not coupled to Diana's own
-    card module): `test_cancel_context_carries_the_canceled_options_
-    played_card_type` (the marker reaches the cancel provider's context and
-    is load-bearing: a fake Reaction-typed option is actually canceled by a
-    Reaction-only canceler) and `test_a_reaction_only_canceler_cannot_
-    reach_a_non_card_play_option` (the motivating OQ-33 scenario itself: a
-    Reaction-only canceler offers nothing at all against an option left at
-    the default `None`, mirroring Modius/Oxford University, England's own
-    shape -- the effect runs unsuppressed because no legal cancellation was
-    ever offered).
-  - `apply_chosen_option`'s own docstring "Two known gaps" section is
-    updated: the card-type gap is marked resolved and folded into the
-    `canceled_card_type` description; the still-open re-entrant-dispatch
-    gap (unenforced "no other effects can be used" during a cancellation)
-    is kept, unchanged, as the sole remaining documented gap -- still out
-    of scope for this pass, same as OQ-32 left it.
-  - Confirmed not contradicted: this entry's own prior "Ruling check"
-    correction (Diana's clause 1 may burn-and-cancel only once per
-    referendum she calls, Rulebook §3's "During X, do Y" wording template)
-    is a plain rules fact about her own future card module, not something
-    this pass's engine primitive needs to enforce -- `played_card_type`
-    only identifies *what* may be canceled; a future `card-implementer`
-    pass must still track Diana's own "already used this referendum" flag
-    itself (scoped to the specific referendum instance, e.g. a key on
-    `pending` keyed by the referendum's own identity, not per-action or
-    global), exactly as this entry already recorded it.
-  - Not built, and out of scope for this pass: `src/vtesbot/cards/
-    diana_iadanza.py` is untouched, per instruction -- it stays
-    `Status.BLOCKED`, `blocked_reason="OQ-33"`, for a future
-    `card-implementer` pass. That pass is now genuinely unblocked on the
-    engine side: it can register a `CANCEL_AS_PLAYED_HOOK` provider gated
-    on `context["canceled_card_type"] == "Reaction"`, burn 1 blood in its
-    own `apply`, and separately track her own "once per referendum she
-    calls" limiter (the only remaining piece, per the paragraph above --
-    not an engine gap).
-- Impacted code: `src/vtesbot/engine/hooks.py` (`HookOption.played_card_
-  type` field, new; `apply_chosen_option`'s `cancel_context` and docstring,
-  updated), `src/vtesbot/engine/politics.py`
-  (`variable_pool_burn_vote_options`'s own docstring, noting it always
-  leaves the field at its default), `tests/rules/test_hooks.py` (two new
-  tests). Impacted cards (docstring/constant additions only, each module's
-  own effect code unchanged, full suite passes unchanged): `threats.py`,
-  `telepathic_counter.py`, `taste_of_vitae.py`, `slam.py`, `side_strike.py`,
-  `parity_shift.py`, `pursuit.py`, `kine_resources_contested.py`,
-  `oxford_university_england.py`, `protection_racket.py`,
-  `grooming_the_protege.py`, `saku_pihlajamaki.py`, `organized_resistance.py`,
-  `perfect_paragon.py`, `forty_seventh_street_royals.py`, `bonding.py`,
-  `fleetness.py`, `celerity.py`, `modius.py`, `fame.py`, `dust_up.py`,
-  `enchant_kindred.py`, `life_in_the_city.py`, `line_brawl.py`,
-  `wider_view.py`. Diana Iadanza stays registered `blocked`, reason
-  `OQ-33`, for her clause 1 only (her "+1 bleed" clause 2 remains
-  implemented and unblocked separately); no other card in the current pool
-  registers against `CANCEL_AS_PLAYED_HOOK`.
+- Ruling check (not the gap): re-verified live (`https://api.krcg.org/
+  card/201694`, 2026-10-13) and all 5 on-file rulings for the generic
+  "cancel as played" mechanic -- none mention a "once per referendum" cap;
+  Diana may cancel as many times as she can afford (1 blood each), each its
+  own "immediate, no other effects" window [LSJ 20061207]. Not the blocker;
+  recorded so a future pass does not re-derive it.
+- Impacted code: none yet. Impacted cards: Diana Iadanza
+  (`src/vtesbot/cards/diana_iadanza.py`) stays `Status.BLOCKED`, reason
+  `OQ-33`, for clause 1 only; her "+1 bleed" clause 2 is implemented in the
+  same module (CLAUDE.md §6: status is per whole card, not split).

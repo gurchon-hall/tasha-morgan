@@ -99,18 +99,30 @@ are recorded here as design choices, not as VtES facts.
   are moved verbatim to `docs/open_questions_archive/<NNN>.md` (also
   capped at 25 entries per file), tracked by
   `docs/open_questions_archive/INDEX.md`. OQ numbering stays global
-  and is never reused or renumbered by a move.
+  and is never reused or renumbered by a move. Additionally (2026-10-13):
+  the instant an entry's own status flips to `resolved`, its body is
+  trimmed to exactly three bullets — Situation / Rules & interactions /
+  Solution — dropping the accumulated audit-round narrative, rejected
+  alternatives and file-by-file impact lists; its title is updated to
+  name the card it blocked wherever one exists. `INDEX.md` carries one
+  row per archived `OQ-<n>` (not grouped into ranges), with a `Summary`
+  column populated from that trimmed title.
 - Rationale: this is an archival/ergonomics decision, not a rules
   question, so it belongs here rather than as an Open Question
   itself. Capping by entry count (not by a token/line budget) keeps
   the rule simple and mechanically checkable (`grep -c '^## OQ-'`);
   archiving only `resolved` entries guarantees nothing still needing
-  a decision ever becomes harder to find.
+  a decision ever becomes harder to find. The mandatory trim attacks
+  this decision's own original Context directly: it was the resolution
+  narrative, not the entry count, that made the file expensive to
+  read — capping entries alone does not shrink it if each one is still
+  150+ lines.
 - Consequence: anyone resolving or filing an OQ must check
   `docs/open_questions_archive/INDEX.md` as well as
   `docs/OPEN_QUESTIONS.md` when looking up the highest used `OQ-<n>`
   or an existing entry's current location. See `vtes-rules-reference`
-  skill for the exact archive procedure.
+  skill for the exact archive procedure and the exact trim/title
+  format.
 
 ## D-7: Deck-import pipeline as `formats/`/`decks/`, two judgment calls (2026-10-12)
 
