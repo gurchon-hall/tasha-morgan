@@ -173,6 +173,11 @@ tests/
 
 - Python ≥ 3.14, full type hints, `dataclasses` or `pydantic` for
   state.
+- Comments: minimal. Only when the WHY is non-obvious (a rule
+  subtlety, a workaround, an invariant); never restate what the
+  code already says. Docstrings still cite rule sources (§2) and
+  cover ruling-driven edge cases a reader couldn't infer from the
+  code.
 - Tests: `pytest`. Lint/format: `ruff`. Markdown lint:
   `pymarkdownlnt` (`uv run pymarkdown scan docs/ CLAUDE.md`),
   config in `.pymarkdown`. Any change touching a tracked `.md`
