@@ -13,73 +13,27 @@ only one effect is available there is nothing to "choose the order" of, so
 no vacuous ordering decision is raised (the rules-scenario-test skill's
 "only when needed" principle).
 
-OQ-15 (`docs/OPEN_QUESTIONS.md`, resolved by this pass): a contested ally
-(`AllyInPlay.contested_with` set, `zone == "contested"` -- OQ-10's own
-resolution, `engine/allies.py::detect_contest_on_recruit`) now also surfaces
-a pending `f"contest_ally:{...}"` effect, resolved by
-`engine/allies.py::resolve_one_ally_contest` (mirrors `resolve_one_contest`
-below exactly, for the ally-specific pay-1-pool-or-yield mechanism; see that
-function's own docstring for why it must *not* restore `zone` to `"ready"`
-on either branch). `_unlock_own_allies` is the delayed-restore half the
-rulebook's own wording requires ("the card is unlocked and turned face up
-during your next unlock phase, ending the contest" -- a further event tied
-to the surviving controller's own next unlock phase, not instantaneous with
-the opponent's yield): once `resolve_one_ally_contest`'s "yield" branch
-clears an ally's `contested_with` while deliberately leaving its `zone` at
-`"contested"`, this mandatory step -- run once per `unlock_phase` call,
-alongside `_unlock_own_vampires`, *before* the optional pay-or-yield loop --
-is what actually flips that ally's `zone` back to `"ready"`, on its own
-controller's own next unlock phase (which, per 2P's alternating turns, may
-not come up until after the opponent's own next turn too).
+A contested ally (OQ-10/OQ-15), attached master card (OQ-22), and standalone
+Master card (OQ-23) each get the same pay-1-pool-or-yield treatment already
+built for a contested crypt card, plus a delayed "restore to usable once the
+opponent yields" step run alongside `_unlock_own_vampires` (Rulebook SS4
+Advanced Rules > Contested Cards: "the card is unlocked and turned face up
+during your *next* unlock phase, ending the contest" -- a further event
+tied to the surviving controller's own next unlock phase, not instantaneous
+with the opponent's yield). See each `_unlock_own_*` function's own
+docstring below for the mechanics and sourcing specific to that card
+category, and `engine/allies.py`/`engine/attachments.py`/
+`engine/master_cards.py`'s own `resolve_one_*_contest` for why the restore
+cannot happen on the yielding player's own turn.
 
-OQ-22 (`docs/OPEN_QUESTIONS.md`, resolved by this pass, found implementing
-Fame): a contested attached master card (`CardAttachment.contested_with`
-set, `zone == "contested"` -- `engine/attachments.py::
-detect_contest_on_attach`) gets exactly the same third treatment: a pending
-`f"contest_attachment:{...}"` effect resolved by `engine/attachments.py::
-resolve_one_attachment_contest`, and `_unlock_own_attachments` as its own
-delayed-restore step, mirroring `_unlock_own_allies` for the same "no 2P
-override for this card type" reason. The one difference from the vampire/
-ally cases: an attachment has no top-level `PlayerState` dict of its own
-(it is nested inside whichever vampire's own `attachments` list it was put
-on, possibly the *other* player's), so both the pending-effect scan and the
-delayed-restore step go through `engine/attachments.py::iter_attachments`/
-`find_attachment_by_instance_id` instead of a direct dict lookup, and both
-filter by the attachment's own `controller` (who played it), not by whose
-vampire it is attached to.
-
-OQ-23 (`docs/OPEN_QUESTIONS.md`, resolved by this pass): a standalone Master
-card in play (`engine/state.py::MasterCardInPlay`, e.g. Oxford University,
-England, still `blocked`) gets the same two unlock-phase treatments a
-vampire/ally already have, for reasons specific to this card category and
-not shared by the ally/attachment cases: (1) `_unlock_own_master_cards`
-below unlocks a `locked` `"in_play"` card, mirroring `_unlock_own_vampires`
--- sourced directly by the generic Unlock Phase rule ("you must unlock all
-of your cards," quoted in full above, is not restricted to minions) and
-genuinely needed for Oxford's own repeatable "lock this card ... to get +2X
-votes" ability to ever be usable a second time, unlike an ally (no ally in
-the pool is ever locked except at recruit time, and nothing currently reads
-that lock back off) or an attachment (never locked at all); and (2) the
-same delayed-restore-from-contest half `_unlock_own_allies`/`_unlock_own_
-attachments` already have, for the identical "no 2P override for this card
-type" reason OQ-10/OQ-15/OQ-22 established -- only reachable for a card
-actually printed "Unique" (`engine/master_cards.py::detect_contest_on_
-bring_into_play`'s own contract; a non-unique card such as Wider View never
-calls that function, so its `contested_with` stays `None` and this branch
-never fires for it). A pending `f"contest_master_card:{...}"` effect,
-resolved by `engine/master_cards.py::resolve_one_master_card_contest`, is
-added to `_pending_effect_ids`/`_resolve_optional_effects_in_chosen_order`
-alongside the existing `"contest_ally:"`/`"contest_attachment:"` branches.
-
-OQ-22 follow-up (resolved finishing Fame, `card-implementer` pass): Fame's
-own remaining clause ("During each Methuselah's unlock phase, if this
-vampire is in torpor, that Methuselah burns 1 pool") is a *mandatory*
-per-unlock-phase effect with no legal alternative, unlike every pending
-effect above (each of which is a genuine pay-or-yield/gain-or-decline
-choice) -- so it is dispatched as its own `UNLOCK_PHASE_MANDATORY_EFFECT_HOOK`
-(`hooks.run_effects`, no `Decision`) rather than folded into
-`_pending_effect_ids`. See that constant's own docstring below for why it
-runs before, not inside, the optional-effect loop.
+OQ-22 follow-up (Fame's own torpor clause, "During each Methuselah's unlock
+phase, if this vampire is in torpor, that Methuselah burns 1 pool"): a
+*mandatory* per-unlock-phase effect with no legal alternative, unlike every
+pending effect above (each a genuine pay-or-yield/gain-or-decline choice) --
+dispatched as its own `UNLOCK_PHASE_MANDATORY_EFFECT_HOOK` (`hooks.
+run_effects`, no `Decision`) rather than folded into `_pending_effect_ids`.
+See that constant's own docstring below for why it runs before, not inside,
+the optional-effect loop.
 """
 
 from typing import TYPE_CHECKING

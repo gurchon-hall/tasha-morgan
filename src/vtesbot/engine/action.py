@@ -13,93 +13,46 @@ condensed mapping):
 
 2P structural consequence (CLAUDE.md SS3, settled core structural rule, not
 OQ-1 which is scoped to card-text wording): with exactly two Methuselahs,
-the sole opponent is simultaneously prey and predator. The rulebook's
-"prey first, then predator" sequencing exists to give each of several
-*different* Methuselahs a chance to block in turn; when both roles are held
-by the same single Methuselah there is only one decision-maker and no new
-information arrives between a hypothetical "as prey" and "as predator" ask,
-so this implementation collapses both directed and undirected actions to a
-single block-attempt decision offered to that one opponent.
+the sole opponent is simultaneously prey and predator, so the rulebook's
+"prey first, then predator" sequencing (meant to give several *different*
+Methuselahs each a turn) collapses to a single block-attempt decision,
+offered to that one opponent, for both directed and undirected actions.
 
-Stealth/intercept hook wiring (`engine/hooks.py`): "Stealth may be added
-only when needed (an ongoing block would succeed); intercept only when
-needed (acting stealth exceeds it)" (Rulebook SS4 Minion Phase, per the
-`vtes-rules-reference` skill condensed mapping) is a strict ping-pong, not
-the general "both sides get a turn" impulse window: the *blocking*
-Methuselah may add intercept only while the attempt is currently failing
-(stealth > intercept); the *acting* Methuselah may add stealth only while
-the attempt is currently succeeding (intercept >= stealth). `_duel_stealth_
-intercept` below implements exactly that alternation via the
-`"stealth_modifier"` / `"intercept_modifier"` hooks; with no providers
-registered for either hook (no stealth/intercept library cards implemented
-yet), each offer is empty and the loop terminates immediately at
-(stealth=base_stealth, intercept=0) -- byte-for-byte the milestone-2 result,
-so this wiring is pure scaffolding until a card registers against one of
-these hooks.
+Stealth/intercept ping-pong (`engine/hooks.py`): per the rule quoted above,
+the *blocking* Methuselah may add intercept only while the attempt is
+currently failing (stealth > intercept); the *acting* Methuselah may add
+stealth only while it is currently succeeding (intercept >= stealth) --
+this is a strict alternation, not the general "both sides get a turn"
+impulse window. `_duel_stealth_intercept` below implements it via the
+`"stealth_modifier"`/`"intercept_modifier"` hooks; with no providers
+registered for either hook yet, each offer is empty and the loop terminates
+immediately at (stealth=base_stealth, intercept=0).
 
-Action discriminator (OQ-9, `docs/OPEN_QUESTIONS.md`): `attempt_block` /
-`_duel_stealth_intercept` / `perform_minion_action` below thread an explicit
-`action: str | None` (e.g. `ACTION_BLEED`, `ACTION_HUNT`, `ACTION_
-RECRUIT_ALLY`, `ACTION_POLITICAL`, `ACTION_ACTION_CARD`) into the
-`"block_attempt"` decision's own context and into the
-`"stealth_modifier"`/`"intercept_modifier"` hook context, so a provider can
-gate itself on which minion action is in progress (e.g. Bonding's superior
-clause, "[DOM] Cannot be used to increase the stealth of a non-bleed
-action") instead of guessing from `base_stealth`'s numeric value.
-
-Directed/undirected (OQ-17, `docs/OPEN_QUESTIONS.md`): the same three
-functions also thread an explicit `directed: bool | None`, the Rulebook
-glossary's "Directed Action" (targets one other Methuselah) vs "Undirected
-Action" (does not) distinction. The 2P structural collapse described above
-already means the sole opponent is simply offered the one block attempt
-either way, so `directed` changes no mechanics in this module today -- it
-exists so a card/hook built on top of `engine/phases/minion.py::
-ACTION_CARD_PLAY_HOOK` (an "Action"-type library card is itself the acting
-vampire's whole minion action, and may be either directed or undirected
-depending on its own text) can supply and a future consumer can read
-accurate context, rather than the engine silently guessing one or the other.
-
-Pending scratch container (OQ-11, `docs/OPEN_QUESTIONS.md`):
-`perform_minion_action` builds one shared, mutable `pending: dict[str, Any]`
-per action attempt, threads it into the block-attempt phase's hook context
-(so a stealth/intercept provider's `apply(state)` can stash something), and
-hands that same object to `resolve`/`on_blocked` once the outcome is known,
-so a single card play can deliver an effect that spans both phases without
-desynchronizing from whatever later clamp/computation consumes it (see
-`engine/phases/minion.py`'s own docstring for the worked example).
-
-Forced block from a locked vampire (OQ-26, `docs/OPEN_QUESTIONS.md`,
-resolved): `attempt_block` below also offers `Hook.BLOCK_CANDIDATE_
-INJECTION` (`BLOCK_CANDIDATE_INJECTION_HOOK`, `"block_candidate_
-injection"`) to `defender`, alongside its own hardcoded `state.ready_
-unlocked_vampires(defender)` candidates, every time around the retry loop.
-A registered provider contributes an extra `HookOption` built from one of
-`defender`'s own currently-*locked* vampires (e.g. Organized Resistance's
-"unlock a locked Anarch you control; that Anarch attempts to block ...
-even if intercept is not yet needed"); choosing it calls that `HookOption`'s
-own `apply(state)`, which must unlock the vampire (`vampire.locked = False`)
-and return that same `VampireInPlay` -- `attempt_block` returns it directly
-as the successful blocker, the same way a normal candidate is returned once
-`intercept >= stealth`, but *without* ever calling `_duel_stealth_intercept`
-for it. This matches the one on-file ruling that settles the point: "If the
-action lacks a suitable target because of the unlock ..., the block attempt
-still happens, as does the resulting combat if the block is successful"
-[LSJ 20090514] -- i.e. once chosen, this option cannot fail and always
-leads straight to combat, so it is never worth running the "only when
-needed" ping-pong for it at all. With no provider registered (every call
-site and every other card today), `hooks.offer` returns an empty list and
-this is a pure no-op: the candidate list offered is byte-for-byte the same
-as before this pass.
-
-Pre-combat maneuver grant (OQ-25, `docs/OPEN_QUESTIONS.md`, resolved):
-`perform_minion_action`'s own `maneuver_grant: str | None = None` parameter
-threads a vampire instance id into this function's *own internal*
-`run_combat` call on the blocked branch (via `engine/combat.py::seed_pre_
-combat_maneuver_grant`), the one combat-producing path a card's own
-`ActionCardSpec`/`resolve` closure has no other way to reach -- see `engine/
-combat.py`'s own "Pre-combat grant seeding" docstring section and `engine/
-phases/minion.py::ActionCardSpec.maneuver_grant` for the full picture
-(unblocked path vs. this one).
+Open-question plumbing threaded through `attempt_block`/
+`_duel_stealth_intercept`/`perform_minion_action` below (`docs/
+OPEN_QUESTIONS.md`; see each parameter's own docstring for how it is used):
+- OQ-9: `action: str | None` (the `ACTION_*` constants below) lets a hook
+  provider gate on which minion action is in progress (e.g. Bonding's
+  "cannot be used to increase the stealth of a non-bleed action") instead of
+  guessing from `base_stealth`'s numeric value.
+- OQ-17: `directed: bool | None` records the Rulebook glossary's Directed
+  vs. Undirected Action distinction; the 2P collapse above means it changes
+  no mechanics here today, it is threaded through only as context for a
+  future hook/decision consumer.
+- OQ-11: `perform_minion_action` builds one shared mutable `pending:
+  dict[str, Any]` per attempt so a card play spanning the block-attempt and
+  resolve/on_blocked phases can carry state between them (see `engine/
+  phases/minion.py` for the worked example).
+- OQ-26 (resolved): `attempt_block` also offers `BLOCK_CANDIDATE_INJECTION_
+  HOOK` to the defender each retry, so a provider can contribute a candidate
+  built from one of the defender's own *locked* vampires (e.g. Organized
+  Resistance). Per the controlling ruling [LSJ 20090514] such a block cannot
+  fail once chosen, so it bypasses `_duel_stealth_intercept` entirely. With
+  no provider registered, this is a no-op.
+- OQ-25 (resolved): `perform_minion_action`'s `maneuver_grant` seeds one
+  optional pre-combat maneuver grant into this function's own blocked-branch
+  `run_combat` call (see `engine/combat.py`'s "Pre-combat grant seeding"
+  section for the unblocked-path counterpart).
 """
 
 from collections.abc import Callable
@@ -116,17 +69,11 @@ STEALTH_MODIFIER_HOOK = "stealth_modifier"
 INTERCEPT_MODIFIER_HOOK = "intercept_modifier"
 BLOCK_CANDIDATE_INJECTION_HOOK = "block_candidate_injection"
 """OQ-26 (`docs/OPEN_QUESTIONS.md`, resolved): mirrors `src/vtesbot/cards/
-registry.py::Hook.BLOCK_CANDIDATE_INJECTION`'s own string value -- a card-
-sourced option, offered to `defender` inside `attempt_block`'s retry loop
-alongside the normal ready-unlocked candidates, that contributes an
-*additional* block candidate drawn from one of `defender`'s own currently-
-*locked* vampires. A provider's `HookOption.apply(state)` must unlock the
-chosen vampire (`vampire.locked = False`) and return that same
-`VampireInPlay` instance; `attempt_block` then returns it directly as the
-blocker -- an immediate, unconditional *successful* block, bypassing
-`_duel_stealth_intercept`'s "only when needed" ping-pong entirely for this
-candidate (see the module docstring's own "Forced block from a locked
-vampire" section for the sourcing)."""
+registry.py::Hook.BLOCK_CANDIDATE_INJECTION`'s own string value. See the
+module docstring's OQ-26 entry for the mechanism; a provider's
+`HookOption.apply(state)` must unlock its chosen (locked) vampire and
+return it, for `attempt_block` to return directly as an unconditional
+successful blocker."""
 
 ACTION_BLEED = "bleed"
 ACTION_HUNT = "hunt"
@@ -137,12 +84,9 @@ ACTION_ACTION_CARD = "action_card"
 single source of truth for `action=` values passed to `attempt_block`/
 `perform_minion_action`, so a producing call site (`engine/phases/minion.py`,
 `engine/politics.py`) and a consuming hook provider cannot silently desync
-over a re-typed literal. `ACTION_ACTION_CARD` (OQ-17, resolved by this pass)
-is the one fixed discriminator every `"action_card_play"` hook play shares,
-regardless of which specific library card of printed `types == ["Action"]`
-is actually being played -- mirroring how every Ally recruited shares
-`ACTION_RECRUIT_ALLY` regardless of which specific Ally card, rather than
-letting each registering card module invent its own action-name string."""
+over a re-typed literal. `ACTION_ACTION_CARD` is the one fixed discriminator
+every `"action_card_play"` hook play shares, regardless of which specific
+library card of printed `types == ["Action"]` is being played."""
 
 
 def _duel_stealth_intercept(
@@ -245,29 +189,16 @@ def attempt_block(
     current block attempt / ongoing block attempt / blocks declined by all"
     model named by the `vtes-rules-reference` skill.
 
-    `action` (OQ-9), `directed` (OQ-17, `docs/OPEN_QUESTIONS.md`: whether
-    this action is a Rulebook glossary "Directed Action" at the single 2P
-    opponent, or an "Undirected Action" -- 2P structurally collapses both to
-    this same single-opponent block-attempt call, so `directed` changes no
-    mechanics here; it is threaded through purely as accurate context for a
-    future hook/decision consumer and for the replay log) and `pending`
-    (OQ-11, `docs/OPEN_QUESTIONS.md`) are forwarded into both the
+    `action` (OQ-9) and `directed` (OQ-17) are forwarded into the
     `"block_attempt"` decision's own context and the stealth/intercept hook
-    context built by `_duel_stealth_intercept`; a caller that does not pass
-    `pending` gets one fresh `{}`, created once here (not per retry of the
-    loop below), so every hook offer during this one call shares the same
-    mutable object.
+    context (see module docstring). `pending` (OQ-11) likewise; a caller that
+    does not pass one gets a fresh `{}` created once here, so every hook
+    offer during this call shares the same mutable object.
 
-    `BLOCK_CANDIDATE_INJECTION_HOOK` (OQ-26, `docs/OPEN_QUESTIONS.md`,
-    resolved) is offered to `defender` every time around the loop, alongside
-    the hardcoded `state.ready_unlocked_vampires(defender)` candidates;
-    choosing an injected option calls its own `apply(state)` (which must
-    unlock the vampire it is built from and return that same `VampireInPlay`)
-    and returns the result directly as the blocker, without ever running
-    `_duel_stealth_intercept` for it -- see this module's own "Forced block
-    from a locked vampire" docstring section. With no provider registered,
-    this adds nothing: `hooks.offer` returns `[]` and the candidate list
-    offered is exactly `state.ready_unlocked_vampires(defender)`, as before.
+    `BLOCK_CANDIDATE_INJECTION_HOOK` (OQ-26, resolved, see module docstring)
+    is offered to `defender` every time around the loop, alongside the
+    hardcoded `state.ready_unlocked_vampires(defender)` candidates. With no
+    provider registered, this adds nothing.
     """
     if pending is None:
         pending = {}
@@ -360,30 +291,20 @@ def perform_minion_action(
     announce time); a call site that never passes it (e.g. bleed/hunt) sees
     no behaviour change on the blocked branch.
 
-    `action` (OQ-9), `directed` (OQ-17, `docs/OPEN_QUESTIONS.md`, see
-    `attempt_block`'s own docstring) and the per-attempt `pending: dict[str,
-    Any]` scratch container (OQ-11, `docs/OPEN_QUESTIONS.md`) are threaded
-    through to `attempt_block` and then on to `resolve`/`on_blocked`, so a
-    card played during the earlier block-attempt phase can stash something
-    for either callback to read back -- see `engine/phases/minion.py`'s own
-    docstring for the worked example this resolves.
+    `action` (OQ-9), `directed` (OQ-17) and the per-attempt `pending:
+    dict[str, Any]` scratch container (OQ-11) are threaded through to
+    `attempt_block` and then on to `resolve`/`on_blocked`, so a card played
+    during the block-attempt phase can stash something for either callback
+    to read back (see module docstring; worked example in `engine/phases/
+    minion.py`).
 
-    `maneuver_grant` (OQ-25, `docs/OPEN_QUESTIONS.md`, resolved): the vampire
-    instance id to pre-grant one optional maneuver to, for a combat this
-    *blocked* branch's own internal `run_combat` call produces -- `None` (the
-    default; every call site before this pass) changes nothing. This
-    function has no `ActionCardSpec`-shaped field or hook of its own to
-    extend on that internal call, unlike the unblocked branch's own
-    `resolve()` callback, which can already call `engine/combat.py::
-    run_combat` directly with its own `initial_combat_state=` (see that
-    module's own "Pre-combat grant seeding" docstring section) -- this
-    parameter is the only way for a card whose grant must exist before
-    *this* branch's combat starts to reach it. Built into `seed_pre_combat_
-    maneuver_grant(maneuver_grant)` and passed as `run_combat`'s own
-    `initial_combat_state`, so a `"maneuver"` hook provider recognizing
-    `engine/combat.py::PRE_COMBAT_MANEUVER_GRANT_KEY` sees the grant from this
-    combat's very first round, exactly as if it had been seeded by an
-    unblocked `resolve()`'s own direct `run_combat` call.
+    `maneuver_grant` (OQ-25, resolved): a vampire instance id to pre-grant
+    one optional maneuver to, for the combat this *blocked* branch's own
+    `run_combat` call produces (`None`, the default, changes nothing). This
+    is the only way to reach that combat with a pre-seeded grant, since
+    unlike the unblocked branch's `resolve()` callback, this function has no
+    `ActionCardSpec`-shaped hook of its own to extend it -- see `engine/
+    combat.py`'s "Pre-combat grant seeding" section.
     """
     vampire.locked = True
     pending: dict[str, Any] = {}

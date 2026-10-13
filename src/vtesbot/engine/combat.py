@@ -23,8 +23,8 @@ the project's own impulse invariant, CLAUDE.md SS5 / Rulebook SS2
 Sequencing). The acting minion's controller is therefore always asked to
 press first, every round, never alternating by round parity.
 
-Combat-card hook wiring (`engine/hooks.py`, CLAUDE.md milestone-3 scaffolding
-pass): the strike step offers each combatant's controller every registered
+Combat-card hook wiring (`engine/hooks.py`): the strike step offers each
+combatant's controller every registered
 `"combat_strike_option"` alongside the two built-in choices (a card-granted
 strike option's `apply(state)` must return the damage it inflicts, so it can
 fully stand in for a hand strike -- e.g. a card that adds flat damage to a
@@ -88,62 +88,43 @@ the local cache `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`:
   (Wauneka 1 additional strike, Flávio Gonçalves 2: two more strike pairs,
   the second with only Flávio striking).
 
-  Cross-card, per-minion "(limited)" cap (resolves `docs/OPEN_QUESTIONS.md`
-  OQ-19, closing a gap `cards/dust_up.py`/`cards/side_strike.py` previously
-  flagged as "a candidate for a future `rules-engineer` pass": both tracked
-  their own clause's "(limited)" use in a private, per-vampire-*instance*,
-  effectively-forever dict, since no round-boundary signal existed anywhere
-  in this module for a hook provider to see). The SS8 rule quoted above is a
-  *cross-card*, round-scoped cap ("a minion cannot use more than one card or
-  effect ... per round of combat") -- cross-*card* (not per-card), but still
-  strictly per-*minion*: the Wauneka/Flávio Gonçalves worked example two
-  paragraphs above is itself two different minions each legally using their
-  own additional-strike grant in the *same* round, so the cap must never be
-  pooled jointly across both combatants, only within each one's own. `run_
-  combat` now creates one fresh, shared `round_state: dict[str, Any]` at the
-  top of every round (reset every round, never carried into the next) and
-  threads it, under the context key `ROUND_STATE_CONTEXT_KEY`, into both
-  `COMBAT_DODGE_OPTION_HOOK`'s and `COMBAT_ADDITIONAL_STRIKE_HOOK`'s own hook
-  context -- the two, and only two, hooks where a "(limited)" additional-
-  strike grant can originate (`COMBAT_STRIKE_OPTION_HOOK`'s plain alternate-
-  strike grants never grant an *additional* strike, so they need no access
-  to this cap). `additional_strike_limit_used`/`mark_additional_strike_
-  limit_used` (below) read/write a flag *keyed by vampire instance id*
-  inside that shared dict (never a single flat boolean, since `round_state`
-  is the same object offered to both combatants each round -- a flat
-  boolean would wrongly let one combatant's own play block the *other*,
-  unrelated combatant's own grant); a card module implementing a "(limited)"
-  additional-strike clause (e.g. Dust Up's `[cel]`, Side Strike's `[CEL]`)
-  must consult/record it from its own grant -- this is what actually
-  enforces the cap *across* different cards (or a second physical copy of
-  the same card) held by the *same* vampire in the same round, closing a
-  real illegal-play gap the previous per-card-only tracking left open
-  (nothing previously stopped a vampire holding both Dust Up and Side Strike
-  from using *both* cards' grants in one round), while still correctly
-  leaving each combatant's own cap independent of the other's. Per Dust
-  Up's own ruling on exactly where the check belongs ("[cel] The additional
-  strike is not optional: you cannot play it for the dodge only if you
-  already played it for a (limited) additional strike this round" [ANK
-  20220204]), the check gates the *granting* clause itself (a dodge-bundled
-  grant counts identically to a direct one) -- not the later act of
-  claiming an already-recorded grant, which needs no re-check (nothing in
-  the rules revokes a legitimately granted strike mid-round). A card
-  implementing an *exempt* clause per its own printed text (e.g. a future
-  Quickness `[CEL]`/Hell-for-Leather `[cel]` "additional strike that does
-  not count against the limit") simply never calls either helper for that
-  clause -- the cap remains, as before, the granting card's own choice to
-  consult, not something this generic mechanism imposes unconditionally;
-  see `additional_strike_limit_used`'s own docstring for a warning about
-  this convention-only (not enforced) exemption boundary.
+  Cross-card, per-minion "(limited)" cap (OQ-19, `docs/OPEN_QUESTIONS.md`):
+  the SS8 rule quoted above is a *cross-card*, round-scoped cap ("a minion
+  cannot use more than one card or effect ... per round of combat") -- but
+  still strictly per-*minion*: the Wauneka/Flávio Gonçalves worked example
+  two paragraphs above is itself two different minions each legally using
+  their own additional-strike grant in the *same* round, so the cap must be
+  tracked independently per combatant, never pooled jointly. `run_combat`
+  creates one fresh, shared `round_state: dict[str, Any]` at the top of
+  every round (reset every round) and threads it, under
+  `ROUND_STATE_CONTEXT_KEY`, into both `COMBAT_DODGE_OPTION_HOOK`'s and
+  `COMBAT_ADDITIONAL_STRIKE_HOOK`'s own hook context -- the two, and only
+  two, hooks where a "(limited)" additional-strike grant can originate
+  (`COMBAT_STRIKE_OPTION_HOOK`'s plain alternate-strike grants never grant
+  an *additional* strike). `additional_strike_limit_used`/`mark_additional_
+  strike_limit_used` (below) read/write a flag *keyed by vampire instance
+  id* inside that shared dict, never a flat boolean (which would wrongly let
+  one combatant's own play block the other's unrelated grant); a card
+  module implementing a "(limited)" additional-strike clause (e.g. Dust Up's
+  `[cel]`, Side Strike's `[CEL]`) must consult/record it from its own grant
+  -- this is what enforces the cap *across* different cards (or a second
+  physical copy of the same card) held by the same vampire. Per Dust Up's
+  own ruling on where the check belongs ("you cannot play it for the dodge
+  only if you already played it for a (limited) additional strike this
+  round" [ANK 20220204]), the check gates the *granting* clause itself (a
+  dodge-bundled grant counts identically to a direct one), not the later act
+  of claiming an already-recorded grant. See `additional_strike_limit_
+  used`'s own docstring for the *exempt*-clause boundary (e.g. a future
+  Quickness/Hell-for-Leather additional strike that does not count against
+  the limit).
 
 With no providers registered for either hook, no dodge/additional-strike
-choice is ever offered and the additional-strike loop exits immediately --
-byte-for-byte the previous (pre-Gap-2) result.
+choice is ever offered and the additional-strike loop exits immediately.
 
-Dodge-proof strikes (`rules-auditor` finding on the first Gap 2 pass): the
-Golden Rule for Cards (CLAUDE.md SS2 / Rulebook SS3 "whenever the cards
-contradict the rules, the cards take precedence") lets a specific strike's
-own printed text override the normal dodge rule for that strike only --
+Dodge-proof strikes: the Golden Rule for Cards (CLAUDE.md SS2 / Rulebook SS3
+"whenever the cards contradict the rules, the cards take precedence") lets a
+specific strike's own printed text override the normal dodge rule for that
+strike only --
 Dust Up's own `[ani]` clause ("This strike cannot be dodged") is the sourced
 example, confirmed by its own ruling: "[ani] Does not prevent the opponent
 from dodging, the dodge just has no effect." [LSJ 20030902-2] [LSJ
@@ -160,11 +141,11 @@ plain `int` (the common case; a plain `int` behaves exactly like
 `combat_dodge_option` itself never need this (hand strike is always
 dodgeable by rule default; a dodge strike deals no damage regardless).
 
-Determine Range and maneuvers (CLAUDE.md milestone-3 follow-up pass, Saku
-Pihlajamäki (201658, "Anarch Baron of Helsinki: Saku gets 1 optional
-maneuver each combat") -- the first card in the pool needing it) -- re-
-fetched live <https://www.vekn.net/rulebook/4-detailed-turn-sequence>
-2026-10-11, matching the local cache `data/sources/rulebook/2026-10-09/
+Determine Range and maneuvers (Saku Pihlajamäki, 201658, "Anarch Baron of
+Helsinki: Saku gets 1 optional maneuver each combat" -- the first card in
+the pool needing it) -- re-fetched live
+<https://www.vekn.net/rulebook/4-detailed-turn-sequence> 2026-10-11,
+matching the local cache `data/sources/rulebook/2026-10-09/
 4-detailed-turn-sequence.md`:
 
 - Combat Sequence (verbatim, step list): "1. Before Range: Play cards before

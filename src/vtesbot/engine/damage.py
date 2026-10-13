@@ -20,8 +20,9 @@ burns 2 blood, [and] ends in torpor with no blood" -- i.e. the first
 aggravated point wounds-and-torpors, and the remaining points (now applied
 to an already-wounded, in-torpor vampire) each burn 1 blood or burn the
 vampire, exactly as `apply_damage`'s existing wounded-vampire branch already
-modelled. Ryan (already wounded, takes aggravated damage) is unaffected by
-this fix and is covered by `test_aggravated_damage_burns_an_already_wounded_vampire`.
+models. Ryan (already wounded, takes aggravated damage) follows that same
+branch directly and is covered by
+`test_aggravated_damage_burns_an_already_wounded_vampire`.
 
 Replay-log narration (`engine/log.py`'s `record_event`, observability only,
 added alongside `pool.py`'s own pool-change events): `apply_damage` logs one
@@ -35,8 +36,8 @@ Vampire blood capacity cap (a vampire may never hold more blood than its
 printed capacity) is a foundational, uncontested VTES rule (Rulebook SS1
 Vampires) and is enforced here via `add_blood`.
 
-Damage-prevention hook wiring (`engine/hooks.py`, CLAUDE.md milestone-3
-scaffolding pass): the "Prevent step" named above is a single-sided window
+Damage-prevention hook wiring (`engine/hooks.py`): the "Prevent step" named
+above is a single-sided window
 (only the damaged vampire's controller may play a prevention effect, e.g.
 Rolling with the Punches / Soak), so it is wired with
 `hooks.offer_until_pass` against the `"damage_prevention"` hook. With no
@@ -168,7 +169,6 @@ def add_blood(state: GameState, vampire: VampireInPlay, amount: int) -> int:
 
 
 def burn_vampire(state: GameState, player: str, vampire: VampireInPlay) -> None:
-    """Move a vampire out of play to the ash heap (destroyed)."""
     vampire.zone = "burned"
     vampire.locked = False
     state.log.record_event(f"{vampire.card.name} ({vampire.instance_id}) is burned")
@@ -209,9 +209,8 @@ def send_to_torpor(state: GameState, player: str, vampire: VampireInPlay) -> Non
 
     Dispatches `VAMPIRE_ENTERS_TORPOR_HOOK` (`hooks.run_effects`) immediately
     after the zone transition, for any card whose own text reacts to the
-    moment a vampire goes to torpor (e.g. Fame, 100698, OQ-22). No provider
-    was registered against this hook before OQ-22's own remaining clauses
-    were wired, so this call changed no behaviour the instant it landed.
+    moment a vampire goes to torpor (e.g. Fame, 100698, OQ-22). With no
+    provider registered, this is a no-op.
     """
     vampire.zone = "torpor"
     vampire.locked = False

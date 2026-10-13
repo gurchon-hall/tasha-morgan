@@ -82,15 +82,12 @@ the acting vampire's controller"`, quoted above) is modeled as an ordinary
 abstain `Decision` machinery in `_cast_votes`, and the acting Methuselah may
 decline it or cast it against their own referendum, matching the verbatim
 "no obligation to cast... cast either for or against" rule with no special
-case. (A `rules-auditor` review of an earlier pass found this vote hardcoded
-as an automatic, non-optional "for" -- that was a bug, not a sourced
-behaviour, and has been fixed.)
+case.
 
 The *other* Methuselah's own political-action-card vote ("Other political
 action cards used for votes are simply burned without regard to the text on
-the cards", quoted above -- a `rules-auditor` finding on this pass: a whole
-vote-source category the previous landing omitted entirely) is modeled the
-same way, as an ordinary `VoteSource` (`_collect_vote_sources` below,
+the cards", quoted above) is modeled the same way, as an ordinary
+`VoteSource` (`_collect_vote_sources` below,
 `source_id` = `f"political_action_card_hand:{other_player}"`), gated purely
 on "this player did not call the referendum" -- `caller_player` never gets
 this source at all, not because of a shared 1-vote cap the two clauses
@@ -109,30 +106,23 @@ is never a meaningful choice (the rule is explicit the card is burned "without
 regard to the text on the cards"), so no extra `Decision` is raised for it;
 the engine picks the first matching card in hand order, deterministically.
 
-`User Ruling` (OQ-6, settled by the project's user, fourth politics.py fix
-round): a third `rules-auditor` pass found that the paragraph above, while
-correctly implemented, overstated its own closure -- the rules text's only
-textual tie between clause 1 (the calling card's automatic vote) and clause
-2 (burning a different political-action-card from hand) is the shared cap
-sentence ("Each Methuselah can gain no more than 1 vote from political
-action cards"), not an explicit "the caller may only ever use clause 1"
-statement, leaving open whether a caller who *declines* their clause-1 vote
-(legal -- "no obligation to cast") could then use clause 2 instead, still
-capped at 1 total. The user has settled this: **no** -- the calling card
-consumes the Methuselah's one political-action-card-vote slot the moment it
-is used to call the referendum, regardless of whether the automatic vote it
-grants is subsequently cast or declined. Declining the clause-1 vote does
-not free up access to clause 2; the caller's only political-action-card vote
-path is clause 1, full stop. Reasoning: it is the calling card's own use to
-call the referendum that consumes the slot, independent of whether its
-automatic vote is subsequently cast or declined -- the vote and the slot are
-not the same event. This confirms the existing code (gating
-`political_action_card_hand:{other_player}` to `other_player` only, never
-`caller_player`, unconditionally) is correct as-is; no behaviour change was
-made for this ruling. See `docs/OPEN_QUESTIONS.md` OQ-6's addendum and
-`tests/rules/test_politics.py::
+`User Ruling` (OQ-6): the rules text's only textual tie between clause 1
+(the calling card's automatic vote) and clause 2 (burning a different
+political-action card from hand) is the shared cap sentence ("Each
+Methuselah can gain no more than 1 vote from political action cards"), not
+an explicit "the caller may only ever use clause 1" statement -- leaving
+open whether a caller who *declines* their clause-1 vote (legal -- "no
+obligation to cast") could then use clause 2 instead, still capped at 1
+total. Settled by the project's user: **no** -- the calling card consumes
+the Methuselah's one political-action-card-vote slot the moment it is used
+to call the referendum, independent of whether the automatic vote it
+grants is subsequently cast or declined; the vote and the slot are not the
+same event. This confirms the existing code (gating `political_action_card_
+hand:{other_player}` to `other_player` only, never `caller_player`) is
+correct as-is. See `docs/OPEN_QUESTIONS.md` OQ-6's addendum and `tests/
+rules/test_politics.py::
 test_the_calling_methuselah_is_never_offered_the_burn_from_hand_political_
-action_card_source` (pre-existing, unchanged, already pins this behaviour).
+action_card_source`.
 
 Polling-step hook wiring (`POLLING_STEP_HOOK`, `cards/registry.py::
 Hook.POLLING_STEP`): "Cards that are usable 'during the polling step' but
@@ -252,20 +242,18 @@ Vote/ballot *casting order* for exactly two Methuselahs was an open question
 (`docs/OPEN_QUESTIONS.md` OQ-20, now resolved): the quoted rule above only
 says casting happens "in any order," with no turn structure specified by the
 rulebook itself. `User Ruling` (OQ-20, settled by the project's user from
-real-table play experience, fourth politics.py fix round): votes are cast in
-table order (seating order) -- each Methuselah decides, on their turn in
-that fixed rotation, which vampire(s)/source(s) contribute votes for/against,
-or passes, and the table goes around for a second and (if needed) third lap,
-continuing until a full lap completes with nobody casting anything. In this
-2P engine that is simply strict alternation, `caller_player` first each lap
-(they are the one who called the referendum) then `other_player`, repeating
-laps until one full lap passes with no casts from either side. `_cast_votes`
-below implements exactly that now -- see its own docstring for the mechanics
-of the rewritten loop. This replaced the former strict "impulse always
-returns to `caller_player` after any cast" procedure (which gave the caller
-a real, unsourced tactical edge: the caller could cast every one of their
-own sources back-to-back before the other Methuselah ever got a look), which
-was this project's own interim placeholder, never a sourced reading.
+real-table play experience): votes are cast in table order (seating order)
+-- each Methuselah decides, on their turn in that fixed rotation, which
+vampire(s)/source(s) contribute votes for/against, or passes, and the table
+goes around for a second and (if needed) third lap, continuing until a full
+lap completes with nobody casting anything. In this 2P engine that is
+strict alternation, `caller_player` first each lap (they called the
+referendum) then `other_player`, repeating laps until one full lap passes
+with no casts from either side -- not the impulse-returns-to-the-acting-
+player model used elsewhere in this engine, which would give the caller an
+unsourced tactical edge (casting every one of their own sources back-to-back
+before the other Methuselah gets a look). `_cast_votes` below implements
+exactly that; see its own docstring for the loop's mechanics.
 """
 
 from collections.abc import Callable
@@ -709,16 +697,10 @@ def _cast_votes(
     for/against/hold-back unit, never split); "[i]f there are more votes for
     the referendum than against, it passes [...] Tied referendums fail."
 
-    Casting order for exactly two Methuselahs: `User Ruling` (OQ-20, settled
-    by the project's user from real-table play experience): "votes are cast
-    in table order (seating order) -- each Methuselah decides, on their turn
-    in that fixed rotation, which vampire(s)/source(s) contribute votes
-    for/against, or passes, and the table goes around for a second and (if
-    needed) third lap, continuing until a full lap completes with nobody
-    casting anything" -- "the caller goes first each lap since they're the
-    one who called the referendum, then it's the other player's turn, and
-    that completes one lap; repeat laps until a full lap passes with zero
-    casts by either player or no sources remain for anyone."
+    Casting order for exactly two Methuselahs: `User Ruling` (OQ-20, see
+    module docstring for the full ruling) -- table-order lapping collapses,
+    for two players, to strict alternation with the caller going first each
+    lap.
 
     Implemented as strict two-player alternation: `turn` flips between
     `caller_player` and `other_player` after *every* step, whether that step

@@ -32,7 +32,7 @@ forced discard still lets the player choose *which* card, since the rule
 does not say; drawing up has no choice to offer at all, so it never raises a
 `Decision` -- mirrors `engine/phases/discard.py::discard_phase`'s own
 replacement-draw, logged the same way via `state.log.record_random`). Wired
-call sites (this pass): `vtesbot.cards._shared.play_from_hand_pending` (the
+call sites: `vtesbot.cards._shared.play_from_hand_pending` (the
 one chokepoint every card play's own replacement draw already goes through,
 per that module's docstring) and `engine/phases/discard.py::discard_phase`'s
 own discard+replacement branch. `engine/setup.py`'s initial 7-card deal is

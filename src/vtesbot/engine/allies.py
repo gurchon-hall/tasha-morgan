@@ -1,82 +1,50 @@
 """Allies in play: bring one into play, and remove one from play.
 
-OQ-7 (`docs/OPEN_QUESTIONS.md`): `engine/state.py::AllyInPlay` gives an ally
-a representation in play; this module provides the two effects a
-currently-blocked card (47th Street Royals) needs built on top of it --
-entering play, and being removed from play (burned) as a card's own
-reaction cost. Mirrors the equivalent vampire-side helpers
-(`engine/damage.py::burn_vampire`) in shape and in scope.
+OQ-7 (`docs/OPEN_QUESTIONS.md`): provides the two effects a card needs on
+top of `engine/state.py::AllyInPlay` -- entering play, and being removed
+(burned) as a reaction cost. Mirrors `engine/damage.py::burn_vampire` in
+shape and scope.
 
-OQ-12 (`docs/OPEN_QUESTIONS.md`, resolved): the actual "recruit ally" minion
-action (its own announce/block-attempt window, `engine/phases/minion.py::
-_perform_recruit_ally`) is now wired on top of `recruit_ally` below, mirroring
-`engine/phases/master.py`'s `"master_phase_play"` hook pattern: a card
-module registers against the `"recruit_ally_play"` hook
-(`engine/phases/minion.py::RECRUIT_ALLY_PLAY_HOOK`), offering one
-`hooks.HookOption` per Ally library card of its own it finds in the acting
-player's hand; `apply(state)` must return a `RecruitAllySpec` (see below).
-`recruit_ally` itself is unchanged -- it remains the minimal "bring into
-play" primitive, called by `_perform_recruit_ally`'s own `resolve()` only
-once a recruit-ally attempt actually succeeds, and still the direct entry
-point a scenario test (or 47th Street Royals' own reaction, which never
-needs to be *recruited* by this path) uses to put an ally into play directly.
+OQ-12 (resolved): the "recruit ally" minion action (`engine/phases/
+minion.py::_perform_recruit_ally`) is wired on top of `recruit_ally` below
+via a `"recruit_ally_play"` hook, mirroring `engine/phases/master.py`'s
+`"master_phase_play"` pattern -- a provider's `apply(state)` returns a
+`RecruitAllySpec` (see below). `recruit_ally` itself stays the minimal
+"bring into play" primitive.
 
-Still deliberately out of scope (see `AllyInPlay`'s own docstring, unchanged
-by OQ-12): ally bleed/block/combat participation, and an ally itself ever
-being the *acting* minion that attempts to recruit another ally (Rulebook
-SS4 "Recruit Ally": "Who can recruit an ally: Any ready minion" -- read
-literally this includes a ready unlocked ally, not only a vampire; but no
-card in the pool needs this, and `engine/phases/unlock.py` does not unlock
-allies at all yet, so no ally can ever reach "ready unlocked" in the first
-place -- building ally-as-actor ahead of that sourced need is exactly what
-CLAUDE.md rule 2 forbids. `_perform_recruit_ally` is therefore offered only
-to ready unlocked *vampires*, the same scope boundary OQ-7 already drew for
-every other ally capability.
+Deliberately out of scope (per `AllyInPlay`'s own docstring): ally bleed/
+block/combat participation, and an ally acting as the recruiter of another
+ally -- Rulebook SS4 "Recruit Ally: Any ready minion" would literally permit
+a ready unlocked ally, but no card needs it and `engine/phases/unlock.py`
+never unlocks allies, so building that ahead of a sourced need would
+violate CLAUDE.md rule 2.
 
-OQ-10 (`docs/OPEN_QUESTIONS.md`, resolved by this pass): `detect_contest_on_
-recruit` below gives an ally the uniqueness enforcement `recruit_ally` itself
-never had (`engine/contests.py`'s own `detect_contest_on_reveal` is the
-vampire-side equivalent, called from `engine/phases/influence.py` after a
-crypt-card reveal; this is its ally-side counterpart, called from
-`engine/phases/minion.py::_perform_recruit_ally` after a successful
-recruit). Deliberately kept out of `engine/contests.py`, not merely mirrored
-into it: that module is explicitly scoped to the 2P variant's own override
-for *crypt* cards ("contested crypt cards stay in play and usable; 1 pool
-each unlock phase or yield") -- re-checked live, the 2P variant's "Contested
-crypt cards" section is titled and worded for crypt cards specifically, and
-its own aside, "(Note: this means that contested crypt cards are no longer
-out of play)", confirms by negation that the override does not reach an
-Ally/Equipment/Location. So an ally contest follows the unmodified Rulebook
-SS4 Advanced Rules > Contested Cards rule instead: "turned face down and are
-out of play" for *both* copies, for the whole contest -- not merely a
-`contested_with` flag layered on an unchanged, still-usable "ready" zone
-(contrast `detect_contest_on_reveal`, which never touches `zone` precisely
-*because* the 2P override keeps a contested crypt card ready/usable).
+OQ-10 (resolved): `detect_contest_on_recruit` gives an ally the same
+uniqueness enforcement `engine/contests.py::detect_contest_on_reveal` gives
+a crypt card. Kept out of `contests.py` rather than merged into it: that
+module is scoped to the 2P variant's crypt-card override ("contested crypt
+cards stay in play and usable"); the 2P variant's "Contested crypt cards"
+section is worded for crypt cards specifically, and its own aside ("this
+means that contested crypt cards are no longer out of play") confirms by
+negation that the override does not reach an Ally/Equipment/Location. So an
+ally contest follows the unmodified Rulebook SS4 Advanced Rules > Contested
+Cards rule: both copies turned face down and out of play for the whole
+contest.
 
-OQ-15 (`docs/OPEN_QUESTIONS.md`, resolved by this pass): `resolve_one_ally_
-contest` below closes the gap the paragraph above used to describe -- the
-rulebook's own "Contested Cards" section gives the resolution cost in full:
-"The cost to contest a card is 1 pool, which you pay during each of your
-unlock phases. Instead of paying the cost ... you may choose to yield the
-card ... [a yielded card] is burned ... If all other cards contesting your
-unique card are yielded, then the card is unlocked and turned face up during
-your next unlock phase, ending the contest." This is the exact same
-pay-1-pool-or-yield structure `engine/contests.py::resolve_one_contest`
-already applies to crypt cards -- reused/mirrored here, not reinvented --
-with one wrinkle OQ-15 flagged and this pass resolves carefully: a contested
-crypt card never needs a "restore to ready" step on the surviving copy
-because the 2P override already kept it `zone == "ready"` throughout; an
-ally has no such override (this module's own `detect_contest_on_recruit`
-moves *both* copies to `zone == "contested"`), so the surviving copy's own
-`zone` must actually flip back to `"ready"` -- and the rulebook's own
-wording ("unlocked and turned face up during your *next* unlock phase") says
-this happens on the surviving controller's *own next* unlock phase, not
-instantaneously with the opponent's yield. See `resolve_one_ally_contest`'s
-own docstring for the "pay" vs "yield" split, and
-`engine/phases/unlock.py::_unlock_own_allies` for the delayed-restore half
-(a separate, later unlock-phase step, mirroring how `_unlock_own_vampires`
-itself is a separate mandatory step from the optional contest-resolution
-loop).
+OQ-15 (resolved): `resolve_one_ally_contest` applies the rulebook's
+pay-1-pool-or-yield structure (Advanced Rules > Contested Cards: "The cost
+to contest a card is 1 pool, which you pay during each of your unlock
+phases ... [or] yield the card ... burned ... If all other cards contesting
+your unique card are yielded, then the card is unlocked and turned face up
+during your next unlock phase") -- the same structure `engine/contests.py::
+resolve_one_contest` already applies to crypt cards. One difference: a
+contested crypt card never needs a "restore to ready" step (the 2P override
+already keeps it `zone == "ready"` throughout), but an ally has no such
+override, so the surviving copy's `zone` must flip back to `"ready"` -- and
+per the wording above, that happens on the surviving controller's own
+*next* unlock phase, not instantaneously on the opponent's yield. See
+`resolve_one_ally_contest`'s own docstring for the pay/yield split, and
+`engine/phases/unlock.py::_unlock_own_allies` for the delayed restore.
 """
 
 from collections.abc import Callable
@@ -171,13 +139,13 @@ def detect_contest_on_recruit(state: GameState, recruited: AllyInPlay) -> None:
     """Flag `recruited` and any same-named in-play opposing ally as contested,
     and move both out of the usable "ready" zone for the contest's duration.
 
-    Source: Rulebook SS4 Advanced Rules > Contested Cards (quoted in full in
-    this module's own docstring and in `docs/OPEN_QUESTIONS.md` OQ-10): "If
-    more than one unique card with the same name is brought into play, that
-    means control of the card is being contested. For the duration of the
-    contest, all of the contested cards are turned face down and are out of
-    play." Not overridden for an ally by the 2P variant (that override is
-    scoped to crypt cards only -- see this module's docstring); matched by
+    Source: Rulebook SS4 Advanced Rules > Contested Cards (OQ-10, `docs/
+    OPEN_QUESTIONS.md`): "If more than one unique card with the same name is
+    brought into play, that means control of the card is being contested.
+    For the duration of the contest, all of the contested cards are turned
+    face down and are out of play." Not overridden for an ally by the 2P
+    variant (that override is scoped to crypt cards only -- see this
+    module's docstring); matched by
     printed name (`AllyInPlay.name`), exactly as the rulebook's own test is
     "the same name", not the same krcg id (a reprint under the same name is
     still the same unique card).

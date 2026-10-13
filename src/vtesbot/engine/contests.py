@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 
 
 def detect_contest_on_reveal(state: GameState, revealed: VampireInPlay) -> None:
-    """Flag `revealed` and any same-named in-play opposing vampire as contested."""
     opponent = state.other_player(revealed.controller)
     for other in state.players[opponent].vampires.values():
         if other.zone in ("ready", "torpor") and other.card.name == revealed.card.name:

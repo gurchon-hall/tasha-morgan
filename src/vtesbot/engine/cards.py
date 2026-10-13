@@ -159,42 +159,23 @@ class CardAttachment:
     OPEN_QUESTIONS.md`, generalizing OQ-8/OQ-10/OQ-15's own contest
     machinery to an attached master card such as Fame).
 
-    `controller` is whatever value the caller supplies when constructing a
-    `CardAttachment` (or passes to `engine/attachments.py::attach_card`) --
-    this field and that function store it, they do not derive it from the
-    attachment's own card type. For a Master-type attachment such as Fame,
-    the correct value is the Methuselah who *played* the card (Rulebook SS2
-    Card Types, "Master Cards": "A master card in play is controlled by the
-    Methuselah who played it, even if it is played on a card controlled by
-    another Methuselah"), which may indeed differ from the vampire it is
-    attached to -- this is the only case `attach_card` has a real caller for
-    today (tests standing in for Fame). **This is not a general rule for
-    every `CardAttachment`**: the same rulebook page's "Minion Cards"
-    subsection states the opposite for an Equipment or Retainer card (both
-    named in this class's own first paragraph as in-scope attachment
-    categories): "A minion card in play is controlled by the controller of
-    the minion it is on." (Equipment/Retainer are "put into play on the
-    acting minion" and burn with that minion.) `attach_card` does not branch
-    on card type to enforce either rule -- a future caller attaching an
-    Equipment/Retainer-type card (e.g. Shilmulo Tarot, krcg id 101767,
-    flagged in OQ-10) is responsible for passing that vampire's own current
-    controller as `controller`, not "whoever played it." See `docs/
-    OPEN_QUESTIONS.md` OQ-22's 2026-10-11 addendum. This is who the
-    Contested Cards mechanism below pays/yields against, and who
-    `engine/phases/unlock.py` resolves it for, mirroring `AllyInPlay.
-    controller`'s own role. Defaults to `None` for an attachment constructed
-    directly rather than through `engine/attachments.py::attach_card` (e.g.
-    Celerity's own `src/vtesbot/cards/celerity.py::_apply`, and every
-    pre-existing scenario-test fixture that predates OQ-22): a non-unique
-    attachment such as Celerity can never be contested in the first place
-    (Rulebook SS4 Advanced Rules > Contested Cards only ever applies to a
-    card printed "Unique"), so it has no need of `controller`/`contested_with`/
-    `zone` tracking and is intentionally left with these defaults rather than
-    forcing every existing call site to supply a controller it does not need.
-    Any attachment that must participate in the generalized Contested Cards
-    mechanism (a future Unique attached master card, e.g. Fame, 100698, OQ-22)
-    must be created through `attach_card`, which always sets `controller` and
-    mints `instance_id`.
+    `controller` is whatever the caller supplies (`engine/attachments.py::
+    attach_card` stores it as-is, never deriving it from the attachment's
+    own card type) -- see that function's own docstring for the Master-card
+    vs. Minion-card controller rule (Rulebook SS2 Card Types) a caller must
+    get right. This is who the Contested Cards mechanism below pays/yields
+    against, and who `engine/phases/unlock.py` resolves it for, mirroring
+    `AllyInPlay.controller`'s own role. Defaults to `None` for an attachment
+    constructed directly rather than through `attach_card` (e.g. Celerity's
+    own `src/vtesbot/cards/celerity.py::_apply`, and every pre-existing
+    scenario-test fixture that predates OQ-22): a non-unique attachment such
+    as Celerity can never be contested in the first place (Rulebook SS4
+    Advanced Rules > Contested Cards only ever applies to a card printed
+    "Unique"), so it has no need of `controller`/`contested_with`/`zone`
+    tracking. Any attachment that must participate in the generalized
+    Contested Cards mechanism (a future Unique attached master card, e.g.
+    Fame, 100698, OQ-22) must be created through `attach_card`, which always
+    sets `controller` and mints `instance_id`.
 
     `instance_id` (OQ-22): a unique id minted by `attach_card`
     (`PlayerState.new_attachment_instance_id`, its own `"<player>-AT<n>"`

@@ -100,15 +100,10 @@ class MasterCardInPlay:
     card itself in a player's own play area, persisting across turns (OQ-23,
     `docs/OPEN_QUESTIONS.md`).
 
-    Originally built (and originally named `LocationInPlay`/
-    `engine/locations.py` in OQ-23's first landing, since renamed to this
-    generic name/module) for Oxford University, England ("Unique
-    location.\\nYou can lock this card and burn X pool during the polling
-    step of a political action to get +2X votes.") on the premise that
-    "location" needed its own entity. A later sweep of the full active 2P
-    pool corrected that premise and this entity's own name/scope: krcg has
-    no `Type.LOCATION` at all -- "Unique location." is free text on an
-    ordinary `Master`-type card, no different in kind from "Unique." or
+    krcg has no `Type.LOCATION` at all -- "Unique location." (e.g. Oxford
+    University, England, "You can lock this card and burn X pool during the
+    polling step of a political action to get +2X votes.") is free text on
+    an ordinary `Master`-type card, no different in kind from "Unique." or
     "Trifle." on any other Master card. The real, broader gap is a
     standalone Master card in play *at all*, Unique or not -- found to cover
     at least 18 Master-type library cards in the active 2P allowed list

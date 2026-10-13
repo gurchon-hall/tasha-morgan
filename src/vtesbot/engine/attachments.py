@@ -1,94 +1,53 @@
 """Effective capacity / effective discipline levels: attachments folded in.
 
-Source: `engine/cards.py::CardAttachment` ("a discipline/archetype master
-card (Celerity, Fame, Perfectionist), a piece of combat equipment ..., or a
-retainer. The engine only needs to track *that* a card is attached and to
-whom ... so it can be found, destroyed, or referenced by a hook; what the
-attachment *does* is card-specific behaviour registered against a hook by
-its `src/vtesbot/cards/` module, never special-cased here") and
+Source: `engine/cards.py::CardAttachment` and
 `engine/state.py::VampireInPlay.attachments`.
 
-`docs/OPEN_QUESTIONS.md` OQ-8 identified the missing piece: every place
-that reads a vampire's capacity or discipline levels
-(`engine/damage.py::add_blood`, `engine/phases/influence.py`'s two capacity
-checks, `engine/observation.py`) read `vampire.card.capacity` /
-`vampire.card.disciplines` directly, never consulting
-`VampireInPlay.attachments` at all -- so an attached card's own printed
-numeric/discipline bonus (e.g. Celerity's "+1 level of Celerity [cel] and +1
-capacity") had no effect anywhere, which is a silent mis-resolution
-(CLAUDE.md "never mis-resolves a card").
+OQ-8 (`docs/OPEN_QUESTIONS.md`): every call site that reads a vampire's
+capacity or discipline levels (`engine/damage.py::add_blood`, `engine/
+phases/influence.py`'s capacity checks, `engine/observation.py`) read
+`vampire.card.capacity`/`.disciplines` directly, ignoring `VampireInPlay.
+attachments` -- so an attachment's printed bonus (e.g. Celerity's "+1 level
+of Celerity [cel] and +1 capacity") had no effect anywhere. `vampire.card`
+stays frozen, deck-construction identity only; the bonus is exposed instead
+as two passive, mandatory hook points below (`CAPACITY_MODIFIER_HOOK`,
+`DISCIPLINE_LEVEL_MODIFIER_HOOK`) that a card module registers against, and
+the engine folds in whatever is offered without special-casing a card name
+(CLAUDE.md SS6).
 
-`vampire.card` (`engine/cards.py::CryptCard`) is documented as "deck-
-construction identity only" and stays frozen and untouched (CLAUDE.md "do
-not hack around a missing engine mechanism inside the card module" -- the
-fix belongs here, in `engine/`, not in a card module faking the bonus by
-mutating identity data). What any given attachment actually grants is
-still card-specific behaviour (CLAUDE.md SS6): it is exposed as two more
-passive, mandatory hook points (mirroring every other hook in
-`engine/hooks.py`), so a `src/vtesbot/cards/` module recognizes its own
-`krcg_id` among `vampire.attachments` and contributes the bonus its own
-printed text grants; the engine itself only folds in whatever is offered,
-never special-casing a card name.
-
-OQ-22 (`docs/OPEN_QUESTIONS.md`, resolved by this pass, found implementing
-Fame, 100698): a card attachment printed "Unique" (e.g. Fame) is subject to
-the same generalized Contested Cards mechanism OQ-8/OQ-10/OQ-15 already
-built for a `VampireInPlay`/`AllyInPlay` -- Rulebook SS4 Advanced Rules >
-Contested Cards (quoted in full in `engine/contests.py`'s and
-`engine/allies.py`'s own module docstrings): "If more than one unique card
-with the same name is brought into play, that means control of the card is
-being contested. For the duration of the contest, all of the contested
-cards are turned face down and are out of play ... The cost to contest a
-card is 1 pool, which you pay during each of your unlock phases. Instead of
-paying the cost ... you may choose to yield the card ... [a yielded card]
-is burned ... If all other cards contesting your unique card are yielded,
-then the card is unlocked and turned face up during your next unlock
-phase, ending the contest." The 2P variant's "Contested crypt cards"
-override (stay in play, usable, no face-down) is scoped to crypt cards only
-(OQ-10's own re-confirmation, cross-checked again here against
-`data/sources/2p-variant/2026-10-09/variant.md`'s own title and its own
-"(Note: this means that contested crypt cards are no longer out of play)"
-aside) -- so a Unique attached master card follows the *unmodified* base
-rule, exactly like an ally (not a new reading, a third application of the
-same already-settled one).
+OQ-22 (`docs/OPEN_QUESTIONS.md`, resolved, found implementing Fame,
+100698): a card attachment printed "Unique" (e.g. Fame) is subject to the
+same Contested Cards mechanism (Rulebook SS4 Advanced Rules, quoted in full
+in `engine/contests.py`'s and `engine/allies.py`'s own module docstrings)
+already built for a `VampireInPlay`/`AllyInPlay`. The 2P variant's
+"Contested crypt cards" override is scoped to crypt cards only (re-
+confirmed against `data/sources/2p-variant/2026-10-09/variant.md`), so a
+Unique attached master card follows the unmodified base rule, like an ally.
 
 `attach_card`/`detect_contest_on_attach`/`resolve_one_attachment_contest`
 below mirror `engine/allies.py::recruit_ally`/`detect_contest_on_recruit`/
-`resolve_one_ally_contest` deliberately closely, including the one wrinkle
-OQ-15 already identified for an ally and which applies identically here:
-because there is no 2P "stays usable" override for this card type either,
-`CardAttachment.zone` must actually flip between `"attached"` and
-`"contested"` (unlike a contested crypt card, which never leaves `"ready"`),
-and the surviving copy's own zone is restored to `"attached"` only on its
-*own controller's* next unlock phase (`engine/phases/unlock.py::
-_unlock_own_attachments`, mirroring `_unlock_own_allies`), not
-instantaneously with the opponent's yield.
+`resolve_one_ally_contest`, including the same OQ-15 wrinkle: with no 2P
+"stays usable" override for this card type, `CardAttachment.zone` flips
+between `"attached"` and `"contested"`, and the surviving copy restores to
+`"attached"` only on its own controller's next unlock phase (`engine/
+phases/unlock.py::_unlock_own_attachments`).
 
-One deliberate new wrinkle not present on the vampire/ally side: a
-`CardAttachment` is not keyed in its own top-level `PlayerState` dict (it
-lives nested inside whichever vampire's own `attachments` list it was put
-on), and for a *Master*-type attachment such as Celerity/Fame (both target
-"a vampire", not "a vampire you control"), its `controller` -- the
-Methuselah who *played* it, Rulebook SS2 Card Types, "Master Cards" -- can
-differ from that vampire's own controller. This is a Master-card-specific
-rule, not a general property of every `CardAttachment`: an Equipment or
-Retainer-type attachment is controlled by its host vampire's own
-controller instead (same page, "Minion Cards" subsection) -- see
-`attach_card`'s own docstring and `docs/OPEN_QUESTIONS.md` OQ-22's
-2026-10-11 addendum for the caller's responsibility there.
-`iter_attachments`/`find_attachment_by_instance_id` below are what let
-`engine/phases/unlock.py` locate a specific player's own contested
-attachments, and a specific attachment by id, across *either* player's
-vampires.
+One wrinkle not present on the vampire/ally side: a `CardAttachment` is not
+keyed in its own `PlayerState` dict (it lives nested inside its host
+vampire's `attachments` list), and for a Master-type attachment such as
+Celerity/Fame its `controller` -- the Methuselah who *played* it (Rulebook
+SS2 Card Types, "Master Cards") -- can differ from that vampire's own
+controller; an Equipment/Retainer attachment is controlled by its host's
+controller instead ("Minion Cards", same page). See `attach_card`'s own
+docstring and `CardAttachment`'s own docstring (`engine/cards.py`) for the
+caller's responsibility there. `iter_attachments`/
+`find_attachment_by_instance_id` below let `engine/phases/unlock.py` locate
+a player's contested attachments, and a specific attachment by id, across
+either player's vampires.
 
-Deliberately **not** built here (CLAUDE.md "one rule mechanism per
-change"; no card module needs it yet -- same boundary OQ-15 itself drew for
-Shilmulo Tarot on this exact `CardAttachment` side): any Observation-level
-visibility for an attachment at all (`engine/observation.py`'s
-`VampireView` has no `attachments` field today, contested or not -- a
-pre-existing gap, not introduced or widened by this pass) -- Fame itself
-stays `blocked`/OQ-22 in the registry regardless of this pass, and no other
-card in the pool needs an attachment visible in `Observation` yet.
+Deliberately not built here (no card needs it yet): any Observation-level
+visibility for an attachment (`VampireView` has no `attachments` field) --
+Fame stays `blocked`/OQ-22 in the registry regardless.
 """
 
 from collections.abc import Iterator
@@ -249,26 +208,20 @@ def detect_contest_on_attach(state: GameState, attachment: CardAttachment) -> No
     contested, and move both out of the usable `"attached"` zone for the
     contest's duration (OQ-22).
 
-    Source: Rulebook SS4 Advanced Rules > Contested Cards (quoted in full in
-    this module's own docstring and in `docs/OPEN_QUESTIONS.md` OQ-22): "If
-    more than one unique card with the same name is brought into play, that
-    means control of the card is being contested. For the duration of the
-    contest, all of the contested cards are turned face down and are out of
-    play." Not overridden by the 2P variant for an attached master card
-    (that override is scoped to crypt cards only -- see this module's own
-    docstring); matched by printed `name`, exactly like
-    `engine/contests.py::detect_contest_on_reveal`/`engine/allies.py::
-    detect_contest_on_recruit`'s own "same name, not same krcg id" test.
+    Source: Rulebook SS4 Advanced Rules > Contested Cards (OQ-22, `docs/
+    OPEN_QUESTIONS.md`; full quote in this module's and `engine/allies.py`'s
+    own module docstrings). Not overridden by the 2P variant for an attached
+    master card (that override is scoped to crypt cards only); matched by
+    printed `name`, exactly like `engine/contests.py::detect_contest_on_
+    reveal`/`engine/allies.py::detect_contest_on_recruit`'s "same name, not
+    same krcg id" test.
 
     Checked against every attachment currently in play across *either*
     player's vampires (`iter_attachments`), because the attachment's own
     `controller` -- not the vampire it sits on -- is who it may contest
     against; only the opponent of `attachment.controller`'s own copies are
-    checked, mirroring `detect_contest_on_reveal`/`detect_contest_on_recruit`'s
-    identical "only ever checks the opponent" scope boundary (OQ-16 tracks
-    the rulebook's own "cannot contest yourself" DECK CONSTRUCTION caution
-    box as an equally-unimplemented gap on all three paths alike -- not a
-    new gap introduced here).
+    checked (OQ-16 tracks the rulebook's own "cannot contest yourself" edge
+    case as an equally-unimplemented gap on all three paths alike).
     """
     if attachment.controller is None:
         return
@@ -296,25 +249,13 @@ def resolve_one_attachment_contest(
     (burn your own copy).
 
     Mirrors `engine/allies.py::resolve_one_ally_contest`'s own two branches
-    exactly, for the same reason that function itself gave for diverging
-    from the crypt-card case (`engine/contests.py::resolve_one_contest`):
-    there is no 2P "stays in play and usable" override for this card type
-    either (that override is scoped to crypt cards only), so "paying" here
-    correctly leaves `attachment.zone == "contested"` (still out of play)
-    rather than restoring it.
-
-    The "yield" branch burns the yielding attachment (`zone = "burned"`) and
-    clears the opponent's own `contested_with` immediately -- but, unlike
-    the crypt-card case, does *not* also restore the opponent's `zone` to
-    `"attached"` here: the rulebook's own wording is "the card is unlocked
-    and turned face up during your next unlock phase, ending the contest" --
-    a further, later event tied to the *surviving controller's own* next
-    unlock phase, not the yielding player's current one. The surviving
-    attachment's own `zone` flip back to `"attached"` is handled by
-    `engine/phases/unlock.py::_unlock_own_attachments`, run as part of its
-    controller's own (later) `unlock_phase` call, exactly where the rulebook
-    situates it -- mirroring `resolve_one_ally_contest`/
-    `_unlock_own_allies`'s identical split.
+    exactly, for the same reason given there: no 2P "stays in play and
+    usable" override for this card type, so "paying" leaves
+    `attachment.zone == "contested"` rather than restoring it, and "yield"
+    burns this copy while the surviving copy's own `zone` restores to
+    `"attached"` only on its controller's own next unlock phase
+    (`engine/phases/unlock.py::_unlock_own_attachments`), not
+    instantaneously.
     """
     choices = (
         Choice("pay", "Pay 1 pool to keep contesting"),

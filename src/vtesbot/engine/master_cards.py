@@ -1,21 +1,16 @@
 """Standalone Master cards in play (OQ-23, `docs/OPEN_QUESTIONS.md`): bring
 one into play, detect/resolve a Contested Cards contest against it.
 
-Originally built (as `engine/locations.py`, `LocationInPlay`) for Oxford
-University, England (krcg id 101341, "Unique location.\n You can lock this
-card and burn X pool during the polling step of a political action to get
-+2X votes.") on the premise that "location" needed its own engine entity. A
-later sweep of the full active 2P pool corrected that premise: krcg has no
-`Type.LOCATION` at all -- "Unique location." is free text on an ordinary
+krcg has no `Type.LOCATION` at all -- "Unique location." (e.g. Oxford
+University, England, krcg id 101341) is free text on an ordinary
 `Master`-type card, no different in kind from "Unique." or "Trifle." on any
 other Master card. This module (and `engine/state.py::MasterCardInPlay`,
-which it builds on) is deliberately named and framed generically: it backs
-every standalone Master card in play, not just the four "Unique location."
-ones, and not only Unique cards either -- see `MasterCardInPlay`'s own
-docstring for the full "at least 18 cards share this shape" finding
-(Oxford University England 101341, The Barrens 100135, Chantry 100329,
-Cursed Abattoir 102313, Tension in the Ranks 101958, Wider View 102180, and
-others).
+which it builds on) is therefore named and framed generically: it backs
+every standalone Master card in play, not just a "location" subtype, and
+not only Unique cards either -- see `MasterCardInPlay`'s own docstring for
+the full "at least 18 cards share this shape" finding (Oxford University
+England 101341, The Barrens 100135, Chantry 100329, Cursed Abattoir 102313,
+Tension in the Ranks 101958, Wider View 102180, and others).
 
 Deliberately mirrors `engine/allies.py`'s own shape (itself already a
 mirror of `engine/contests.py`'s crypt-card shape, generalized a third time

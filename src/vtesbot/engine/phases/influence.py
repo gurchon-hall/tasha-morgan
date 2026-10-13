@@ -21,21 +21,18 @@ card's own bonus (e.g. Celerity's "+1 capacity") -- see
 `engine/attachments.py::effective_capacity`, consulted below instead of a
 bare `v.card.capacity` read.
 
-OQ-24 (`docs/OPEN_QUESTIONS.md`, resolved): until this pass, this phase was
-a closed, hardcoded implementation of exactly the three transfer types
-above plus the free reveal, with no hook dispatch at all -- unlike
-`engine/phases/master.py::master_phase`'s own `"master_phase_play"` hook.
-Wider View (krcg id 102180, "You can use 1 transfer to draw 1 card from
-your crypt and then remove a crypt card in your uncontrolled region from
-the game. You can use 4 transfers to burn this card and gain 2 pool.")
-needs two further transfer-costed options available during this same
-phase, which no existing hardcoded `kind` branch can express. Fixed by
-adding `INFLUENCE_PHASE_ACTION_HOOK` (`"influence_phase_action"`), offered
-via `hooks.offer` alongside the three hardcoded transfer types (kept as a
-hardcoded baseline rather than reimplemented as hook providers of their own
--- see this module's own "Why hardcoded baseline, not hook providers"
-note below for the reasoning) -- mirrors `master_phase`'s own
-offer/by-value/dispatch shape. A provider's `HookOption.apply(state)` must
+OQ-24 (`docs/OPEN_QUESTIONS.md`, resolved): Wider View (krcg id 102180,
+"You can use 1 transfer to draw 1 card from your crypt and then remove a
+crypt card in your uncontrolled region from the game. You can use 4
+transfers to burn this card and gain 2 pool.") needs two further
+transfer-costed options available during this same phase, which no
+hardcoded `kind` branch (below) can express. `INFLUENCE_PHASE_ACTION_HOOK`
+(`"influence_phase_action"`) is offered via `hooks.offer` alongside the
+three hardcoded transfer types (kept as a hardcoded baseline rather than
+reimplemented as hook providers of their own -- see this module's own "Why
+hardcoded baseline, not hook providers" note below for the reasoning) --
+mirrors `master_phase`'s own offer/by-value/dispatch shape. A provider's
+`HookOption.apply(state)` must
 return an `int`: the number of transfers the chosen option consumed (the
 same "`apply`'s return value documents the hook's own contract" pattern
 `master_phase`'s own module docstring already uses for its `bool`
