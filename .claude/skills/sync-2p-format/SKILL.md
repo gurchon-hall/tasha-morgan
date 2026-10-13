@@ -60,12 +60,11 @@ not reconstruct a list from memory.
    a crypt name matches several krcg printings across groups, only
    the one at group >= 5 is auto-selected; if none or more than one
    qualify, it is left unmatched with every candidate (krcg_id,
-   group) listed. Never override this by picking a candidate
-   yourself — surface it for user confirmation instead. Names the
-   script leaves in `"unmatched"` go in a `"unmatched"` array of the
-   output file and in the report; do not guess the intended card,
-   even when the script's `suggested_krcg_id` looks obviously right —
-   confirm with the user first (see `data/formats/2p/CHANGELOG.md`,
+   group) listed. Names the script leaves in `"unmatched"` go in a
+   `"unmatched"` array of the output file and in the report; never
+   pick a candidate yourself, even when the script's
+   `suggested_krcg_id` looks obviously right — surface it for user
+   confirmation instead (see `data/formats/2p/CHANGELOG.md`,
    2026-10-08 entry, for the precedent: typos, singular/plural drift
    and missing subtitles have all previously been confirmed this
    way).

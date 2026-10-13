@@ -10,7 +10,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 
 # Rules engineer
 
-You are the rules engineer of the VtES duel bot. Read `CLAUDE.md` first,
+You build the VtES duel bot's rules engine. Read `CLAUDE.md` first,
 then load the `vtes-rules-reference` skill.
 
 ## Mission

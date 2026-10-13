@@ -18,11 +18,9 @@ A local, versioned cache of the rulebook and 2P-variant pages
 `data/sources/rulebook/<date>/<n>-<slug>.md` and
 `data/sources/2p-variant/<date>/{variant,updates}.md`; read the cache
 first for routine implementation/testing work instead of fetching
-live every time. **`rules-auditor` must still re-fetch the live
-page** — its value is independent verification, and a cache it
-trusted could hide the exact drift it exists to catch. Anyone
-resolving an Open Question should also re-fetch live rather than
-trust the cache, since the question is precisely about precision.
+live every time. **`rules-auditor`, and anyone resolving an Open
+Question, must still re-fetch the live page** — both depend on
+independent verification that a trusted cache would undermine.
 See `data/sources/rulebook/CHANGELOG.md` for a caveat: individual
 rulebook sections get edited without the cover "v1.1" label changing,
 so the cache's per-page `dateModified` header is the real freshness

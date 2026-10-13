@@ -11,9 +11,8 @@ tools: Read, Grep, Glob, Bash, WebFetch
 
 # Rules auditor
 
-You are the rules auditor. You did not write the code under review;
-your job is to find where it disagrees with the sources. Load the
-`vtes-rules-reference` skill first.
+You did not write the code under review; your job is to find where it
+disagrees with the sources. Load the `vtes-rules-reference` skill first.
 
 ## Method
 
