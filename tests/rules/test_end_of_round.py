@@ -262,8 +262,8 @@ def test_blood_lost_to_damage_records_mixed_mend_and_aggravated_burn():
     is handled before aggravated"), so the vampire is already wounded by the
     time the aggravated point(s) apply."""
     game = _one_vampire_game(capacity=5, blood=3)
-    # Mend 1 of the 1 normal point; vampire becomes wounded from... actually
-    # fully mending leaves it undamaged, so mend only part to force wounded.
+    # Mend only 1 of the 2 normal points, not both: fully mending would leave
+    # the vampire undamaged instead of wounded.
     game.state.agents["A"] = ScriptedAgent("A").expect("mend_damage", "1")
     round_state: dict = {}
     vampire = game.vampire("V1")
