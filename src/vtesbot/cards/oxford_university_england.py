@@ -16,84 +16,59 @@ pay on top of the clan requirement below). Not printed "Trifle.", so
 playing it does not grant a bonus master phase action.
 
 Clan requirement (Rulebook SS2 Card Types > "Requirements for Playing
-Cards", quoted verbatim, re-fetched 2026-10-11, matching the local cache
-`data/sources/rulebook/2026-10-09/2-card-types.md`): "Each library card has
-symbols on the attribute bar ... for the card type (except for master
-cards), the clan, or Discipline (if any) required to play the card ...
-Only a minion who meets the requirements given on a minion card can play
-it, whereas only a Methuselah who controls a ready minion who meets the
-requirements of a master card can play it." Oxford's own printed clan
-symbol is Brujah (`clans == ["Brujah"]`, confirmed live via krcg) -- unlike
-a *minion* card's own clan requirement (checked against the specific
-*acting* minion, e.g. `forty_seventh_street_royals.py`'s own
-`_provide_recruit`), a *master* card's requirement is checked against "a
-ready minion" the player merely controls, with no acting-minion concept at
-all in the generic Master Phase rule (`engine/phases/master.py`'s own
-module docstring: its hook context carries only `player`, never a specific
-vampire). So the gate here (`_controls_a_ready_brujah`) is "does `player`
-control at least one ready Brujah vampire right now", not tied to any one
-specific vampire -- and it governs only the initial play of the card (a
-one-time playability check, Rulebook SS2's own "Requirements for Playing
-Cards" heading); Oxford's own repeatable polling-step ability below carries
-no further clan-conditional clause of its own, so no analogous check is
-made there.
+Cards"): "... only a Methuselah who controls a ready minion who meets the
+requirements of a master card can play it." Oxford's printed clan symbol
+is Brujah (`clans == ["Brujah"]`) -- unlike a *minion* card's clan
+requirement (checked against the specific acting minion, e.g.
+`forty_seventh_street_royals.py`'s `_provide_recruit`), a *master* card's
+requirement is checked against "a ready minion" the player merely
+controls, with no acting-minion concept in the generic Master Phase rule
+(`engine/phases/master.py`'s hook context carries only `player`). So the
+gate here (`_controls_a_ready_brujah`) is "does `player` control at least
+one ready Brujah vampire right now" -- a one-time playability check that
+governs only the initial play; Oxford's repeatable polling-step ability
+below carries no further clan-conditional clause, so no analogous check
+is made there.
 
 Two independent clauses:
 
 1. "Unique location." -- a standalone Master card, not an attachment
-   (`engine/state.py::MasterCardInPlay`, OQ-23 `docs/OPEN_QUESTIONS.md`,
-   resolved and independently `rules-auditor`-reviewed clean): wired
-   against the `"master_phase_play"` hook exactly like Life in the City
-   (`engine/phases/master.py`), via `bring_master_card_into_play` then
-   (since this card is printed "Unique") `detect_contest_on_bring_into_
-   play` -- mirrors `tests/rules/test_master_cards.py::
-   test_master_phase_play_end_to_end_brings_a_card_into_play_and_detects_
-   contest`'s own proven production-call-site shape, now with a real card
-   instead of a fake stand-in provider. Not a trifle (`apply` returns
+   (`engine/state.py::MasterCardInPlay`, OQ-23): wired against the
+   `"master_phase_play"` hook exactly like Life in the City, via
+   `bring_master_card_into_play` then (since printed "Unique")
+   `detect_contest_on_bring_into_play`. Not a trifle (`apply` returns
    `False`).
 2. "You can lock this card and burn X pool during the polling step of a
-   political action to get +2X votes." -- wired against the
-   `"polling_step"` hook (`engine/politics.py::POLLING_STEP_HOOK`), built on
-   `variable_pool_burn_vote_options` (OQ-23's own reusable primitive for
-   exactly this "burn X pool for Y*X votes" shape; `votes_per_pool=2` per
-   the printed "+2X votes"), with `on_burn` locking this specific
-   `MasterCardInPlay` instance as the ability's own additional cost ("lock
-   this card *and* burn X pool"). Offered only:
+   political action to get +2X votes." -- wired against
+   `engine/politics.py::POLLING_STEP_HOOK`, built on
+   `variable_pool_burn_vote_options` (OQ-23's reusable "burn X pool for
+   Y*X votes" primitive; `votes_per_pool=2` per the printed "+2X votes"),
+   with `on_burn` locking this specific `MasterCardInPlay` instance as the
+   ability's own additional cost ("lock this card *and* burn X pool").
+   Offered only:
      (a) while this hook fires at all -- `POLLING_STEP_HOOK` is only ever
-         dispatched from `engine/politics.py::resolve_referendum`'s
-         pre-cast window, itself only reached during an unblocked political
-         action's polling step (`engine/politics.py::political_action`), so
-         "during the polling step of a political action" is already
-         satisfied by registering against this hook, with no further
-         action-type check needed here -- mirrors every other
-         `POLLING_STEP_HOOK` provider's own scope;
-     (b) for this specific instance's own controller only ("you can lock
-         this card" -- Oxford is its controller's own political resource,
-         not a shared one): `_provide_oxford_polling_step` only ever
-         inspects `state.players[context["player"]].master_cards`, which by
-         construction can never contain the opponent's own copy; and
+         dispatched from `resolve_referendum`'s pre-cast window, itself
+         only reached during an unblocked political action's polling step,
+         so "during the polling step of a political action" is already
+         satisfied by registering against this hook;
+     (b) for this instance's own controller only ("you can lock this
+         card"): `_provide_oxford_polling_step` only inspects
+         `state.players[context["player"]].master_cards`, which can never
+         contain the opponent's own copy; and
      (c) only while this instance is `zone == "in_play"` and `locked is
          False` (`MasterCardInPlay.is_unlocked_in_play`) -- a contested or
          burned copy is out of play and cannot react, and an already-locked
-         copy (e.g. already used once this same polling step, or simply not
-         yet unlocked since an earlier use) must not be offered the ability
-         again until its own next unlock phase (`engine/phases/unlock.py::
-         _unlock_own_master_cards`) -- mirrors `tests/rules/
-         test_politics.py::
-         test_an_already_locked_location_is_not_offered_the_option_again`'s
-         own fake-provider shape exactly.
+         copy must not be offered again until its next unlock phase
+         (mirrors `tests/rules/test_politics.py::
+         test_an_already_locked_location_is_not_offered_the_option_again`).
 
-Status: IMPLEMENTED. Was `blocked` with a stale `blocked_reason="OQ-6"`
-(OQ-6 itself long resolved); the actual remaining blocker, OQ-23's missing
-standalone master-card entity, is now resolved and independently
-`rules-auditor`-reviewed clean, per this pass's own task. `Hook.
-LOCATION_ENTITY` is no longer cited here: OQ-23's own resolution found
-"location" is not a distinct krcg card type at all (free text on an
-ordinary Master card), so this card needs no entity beyond the now-generic
-`MasterCardInPlay` -- `Hook.LOCATION_ENTITY` itself is left unchanged in
-`cards/registry.py`, since 17 other "Unique location."/standalone-Master-
-card hits from OQ-23's own sweep are still unimplemented and may still find
-it a reasonable classification tag until they are built.
+Status: IMPLEMENTED. The remaining blocker, OQ-23's missing standalone
+master-card entity, is now resolved. `Hook.LOCATION_ENTITY` is not cited
+here: OQ-23 found "location" is not a distinct krcg card type (free text
+on an ordinary Master card), so this card needs no entity beyond the
+generic `MasterCardInPlay` -- `Hook.LOCATION_ENTITY` is left unchanged in
+`cards/registry.py` for the other "Unique location." cards still
+unimplemented.
 """
 
 from collections.abc import Mapping

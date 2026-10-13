@@ -33,46 +33,33 @@ valeriya_zinovieva.py`):
    effect -- the only part this module implements.
 
 Engine support (`engine/combat.py`'s "Determine Range and maneuvers"
-section, built this same pass specifically scoped for exactly this card's
-shape): `MANEUVER_HOOK` (`cards/registry.py::Hook.MANEUVER`) is offered to
-each combatant's controller, strictly alternating turn by turn, during the
-Determine Range step, before the strike step each round. This card's
-provider:
+section): `MANEUVER_HOOK` is offered to each combatant's controller,
+strictly alternating turn by turn, during the Determine Range step, before
+the strike step each round. This card's provider:
 
-- Returns one `HookOption` (the maneuver itself) exactly when Saku is the
-  combatant whose turn it is (gated on `context["player"]` matching Saku's
-  controller and `context["vampire"]` naming this exact vampire instance,
-  and that instance's `card.krcg_id == KRCG_ID` -- mirrors
-  `valeriya_zinovieva.py`'s own gating convention for a per-vampire-instance
-  effect) *and* the once-per-combat grant has not yet been used this combat.
-- "Optional": the engine's own `_ask_maneuver`/`_determine_range` always
-  offers a decline choice (`hooks.PASS_VALUE`, "Do not maneuver") alongside
-  every registered option, so nothing in this provider needs to encode
-  optionality itself -- declining is always available regardless of what
-  any provider offers.
-- "1 ... each combat" (not "each round"): per-combat, not per-round, scoping
-  -- `context["combat_state"]` (`COMBAT_STATE_CONTEXT_KEY`) is the shared
-  dict `run_combat` creates once, outside its per-round loop, so a flag
-  recorded there persists for every round of the *same* combat but resets
-  for a fresh, separate combat (a new `combat_state` dict each time
-  `run_combat` is called) -- exactly the per-vampire-id-keyed convention the
-  module docstring's "Per-combat, not per-round, scoping" paragraph
-  describes, keyed by `context["vampire"]` so a future second vampire's own
-  independent per-combat grant (if any) would never collide with Saku's.
+- Returns one `HookOption` exactly when Saku is the combatant whose turn it
+  is (gated on `context["player"]`/`context["vampire"]` naming this exact
+  vampire instance, `card.krcg_id == KRCG_ID`) *and* the once-per-combat
+  grant has not yet been used this combat.
+- "Optional": `_ask_maneuver`/`_determine_range` always offers a decline
+  choice (`hooks.PASS_VALUE`) alongside every registered option, so nothing
+  here needs to encode optionality.
+- "1 ... each combat" (not "each round"): `context["combat_state"]`
+  (`COMBAT_STATE_CONTEXT_KEY`) is the shared dict `run_combat` creates once,
+  outside its per-round loop, so a flag recorded there persists for every
+  round of the same combat but resets for a fresh combat -- keyed by
+  `context["vampire"]` so a future second vampire's own per-combat grant
+  would never collide with Saku's.
 
-Target/scope: the maneuver is granted to Saku specifically (her own
-combatant role in the current combat), never to the opponent or to a
-different vampire controlled by the same player -- consistent with how
-`valeriya_zinovieva.py`'s own strength bonus is gated to that exact printed
-vampire, not "any Baron" or "any Brujah". No zone (`ready`/`torpor`) gate is
-added beyond what the engine itself already guarantees: `MANEUVER_HOOK` is
-only ever offered for a vampire that is actually a live combatant in a
-resolving combat (`engine/combat.py::_determine_range`'s own call sites), so
-an explicit zone check here would be dead code, not a missing safeguard.
+Target/scope: the maneuver is granted to Saku specifically, never the
+opponent or a different vampire of the same player. No zone gate is added
+beyond what the engine already guarantees:
+`MANEUVER_HOOK` is only ever offered for a vampire that is actually a live
+combatant in a resolving combat (`_determine_range`'s own call sites).
 
 Duration: for as long as this specific vampire is in play and in combat --
-no further qualifier in the text beyond "each combat", which the per-combat
-scratch dict above implements directly.
+no further qualifier in the text beyond "each combat", implemented
+directly by the per-combat scratch dict above.
 """
 
 from collections.abc import Mapping

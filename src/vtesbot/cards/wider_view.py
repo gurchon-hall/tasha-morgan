@@ -17,106 +17,69 @@ Card type: Master (`types == ["Master"]`). `clan_requirement == []`,
 `discipline_requirement.disciplines == []` (no clan/discipline needed).
 `trifle is True`.
 
-Correction to this task's own brief, found while re-verifying live rather
-than trusting the paraphrase handed down (CLAUDE.md "no guessing" / "text
-first"): the task description asserted `pool_cost=None`. Re-checked directly
-against both the live `api.krcg.org/card/102180` endpoint and the installed
-`krcg` package (`krcg.load()[102180].cost`) -- both report
-`cost = Cost(type=Pool, value=1)`, i.e. this card costs 1 pool to play, not
-free. Rulebook SS2 Card Types > "Requirements for Playing Cards" (quoted in
-full in `oxford_university_england.py`'s own docstring; re-fetched here
-too, matching the local cache `data/sources/rulebook/2026-10-09/
-2-card-types.md`): "A number in a white diamond with a skull represents pool
-cost (the amount of pool the Methuselah must burn). Only a Methuselah with
-enough pool can play a card with a pool cost." So playing Wider View both
-requires >= 1 pool and burns it as part of being played -- implemented below
-via `lose_pool` in the master-phase-play `apply`, gated by `pool >= POOL_COST`
-in the provider itself (legality by construction, same invariant every other
-hook provider in this engine already follows).
+Correction to this task's own brief (CLAUDE.md "no guessing" / "text
+first"): the brief asserted `pool_cost=None`. Re-checked against both the
+live `api.krcg.org/card/102180` endpoint and the installed `krcg` package
+(`krcg.load()[102180].cost`) -- both report `cost = Cost(type=Pool,
+value=1)`: this card costs 1 pool to play. Rulebook SS2 "Requirements for
+Playing Cards" (quoted in full in `oxford_university_england.py`'s
+docstring): "Only a Methuselah with enough pool can play a card with a pool
+cost." So playing Wider View both requires >= 1 pool and burns it --
+implemented via `lose_pool` in the master-phase-play `apply`, gated by
+`pool >= POOL_COST` in the provider.
 
 Three independent clauses, matching `data/cards/102180.json`'s own `text`
 field split at each sentence:
 
-1. "Trifle.\nPut this card in play." -- identical shape to Oxford
-   University, England (`src/vtesbot/cards/oxford_university_england.py`,
-   OQ-23 `docs/OPEN_QUESTIONS.md`): registers a `"master_phase_play"`
-   provider that pays the 1-pool cost above, then calls `play_from_hand`
-   (`src/vtesbot/cards/_shared.py`) then `bring_master_card_into_play`
-   (`src/vtesbot/engine/master_cards.py`). Unlike Oxford, this card is
-   printed "Trifle." (not "Unique."), so: (a) `detect_contest_on_bring_
-   into_play` is never called -- it is only ever correct for a card printed
-   "Unique" (`engine/master_cards.py`'s own module/function docstrings,
-   OQ-23), and this card's own text carries no such clause (confirmed by
-   OQ-23's own 18-card sweep, which names Wider View by id as *the*
-   non-unique counter-example motivating `MasterCardInPlay`'s generic,
-   not-unique-scoped shape); (b) `apply(state)` returns `True` (Rulebook SS4
-   Master Phase: "trifles grant one extra [master phase action]"), unlike
-   Oxford's `False`. No clan/discipline gate beyond "card is in hand" and
-   "enough pool", since this card prints neither.
+1. "Trifle.\nPut this card in play." -- same shape as Oxford University,
+   England (OQ-23): registers a `"master_phase_play"` provider that pays
+   the pool cost, then calls `play_from_hand` then
+   `bring_master_card_into_play`. Unlike Oxford, this card is printed
+   "Trifle." (not "Unique."), so: (a) `detect_contest_on_bring_into_play`
+   is never called -- only correct for a card printed "Unique"
+   (`engine/master_cards.py`; OQ-23's own sweep names Wider View as the
+   non-unique counter-example motivating `MasterCardInPlay`'s generic
+   shape); (b) `apply(state)` returns `True` (Rulebook SS4 Master Phase:
+   "trifles grant one extra master phase action"), unlike Oxford's
+   `False`. No clan/discipline gate beyond "card is in hand" and "enough
+   pool", since this card prints neither.
 
 2. "You can use 1 transfer to draw 1 card from your crypt and then remove a
    crypt card in your uncontrolled region from the game." -- registered
-   against `INFLUENCE_PHASE_ACTION_HOOK` (`src/vtesbot/engine/phases/
-   influence.py`, OQ-24 `docs/OPEN_QUESTIONS.md`). `HookOption.apply(state)`
-   returns `1` (transfers consumed), per that hook's own documented
-   contract.
+   against `INFLUENCE_PHASE_ACTION_HOOK` (OQ-24). `apply(state)` returns
+   `1` (transfers consumed), per that hook's contract.
 
-   Sequencing ("draw... and then remove"), resolved directly from the
-   Rulebook's own glossary rather than guessed (CLAUDE.md "no guessing" --
-   this was checked, not picked): SS8 Glossary "Draw": "Crypt cards are
-   drawn from the top of the Methuselah's crypt into their uncontrolled
-   region." So "draw 1 card from your crypt" means exactly what the
-   engine's own pre-existing `influence.py::_apply`'s `"bring_crypt"` branch
-   already does -- `crypt_deck.pop(0)` into a new `VampireInPlay` with
-   `zone="uncontrolled"` -- and that drawn card is, by the glossary's own
-   wording, already "in your uncontrolled region" the instant the draw
-   completes, *before* the "and then remove a crypt card in your
-   uncontrolled region" clause is ever evaluated. The text does not say
-   "another" or "a different" crypt card -- "a crypt card in your
-   uncontrolled region" is therefore satisfied by the complete,
-   post-draw set of the controller's own uncontrolled vampires, which
-   necessarily includes the one just drawn. This is a direct textual/
-   sourced reading, not an inference beyond the printed rule, so no Open
-   Question is raised for it: the ability is legal whenever there is a
-   crypt card left to draw at all (`crypt_deck` non-empty) -- no separate
-   "needs a pre-existing uncontrolled vampire" gate exists, because the
-   freshly-drawn card is itself always a legal (if sometimes pointless --
-   look at the top of your crypt, then put it right back out of the game)
-   removal target the moment the draw itself is legal. Implemented via
-   `remove_vampire_from_game` (`src/vtesbot/engine/damage.py`) for the
-   removal half; if, after the draw, more than one of the controller's own
-   uncontrolled vampires exists, the controller is offered a sub-`Decision`
-   choosing which one to remove (mirrors `src/vtesbot/cards/line_brawl.py`/
-   `enchant_kindred.py`'s own per-target `Choice` pattern) -- never
-   auto-picked.
+   Sequencing ("draw... and then remove"): SS8 Glossary "Draw": "Crypt
+   cards are drawn from the top of the Methuselah's crypt into their
+   uncontrolled region." The drawn card is therefore already "in your
+   uncontrolled region" before the removal clause is evaluated; the text
+   does not say "another"/"a different" crypt card, so "a crypt card in
+   your uncontrolled region" is satisfied by the full post-draw set,
+   including the one just drawn. The ability is legal whenever there is a
+   crypt card left to draw (`crypt_deck` non-empty) -- no separate
+   "pre-existing uncontrolled vampire" gate is needed, since the
+   freshly-drawn card is itself always a legal removal target the moment
+   the draw is legal. Implemented via `remove_vampire_from_game`; if more
+   than one of the controller's own uncontrolled vampires exists after the
+   draw, a sub-`Decision` offers a choice of which to remove (mirrors
+   `line_brawl.py`'s per-target `Choice` pattern).
 
    Offered only while: (a) the controller controls at least one of this
-   card's own instances with `zone == "in_play"` (the ability is granted by
-   having *a* copy in play -- this clause carries no "lock this card"
-   wording at all, unlike Oxford's "you can lock this card and burn X
-   pool...": re-read verbatim above, confirmed no locking mechanic is
-   printed here, so none is modelled -- a burned/contested instance grants
-   nothing, but an in-play one is never locked by using this ability,
-   mirroring `MasterCardInPlay.locked`'s own documented default-`False`,
-   never-set-by-this-clause behaviour); (b) `transfers_remaining >= 1`;
-   (c) `state.players[player].crypt_deck` is non-empty (legality by
-   construction, `GameState.ask`'s own invariant -- without this gate the
-   draw itself would have nothing to draw).
+   card's own `zone == "in_play"` instances (this clause carries no
+   "lock this card" wording, unlike Oxford's; a burned/contested instance
+   grants nothing, and an in-play one is never locked by using this
+   ability); (b) `transfers_remaining >= 1`; (c) `crypt_deck` is non-empty.
 
 3. "You can use 4 transfers to burn this card and gain 2 pool." --
-   registered against the same `INFLUENCE_PHASE_ACTION_HOOK`, one option per
-   own in-play instance (mirrors Oxford's own `_own_unlocked_in_play_
-   instances` per-instance enumeration, since burning is a specific
-   instance's own fate): `apply(state)` burns that instance (`zone =
-   "burned"`) and calls `gain_pool(state, player, 2)`
-   (`src/vtesbot/engine/pool.py`), returning `4`. Offered only while
-   `transfers_remaining >= 4` and that instance is still `zone == "in_play"`
-   (a `"burned"` copy cannot be burned again; a `"contested"` one is out of
-   play and inert, same as clause 2's own in-play gate).
+   registered against the same hook, one option per own in-play instance
+   (burning is a specific instance's own fate): `apply(state)` burns that
+   instance and calls `gain_pool(state, player, 2)`, returning `4`.
+   Offered only while `transfers_remaining >= 4` and that instance is still
+   `zone == "in_play"` (a burned copy cannot be burned again; a contested
+   one is out of play and inert, same as clause 2's in-play gate).
 
 Choice-value namespacing (OQ-24 addendum, `hooks.ensure_unique_choice_
-values`): every `Choice.value` here is prefixed `"wider_view_"`, matching
-the convention every other card module already follows.
+values`): every `Choice.value` here is prefixed `"wider_view_"`.
 """
 
 from collections.abc import Mapping

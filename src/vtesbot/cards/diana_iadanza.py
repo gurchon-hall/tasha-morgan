@@ -22,10 +22,7 @@ Two separate printed clauses (period-separated):
 The whole card is registered `blocked` because a single registry entry
 carries one status for the whole effect module (`src/vtesbot/cards/
 registry.py`); splitting one printed ability across two registry entries
-would misrepresent "one card = one registration" (CLAUDE.md SS6). A future
-`card-implementer` pass may choose to implement clause 2 now and leave
-clause 1 raising `UnresolvedRulingError("OQ-6")`, re-registering this module
-as `implemented` once both clauses are covered by tests.
+would misrepresent "one card = one registration" (CLAUDE.md SS6).
 """
 
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register

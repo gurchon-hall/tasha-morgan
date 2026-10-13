@@ -46,57 +46,44 @@ accuracy (same non-mechanical role `enchant_kindred.py`'s basic clause
 already documents for its own `directed=True`).
 
 Target selection in 2P ("Choose a Methuselah who has more pool than you
-do"): with exactly two Methuselahs total, the only *possible* target is the
-sole opponent, and only when their pool strictly exceeds the acting
-player's own pool at the moment the card would be played (you can never
-target yourself: "more pool than you do" is never true of your own pool).
-Per the verbatim ruling "[c]annot be used or played if the conditions for
-the terms of the referendum cannot be met (e.g. no legal selection ...)",
-`_provide_parity_shift` simply does not offer the play at all when the
-opponent's pool does not strictly exceed the acting player's -- there is no
-"announce it anyway and let it fizzle" path, matching how
-`enchant_kindred.py`'s superior clause already withholds its own option
-when it has no eligible target. Rulebook SS4 "Announce the Action": "all
-terms fixed now, except referendum terms" -- the target Methuselah is fixed
-at this moment (deterministically the sole opponent, 2P's only possible
-choice), not re-decided later.
+do"): with exactly two Methuselahs, the only *possible* target is the sole
+opponent, and only when their pool strictly exceeds the acting player's at
+the moment the card would be played (never yourself: "more pool than you
+do" is never true of your own pool). Per the ruling "cannot be used or
+played if the conditions for the terms of the referendum cannot be met
+(e.g. no legal selection ...)", `_provide_parity_shift` simply does not
+offer the play when the opponent's pool does not strictly exceed the
+acting player's -- no "announce it anyway and let it fizzle" path (matching
+`enchant_kindred.py`'s superior clause). Rulebook SS4 "Announce the
+Action": "all terms fixed now, except referendum terms" -- the target is
+fixed at announce (deterministically the sole opponent), not re-decided
+later.
 
-Allocation ("Terms chosen only after success" -- `vtes-rules-reference`
-skill's Politics section): "allocate 3 of their [the target's] pool among 1
-or more **other** Methuselahs (including you)" -- "other" is relative to
-the target (the Methuselah whose pool is being allocated), i.e. the
-recipients are drawn from every Methuselah *except* the target. With
-exactly two Methuselahs total and the target fixed as the sole opponent,
-the only Methuselah left who could ever be an "other" recipient is the
-acting player themself -- there is no second or third possible recipient to
-split the amount with, so (unlike Kine Resources Contested's genuine 3-way
-choice of split) this is not a real choice in 2P at all: 100% of the
-awarded amount always goes to the caller. No `Decision` is raised for it
-(the project's "only when needed"/"never a vacuous Decision" invariant,
-`engine/decision.py::Decision.__post_init__`) -- `resolve()` simply computes
-the amount and transfers it once the referendum passes.
+Allocation ("Terms chosen only after success"): "allocate 3 of their [the
+target's] pool among 1 or more **other** Methuselahs (including you)" --
+"other" is relative to the target, so recipients are drawn from every
+Methuselah *except* the target. With exactly two Methuselahs and the
+target fixed as the sole opponent, the acting player is the only possible
+"other" recipient -- unlike Kine Resources Contested's genuine 3-way split,
+this is not a real choice in 2P: 100% of the awarded amount always goes to
+the caller. No `Decision` is raised for it (the "never a vacuous Decision"
+invariant, `engine/decision.py::Decision.__post_init__`) -- `resolve()`
+simply computes the amount and transfers it once the referendum passes.
 
-Amount ("allocate 3 of their pool", ruling "[i]f the target has less than 3
+Amount ("allocate 3 of their pool", ruling "if the target has less than 3
 pool when referendum passes, the Methuselah calling the referendum chooses
 how to distribute within the bounds of the terms"): `amount = min(3,
 target's current pool)`, read at the moment `resolve_referendum` reports a
-pass (not at announce time) -- with only one possible recipient in 2P,
-"chooses how to distribute within the bounds" has nothing left to choose
-either, the same collapse as the allocation question above. "Changes in
-pool during the referendum (after terms are chosen) do not affect the
-outcome": this engine resolves the pass/fail tally and this card's own
-pass-effect synchronously, with no window for a further pool change to
-occur in between within a single `resolve()` call, so this ruling is
-already satisfied by the engine's own execution order, with no extra code
-needed. "Successful referendum means the pool is distributed": a real
-transfer, not a burn (contrast `kine_resources_contested.py`'s pure
-pool-loss "burns 1 pool") -- `engine.pool.lose_pool` on the target plus
-`engine.pool.gain_pool` on the caller. "The pool awarded can be used to
-play Life Boon to save the target from an oust": consistent with a genuine
-`gain_pool` (not a different, non-spendable resource) -- Life Boon itself is
-a separate, unimplemented card and needs no code here; this ruling only
-confirms the transfer's nature, which the implementation above already
-reflects.
+pass -- with only one possible recipient in 2P, "chooses how to distribute"
+has nothing left to choose either. "Changes in pool during the referendum
+... do not affect the outcome": this engine resolves the tally and this
+card's pass-effect synchronously within one `resolve()` call, so no extra
+code is needed. "Successful referendum means the pool is distributed": a
+real transfer, not a burn (contrast `kine_resources_contested.py`'s pure
+pool-loss) -- `lose_pool` on the target plus `gain_pool` on the caller.
+"The pool awarded can be used to play Life Boon to save the target from an
+oust": consistent with a genuine `gain_pool`; Life Boon is a separate,
+unimplemented card and needs no code here.
 """
 
 from collections.abc import Mapping

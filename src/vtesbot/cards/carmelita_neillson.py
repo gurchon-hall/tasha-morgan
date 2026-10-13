@@ -10,40 +10,32 @@ Rulings: none on file (`krcg.vtes.VTES[201625].rulings == []` and the raw API
 snapshot's own `"rulings": []`, both checked 2026-10-12).
 
 Card type: crypt vampire (`types == ["Vampire"]`). Clan Toreador, no title
-(the live API's own `"title": null`, confirmed -- unlike Marcos Belegrad/
-Modius/Atiena/Leumeah, whose own "<Sect> <Title> of <City>:" preamble names an
-actual title; Carmelita's own `"Camarilla:"` preamble is a bare sect keyword
-with no title at all), group 7, capacity 5, disciplines `["cel", "pre",
-"AUS"]`. Legal since 2022-05-17; confirmed on the active 2P allowed list
+(the live API's own `"title": null`, confirmed -- unlike Marcos Belegrad's
+own "<Sect> <Title> of <City>:" preamble, which names an actual title;
+Carmelita's own `"Camarilla:"` preamble is a bare sect keyword with no
+title at all), group 7, capacity 5, disciplines `["cel", "pre", "AUS"]`.
+Legal since 2022-05-17; confirmed on the active 2P allowed list
 (`data/formats/2p/2026-10-03.json`).
 
-"Camarilla:" sect-gating -- resolved, not an Open Question: this is the same
-bare-sect-colon-preamble shape `engine/cards.py::derive_sect`'s own docstring
-names for Ariane ("Anarch: Ariane gets -1 stealth...") and already
-implemented, non-title, sect-conditional abilities gate on it for real
-(`src/vtesbot/cards/dust_up.py`, `line_brawl.py`, `organized_resistance.py`,
-`protection_racket.py`, each checking `vampire.card.sect is Sect.<X>` and
-treating `sect is None` as "does not qualify" per `CryptCard`'s own docstring:
-"a card gating on sect must treat `None` as 'does not qualify,' never guess a
-default sect"). This is a different pattern from Marcos Belegrad's/Modius's/
-Atiena's/Leumeah's own "<Sect> <Title> of <City>:" preamble, where the sect
-word is fused into the *title name itself* (and those modules correctly left
-it unconditional, since the generic `engine/politics.py::TITLE_VOTES` table
-already keys purely on the bare title string, with no sect-dependent vote
-value -- see `atiena.py`'s own docstring). Carmelita carries no title at all
-(`"title": null`, confirmed above), so there is no title machinery for this
-preamble to ride on; her "Camarilla:" is read the same way Dust Up's "Requires
-an Anarch" and Ariane's "Anarch:" are: a live condition on her own current
-`vampire.card.sect`, re-checked every call exactly like her own `zone`/
-`locked` are (per `engine/cards.py::CryptCard`'s "plain printed stats, not
-behaviour" framing and the hook contract below). In practice, since no card
-in this pool implements a sect-change mechanism yet (`protection_racket.py`'s
-own "changes sect mid-action" caveat; no such mechanism exists), this check
-is always true for a real, `derive_sect`-populated Carmelita instance -- it is
-included for consistency with the established convention and to correctly
-return no bonus for a synthetic/test vampire whose `sect` was never modeled
-(`sect is None`), not because any live game state can presently make it false
-for a genuine Carmelita.
+"Camarilla:" sect-gating -- resolved, not an Open Question: this is the
+same bare-sect-colon-preamble shape `engine/cards.py::derive_sect`'s
+docstring names for Ariane ("Anarch: Ariane gets -1 stealth..."), which
+other non-title, sect-conditional abilities already gate on for real
+(`dust_up.py`, `line_brawl.py`, `organized_resistance.py`,
+`protection_racket.py`: `vampire.card.sect is Sect.<X>`, treating `sect is
+None` as "does not qualify" per `CryptCard`'s docstring). This differs
+from Marcos Belegrad's "<Sect> <Title> of <City>:" preamble, where the
+sect word is fused into the title name itself and that module correctly
+left it unconditional (the generic `TITLE_VOTES` table keys purely on the
+bare title string, no sect-dependent vote value -- `atiena.py`'s
+docstring). Carmelita carries no
+title at all (`"title": null`), so her "Camarilla:" is read the same way
+as Dust Up's "Requires an Anarch": a live condition on her current
+`vampire.card.sect`, re-checked every call. Since no card in this pool
+implements a sect-change mechanism yet, this check is always true for a
+real, `derive_sect`-populated Carmelita instance -- it is included for
+consistency with the established convention and to correctly return no
+bonus for a synthetic/test vampire whose `sect` was never modeled.
 
 "While Carmelita is ready": per `src/vtesbot/cards/registry.py::Hook.
 HAND_SIZE_MODIFIER`'s own docstring and `engine/hand.py`'s module docstring,

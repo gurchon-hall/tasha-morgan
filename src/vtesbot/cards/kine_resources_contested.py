@@ -63,26 +63,17 @@ directly inside `resolve()` -- the same "decision raised inside resolve(),
 once unblocked" shape `enchant_kindred.py`'s own target-choice decision
 uses.
 
-Legal splits in 2P (derived directly from the card's own text, not a
-guess): "Allocate 4 points **among two or more Methuselahs**" requires at
-least two distinct recipients to each receive a *nonzero* share (a
-recipient assigned 0 points is not "among" the allocation at all, by the
-plain meaning of "allocate among N recipients"). With exactly two
-Methuselahs total in a 2P duel, "two or more" can only ever mean "both of
-them", so each of the two players must receive >=1 of the 4 points --
-independently entailing the printed ruling's "cannot allocate 4 points to
-a single Methuselah" (whichever player would otherwise receive all 4, the
-other receives 0, which already violates "among two or more" on its own).
-The legal splits are therefore exactly `(1, 3)`, `(2, 2)`, `(3, 1)`
-(self points, other points) -- never `(4, 0)` or `(0, 4)`. The ruling's own
-other clause, "but you can allocate points to yourself", is not a separate
-restriction to enforce: nothing here ever prevents the caller from
-assigning points to their own side; `(1, 3)`/`(2, 2)`/`(3, 1)` all do so by
-construction. (Note: this reasoning was derived directly from the printed
-"among two or more Methuselahs" wording plus the verbatim ruling above --
-not from any external worked example -- since the two together already
-settle the question unambiguously for exactly two players; this is not
-logged as an Open Question.)
+Legal splits in 2P (derived directly from the card's own text): "Allocate
+4 points **among two or more Methuselahs**" requires at least two distinct
+recipients to each receive a *nonzero* share (0 points is not "among" the
+allocation at all). With exactly two Methuselahs in a 2P duel, "two or
+more" can only mean "both of them", so each player must receive >=1 of the
+4 points -- independently entailing the ruling's "cannot allocate 4 points
+to a single Methuselah". The legal splits are therefore exactly `(1, 3)`,
+`(2, 2)`, `(3, 1)` (self points, other points) -- never `(4, 0)` or
+`(0, 4)`. The ruling's other clause, "but you can allocate points to
+yourself", is not a separate restriction to enforce: `(1, 3)`/`(2, 2)`/
+`(3, 1)` all do so by construction.
 
 "Successful referendum means each Methuselah burns 1 pool for each point
 allocated": a pure loss, not a transfer (contrast `parity_shift.py`, whose

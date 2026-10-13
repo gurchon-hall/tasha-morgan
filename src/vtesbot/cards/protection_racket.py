@@ -24,66 +24,41 @@ Status: implemented.
 
 "Requires an Anarch": per Rulebook SS6 Vampire Sects, "Some cards can only be
 played by Anarch vampires" -- this restricts the minion *playing* the card,
-not the (textually distinct) "acting minion" named by the card's own second
-clause. For an ordinary Action/Combat card (e.g. `dust_up.py`, `line_brawl.py`)
-those two minions are the same vampire, so the distinction never shows up
-there; Protection Racket is a *Reaction* card, SS8 glossary: "A card played by
-a Methuselah's ready, unlocked minion in response to an action taken by a
-minion controlled by another Methuselah" -- the minion playing it is the
-*reacting* (defending) Methuselah's own vampire, textually and causally
-unrelated to the acting minion whose action it is reacting against. This
-reading is not a guess: a live krcg ruling/text survey of every other printed
-Reaction card starting "Requires a(n) <sect/title>" (2026-10-11) confirms the
-convention unambiguously, e.g. Car Bomb (100293, a Reaction card) -- "Requires
-a ready anarch. ... Lock this reacting minion." -- names its own Anarch
-requirement and its own locking effect against the same noun, "this reacting
-minion", never the acting one; Bait and Switch (102218, also Reaction)
-likewise is phrased throughout in terms of "this reacting vampire" opposite
-"the acting minion's controller". Every provider below therefore checks
-`vampire.card.sect is Sect.ANARCH` on the *candidate reacting* vampire (one of
-`player`'s own, per the eligibility rules below), exactly mirroring
-`dust_up.py`/`line_brawl.py`'s own sect-gate shape but applied to the other
-side of the action -- including treating `sect is None` as "does not
-qualify" (`CryptCard`'s own docstring: never guess a default sect).
+not the (textually distinct) "acting minion" named by the card's second
+clause. Protection Racket is a *Reaction* card (SS8 glossary: "A card played
+by a Methuselah's ready, unlocked minion in response to an action taken by a
+minion controlled by another Methuselah"), so the minion playing it is the
+*reacting* (defending) Methuselah's own vampire, unrelated to the acting
+minion whose action it reacts against. Confirmed against other printed
+Reaction cards phrased the same way, e.g. Car Bomb (100293): "Requires a
+ready anarch. ... Lock this reacting minion" names its Anarch requirement
+and its locking effect against the same noun, "this reacting minion", never
+the acting one. Every provider below therefore checks `vampire.card.sect is
+Sect.ANARCH` on the *candidate reacting* vampire, mirroring `dust_up.py`'s
+sect-gate shape but applied to the other side of the action -- including
+treating `sect is None` as "does not qualify" (`CryptCard`'s own
+docstring).
 
 "+1 intercept, with an additional +1 intercept if the acting minion is
-titled.": a plain `"intercept_modifier"` provider (`engine/action.py::
-INTERCEPT_MODIFIER_HOOK`), the hook's sole call site (`engine/action.py::
-_duel_stealth_intercept`) only ever offering it with `player=defender` -- so,
-exactly as `bonding.py`'s own basic clause reasons for its hook choice, "the
-restriction is trivially satisfied by which hook this card registers
-against": no extra "am I the defender" check is needed here, this hook is
-never offered to the acting side at all. "The acting minion" is read from
-that same call site's own context, `context["acting_vampire"]` looked up in
-`state.players[context["actor"]].vampires` (the vampire whose action is
-currently being evaluated for a block, not the vampire that will play this
-card) -- "titled" is `CryptCard.title is not None` (`engine/cards.py`'s own
-general convention: a printed title, independent of which specific title it
-is; distinct from `engine/politics.py::TITLE_VOTES`, which maps title ->
-vote count and is a sabbat/camarilla-titles-only lookup table, not a generic
-"is this vampire titled" predicate -- using it here would wrongly read "no
-vote value listed" as "untitled" for any future non-Camarilla/non-Sabbat
-title). Bonus is computed fresh on every single `offer()` call (this
-provider function is re-invoked by `_duel_stealth_intercept`'s own ping-pong
-loop each time intercept is still needed), not cached once per action: per
-the one ruling on file, "the additional intercept is gained or lost if the
-acting vampire changes sect during the action (eg. with {The Red Question} or
-{Mask of a Thousand Faces})" [ANK 20190416], re-evaluating live is the correct
-behaviour (a provider that captured `titled` once, at offer-list-build time,
-and reused it across a changing mid-action sect, would contradict this
-ruling). Neither The Red Question (101575) nor Mask of a Thousand Faces
-(101179) is implemented in this project yet, and `CryptCard.sect`/`title` are
-frozen, printed identity fields with no in-game mutation path modeled anywhere
-in the engine today (`engine/cards.py`'s own docstring: "plain printed
-stats ... not behaviour") -- so the *specific* "changes sect mid-action"
-scenario the ruling describes is not reachable with the current card pool,
-exactly the same "not reachable today, but correctly modeled either way"
-status `dust_up.py`'s own OQ-21 citation uses for an analogous not-yet-
-reachable branch; this is not a fresh gap introduced by this card (nothing
-elsewhere in the engine, e.g. `engine/politics.py::_collect_vote_sources`'s
-own un-gated `vampire.card.title` read, enforces "title suspended while sect
-is inappropriate" either), and does not block implementing the clause's own,
-otherwise fully-specified, live-reads-every-time behaviour.
+titled.": a plain `"intercept_modifier"` provider; the hook's sole call site
+(`_duel_stealth_intercept`) only ever offers it with `player=defender`, so no
+extra "am I the defender" check is needed. "The acting minion" is read from
+that call site's own context, `context["acting_vampire"]` looked up in
+`state.players[context["actor"]].vampires`. "Titled" is `CryptCard.title is
+not None` (a printed title, independent of which one; distinct from
+`engine/politics.py::TITLE_VOTES`, a Sabbat/Camarilla-titles-only vote-value
+table, not a generic "is this vampire titled" predicate). The bonus is
+computed fresh on every `offer()` call, not cached once per action: per the
+ruling on file, "the additional intercept is gained or lost if the acting
+vampire changes sect during the action (eg. with {The Red Question} or {Mask
+of a Thousand Faces})" [ANK 20190416], re-evaluating live is correct. Neither
+Red Question nor Mask of a Thousand Faces is implemented yet, and
+`CryptCard.sect`/`title` have no in-game mutation path modeled anywhere in
+this engine today, so the specific "changes sect mid-action" scenario is not
+reachable with the current card pool (not reachable today, but correctly
+modeled either way, per `dust_up.py`'s OQ-21 citation) -- not a fresh gap
+introduced by this card, and no block on implementing the clause's own
+live-reads-every-time behaviour.
 
 SS8 glossary, same page as the Reaction Card definition: "A minion cannot
 play the same reaction card more than once during a single action (even if

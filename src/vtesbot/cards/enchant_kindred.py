@@ -26,7 +26,7 @@ action; `engine/phases/minion.py::ACTION_CARD_PLAY_HOOK` /
 `ActionCardSpec` / `_perform_action_card` is that entry point. Both clauses
 below are `ACTION_CARD_PLAY_HOOK` providers, mirroring the "basic vs
 superior, two different hooks/providers for one physical card" shape already
-used by `bonding.py`/`threats.py`/`telepathic_counter.py`/`celerity.py`
+used elsewhere (e.g. `bonding.py`)
 (`disciplines` gating: a vampire with only basic `"pre"` unlocks only the
 basic clause; a vampire with superior `"PRE"` is eligible for either, per
 Rulebook SS3 "may opt to use either effect").
@@ -85,38 +85,19 @@ clamps defensively).
 
 "which eligible vampire to add blood to" is a new per-card `Decision` (kind
 "enchant_kindred_target") raised inside `apply()`, at announce time, before
-the block-attempt window opens -- *not* deferred to `resolve()` (`rules-
-auditor` finding, 2026-10-11, same root cause flagged on `line_brawl.py`'s
-`[pot]` clause: Rulebook SS4 "1. Announce the Action" -- "All details of the
-action are defined when the action is announced, including the target(s)...
-" -- and this engine's own `ActionCardSpec` contract both require the target
-to be fixed before `resolve()`, not inside it. This clause's own stakes are
-lower than `line_brawl.py`'s directed one -- the target is the acting
-player's own uncontrolled vampire, so no opposing block decision is ever
-shaped by which one gets picked -- but the contract violation itself is the
-same, and OQ-17's original resolution (cited by the earlier version of this
-paragraph as having already settled the timing) only ever examined this
-undirected, own-side case in the first place; it did not establish that
-deferring to `resolve()` was fine in general, only that the `Decision`/
-`Choice` machinery itself needs no further engine change to support an
-arbitrary "pick one of several eligible targets" choice -- which remains
-true with the choice moved to `apply()` -- see `docs/OPEN_QUESTIONS.md`
-OQ-21, fully resolved: a live krcg ruling search found the general
-"fizzles (resolves successfully for no effect)" ruling, cross-referenced
-against well over 100 unrelated cards, confirming VTES never re-chooses a
-card's target at resolve time anywhere in the game; `resolve()`'s own
-"target no longer eligible" branch below already matches that fizzle
-convention). Mirrors `engine/phases/unlock.py::
-_resolve_optional_effects_in_chosen_order`'s own "only when needed"
-convention: with exactly one eligible target at `apply()` time, bound
-directly with no decision raised at all; with more than one, a `Decision`
-offers one choice per eligible target (no "decline"/"pass" alternative --
-the card is already being played by this point, the effect is mandatory,
-only *which* target remains to be chosen). `resolve()` then looks up the
-already-chosen target by the instance id `apply()` bound into its closure,
-defensively treating a target that somehow lost its room for blood between
-announce and resolve (not reachable today) as "nothing to do" rather than
-crashing.
+the block-attempt window opens -- not deferred to `resolve()` (Rulebook SS4
+"Announce the Action": all action details, including the target, are fixed
+at announce; this engine's own `ActionCardSpec` contract matches. OQ-21,
+resolved: VTES never re-chooses a target at resolve time, only re-validates
+it, per the general "fizzles" ruling cross-referenced against 100+ cards;
+`resolve()`'s own "target no longer eligible" branch below matches that
+fizzle convention). With exactly one eligible target at `apply()` time,
+bound directly with no decision raised; with more than one, a `Decision`
+offers one choice per eligible target (no decline -- the effect is
+mandatory, only *which* target remains open). `resolve()` looks up the
+already-chosen target by instance id, treating a target that lost its room
+for blood between announce and resolve (not reachable today) as "nothing to
+do" rather than crashing.
 """
 
 from collections.abc import Mapping
@@ -250,10 +231,8 @@ def _provide_enchant_kindred_superior(
     def _apply(s: GameState) -> ActionCardSpec:
         play_from_hand(s, player, KRCG_ID)
 
-        # Target fixed now, at announce time (module docstring, rules-auditor
-        # finding): Rulebook SS4 "Announce the Action" + this engine's own
-        # `ActionCardSpec` contract both require the target to be set before
-        # the block-attempt window opens -- not deferred to `resolve()`.
+        # Target fixed at announce time, not deferred to resolve() -- OQ-21,
+        # see module docstring.
         targets = _eligible_targets(s, player, acting_vampire)
         if len(targets) == 1:
             target_id = targets[0].instance_id

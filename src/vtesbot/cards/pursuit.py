@@ -26,90 +26,49 @@ No Ⓓ marker, no prey/predator/"other Methuselahs" wording, no political
 vote -- this is a plain Combat card played during an already-resolving
 combat, so OQ-1 (CLAUDE.md §3) does not apply.
 
-History of this entry (`docs/OPEN_QUESTIONS.md` OQ-27, now resolved -- see
-that entry for the full step-by-step research trail): this card was first
-registered `blocked` on the premise that its basic `[cel]` "Maneuver" clause
-was "a maneuver from a strike card" (Rulebook SS4 Determine Range: "If a
-minion uses the maneuver from a strike card or a weapon, they are
-effectively choosing their strike as well. As such, they cannot use a second
-strike card or weapon to maneuver again in the same round."), which the
-engine has no mechanism to enforce. A follow-up, prompted by the project
-owner's own structural reading ("Pursuit is a non-weapon, non-strike
-maneuver... A maneuver in a strike card is Slam for example. A maneuver in a
-weapon is .44 Magnum's strike for reference"), re-examined the Rulebook's own
-**Strike step** cross-reference to this same restriction (SS4 Combat >
-Strike > Choose Strike, re-fetched live 2026-10-12 and matching the cached
-copy `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:824-828`,
-not previously quoted by this module or by OQ-27's first pass): "Each minion
-chooses their strike. The strike can be from a combat card, from a weapon
-the minion possesses, by default from a hand strike, or can be from any
-other card providing this minion a strike. **If a minion has used a
-maneuver from a strike (either a strike card or a weapon) this round**, then
-they cannot choose any other strike for their initial strike of the round."
-This pins down what "a strike card" means for this restriction: the
-maneuver must itself be **from a strike** -- i.e. the same clause that grants
-the maneuver must also be, or be part of, a strike effect (confirmed by
-fetching Slam's and .44 Magnum's own printed text live via krcg for
-comparison: Slam, krcg id 101798, reads "[pot] Strike: hand strike at +2
-damage.\n[POT] As above, with 1 optional maneuver, only usable to get to
-close range." -- the superior clause's maneuver is explicitly "as above",
-i.e. part of the very same strike effect; .44 Magnum, krcg id 100001, reads
-"Weapon: gun.\nStrike: 2R damage, with 1 optional maneuver each combat." --
-again, the maneuver is printed inside the strike clause itself, "with 1
-optional maneuver"). Pursuit's basic clause, by contrast, is a bare
-"Maneuver." with no "Strike:" wording anywhere in that clause and no "as
-above" connecting it to the card's own, textually and mechanically separate,
-superior "Additional strike (limited)" clause (gated at a different
-discipline level, usable independently through the ordinary additional-
-strike window, not through Determine Range at all) -- it is not "a maneuver
-from a strike" in the Rulebook's own technical sense, exactly as Dance with
-the Devil's identically bare "[obf] or [tha] Maneuver, only usable to get to
-close range" (krcg id 102315, re-checked live) is not either. Neither
-Rulebook restriction quoted above -- the Determine Range "cannot use a
-second strike card or weapon to maneuver again" cap, nor the Choose Strike
-"cannot choose any other strike" lock -- is therefore triggered by playing
-Pursuit's basic clause: this clause is a plain maneuver, the same category
-as a vampire's own innate maneuver-granting title ability (Saku
-Pihlajamäki's "1 optional maneuver each combat",
-`src/vtesbot/cards/saku_pihlajamaki.py`) or Dance with the Devil's own
-clauses, not a strike-card-bundled one (Slam, .44 Magnum -- still correctly
-left unbuilt, per `engine/combat.py`'s own "Determine Range and maneuvers"
-docstring section, which now additionally cites this same finding). OQ-27
-records the owner's own reasoning, the General Ruling found during the
-*prior* follow-up pass ([LSJ 19971215], about weapon strike-choice
-specifically, now superseded in relevance by this more on-point Choose
-Strike citation), and this resolution for posterity.
+Whether Pursuit's basic "Maneuver." clause carries Rulebook SS4's "cannot
+use a second strike card or weapon to maneuver again"/"cannot choose any
+other strike" restrictions (OQ-27, resolved): SS4 Combat > Choose Strike
+(`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:824-828`):
+"Each minion chooses their strike. ... If a minion has used a maneuver
+from a strike (either a strike card or a weapon) this round, then they
+cannot choose any other strike for their initial strike of the round."
+This pins down the test: the maneuver must itself be **from a strike** --
+the same clause that grants the maneuver must also be, or be part of, a
+strike effect (contrast Slam's "[POT] As above, with 1 optional
+maneuver..." and .44 Magnum's "Strike: 2R damage, with 1 optional
+maneuver...", where the maneuver is printed inside the strike clause).
+Pursuit's basic clause is a bare "Maneuver." with no "Strike:" wording and
+no "as above" link to the card's own separate, differently-gated superior
+"Additional strike (limited)" clause -- it is not "a maneuver from a
+strike" in the Rulebook's technical sense, exactly as Dance with the
+Devil's identically bare "[obf] or [tha] Maneuver, only usable to get to
+close range" (krcg id 102315) is not either. Neither SS4 restriction is
+therefore triggered by playing Pursuit's basic clause: it is a plain
+maneuver, the same category as a vampire's own innate maneuver-granting
+title ability (Saku Pihlajamäki's "1 optional maneuver each combat") or
+Dance with the Devil's clauses, not a strike-card-bundled one (Slam, .44
+Magnum -- still correctly left unbuilt, per `engine/combat.py`'s own
+"Determine Range and maneuvers" docstring section).
 
-"[cel] Maneuver." (basic clause): a plain `MANEUVER_HOOK`
-(`engine/combat.py`) grant, offered at either Celerity level (Rulebook SS3:
-superior unlocks either effect), exactly the same hook Saku Pihlajamäki's
-own innate ability already uses -- the only difference being that this is a
-played *card* (consumed from hand via `play_from_hand`, replaced from the
-library per the ordinary "play a card" rule) rather than an always-available
-printed ability, so no per-combat "already used" bookkeeping is needed
-(each physical copy is its own one-shot grant; a second copy in hand can be
-played later in the same combat, or even the same round, in response to the
-opponent's own counter-maneuver -- exactly the alternating-turns shape
-`_determine_range`'s own worked example (Ayelech/Colette) already
-demonstrates for *any* registered maneuver source, with nothing
-Pursuit-specific needed for it). Not marked "optional" on the card (unlike
-Fleetness's/Saku's own "1 optional maneuver"), but this has no engine
-consequence: the existing choice already includes "do not maneuver"
-unconditionally (`_ask_maneuver`'s own `hooks.PASS_VALUE` option) -- a
-player simply does not play this card at all if they do not want its
-maneuver; there is no further "played but declined" sub-choice Rulebook SS4
-describes only for an *optional*-maneuver card, which this is not.
+"[cel] Maneuver." (basic clause): a plain `MANEUVER_HOOK` grant, offered at
+either Celerity level (Rulebook SS3: superior unlocks either effect), the
+same hook Saku Pihlajamäki's own innate ability uses -- the only difference
+being this is a played *card* (consumed via `play_from_hand`), so no
+per-combat "already used" bookkeeping is needed: each physical copy is its
+own one-shot grant. Not marked "optional" on the card (unlike Fleetness's/
+Saku's "1 optional maneuver"), but with no engine consequence: the
+existing choice already includes "do not maneuver" unconditionally
+(`_ask_maneuver`'s own `hooks.PASS_VALUE` option) -- a player simply does
+not play this card if they do not want its maneuver.
 
-"[CEL] Additional strike (limited)." (superior clause): the exact same
-shape as Side Strike's own superior clause (`src/vtesbot/cards/
-side_strike.py`) -- a plain `COMBAT_ADDITIONAL_STRIKE_HOOK` grant, gated on
-superior `"CEL"` and the already-built, cross-card "(limited)" cap
+"[CEL] Additional strike (limited)." (superior clause): the same shape as
+Side Strike's own superior clause -- a plain `COMBAT_ADDITIONAL_STRIKE_HOOK`
+grant, gated on superior `"CEL"` and the cross-card "(limited)" cap
 (`additional_strike_limit_used`/`mark_additional_strike_limit_used`,
 OQ-19). Entirely independent of the basic clause: a superior-Celerity
 vampire holding two physical copies could maneuver with one and claim the
-additional strike with the other in the same round, neither affecting the
-other, mirroring Side Strike's own documented independence between its two
-clauses.
+additional strike with the other in the same round.
 """
 
 from collections.abc import Mapping

@@ -17,10 +17,10 @@ OPEN_QUESTIONS.md`, `engine/politics.py`) is resolved, and the "referendum
 that is automatically passing" state named by its own ruling is exactly the
 unresolved procedural gap OQ-6 describes. The superior [PRE] clause (an
 intercept-reduction action modifier, no polling step involved) does not
-depend on OQ-6 and *is* implementable against the already-wired
-`"intercept_modifier"` hook (`engine/hooks.py`, `engine/action.py`) once
-`card-implementer` picks this card back up -- noted here, not built, since
-this pass only scaffolds hooks and registers what's genuinely blocked.
+depend on OQ-6 and could be implemented against the already-wired
+`"intercept_modifier"` hook (`engine/hooks.py`, `engine/action.py`); not
+built here since one registry entry carries one status for the whole
+module (CLAUDE.md SS6, same constraint Diana Iadanza's docstring documents).
 """
 
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register

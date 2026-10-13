@@ -14,93 +14,54 @@ fields (this card's burn-to-reduce-bleed mechanic is the card's own printed
 text, not the engine's generic `burn_option` flag). Listed in the active 2P
 allowed list (`data/formats/2p/2026-10-03.json`, `krcg_id: 102217`).
 
-Status: implemented. Was blocked (OQ-14, `docs/OPEN_QUESTIONS.md`), on top of
-the earlier, also now-resolved OQ-12 ("recruit ally" minion action) and OQ-13
-(acting-vampire identity threaded into the `"recruit_ally_play"` hook
-context). OQ-14 itself was the discovery that wiring this card's own recruit
-side would make OQ-10's ally-uniqueness gap live in an ordinary legal 2P
-game; `rules-engineer` resolved OQ-10 (contest *detection*, `AllyInPlay.
-contested_with`/`zone == "contested"`, `engine/allies.py::
-detect_contest_on_recruit`, called from `_perform_recruit_ally`'s own
-production call site) and then OQ-15 (contest *resolution*, the
-pay-1-pool-or-yield unlock-phase loop that actually ends a contest --
-`engine/allies.py::resolve_one_ally_contest` plus `engine/phases/unlock.py::
-_unlock_own_allies`). With both halves of that prerequisite now independently
-audited clean (per this task's own briefing), this card's own two clauses are
-wired below. OQ-16 ("cannot contest yourself") stays open but is confirmed
-unreachable here: no deck-legality check yet lets one player hold two copies
-of the same unique card, so `detect_contest_on_recruit` never needs to
-consider that case for this card either.
+Status: implemented. Depends on OQ-12 ("recruit ally" minion action), OQ-13
+(acting-vampire identity in the `"recruit_ally_play"` hook context), OQ-10
+(ally contest *detection*, `AllyInPlay.contested_with`/`zone ==
+"contested"`, `engine/allies.py::detect_contest_on_recruit`), and OQ-15
+(contest *resolution*: `engine/allies.py::resolve_one_ally_contest` plus
+`engine/phases/unlock.py::_unlock_own_allies`'s pay-1-pool-or-yield
+unlock-phase loop) -- all resolved. OQ-16 ("cannot contest yourself") stays
+open but is confirmed unreachable here: no deck-legality check yet lets one
+player hold two copies of the same unique card.
 
 Two independent clauses, matching the registry's established "wire what the
-text says, nothing more" pattern (`threats.py`/`bonding.py`):
+text says, nothing more" pattern (e.g. `threats.py`):
 
 1. "Unique mortal with 2 life. 1 strength, 0 bleed." -- the Ally's own
-   recruit eligibility, wired against the `"recruit_ally_play"` hook
-   (`engine/phases/minion.py::RECRUIT_ALLY_PLAY_HOOK`, OQ-12). `_provide_
-   recruit` mirrors the shape OQ-12/OQ-13's own scaffolding tests already
-   exercise with a stand-in provider (`tests/rules/test_recruit_ally_action.
-   py`, `tests/rules/test_ally_contests.py`): checked against *this specific*
-   acting vampire (`context["vampire"]`, OQ-13) rather than merely "the
-   player controls a Brujah somewhere" (Rulebook SS2 "Card Types" >
-   "Requirements for Playing Cards" binds a minion card's requirement to the
-   specific acting minion), via `acting_vampire.card.clan` -- confirmed by
-   reading `engine/cards.py::CryptCard.clan` directly rather than assumed:
-   a plain printed-stat field, exactly the engine's existing "clan/title/
-   disciplines are plain printed stats, not behaviour" contract. Returns a
-   `RecruitAllySpec(card=..., life=2, strength=1, bleed=0, pay_cost=None)`
-   (`engine/allies.py::RecruitAllySpec`) -- `pay_cost=None` because krcg's
-   own `cost` field is `None` ("Cost: As listed on the ally card"; this card
-   lists none). `_perform_recruit_ally` (`engine/phases/minion.py`) handles
-   everything else generically: announcing (removing the card from hand via
-   `play_from_hand_pending`, done inside this module's own `apply`, per
-   `RecruitAllySpec`'s own contract that `apply` must have already removed
-   the card), the block-attempt window, paying the (here: nonexistent) cost
-   only on success, placing the ally in play ready-but-locked
-   (`recruit_ally`), burning the card to the ash heap with no ally created on
-   a block (Rulebook SS4 "Resolve the Action"), and -- the exact prerequisite
-   this entry was blocked on -- calling `detect_contest_on_recruit` after
-   every successful recruit, so two Methuselahs each recruiting their own
-   copy in an ordinary 2P game correctly ends with both copies `zone ==
-   "contested"`, out of play, not two silently-coexisting `AllyInPlay`
-   instances. Nothing about uniqueness/contest handling needs to appear in
-   *this* module -- it is unconditionally generic in `recruit_ally`/
-   `_perform_recruit_ally` now, exactly per OQ-14's own resolution note.
+   recruit eligibility, wired against the `"recruit_ally_play"` hook (OQ-12).
+   Checked against *this specific* acting vampire (`context["vampire"]`,
+   OQ-13) rather than merely "the player controls a Brujah somewhere"
+   (Rulebook SS2 "Requirements for Playing Cards" binds a minion card's
+   requirement to the specific acting minion), via `acting_vampire.card.clan`
+   -- a plain printed-stat field. Returns a `RecruitAllySpec(card=..., life=2,
+   strength=1, bleed=0, pay_cost=None)` -- `pay_cost=None` because krcg's own
+   `cost` field is `None` ("Cost: As listed on the ally card"; this card
+   lists none). `_perform_recruit_ally` handles everything else generically:
+   announcing, the block-attempt window, paying cost only on success,
+   placing the ally in play ready-but-locked, burning the card on a block
+   (Rulebook SS4 "Resolve the Action"), and -- the prerequisite this entry
+   was blocked on -- calling `detect_contest_on_recruit` after every
+   successful recruit, so two Methuselahs each recruiting their own copy
+   correctly end with both copies `zone == "contested"`. Nothing about
+   uniqueness/contest handling needs to appear in *this* module.
 
 2. "You can burn 47th Street Royals to reduce a bleed against you by 3." --
-   a reaction, wired against the already-wired `"bleed_amount_modifier"` hook
-   (`engine/phases/minion.py::_perform_bleed`'s `resolve()`), byte-for-byte
-   the same shape as `telepathic_counter.py`'s reduction and the exact
-   mechanism already proven by `tests/rules/test_allies.py::
-   test_ally_burned_as_a_bleed_reduction_reaction_cost`'s stand-in provider,
-   except the cost consumed is the ally itself (`engine/allies.py::
-   burn_ally`), not a card played from hand. `_provide_bleed_reduction`
-   offers its option only to this ally's own controller (checked the same
-   way `telepathic_counter.py` checks "is `context["player"]` the defender":
-   the acting, bleeding vampire -- `context["vampire"]` -- is not one of
-   `context["player"]`'s own vampires), and only while this specific ally
-   (matched by `krcg_id`, since it is Unique there can be at most one live
-   copy under any one controller at a time -- OQ-16 notwithstanding, see
-   above) is `zone == "ready"`: a `"contested"` ally is "turned face down and
-   out of play" (Rulebook SS4 Advanced Rules > Contested Cards, quoted in
-   full in `engine/allies.py`'s own module docstring) for the whole contest,
-   so it cannot react, exactly like a contested *vampire* cannot act; a
-   `"burned"` one is simply gone. `AllyInPlay.is_ready_unlocked` is not used
-   here deliberately -- unlike a vampire or an acting minion, nothing in the
-   rules requires this *reacting* ally itself to be unlocked (it is not
-   taking an action, merely being spent as a cost: Rulebook SS8 glossary
-   "Reaction Card" requires the reacting *minion* to be "ready, unlocked",
-   but that requirement is about which of the Methuselah's own minions may
-   play the reaction, not about the specific card/entity being spent as the
-   reaction's own cost -- the card text names no minion at all, "you can
-   burn 47th Street Royals", so there is no separate "ready unlocked minion
-   playing this" to check beyond the ally being in play and usable, i.e.
-   `zone == "ready"`), so only `zone == "ready"` is checked, matching exactly
-   what `tests/rules/test_allies.py`'s own proven stand-in checks
-   (`a.zone == "ready" and a.name == "47th Street Royals"`). Reducing the
-   pending bleed amount reuses `_perform_bleed`'s own `amount_box`/`pending`
-   threading and its `amount = max(0, amount_box[0])` clamp -- no separate
-   clamp is needed here, same as `telepathic_counter.py`.
+   a reaction, wired against the `"bleed_amount_modifier"` hook, the same
+   shape as `telepathic_counter.py`'s reduction, except the cost consumed is
+   the ally itself (`engine/allies.py::burn_ally`), not a card played from
+   hand. `_provide_bleed_reduction` offers its option only to this ally's own
+   controller, and only while this specific ally (matched by `krcg_id`; at
+   most one live copy per controller since it is Unique, OQ-16
+   notwithstanding) is `zone == "ready"`: a contested ally is "turned face
+   down and out of play" (Rulebook SS4 Advanced Rules > Contested Cards) for
+   the whole contest and cannot react; a burned one is simply gone.
+   `AllyInPlay.is_ready_unlocked` is deliberately not used: the card names no
+   playing minion ("you can burn 47th Street Royals"), so SS8 glossary
+   "Reaction Card"'s "ready, unlocked" requirement (which governs which
+   *minion* may play a reaction) does not apply to the ally being spent as
+   the cost -- only `zone == "ready"` is checked, matching `tests/rules/
+   test_allies.py`'s proven stand-in. Reducing the pending bleed amount
+   reuses `_perform_bleed`'s own `amount_box`/`pending` threading and clamp.
 """
 
 from collections.abc import Mapping

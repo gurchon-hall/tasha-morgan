@@ -12,24 +12,20 @@ Rulings (verbatim, via krcg's live API, cross-checked against
     - "Cannot be used during a referendum that is automatically passing.
       [PIB 20150105] [LSJ 19980107]"
 
-The second ruling (not previously on file in this module's blocked stub,
-found by re-fetching live) concerns referenda that pass without ever
-reaching a normal casting step at all -- per the cited general ruling
+The second ruling concerns referenda that pass without ever reaching a
+normal casting step at all -- per the cited general ruling
 (`https://www.vekn.net/forum/rules-questions/68465-voting-is-complicated`,
 [LSJ 19980107]): "If a referendum will pass automatically (e.g., Cryptic
 Rider, Charming Lobby, Malkavian Rider Clause, Dia de los Muertos), then no
 casting votes or ballots occurs during the automatic referendum, and most
 'during a political action' and 'during a referendum' effects cannot be
-used." None of those auto-passing cards are implemented (or in the active 2P
-allowed list's suggested decklists) in this pool, and `engine/politics.py`'s
-`resolve_referendum` has no "automatically passing" code path at all -- every
-referendum it resolves always goes through a real polling step and a real
-`_cast_votes` tally. This ruling therefore describes a game state this
-engine cannot currently produce; it changes no behaviour here and is not
-covered by a test (there is nothing to construct a scenario against yet).
-If a future card ever implements an auto-passing referendum, that card's own
-module must reopen this question for Modius (and any other polling-step
-ability) rather than assuming this module already handles it.
+used." None of those auto-passing cards are implemented in this pool, and
+`engine/politics.py`'s `resolve_referendum` has no "automatically passing"
+code path -- every referendum always goes through a real polling step and
+a real `_cast_votes` tally, so this ruling describes a game state this
+engine cannot currently produce (not covered by a test; changes no
+behaviour here). A future card implementing an auto-passing referendum
+must reopen this question for Modius (and any other polling-step ability).
 
 Card type: crypt vampire (`types == ["Vampire"]`). Clan Toreador, title
 Prince, group 7, capacity 8, disciplines `["obf", "AUS", "CEL", "PRE"]`.
@@ -51,21 +47,17 @@ directly (i.e. Modius is in play and controlled, not merely
 "whether or not a minion is locked or unlocked does not have any impact on
 their ability to vote" rule already generically true of every vote source).
 
-Cost/effect: "can discard a master card" -- optional (not "must"), so offered
-as a `HookOption` a Methuselah may decline, never a forced effect; costs
-exactly one `"Master"`-type `LibraryCard` (`LibraryCard.card_type ==
-"Master"`, confirmed against real 2P suggested-deck data,
-`data/decks/vekn-2p/*.json`) discarded from Modius's controller's hand to
+Cost/effect: "can discard a master card" -- optional (not "must"), offered
+as a `HookOption` a Methuselah may decline; costs exactly one
+`"Master"`-type `LibraryCard` discarded from Modius's controller's hand to
 their ash heap -- a plain discard (Rulebook SS8 glossary "Discard: Move a
-card in hand to the ash heap", `data/sources/rulebook/2026-10-09/
-8-glossaries.md`), not a "play": no replacement is drawn from the library
-(unlike `engine/phases/discard.py::discard_phase`'s own "discard phase
-action", which is a distinct, named rule that does draw a replacement -- this
-card's "discard" is the plain glossary verb, not that specific phase
-action). Which master card, specifically, is never a meaningful choice (the
-card text does not single one out), so no extra `Decision` is raised for it;
-mirrors `engine/politics.py::_burn_one_political_action_card_from_hand`'s
-"first match in hand order, deterministically" convention.
+card in hand to the ash heap"), not a "play": no replacement is drawn from
+the library (unlike `engine/phases/discard.py::discard_phase`'s own
+"discard phase action", a distinct named rule that does draw one). Which
+master card is never a meaningful choice (the text does not single one
+out), so no extra `Decision` is raised; mirrors `engine/politics.py::
+_burn_one_political_action_card_from_hand`'s "first match in hand order"
+convention.
 
 Effect: "+1 vote" -- a new vote source for Modius's controller, added to
 `pending["extra_sources"]` (the same `{"source_id", "player", "votes",

@@ -31,35 +31,23 @@ docstring, "A third shape, Marcos Belegrad's...", for why this hook (and not
 Target/scope: "Methuselahs casting ... votes or ballots against a referendum
 called by Marcos" -- scoped to referenda called *specifically by this
 Marcos instance*, not any referendum this card's controller happens to call
-(a controller could control Marcos plus some other titled vampire; only
-Marcos's own referenda trigger this -- `engine/politics.py`'s own module
-docstring, the Queen-Anne/Marcos-Belegrad discussion of
-`context["caller_vampire"]`). Checked by `vampire.card.krcg_id == KRCG_ID`
-against the live `caller_vampire` the hook context carries (`_cast_votes`'s
-own tuple shape confirms `context["casts"]` entries are
-`(source.player, source.source_id, source.votes, direction)`, i.e.
-`source.player` is already "whoever controls that vote source" -- a
-title-vote source's `player` is its controller, not the vampire itself, per
-`engine/politics.py::_collect_vote_sources`'s own `VoteSource(player=player,
-...)` construction inside its per-vampire loop. This is exactly what
-"including controlling a minion casting" means: the controller of a minion
-that casts a vote is subject to this ability precisely like a Methuselah who
-casts their own political-action-card or Edge vote, with no special case
-needed -- `source.player` already *is* "whoever is casting, including by
-controlling a minion that casts," for every `VoteSource` kind the engine
-models today).
+(`engine/politics.py`'s own module docstring, the Queen-Anne/Marcos-Belegrad
+discussion of `context["caller_vampire"]`). Checked by
+`vampire.card.krcg_id == KRCG_ID` against the live `caller_vampire` the hook
+context carries. `context["casts"]` entries are `(source.player,
+source.source_id, source.votes, direction)`, where `source.player` is
+already "whoever controls that vote source" (`_collect_vote_sources`'s own
+`VoteSource(player=player, ...)` construction) -- this is exactly what
+"including controlling a minion casting" means, with no special case
+needed.
 
 Amount: the printed text says "burn 1 pool" (a flat amount), not "1 pool per
-vote" or "1 pool per vote or ballot cast against" -- nothing in the sentence
-scales the loss by how many separate sources (political-action-card vote,
-title vote, Edge, a `POLLING_STEP_HOOK`-granted extra source, etc.) a single
-Methuselah cast against the referendum, or by how many votes those sources
-were worth. This module therefore charges exactly 1 pool per *Methuselah*
-who cast at least one vote or ballot against Marcos's referendum (not per
-source, not per vote) -- a plain reading of the verbatim printed text itself
-(CLAUDE.md SS2 "Golden Rule for Cards": card text is the highest-precedence
-source), there being no ruling on file either way to confirm or contradict
-it.
+vote" -- nothing scales the loss by how many separate sources or votes a
+single Methuselah cast against the referendum. This module therefore
+charges exactly 1 pool per *Methuselah* who cast at least one vote or
+ballot against Marcos's referendum (not per source, not per vote) -- a
+plain reading of the verbatim printed text (CLAUDE.md SS2 "Golden Rule for
+Cards"), there being no ruling on file either way.
 
 Effect: `lose_pool(state, player, 1)` (`engine/pool.py`) for each such
 Methuselah -- already floors at 0 and triggers the oust check, so a

@@ -54,93 +54,72 @@ formats/2p/2026-10-03.json`, krcg id 100747).
 
 Prey/predator wording check (per the `implement-card` skill, step 3): both
 clauses carry the "Ⓓ" marker, Rulebook glossary "Directed Action" (targets
-one other Methuselah). CLAUDE.md SS3's own settled structural note already
-covers this: with exactly two Methuselahs, a directed action collapses to
-the single-opponent block-attempt model this engine already implements
-(`engine/action.py`'s own module docstring; the same reading already applied
-without raising OQ-1 by `enchant_kindred.py`'s basic clause and `line_
-brawl.py`'s three clauses, all likewise printed "Ⓓ"). Not OQ-1.
+one other Methuselah). In a 2P duel this collapses to the single-opponent
+block-attempt model (CLAUDE.md SS3; same reading as `enchant_kindred.py`'s
+basic clause). Not OQ-1.
 
-Status: implemented. Previously `blocked` (OQ-25, `docs/OPEN_QUESTIONS.md`,
-now resolved) for want of a way to pre-grant a one-shot, this-combat-only
-optional maneuver at announce time, before the block-attempt window even
-opens. `rules-engineer`'s fix: `engine/combat.py::run_combat` gained an
-optional `initial_combat_state` parameter plus `seed_pre_combat_maneuver_
-grant`/`pre_combat_maneuver_available`/`consume_pre_combat_maneuver_grant`
-helpers keyed by `PRE_COMBAT_MANEUVER_GRANT_KEY`; `engine/phases/minion.py::
+Status: implemented. Previously `blocked` (OQ-25, resolved) for want of a
+way to pre-grant a one-shot, this-combat-only optional maneuver at announce
+time, before the block-attempt window opens. `rules-engineer`'s fix:
+`engine/combat.py::run_combat` gained an optional `initial_combat_state`
+parameter plus `seed_pre_combat_maneuver_grant`/
+`pre_combat_maneuver_available`/`consume_pre_combat_maneuver_grant` helpers
+keyed by `PRE_COMBAT_MANEUVER_GRANT_KEY`; `engine/phases/minion.py::
 ActionCardSpec` gained a `maneuver_grant` field, threaded by `engine/
-action.py::perform_minion_action`'s own new `maneuver_grant` parameter into
-its internal `run_combat` call on the blocked branch -- see that module's own
-docstrings for the full mechanism, proven generically (not Fleetness-
-specific) by `tests/rules/test_pre_combat_maneuver_grant.py`.
+action.py::perform_minion_action`'s own `maneuver_grant` parameter into its
+internal `run_combat` call on the blocked branch -- see those modules' own
+docstrings for the mechanism, proven generically by `tests/rules/
+test_pre_combat_maneuver_grant.py`.
 
-"+1 stealth action." / "[cel] Ⓓ Bleed.": printed *before* either bracketed
-clause (unlike Enchant Kindred's own superior-only "+1 stealth action",
-printed inside that clause's bracket) -- this baseline applies to the action
-regardless of which discipline-level clause is used, so both clauses below
-carry `base_stealth=1`. The basic clause itself is a plain directed,
-default-amount (1) bleed -- no "+1 bleed" bonus printed on this clause,
-unlike Enchant Kindred's/Line Brawl's own `[pre]` clauses -- mirroring
-`engine/phases/minion.py::_perform_bleed`'s own `resolve` closure byte-for-
-byte (same fixed/impulse-window/clamp/edge-holder computation) so any other
-bleed-amount card still composes correctly on top of this bleed. Card text
-literally prints "Bleed", so `ActionCardSpec.action` is declared
-`ACTION_BLEED` (OQ-17 follow-up requirement, not merely cosmetic), so an
-existing bleed-gated provider sharing the same block-attempt/bleed-amount
-hook windows (e.g. `bonding.py`'s superior clause) is not silently and
-wrongly suppressed. The printed 1-blood cost is burned from the acting
-vampire (`acting_vampire.blood -= 1`, mirrors `grooming_the_protege.py`'s own
-`source.blood -= amount`) at the very start of `resolve()`, before the bleed
-computation -- only reached on the unblocked branch.
+"+1 stealth action." / "[cel] Ⓓ Bleed.": printed before either bracketed
+clause (unlike Enchant Kindred's own superior-only "+1 stealth action"), so
+this baseline applies regardless of which clause is used -- both clauses
+below carry `base_stealth=1`. The basic clause is a plain directed,
+default-amount (1) bleed -- no "+1 bleed" bonus printed here, unlike
+Enchant Kindred's/Line Brawl's `[pre]` clauses -- mirroring
+`_perform_bleed`'s own `resolve` closure so other bleed-amount cards still
+compose on top. `ActionCardSpec.action` is declared `ACTION_BLEED` (OQ-17
+follow-up requirement) so a bleed-gated provider sharing the same hook
+windows (e.g. `bonding.py`'s superior clause) isn't silently suppressed.
+The printed 1-blood cost is burned from the acting vampire at the start of
+`resolve()`, before the bleed computation -- only reached on the unblocked
+branch (Rulebook SS4 step 3, quoted in `engine/action.py`'s module
+docstring: cost is paid only if unblocked).
 
 "[CEL] Ⓓ Enter combat with a locked minion. This acting vampire gets 1
 optional maneuver during that combat.": the "enter combat" half is the same
-shape as `line_brawl.py`'s own `[pot]` clause ("Enter combat with a
-minion"), with one extra target filter -- "a locked minion" restricts the
-announce-time target choice to one of the opponent's `zone == "ready"` *and*
-`locked == True` vampires (the opponent's other ready vampires, locked or
-not, remain free to attempt a block with -- the Ⓓ marker ties block-
-eligibility to which Methuselah is targeted, not to the specific minion
-named, and a *locked* vampire can never itself be offered as a blocker,
-`engine/action.py::attempt_block`'s own `state.ready_unlocked_vampires`
-candidate list). The ruling on file ("If the action is unblocked when it
-resolves and the target is unlocked, the action fizzles") is the already-
-generalized OQ-21 fizzle convention: `resolve()` re-validates the
-already-announced target is still `zone == "ready"` and `locked == True`
-before acting, doing nothing (beyond the already-paid cost) otherwise. "This
-acting vampire gets 1 optional maneuver during that combat" is the OQ-25
-pre-combat grant: `ActionCardSpec.maneuver_grant=acting_vampire.instance_id`
-(for the blocked branch, threaded by `perform_minion_action` into its own
-internal `run_combat` call) and `resolve()`'s own direct `run_combat` call
-(for the unblocked branch) both seed
-`engine.combat.seed_pre_combat_maneuver_grant(acting_vampire.instance_id)` --
-the two distinct paths OQ-25's own resolution built support for. A
-dedicated, generic `"maneuver"` hook provider (`_provide_fleetness_maneuver`
-below) recognizes the seeded grant via `pre_combat_maneuver_available`/
-`consume_pre_combat_maneuver_grant` and offers/claims it -- mirroring the
-shape `tests/rules/test_pre_combat_maneuver_grant.py`'s own fake provider
-already proved end-to-end.
+shape as `line_brawl.py`'s `[pot]` clause, with one extra target filter --
+"a locked minion" restricts the announce-time target choice to the
+opponent's `zone == "ready"` *and* `locked == True` vampires (the Ⓓ marker
+ties block eligibility to the targeted Methuselah, not the named minion,
+and a locked vampire is never itself a legal blocker,
+`attempt_block`'s own `ready_unlocked_vampires` list). The on-file ruling
+("unblocked ... target is unlocked ... fizzles") is the OQ-21 fizzle
+convention: `resolve()` re-validates the target is still ready-and-locked
+before acting, doing nothing further otherwise. "Gets 1 optional maneuver
+during that combat" is the OQ-25 pre-combat grant:
+`ActionCardSpec.maneuver_grant=acting_vampire.instance_id` (blocked branch,
+threaded by `perform_minion_action`) and `resolve()`'s own direct
+`run_combat` call (unblocked branch) both seed
+`seed_pre_combat_maneuver_grant(acting_vampire.instance_id)`. The generic
+`"maneuver"` hook provider `_provide_fleetness_maneuver` below recognizes
+the seeded grant via `pre_combat_maneuver_available`/
+`consume_pre_combat_maneuver_grant` and offers/claims it, mirroring
+`tests/rules/test_pre_combat_maneuver_grant.py`'s fake provider.
 
-"Which specific locked minion to enter combat with" is a new per-card
-`Decision` (kind `"fleetness_combat_target"`), raised inside `apply()`, at
-announce time, before the block-attempt window opens -- not deferred to
-`resolve()` (Rulebook SS4 "Announce the Action" + this engine's own
-`ActionCardSpec` contract both require every detail, including the target,
-fixed by that point; same rules-auditor-settled timing already applied by
-`line_brawl.py`'s own `[pot]` clause). "Only when needed": with exactly one
-eligible locked target, bound directly with no decision raised; with none,
-the whole clause is not offered at all (never a vacuous choice); with more
-than one, a `Decision` offers one choice per eligible target.
+The target is chosen inside `apply()`, at announce time (Rulebook SS4
+"Announce the Action" + `ActionCardSpec` contract; same timing as
+`line_brawl.py`'s `[pot]` clause, OQ-21). With exactly one eligible locked
+target it is bound directly with no decision raised; with none, the clause
+is not offered at all; with more than one, a `Decision`
+(`"fleetness_combat_target"`) offers one choice per target.
 
-Basic vs superior discipline gating: mirrors `enchant_kindred.py`'s/
-`line_brawl.py`'s own convention exactly (`card.disciplines`, a plain printed-
-stat read, not the attachment-aware `effective_disciplines` -- OQ-8's own
-finding about `card.disciplines` missing attachments is noted but not acted
-on here, since these are the structurally closest precedents and both
-already settled on this convention for the identical basic/superior-split
-shape). The basic `[cel]` clause is offered whenever the acting vampire has
-either `"cel"` or `"CEL"` (superior unlocks either effect, Rulebook SS3); the
-superior `[CEL]` clause is offered only with `"CEL"`.
+Basic vs superior discipline gating mirrors `enchant_kindred.py`'s/
+`line_brawl.py`'s convention: reads `card.disciplines` (plain printed stat,
+not attachment-aware `effective_disciplines` -- OQ-8 noted, not acted on
+here, matching those precedents). The basic `[cel]` clause is offered
+whenever the acting vampire has either `"cel"` or `"CEL"` (superior unlocks
+either effect, Rulebook SS3); the superior `[CEL]` clause only with `"CEL"`.
 """
 
 from collections.abc import Mapping
@@ -286,10 +265,8 @@ def _provide_fleetness_superior(state: GameState, context: Mapping[str, Any]) ->
         play_from_hand(s, player, KRCG_ID)
         opponent = s.other_player(player)
 
-        # Target fixed now, at announce time (module docstring): Rulebook
-        # SS4 "Announce the Action" + this engine's own `ActionCardSpec`
-        # contract both require the target to be set before the
-        # block-attempt window opens -- not deferred to `resolve()`.
+        # Target fixed at announce time, not deferred to resolve() -- OQ-21,
+        # see module docstring.
         targets = _eligible_locked_targets(s, player)
         if len(targets) == 1:
             target_id = targets[0].instance_id

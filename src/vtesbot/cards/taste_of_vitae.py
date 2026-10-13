@@ -33,22 +33,18 @@ No Ⓓ marker, no prey/predator/"other Methuselahs" wording, no political
 vote -- a plain Combat card scoped to the current combat's own two
 combatants, so OQ-1 (CLAUDE.md SS3) does not apply.
 
-Status: implemented. Previously `blocked` (OQ-29, `docs/OPEN_QUESTIONS.md`,
-now resolved) for want of (1) an "End of Round" timing window and (2) a
-round-scoped "blood lost to damage" tracker. `rules-engineer`'s fix:
-`engine/combat.py` gained `END_OF_ROUND_HOOK`/`_ask_end_of_round`, dispatched
-once per round -- via the engine's standard two-sided, repeatable impulse
-window (`hooks.resolve_impulse_window`), not a single binary ask -- on every
-round-exit path (normal end, premature "no longer ready" end, and "someone
-pressed, round continues"); `engine/damage.py::apply_damage` gained an
-optional `round_state` parameter recording exactly how much blood each
-vampire actually lost to its own mend/aggravated-burn branches this round,
+Status: implemented. Previously `blocked` (OQ-29, resolved) for want of (1)
+an "End of Round" timing window and (2) a round-scoped "blood lost to
+damage" tracker. `rules-engineer`'s fix: `engine/combat.py` gained
+`END_OF_ROUND_HOOK`/`_ask_end_of_round`, dispatched once per round via the
+engine's standard two-sided, repeatable impulse window
+(`hooks.resolve_impulse_window`) on every round-exit path; `engine/
+damage.py::apply_damage` gained an optional `round_state` parameter
+recording how much blood each vampire actually lost to damage this round,
 queryable via `blood_lost_to_damage_this_round(round_state, vampire_id)`
-(survives the tracked vampire being burned afterward -- the record is a
-plain dict entry, untouched by any zone transition). See `engine/combat.py`'s
-own "End of Round and round-scoped blood-loss tracking" docstring section
-for the full mechanism; this module is the first production card wired
-against it.
+(survives the tracked vampire being burned afterward -- a plain dict entry,
+untouched by zone transitions). See `engine/combat.py`'s "End of Round and
+round-scoped blood-loss tracking" docstring section for the mechanism.
 
 `END_OF_ROUND_HOOK`'s own context carries `acting_player`/`acting_vampire`/
 `blocking_player`/`blocking_vampire` as plain ids (absolute, not
@@ -83,14 +79,11 @@ same shared `round_state` dict, never the additional-strike one (same
 "This vampire gains blood equal to the amount of blood lost by the opposing
 vampire to damage this round.": `blood_lost_to_damage_this_round(round_state,
 <opposing vampire's instance id>)`, recomputed fresh inside `apply()` (not
-captured at offer time) since `END_OF_ROUND_HOOK`'s own window is a real,
-repeatable impulse window in which other effects could in principle run
-between this option being offered and actually chosen. An amount of 0 (the
-opponent lost no blood to damage this round) is not itself a reason to
-withhold the option -- the card text does not condition playability on a
-nonzero amount, only on the listed zone/hand/once-per-round gates -- so this
-provider still offers (and the effect still "succeeds," gaining 0 blood) in
-that case.
+captured at offer time), since `END_OF_ROUND_HOOK`'s window is repeatable
+and another effect could run between offer and apply. An amount of 0 is not
+itself a reason to withhold the option: the card text conditions
+playability only on the listed zone/hand/once-per-round gates, not on a
+nonzero amount.
 
 "Cannot be played against an ally." [PIB 20121028]: unreachable today, same
 reason OQ-7/OQ-10 already note for ally combat generally -- no ally can

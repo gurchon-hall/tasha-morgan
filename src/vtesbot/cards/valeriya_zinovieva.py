@@ -15,9 +15,9 @@ group 6, capacity 7, disciplines `["cel", "pre", "pro", "POT"]`. Legal since
 brujah.json` (3 copies, tied for the deck's highest crypt count alongside
 Saku Pihlajamäki).
 
-Two distinct components, exactly like Marcos Belegrad's and Modius's own
+Two distinct components, exactly like Marcos Belegrad's own
 "<title>: <ability text>" printed-text shape (`src/vtesbot/cards/
-marcos_belegrad.py`, `src/vtesbot/cards/modius.py`):
+marcos_belegrad.py`):
 
 1. "Anarch Baron of Moscow" names the title this specific printed vampire
    carries -- `CryptCard.title == "Baron"` (confirmed above). The vote value
@@ -32,35 +32,23 @@ marcos_belegrad.py`, `src/vtesbot/cards/modius.py`):
    only part this module implements.
 
 Timing window / shape: a flat, always-true combat bonus, not a choice a
-Methuselah elects to apply or withhold turn to turn (CLAUDE.md rule 3's
-"mandatory effects defined by the rules" exception) -- exactly the kind of
-printed vampire ability `engine/combat.py`'s own module docstring names as
-the motivating case for `"combat_strength_modifier"` ("a passive, mandatory
-numeric hook ... for printed vampire abilities that are not a choice, e.g. a
-flat '+1 strength' line"): `Hook.COMBAT_STRENGTH_MODIFIER`/
-`COMBAT_STRENGTH_MODIFIER_HOOK`, summed via `hooks.sum_modifiers` into every
-hand-strike (and card-strike, via `_base_hand_strike_damage`-style reads,
-e.g. `dust_up.py`) damage computation for this vampire's own strikes. No new
-engine hook wiring is needed: this is the hook's first production provider,
-but the call site (`engine/combat.py::_strike_strength`) and the generic
-`sum_modifiers` contract were already wired and tested (milestone-3
-scaffolding pass, `tests/rules/test_combat.py`,
-`tests/cards/test_dust_up.py::test_ani_damage_stacks_with_a_live_strength_
-modifier`) before this card existed.
+Methuselah elects to apply or withhold (CLAUDE.md rule 3's "mandatory
+effects defined by the rules" exception) -- the motivating case for
+`"combat_strength_modifier"` (`engine/combat.py`'s own module docstring: "a
+passive, mandatory numeric hook ... for printed vampire abilities that are
+not a choice, e.g. a flat '+1 strength' line"), summed via
+`hooks.sum_modifiers` into every strike damage computation for this
+vampire. No new engine hook wiring is needed: the call site
+(`_strike_strength`) and the generic `sum_modifiers` contract already
+exist.
 
-Target/scope: "+1 strength" is Valeriya's own strength, affecting only *her
-own* strikes (the controller's combatant in the current matchup), never the
-opponent's -- the provider below checks that the specific vampire named by
-`context["vampire"]` (the striking combatant, per `_strike_strength`'s own
-`vampire=vampire.instance_id` call-site convention) is controlled by
-`context["player"]` and is this exact printed card (`krcg_id == KRCG_ID`); it
-is not merely "any Baron" or "any Brujah" (unlike e.g. a hypothetical clan-
-conditional bonus) and never contributes anything for the opponent's side of
-the same strike. No zone (`ready`/`torpor`) gate is added: `"combat_strength_
-modifier"` is only ever read for a vampire that is actually a live combatant
-in a resolving strike (`engine/combat.py::_strike_strength`/`_ask_strike`'s
-own call sites), and a torpid vampire cannot be in combat at all, so an
-explicit zone check here would be dead code, not a missing safeguard.
+Target/scope: "+1 strength" is Valeriya's own strength, affecting only
+*her own* strikes, never the opponent's -- the provider checks that the
+vampire named by `context["vampire"]` is controlled by `context["player"]`
+and is this exact printed card (`krcg_id == KRCG_ID`), not merely "any
+Baron" or "any Brujah". No zone gate is added: `"combat_strength_modifier"`
+is only ever read for a vampire that is actually a live combatant in a
+resolving strike, and a torpid vampire cannot be in combat at all.
 
 Duration: for as long as this specific vampire is in play and striking --
 no "until end of combat"/"this round only" qualifier in the text, unlike a

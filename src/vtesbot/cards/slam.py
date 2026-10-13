@@ -22,16 +22,14 @@ diamond ... may opt to use either the basic (plain text) or the superior
 (bold) effect ... but not both"). `clan_requirement == []`, `path_
 requirement == []`, `cost == {"type": "Blood", "value": 1}` -- 1 blood,
 printed cost box, independent of which clause is used (same precondition
-shape as Fleetness's own 1-blood cost, `src/vtesbot/cards/fleetness.py`:
-the acting vampire itself must have at least 1 blood to play this card at
-all). Unlike an action card (Rulebook SS4 "If unblocked -> pay cost,
-resolve. If blocked -> ... cost not paid"), a Combat card has no
-block-attempt window of its own -- it is simply chosen as a strike or a
-maneuver during an already-resolving combat -- so the 1 blood is burned
-immediately as part of playing the card (in the same `apply()` that calls
-`play_from_hand`), not deferred to any later resolution step. `burn_option
-is False`, `trifle is False`. Legal since 2007-10-26; confirmed on the
-active 2P allowed list (`data/formats/2p/2026-10-03.json`, krcg id 101798).
+shape as Fleetness's 1-blood cost). Unlike an Action card (Rulebook SS4 "If
+unblocked -> pay cost, resolve. If blocked -> ... cost not paid"), a Combat
+card has no block-attempt window of its own -- it is chosen as a strike or
+a maneuver during an already-resolving combat -- so the 1 blood is burned
+immediately as part of playing the card, not deferred to a later
+resolution step. `burn_option is False`, `trifle is False`. Legal since
+2007-10-26; confirmed on the active 2P allowed list (`data/formats/2p/
+2026-10-03.json`, krcg id 101798).
 
 No Ⓓ marker, no prey/predator/"other Methuselahs" wording, no political
 vote -- a plain Combat card played during an already-resolving combat, so
@@ -52,69 +50,48 @@ section for the full mechanism, proven generically (not Slam-specific) by
 its own engine-level tests; this module is the first production card wired
 against it.
 
-"[pot] Strike: hand strike at +2 damage." (basic clause): the exact same
-shape as Dust Up's own `[pot]` clause (`src/vtesbot/cards/dust_up.py`,
-identical printed text) -- a plain `COMBAT_STRIKE_OPTION_HOOK` grant, gated
-on basic-or-superior `"pot"`, the card in hand, and at least 1 blood on the
-acting vampire (the printed cost). "+2 damage" is computed relative to
-whatever a plain hand strike would otherwise deal right now (base strength
-plus any live `combat_strength_modifier` contribution), the same
-non-hardcoded computation `dust_up.py`'s own `_base_hand_strike_damage`
-helper performs, so the "[TOM 19960225]" ruling ("[a]dditional damage
-inherits all of the properties of the base damage" -- i.e. it stacks with,
-rather than replaces, any other strength bonus already in play) holds
-structurally. No `ignore_dodge` flag: an ordinary, fully dodgeable hand-
-strike substitute, same as Dust Up's own `[pot]` clause.
+"[pot] Strike: hand strike at +2 damage." (basic clause): same shape as
+Dust Up's own `[pot]` clause (identical printed text) -- a plain
+`COMBAT_STRIKE_OPTION_HOOK` grant, gated on basic-or-superior `"pot"`, the
+card in hand, and at least 1 blood on the acting vampire. "+2 damage" is
+computed relative to whatever a plain hand strike would otherwise deal
+right now, the same non-hardcoded computation as `dust_up.py`'s
+`_base_hand_strike_damage`, so the "[TOM 19960225]" ruling (additional
+damage stacks with, rather than replaces, any other strength bonus) holds
+structurally. No `ignore_dodge` flag: an ordinary, dodgeable strike.
 
 "[POT] As above, with 1 optional maneuver, only usable to get to close
 range." (superior clause): a `MANEUVER_HOOK` provider, gated on superior
-`"POT"` only, the card in hand, at least 1 blood on the acting vampire, and
+`"POT"`, the card in hand, at least 1 blood, and
 `not strike_committed_this_round(context)` (Rulebook SS4 Combat > Determine
 Range: "they cannot use a second strike card or weapon to maneuver again in
-the same round" -- enforced here at the *offering* provider's own gate, per
-`strike_committed_this_round`'s own documented contract, not centrally by
-the engine). "Only usable to get to close range": the maneuver itself is
-range-restricted, not merely a cosmetic qualifier -- gated on
-`state.combat_range == LONG_RANGE` (the hook provider's own `state`
-parameter, always the live `GameState`), since `_ask_maneuver` flips
-whichever direction the round is currently at regardless of which specific
-maneuver source was chosen; offering this option only while already at long
-range guarantees the flip it causes is always long -> close, never the
-other direction. Choosing it both plays the maneuver (consumes the card,
-burns the 1 blood cost, flips the range) and calls `commit_strike_for_round`
-with a `HookOption` wrapping the "as above" bundled strike itself ("hand
-strike at +2 damage", the identical effect the basic clause grants,
-computed the same non-hardcoded way) -- per `commit_strike_for_round`'s own
-contract, that wrapped `apply(state)` performs no further side effect of
-its own (the card was already played, and its cost already paid, at
-maneuver time; the wrapped `apply` exists solely to compute and return the
-strike's damage from whatever base hand-strike damage is live when the
-strike step actually resolves, which may differ from the value at maneuver
-time if some other effect changes it in between).
+the same round", enforced at this provider's own gate). "Only usable to get
+to close range": gated on `state.combat_range == LONG_RANGE`, since
+`_ask_maneuver` flips whichever direction the round is at regardless of the
+maneuver's source -- offering this only while at long range guarantees the
+flip is always long -> close. Choosing it plays the maneuver (consumes the
+card, burns 1 blood, flips the range) and calls `commit_strike_for_round`
+with a `HookOption` wrapping the "as above" bundled strike (identical
+effect to the basic clause); per that function's contract, the wrapped
+`apply(state)` has no further side effect of its own -- it exists solely
+to compute and return the strike's damage from whatever base hand-strike
+damage is live when the strike step actually resolves (which may differ
+from the value at maneuver time).
 
 "[POT]The optional maneuver cannot be used if the strike cannot be used
-(eg. {Hidden Lurker})." [LSJ 20021028]: Hidden Lurker (krcg id 100916) is
-not implemented in this project (not on any suggested 2P decklist seen so
-far), and no mechanism anywhere in this engine currently makes a
-combatant's strike "unusable" in the sense this ruling guards against
-(every combatant can always choose a plain hand strike at minimum) -- so
-this precondition is vacuously always satisfied today, same "not reachable
-today, but correctly modeled either way" status several other entries'
-own not-yet-relevant rulings already carry (e.g. `dust_up.py`'s own OQ-21
-citation for Daring the Dawn). A future pass implementing Hidden Lurker (or
-any other "this vampire cannot strike" effect) and finding this clause
-needs an actual gate against it will need its own engine hook for "can this
-combatant currently choose a strike" -- not pre-built or guessed at here.
+(eg. {Hidden Lurker})." [LSJ 20021028]: Hidden Lurker is not implemented in
+this project, and no mechanism in this engine currently makes a combatant's
+strike "unusable" (every combatant can always choose a plain hand strike at
+minimum) -- vacuously always satisfied today, same "not reachable today,
+but correctly modeled either way" status as `dust_up.py`'s OQ-21 citation
+for Daring the Dawn. A future pass implementing such an effect will need
+its own "can this combatant currently choose a strike" hook.
 
-"with 1 optional maneuver": optional, unlike Pursuit's own unqualified
-basic "[cel] Maneuver." clause -- but this has no engine consequence beyond
-what the generic "do not maneuver" decline option (`hooks.PASS_VALUE`,
-always offered alongside any `MANEUVER_HOOK` option by `_ask_maneuver`)
-already provides; a player simply does not choose this option if they do
-not want it, same reasoning `pursuit.py`'s own module docstring gives for
-its basic clause's lack of an "optional" qualifier (the inverse case, a
-*mandatory*-once-played maneuver -- either way, nothing beyond the existing
-decline choice is needed).
+"with 1 optional maneuver": optional, unlike Pursuit's unqualified basic
+"[cel] Maneuver." clause, but with no engine consequence beyond the
+generic "do not maneuver" decline (`hooks.PASS_VALUE`, always offered
+alongside any `MANEUVER_HOOK` option) -- same reasoning `pursuit.py`'s
+docstring gives for its own basic clause, the inverse case.
 """
 
 from collections.abc import Mapping

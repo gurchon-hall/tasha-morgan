@@ -115,23 +115,17 @@ def bleed_bookkeeping(pending: dict[str, Any]) -> dict[str, Any]:
     `tests/rules/test_pending_modifier.py::
     test_bleed_bookkeeping_lets_an_exempt_provider_skip_the_shared_limited_flag`.
 
-    `pending` (`engine/action.py::perform_minion_action`'s per-minion-action
-    `dict[str, Any]` scratch container, OQ-11 `docs/OPEN_QUESTIONS.md`) is
-    freshly created once per single minion action, *before* the block-attempt
-    phase runs, and is threaded unchanged into both the earlier phase's
+    Keyed off `pending` (`engine/action.py::perform_minion_action`'s
+    per-minion-action `dict[str, Any]` scratch container, OQ-11), not a
+    per-window-local `amount_box`: `pending` is freshly created once per
+    single minion action, *before* the block-attempt phase runs, and is
+    threaded unchanged into both the earlier phase's
     `"stealth_modifier"`/`"intercept_modifier"` hook context and the later
-    `"bleed_amount_modifier"` window's own context -- so it is the per-action
-    (not merely per-window) scratch object this bookkeeping actually needs.
-    This function originally keyed off `_perform_bleed`'s `resolve()`-local
-    `amount_box` (a `[base_amount]` list that only exists during the later
-    window); that was sufficient for Threats/Telepathic Counter, which only
-    ever act in that one window, but could not see a "(limited)" bleed
-    increase played earlier in the *same* action from the block-attempt
-    phase (e.g. Bonding's superior clause, "[DOM] +1 stealth and +1 bleed
-    (limited)", whose stealth half is offered during the earlier phase).
-    Switching the storage to `pending` closes that gap for every caller with
-    no change to call-site lifetime semantics (both objects are freshly
-    created once per single bleed action) and no engine change -- `pending`
-    was already threaded exactly where needed by OQ-11's resolution.
+    `"bleed_amount_modifier"` window's context -- the per-action (not
+    merely per-window) scratch object this bookkeeping needs, so a
+    "(limited)" bleed increase played during the earlier phase (e.g.
+    Bonding's superior clause, "[DOM] +1 stealth and +1 bleed (limited)")
+    is visible to a provider offered only in the later window, and vice
+    versa.
     """
     return pending.setdefault("_bleed_bookkeeping", {})

@@ -14,16 +14,14 @@ Card type: crypt vampire (`types == ["Vampire"]`). Clan Brujah, title "Baron"
 confirmed on the active 2P allowed list (`data/formats/2p/2026-10-03.json`)
 and in the suggested 2P decklist `data/decks/vekn-2p/brujah.json` (2 copies).
 
-Exactly the same shape as Atiena (201579, `src/vtesbot/cards/atiena.py`),
-whose module docstring this one mirrors: a single clause, the title itself
--- no colon, no second sentence, no extra ability text. "Anarch Baron of
-Canberra." names the title this specific printed vampire carries --
-`CryptCard.title == "Baron"` (confirmed above). The vote value a ready Baron
-contributes (2, Rulebook SS4 Politics > Gaining Votes) is already handled
-generically by `engine/politics.py::TITLE_VOTES` (`{"Baron": 2, ...}`) for
-*every* titled vampire regardless of sect preamble -- see `atiena.py`'s own
-docstring for why the plain "Baron" key already covers an "Anarch Baron" and
-why no sect-dependent vote-value question is open here.
+Same shape as Atiena (201579, `src/vtesbot/cards/atiena.py`): a single
+clause, the title itself -- no colon, no second sentence, no extra ability
+text. "Anarch Baron of Canberra." names the title this specific printed
+vampire carries -- `CryptCard.title == "Baron"` (confirmed above). The vote
+value a ready Baron contributes (2, Rulebook SS4 Politics > Gaining Votes)
+is handled generically by `engine/politics.py::TITLE_VOTES` (`{"Baron": 2,
+...}`) for every titled vampire regardless of sect preamble, so no
+sect-dependent vote-value question is open here.
 
 There is accordingly nothing left for this module to implement beyond
 registering the card: no combat bonus, no reaction, no modifier of any kind

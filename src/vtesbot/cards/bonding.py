@@ -29,93 +29,73 @@ play it, exactly the "basic vs superior" shape already used by
 `threats.py`/`telepathic_counter.py`/`celerity.py`):
 
 "[dom] +1 bleed (limited)" (the basic clause): a clean `"bleed_amount_modifier"`
-provider, byte-for-byte the same pattern as `threats.py` -- offered only to
-the acting (bleeding) player (checked by looking the acting vampire up in
-`context["player"]`'s own `vampires` dict, same as Threats), requiring at
-least basic Dominate (`"dom"` or `"DOM"` in the vampire's disciplines). "Only
-usable during a bleed action": *not* re-checked via `context.get("action")`
-here, unlike the superior clause below -- verified directly against
-`engine/phases/minion.py::_perform_bleed`'s `resolve()` closure, the
-`"bleed_amount_modifier"` hook's context is `{"vampire": ..., "amount":
-amount_box, "pending": pending}`, with no `"action"` key at all (unlike the
-`"stealth_modifier"`/`"intercept_modifier"` hooks' context, which does carry
-one per OQ-9). Gating on `context.get("action") == ACTION_BLEED` here would
-therefore always read `None != "bleed"` and silently suppress this clause
-entirely -- exactly the "silent mis-resolution" CLAUDE.md forbids. The
-restriction is instead "trivially satisfied by which hook this card
-registers against" (`threats.py`'s own words): `"bleed_amount_modifier"` is
-only ever offered from `_perform_bleed`, never from `_perform_hunt`, so no
-extra check is needed or correct here.
+provider, same pattern as `threats.py` -- offered only to the acting
+(bleeding) player, requiring at least basic Dominate (`"dom"` or `"DOM"`).
+"Only usable during a bleed action" is *not* re-checked via
+`context.get("action")` here, unlike the superior clause below:
+`"bleed_amount_modifier"`'s context (`_perform_bleed`'s `resolve()`
+closure) carries no `"action"` key at all (unlike `"stealth_modifier"`/
+`"intercept_modifier"`'s context, OQ-9) -- gating on
+`context.get("action") == ACTION_BLEED` here would always read
+`None != "bleed"` and silently suppress this clause entirely. The
+restriction is instead satisfied by which hook this card registers
+against: `"bleed_amount_modifier"` is only ever offered from
+`_perform_bleed`, never `_perform_hunt`.
 
 "[DOM] +1 stealth and +1 bleed (limited)" (the superior clause): a
 `"stealth_modifier"` provider, requiring superior Dominate (`"DOM"`). Unlike
 the basic clause's hook, `"stealth_modifier"`'s context *does* carry
-`context["action"]` (OQ-9), so the "[DOM] Cannot be used to increase the
-stealth of a non-bleed action" ruling is enforced with an explicit
-`context.get("action") != ACTION_BLEED: return []` gate -- this hook is
-shared with hunt and political-action's own stealth ping-pong
-(`engine/phases/minion.py::_perform_hunt`, `engine/politics.py::
-political_action`), so hook selection alone does not suffice here the way it
-does for the basic clause. The other ruling, "[DOM] Cannot be used if you do
-not need the stealth at the time you play it", needs no extra code at all:
-`engine/action.py::_duel_stealth_intercept`'s own "only when needed"
-ping-pong (module docstring) only ever calls `hooks.offer(STEALTH_MODIFIER_
-HOOK, ...)` on the half of the loop where `intercept >= stealth` ("block
-currently succeeds" = stealth is needed to escape it); the other half
-(`stealth > intercept`, stealth not needed) offers `INTERCEPT_MODIFIER_HOOK`
-to the defender instead, so this provider -- registered only against
-`"stealth_modifier"` -- is simply never invoked at all while stealth is not
-needed. This single play must also deliver the clause's own "+1 bleed" from
-the very same provider call, read much later by `_perform_bleed`'s
-`resolve()` (OQ-11): `apply()` both returns `1` (the `"stealth_modifier"`
-hook's own `int`-delta contract, consumed immediately by `_duel_stealth_
-intercept`) *and* stashes `pending[PENDING_BLEED_AMOUNT_KEY] =
-pending.get(PENDING_BLEED_AMOUNT_KEY, 0) + 1` (accumulating with `+=` rather
-than overwriting, in case a future different source also stashes into the
-same key), which `_perform_bleed`'s `resolve()` folds into `base_amount`
-*before* the separately-clamped `"bleed_amount_modifier"` window runs,
-exactly the mechanism OQ-11's resolution built and
-`tests/rules/test_pending_modifier.py` proves end-to-end with a fake
-stand-in provider; this module wires the real card against it.
+`context["action"]` (OQ-9), and that hook is shared with hunt and
+political-action's own stealth ping-pong (`_perform_hunt`,
+`engine/politics.py::political_action`), so hook selection alone does not
+suffice here: the "[DOM] Cannot be used to increase the stealth of a
+non-bleed action" ruling is enforced with an explicit
+`context.get("action") != ACTION_BLEED: return []` gate. The other ruling,
+"[DOM] Cannot be used if you do not need the stealth at the time you play
+it", needs no extra code: `_duel_stealth_intercept`'s "only when needed"
+ping-pong only ever calls `hooks.offer(STEALTH_MODIFIER_HOOK, ...)` while
+stealth is currently needed (`intercept >= stealth`); the other half offers
+`INTERCEPT_MODIFIER_HOOK` to the defender instead, so this provider is
+simply never invoked while stealth is not needed. This single play must
+also deliver the "+1 bleed" half from the same provider call, read much
+later by `_perform_bleed`'s `resolve()` (OQ-11): `apply()` both returns `1`
+(the hook's `int`-delta contract) *and* stashes
+`pending[PENDING_BLEED_AMOUNT_KEY] += 1`, which `resolve()` folds into
+`base_amount` before the separately-clamped `"bleed_amount_modifier"`
+window runs -- the mechanism OQ-11 built, proved end-to-end by
+`tests/rules/test_pending_modifier.py`'s fake stand-in provider.
 
 Rulebook SS3 "may opt to use either the basic or the superior effect ... but
-not both": a superior-Dominate vampire is eligible for *both* providers above,
-but the two fire in different hook windows at different times within the
-same minion action -- the superior clause can only ever be legally offered
-while a block attempt is in progress and stealth is currently needed (see
-above); if the defender never attempts a block at all this action, "you do
-not need the stealth" for the entire remainder of the action (there is
-nothing to escape), so the superior clause is never offered, and the
-*basic* clause (requiring only `"dom"`/`"DOM"`, i.e. always satisfied by a
-superior-Dominate vampire too) remains available in the later
-`"bleed_amount_modifier"` window -- the vampire ends up using "only" the
-basic effect this time, exactly SS3's "may opt to use either effect"
-(`tests/cards/test_bonding.py::test_superior_vampire_may_opt_to_use_the_
-basic_effect_instead_when_no_block_is_attempted`). Conversely, if a block
-*is* attempted, declining the superior clause's own offer does not lead to
-"use the basic effect instead": declining ends the stealth/intercept
-ping-pong immediately with the block still succeeding at the current
-intercept (bleed's own base stealth is 0, so `intercept(0) >= stealth(0)` is
-trivially already true the instant any blocker is chosen), so the action is
-*blocked* (combat follows) and the later bleed-amount window is never
-reached at all -- not a second, independent chance to fall back to the
-basic effect. Both branches are tested.
+not both": a superior-Dominate vampire is eligible for *both* providers
+above, but they fire in different hook windows at different times within
+the same minion action. The superior clause can only be legally offered
+while a block attempt is in progress and stealth is currently needed; if
+the defender never attempts a block, the superior clause is never offered,
+and the basic clause (always satisfied by a superior-Dominate vampire too)
+remains available in the later `"bleed_amount_modifier"` window -- the
+vampire ends up using "only" the basic effect, exactly SS3's "may opt to
+use either effect" (`tests/cards/test_bonding.py::
+test_superior_vampire_may_opt_to_use_the_basic_effect_instead_when_no_
+block_is_attempted`). Conversely, if a block *is* attempted, declining the
+superior clause's offer does not fall back to the basic effect: declining
+ends the stealth/intercept ping-pong immediately with the block
+succeeding at the current intercept (bleed's base stealth is 0, so
+`intercept(0) >= stealth(0)` already holds once any blocker is chosen), so
+the action is blocked and the later bleed-amount window is never reached.
+Both branches are tested.
 
 "(limited)" (SS8 glossary: "an action modifier card cannot be played to
 increase the bleed if the bleed amount is already being increased by
 another action modifier card"; SS2: "A minion cannot play the same action
 modifier card more than once during a single action (even if using a
-different Discipline level)"): tracked via the per-*action* (not merely
-per-window) `bleed_bookkeeping` scratch space now keyed off `pending`
-(`vtesbot.cards._shared`, refactored this pass from its previous `amount_box`
--- which only existed during the later window and could not see a "(limited)"
-increase played earlier, from the stealth window, in the same action --  to
-`pending`, which spans the whole action; see `_shared.py`'s own updated
-docstring). `LIMITED_USED_KEY` is imported directly from `threats.py` (the
-same shared flag) rather than redefined, so Bonding's basic clause,
-Bonding's superior clause, and Threats correctly exclude one another for the
-rest of one action regardless of which hook window each fires in or which
-one goes first.
+different Discipline level)"): tracked via the per-*action*
+`bleed_bookkeeping` scratch space keyed off `pending` (`vtesbot.cards.
+_shared`) rather than the per-window `amount_box`, which could not see a
+"(limited)" increase played earlier in the same action from the stealth
+window (see `_shared.py`'s docstring). `LIMITED_USED_KEY` is imported
+directly from `threats.py` (the same shared flag) rather than redefined,
+so Bonding's two clauses and Threats correctly exclude one another for the
+rest of one action regardless of which hook window fires first.
 """
 
 from collections.abc import Mapping

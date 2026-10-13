@@ -129,27 +129,25 @@ class Hook(StrEnum):
     """A card/printed-ability-granted maneuver, offered during the Determine
     Range step (`engine/combat.py::_ask_maneuver`/`_determine_range`, before
     the strike step each round) -- acting combatant's controller offered
-    first, strictly alternating turn by turn thereafter (never "returns to
-    the acting Methuselah": Rulebook SS4 Combat > Determine Range's "A minion
-    cannot play two maneuvers in a row" is enforced by this alternation,
-    rather than by a provider-side check), closing once two consecutive
-    turns both decline/have nothing. Covers both a plain ability-granted
-    maneuver *not* bundled with choosing a strike (e.g. Saku Pihlajamäki's
-    printed "1 optional maneuver each combat", Pursuit's basic "[cel]
-    Maneuver." clause -- OQ-27, `docs/OPEN_QUESTIONS.md`, resolved) and a
-    maneuver genuinely "from a strike" (Slam, .44 Magnum -- OQ-28, `docs/
-    OPEN_QUESTIONS.md`, resolved): a provider of the latter shape must also
-    call `engine/combat.py::commit_strike_for_round` from its own grant's
-    `apply`-time closure, fixing that combatant's initial strike of the round
-    to the same bundled strike effect (Rulebook SS4 Combat > Strike > Choose
-    Strike: "If a minion has used a maneuver from a strike ... this round,
-    then they cannot choose any other strike for their initial strike of the
-    round") -- see `engine/combat.py` module docstring's "Maneuver bundled
-    with a strike" section for the full mechanism; a plain-maneuver provider
-    simply never calls it. `context["combat_state"]` carries the shared,
-    *combat*-scoped (not round-scoped) scratch dict a provider needs for a
-    once-per-combat grant like Saku's; `context["round_state"]` carries the
-    shared, round-scoped scratch dict `commit_strike_for_round` writes into."""
+    first, strictly alternating turn by turn (Rulebook SS4 Combat >
+    Determine Range's "A minion cannot play two maneuvers in a row" is
+    enforced by this alternation, not a provider-side check), closing once
+    two consecutive turns both decline/have nothing. Covers both a plain
+    ability-granted maneuver not bundled with choosing a strike (Saku
+    Pihlajamäki, Pursuit's basic clause -- OQ-27, resolved) and a maneuver
+    genuinely "from a strike" (Slam, .44 Magnum -- OQ-28, resolved): a
+    provider of the latter shape must also call `engine/combat.py::
+    commit_strike_for_round` from its grant's `apply`-time closure, fixing
+    that combatant's initial strike of the round to the same bundled strike
+    effect (Rulebook SS4 Combat > Strike > Choose Strike: "If a minion has
+    used a maneuver from a strike ... this round, then they cannot choose
+    any other strike for their initial strike of the round") -- see
+    `engine/combat.py` module docstring's "Maneuver bundled with a strike"
+    section for the mechanism; a plain-maneuver provider never calls it.
+    `context["combat_state"]` carries the shared, combat-scoped scratch
+    dict for a once-per-combat grant like Saku's; `context["round_state"]`
+    carries the round-scoped scratch dict `commit_strike_for_round` writes
+    into."""
     END_OF_ROUND = "end_of_round"
     """Rulebook SS4 Combat > Combat Sequence, step 7, "End of Round: End of
     round cards and effects are played here" -- dispatched once per round by
