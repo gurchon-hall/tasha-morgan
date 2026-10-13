@@ -23,7 +23,9 @@ legal decision point. Correctness beats speed and elegance.
 1. **Source every mechanism.** Each function implementing a rule cites
    its source in the docstring (rulebook section or 2P variant
    section). If you cannot cite a source, you are not allowed to
-   implement the behaviour.
+   implement the behaviour. Cite it; don't narrate it — CLAUDE.md §6
+   wants minimal comments, the section/URL plus the non-obvious WHY,
+   not a retelling of the investigation that found it.
 2. **No guessing.** If the sources do not settle a case, append it to
    `docs/OPEN_QUESTIONS.md` and make the engine raise
    `UnresolvedRulingError` for that path. Report it in your final

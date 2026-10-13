@@ -37,16 +37,26 @@ it.
 
 ## 3. Analyse the text
 
-Write a short breakdown in the module docstring:
+Write a short breakdown in the module docstring — short means it,
+per CLAUDE.md §6 (minimal comments, WHY over WHAT): aim for under
+~20-25 lines, not an essay on how you investigated it.
 
-- verbatim card text (basic and superior levels separately);
-- every ruling, verbatim, with its reference;
-- card type(s), requirements (clan, discipline, capacity, title,
-  sect), costs (blood / pool / other);
-- timing window (master phase, out-of-turn, action, action modifier,
-  reaction, combat step, unlock phase, "as played"…);
-- target(s), duration ("for the remainder of combat", "this action",
-  "until…").
+- verbatim card text (basic and superior levels separately) — this
+  one is always quoted in full, it's the one thing memory must never
+  stand in for;
+- requirements (clan, discipline, capacity, title, sect), costs
+  (blood / pool / other), timing window, target(s), duration;
+- rulings: cite the reference for each one; quote the wording verbatim
+  only when the exact phrasing is load-bearing for the implementation
+  or the blocked/implemented decision — otherwise a one-line summary
+  with its citation is enough, especially for rulings that are generic
+  background and not specific to this card;
+- state the WHY only where a reader couldn't infer it from the code:
+  which clause is blocked and why, which engine hook it rides on. Do
+  not restate this checklist, narrate alternatives you rejected, or
+  re-explain an Open Question already written up in
+  `docs/OPEN_QUESTIONS.md` — cite it by number instead of repeating
+  it.
 
 Flag any wording referring to **prey / predator / "other
 Methuselahs" / votes from several players** — check it against the

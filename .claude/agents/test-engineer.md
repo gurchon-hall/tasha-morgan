@@ -43,3 +43,6 @@ You own test quality. Read `CLAUDE.md`, then use the
   report it.
 - Expected values in tests come from sources, not from what the code
   currently outputs.
+- Minimal comments (CLAUDE.md §6): a test docstring cites the source
+  (rulebook section, ruling reference) and names what it proves —
+  it is not a lab notebook of how you arrived at the scenario.

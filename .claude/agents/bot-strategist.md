@@ -37,6 +37,12 @@ provides. Read `CLAUDE.md` first.
    short proposal with trade-offs and get the user's approval before
    implementing.
 
+## Comments
+
+Minimal (CLAUDE.md §6): a heuristic's rationale belongs in
+`docs/DECISIONS.md` as a design choice, cited by reference from the
+code, not written out in-line as a block comment.
+
 ## Honesty about strategy
 
 Strategy advice is opinion, not rules. Never present a heuristic as
