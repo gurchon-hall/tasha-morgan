@@ -2,12 +2,12 @@
 
 Card text: "Anarch." No title, no rulings on file -- same bare-keyword shape
 as Octane (201609, `tests/cards/test_octane.py`), confirmed against the
-installed `krcg` package (`krcg.vtes.VTES[201612].card_text == "Anarch."`,
+installed `krcg` package (`krcg.load()[201612].text == "Anarch."`,
 `.title is None`, `.rulings == []`) and the live API snapshot
 (`data/cards/201612.json`, `"title": null`). No behaviour to exercise.
 """
 
-from krcg.vtes import VTES
+import krcg
 
 from vtesbot.cards import registry
 from vtesbot.cards.siarhei_levchenko import KRCG_ID
@@ -25,8 +25,7 @@ def test_registered_as_implemented_with_no_hooks():
 
 
 def test_krcg_confirms_no_title_and_no_other_clause():
-    VTES.load()
-    card = VTES[KRCG_ID]
-    assert card.card_text.strip() == "Anarch."
+    card = krcg.load()[KRCG_ID]
+    assert card.text.strip() == "Anarch."
     assert card.title is None
     assert card.rulings == []

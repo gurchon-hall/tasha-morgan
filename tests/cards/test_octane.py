@@ -2,7 +2,7 @@
 
 Card text: "Anarch." No title, no rulings on file -- a bare sect keyword
 with no further clause, confirmed against the installed `krcg` package
-(`krcg.vtes.VTES[201609].card_text == "Anarch."`, `.rulings == []`) and the live
+(`krcg.load()[201609].text == "Anarch."`, `.rulings == []`) and the live
 API snapshot (`data/cards/201609.json`, `"title": null`). There is no
 behaviour to exercise, so this test only proves the registration (no hooks
 registered, matching the module's own "nothing left to implement" claim)
@@ -10,7 +10,7 @@ and re-confirms, from the same krcg sources the implementation module cites,
 that the card really does carry no title and no other clause.
 """
 
-from krcg.vtes import VTES
+import krcg
 
 from vtesbot.cards import registry
 from vtesbot.cards.octane import KRCG_ID
@@ -28,8 +28,7 @@ def test_registered_as_implemented_with_no_hooks():
 
 
 def test_krcg_confirms_no_title_and_no_other_clause():
-    VTES.load()
-    card = VTES[KRCG_ID]
-    assert card.card_text.strip() == "Anarch."
+    card = krcg.load()[KRCG_ID]
+    assert card.text.strip() == "Anarch."
     assert card.title is None
     assert card.rulings == []

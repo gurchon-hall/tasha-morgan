@@ -17,15 +17,17 @@ it; start from its tests.
 
 ## 2. Fetch the official data (never from memory)
 
-Use KRCG. The README shows this usage; confirm it against the
-installed version (`python -c "import krcg; help(krcg.vtes)"`) before
-relying on any other attribute:
+Use KRCG. The API has changed across versions — confirm it against the
+installed version (`python -c "import krcg; print(krcg.__version__)"`,
+`help(krcg.load)`) before relying on any attribute name. As of krcg 4.18
+(this project's installed version), there is no `krcg.vtes` submodule at
+all (`from krcg.vtes import VTES` raises `ModuleNotFoundError`); use:
 
 ```python
-from krcg.vtes import VTES
+import krcg
 
-VTES.load()
-card = VTES["Card Name"]
+cards = krcg.load()
+card = cards["Card Name"]  # or cards[krcg_id]
 data = card.to_json()  # inspect keys: text, rulings, types, ...
 ```
 
