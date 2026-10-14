@@ -622,45 +622,46 @@ up an OQ number or the highest one used so far.
   module (`cards/scalpel_tongue.py`, `Status.IMPLEMENTED`) was written in
   a later pass.
 
-## OQ-38: Voter Captivation/Scalpel Tongue - who may play it (status: open)
+## OQ-38: Voter Captivation/Scalpel Tongue - who may play it (status: resolved)
 
-- Situation: both cards are typed (at least partly) Action Modifier and
-  say only "This vampire ..." — no "other than the acting minion" or
-  similar override phrase. Their current implementations
-  (`cards/voter_captivation.py`, `cards/scalpel_tongue.py`'s basic/superior
-  clauses) offer the play to *any* ready (Scalpel Tongue: ready and
-  unlocked) vampire either Methuselah controls, independent of who is
-  the political action's own acting/caller vampire. `rules-auditor`
-  flagged this as a candidate rules violation, not a verified-safe
-  implementer's choice: it contradicts this project's own Perfect Paragon
-  precedent (OQ-30/31), where the structurally identical "[pre] This
-  vampire gets +3 votes" immediately after a trigger clause was read as
-  caller-only.
-- Sources read: Rulebook §2 Card Types (`data/sources/rulebook/
+- Situation: both cards are typed (at least partly) Action Modifier. Their
+  earlier implementations (`cards/voter_captivation.py`,
+  `cards/scalpel_tongue.py`'s basic/superior clauses) offered the play to
+  *any* ready (Scalpel Tongue: ready and unlocked) vampire either
+  Methuselah controls, independent of who is the political action's own
+  acting/caller vampire. `rules-auditor` flagged this as a candidate rules
+  violation, not a verified-safe implementer's choice: it contradicted this
+  project's own Perfect Paragon precedent (OQ-30/31), where the
+  structurally identical "[pre] This vampire gets +3 votes" immediately
+  after a trigger clause was read as caller-only.
+- Rules/interactions: Rulebook §2 Card Types (`data/sources/rulebook/
   2026-10-09/2-card-types.md:305-311`), verbatim: "The acting minion can
   play these cards... Some action modifier cards are played by minions
   'other than the acting minion'. Only minions controlled by the same
   Methuselah can play those cards." No on-file krcg ruling, nor a live
   VEKN card-rulings fetch, settles whether "this vampire" on either card
   means the acting vampire specifically, or any ready vampire of the
-  controller (and, for the non-caller Methuselah, whether the
-  Action-Modifier half is playable at all absent an "other than the
-  acting minion" phrase — Scalpel Tongue's own non-caller use is
-  separately justified by its Reaction half, Voter Captivation has no
-  such second type to lean on).
-- Candidate readings: A) "this vampire" = the acting vampire of the
-  underlying political action specifically (caller-only for the
-  Action-Modifier half, mirroring Perfect Paragon) — would leave the
-  defending Methuselah's Voter Captivation unplayable, and likely needs a
-  second, Reaction-typed trigger or ruling to justify Scalpel Tongue's
-  existing non-caller use. B) "this vampire" = any ready (and, where
-  typed Reaction, unlocked) vampire of whichever Methuselah plays the
-  card, as currently implemented — consistent with how a card with no
-  explicit actor-binding phrase is sometimes read in practice, but not
-  independently sourced here.
-- Impacted code/cards: `cards/voter_captivation.py`,
-  `cards/scalpel_tongue.py` (both `Status.IMPLEMENTED`, reading B
-  currently shipped, untouched pending resolution).
+  controller.
+- Solution (user ruling): Reading A -- "only usable by the acting vampire."
+  Both cards now restrict any caller-side use strictly to the political
+  action's own acting vampire, `context["caller_vampire_id"]`, per the
+  quoted Rulebook default (absent an "other than the acting minion"
+  override phrase on either card's text, the unqualified default applies).
+  `voter_captivation.py` has no Reaction half to lean on, so this fully
+  removes the non-caller Methuselah's own use of the card -- their copy of
+  Voter Captivation is simply unplayable, an accepted consequence, not a
+  gap. `scalpel_tongue.py` is asymmetric instead: its own Reaction half
+  (`types == ["Action Modifier", "Reaction"]`) independently justifies the
+  *non*-caller Methuselah's use (never "the acting minion" for this
+  political action at all, so the Action-Modifier default does not reach
+  them), kept exactly as it was -- any ready, unlocked qualifying vampire
+  of theirs; only the caller-side half of its own eligibility changed, now
+  requiring their own acting vampire specifically, with that vampire's own
+  (necessarily already-locked, Rulebook SS4) `locked` state correctly
+  ignored for that check, unlike the non-caller Reaction-rule check.
+  `cards/voter_captivation.py::_caller_vampire`,
+  `cards/scalpel_tongue.py::_caller_may_play_basic`/`_caller_may_play_
+  superior` implement this. Both cards stay `Status.IMPLEMENTED`.
 
 ## OQ-39: Loup - implemented despite a ruling gap (status: open)
 
@@ -680,6 +681,32 @@ up an OQ number or the highest one used so far.
   treated as needing a new proactive engine primitive
   (`INTERCEPT_DECREASE_HOOK`) built *before* the card shipped, with the
   card staying `blocked` until it existed.
+- Proposed plan (user-directed, not yet implemented -- pending confirmation):
+  Reading B. A new `STEALTH_INCREASE_HOOK` (`engine/action.py`), offered
+  proactively via `hooks.offer_until_pass` at the very top of `attempt_
+  block`'s retry loop (alongside the existing `INTERCEPT_DECREASE_HOOK` own
+  offer there) and reactively, merged into `_duel_stealth_intercept`'s
+  existing `STEALTH_MODIFIER_HOOK`/`INTERCEPT_DECREASE_HOOK` union (`_ask_
+  stealth_or_decrease` would need to become a three-way merge, or gain a
+  sibling). Simpler than `ActiveInterceptDecrease`: a stealth increase is
+  not candidate-dependent (intercept decrease's own `qualifies(blocker)`
+  predicate exists only because intercept is a per-blocker value; stealth
+  is a per-action value), so `ActiveStealthIncrease` needs only a `delta`,
+  summed unconditionally into `_duel_stealth_intercept`'s `stealth`
+  baseline the same way `_active_intercept_decrease` already sums into
+  `intercept` -- recomputed fresh every call, never cached, same OQ-11
+  convention. `loup.py`'s own provider moves from `STEALTH_MODIFIER_HOOK`
+  to `STEALTH_INCREASE_HOOK`, gaining its own per-action "already granted"
+  flag in `pending` (now reachable from both offer points, unlike today's
+  single reactive one) so the standing +1 is activated at most once per
+  action. Perfect Paragon itself needs no change: its own superior clause
+  already uses the (also proactive+reactive) `INTERCEPT_DECREASE_HOOK`
+  directly and has no analogous gap -- the "close... Perfect Paragon"
+  framing refers to this shared precedent/primitive family, not a second
+  open gap on that card. Scope: `rules-engineer` (`engine/action.py` new
+  hook/dataclass + `attempt_block`/`_duel_stealth_intercept` wiring),
+  `card-implementer` (`cards/loup.py` migration), `rules-auditor` review
+  before landing (core engine change, CLAUDE.md §7).
 - Candidate readings: A) ship as-is (current state): a documented,
   conservative under-approximation that never mis-resolves or
   over-applies the card, merely offers it fewer opportunities to be
