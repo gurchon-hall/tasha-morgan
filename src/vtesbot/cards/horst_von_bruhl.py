@@ -2,14 +2,17 @@
 
 Printed text (verbatim, via the installed `krcg` package's `krcg.vtes.VTES
 [201550].card_text`, re-verified live 2026-10-14, matching the raw API
-endpoint `https://api.krcg.org/card/201550`): "Camarilla Prince of
-Mannheim." No rulings on file (`krcg.vtes.VTES[201550].rulings == []`).
+endpoint `https://api.krcg.org/card/201550`, snapshot saved to
+`data/cards/201550.json`): "Camarilla Prince of Mannheim." No rulings on
+file (`krcg.vtes.VTES[201550].rulings == []`).
 
 Card type: crypt vampire (`types == ["Vampire"]`). Clan Ventrue, title
 "Prince", group 6, capacity 6, disciplines `("aus", "dom", "pre", "FOR")`.
-Legal since 2020-11-30 (Fifth Edition); confirmed on the active 2P allowed
-list (`data/formats/2p/2026-10-03.json`) and in the suggested 2P decklist
-`data/decks/vekn-2p/ventrue.json` (1 copy).
+Legal since 2020-12-30 (the raw snapshot's own `"legal"` field -- Fifth
+Edition's own release date, 2020-11-30, is a different field and not this
+card's legality date); confirmed on the active 2P allowed list (`data/
+formats/2p/2026-10-03.json`) and in the suggested 2P decklist `data/decks/
+vekn-2p/ventrue.json` (1 copy).
 
 Same shape as Mkhokheli (201561, `src/vtesbot/cards/mkhokheli.py`) and
 Leumeah/Atiena: a single clause, the title itself -- no colon, no second

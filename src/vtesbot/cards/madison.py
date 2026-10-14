@@ -2,17 +2,20 @@
 
 Printed text (verbatim, via the installed `krcg` package's `krcg.vtes.VTES
 [201557].card_text`, re-verified live 2026-10-14, matching the raw API
-endpoint `https://api.krcg.org/card/201557`): "Camarilla." No rulings on
-file (`krcg.vtes.VTES[201557].rulings == []`).
+endpoint `https://api.krcg.org/card/201557`, snapshot saved to
+`data/cards/201557.json`): "Camarilla." No rulings on file (`krcg.vtes.VTES
+[201557].rulings == []`).
 
 Card type: crypt vampire (`types == ["Vampire"]`). Clan Ventrue, group 6,
 capacity 6, disciplines `("dom", "for", "pre")`. The live API's own
 `"title"` field is `null`/`None` -- unlike Mkhokheli/Horst von Bruhl,
 Madison carries no title at all, just the bare sect keyword "Camarilla."
-with no city, no colon, no second sentence. Legal since 2020-11-30 (Fifth
-Edition); confirmed on the active 2P allowed list (`data/formats/2p/
-2026-10-03.json`) and in the suggested 2P decklist `data/decks/vekn-2p/
-ventrue.json` (1 copy).
+with no city, no colon, no second sentence. Legal since 2020-12-30 (the raw
+snapshot's own `"legal"` field -- Fifth Edition's own release date,
+2020-11-30, is a different field and not this card's legality date);
+confirmed on the active 2P allowed list (`data/formats/2p/2026-10-03.json`)
+and in the suggested 2P decklist `data/decks/vekn-2p/ventrue.json` (1
+copy).
 
 Same shape as Octane (201609, `src/vtesbot/cards/octane.py`) and Siarhei
 Levchenko: "Camarilla." is a sect keyword, not an ability. Nothing in

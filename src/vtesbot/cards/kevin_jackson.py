@@ -2,9 +2,10 @@
 
 Printed text (verbatim, via the installed `krcg` package's `krcg.vtes.VTES
 [201629].card_text`, re-verified live 2026-10-14, matching the raw API
-endpoint `https://api.krcg.org/card/201629`): "Camarilla Prince of Chicago:
-Kevin gets +1 strength in combat with a Brujah. Brujah get +1 strength in
-combat with him."
+endpoint `https://api.krcg.org/card/201629`, snapshot saved to
+`data/cards/201629.json`): "Camarilla Prince of Chicago: Kevin gets +1
+strength in combat with a Brujah. Brujah get +1 strength in combat with
+him."
 
 Rulings: none on file (`krcg.vtes.VTES[201629].rulings == []`, checked
 2026-10-14).
@@ -12,9 +13,11 @@ Rulings: none on file (`krcg.vtes.VTES[201629].rulings == []`, checked
 Card type: crypt vampire (`types == ["Vampire"]`). Clan Ventrue, title
 "Prince", group 7, capacity 7, disciplines `("dom", "for", "pre")`
 (lowercase-only per krcg -- no superior level printed). Legal since
-2022-04-17 (New Blood); confirmed on the active 2P allowed list
-(`data/formats/2p/2026-10-03.json`) and in the suggested 2P decklist
-`data/decks/vekn-2p/ventrue.json` (1 copy).
+2022-05-17 (the raw snapshot's own `"legal"` field -- New Blood's own
+release date, 2022-04-17, is a different field and not this card's legality
+date); confirmed on the active 2P allowed list (`data/formats/2p/
+2026-10-03.json`) and in the suggested 2P decklist `data/decks/vekn-2p/
+ventrue.json` (1 copy).
 
 Two components:
 
