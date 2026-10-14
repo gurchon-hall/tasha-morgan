@@ -1,0 +1,128 @@
+{
+  "_i18n": {
+    "es": {
+      "name": "Bastón lastrado",
+      "card_text": "Sólo utilizable antes de determinar la distancia durante el primer asalto del combate.\nPonle esta carta a este siervo y pon 5 fichas en esta carta; se convierte en un arma blanca (equipo) que puede atacar: fuerza+1 de daño. Por cada punto de daño infligido por este ataque (incluso si es prevenido), quema 1 ficha de esta carta. Quema esta carta cuando no tenga fichas. Un siervo puede tener sólo un ejemplar de esta carta.",
+      "url": "https://static.krcg.org/card/es/weightedwalkingstick.jpg"
+    },
+    "fr": {
+      "name": "Canne lestée",
+      "card_text": "Seulement utilisable avant l'étape de manœuvre durant le premier round de combat.\nMettez cette carte avec 5 compteurs dessus sur ce serviteur ; elle devient un équipement arme de mêlée qui peut frapper : force+1 points de dégâts. Pour chaque point de dégâts infligé par cette frappe (même prévenus), brûlez 1 compteur de cette carte. Brûlez cette carte si elle n'a plus de compteurs. Un serviteur ne peut en avoir qu'un seul exemplaire.",
+      "url": "https://static.krcg.org/card/fr/weightedwalkingstick.jpg"
+    }
+  },
+  "id": 102169,
+  "_name": "Weighted Walking Stick",
+  "url": "https://static.krcg.org/card/weightedwalkingstick.jpg",
+  "types": [
+    "Combat"
+  ],
+  "card_text": "Only usable before range is determined during the first round.\nPut this card with 5 counters on it on this minion; it becomes a melee weapon equipment that can strike: strength+1 damage. For each damage inflicted by this strike (even if prevented), burn 1 counter from this card. Burn this card if it has no counters. A minion can have only one Weighted Walking Stick.",
+  "_set": "CE:U, Third:U, LotN:PA3, KoT:U/PB3, FB:PV3, V5C:PSal4",
+  "sets": {
+    "Camarilla Edition": [
+      {
+        "release_date": "2002-08-19",
+        "rarity": "Uncommon"
+      }
+    ],
+    "Third Edition": [
+      {
+        "release_date": "2006-09-04",
+        "rarity": "Uncommon"
+      }
+    ],
+    "Lords of the Night": [
+      {
+        "release_date": "2007-09-26",
+        "precon": "Assamite",
+        "copies": 3
+      }
+    ],
+    "Keepers of Tradition": [
+      {
+        "release_date": "2008-11-19",
+        "rarity": "Uncommon"
+      },
+      {
+        "release_date": "2008-11-19",
+        "precon": "Brujah",
+        "copies": 3
+      }
+    ],
+    "First Blood": [
+      {
+        "release_date": "2019-10-01",
+        "precon": "Ventrue",
+        "copies": 3
+      }
+    ],
+    "Fifth Edition (Companion)": [
+      {
+        "release_date": "2024-01-01",
+        "precon": "Salubri",
+        "copies": 4
+      }
+    ]
+  },
+  "scans": {
+    "Camarilla Edition": "https://static.krcg.org/card/set/camarilla-edition/weightedwalkingstick.jpg",
+    "Third Edition": "https://static.krcg.org/card/set/third-edition/weightedwalkingstick.jpg",
+    "Lords of the Night": "https://static.krcg.org/card/set/lords-of-the-night/weightedwalkingstick.jpg",
+    "Keepers of Tradition": "https://static.krcg.org/card/set/keepers-of-tradition/weightedwalkingstick.jpg",
+    "First Blood": "https://static.krcg.org/card/set/first-blood/weightedwalkingstick.jpg",
+    "Fifth Edition (Companion)": "https://static.krcg.org/card/set/fifth-edition-companion/weightedwalkingstick.jpg"
+  },
+  "artists": [
+    "Thomas Nairb"
+  ],
+  "ordered_sets": [
+    "Camarilla Edition",
+    "Third Edition",
+    "Lords of the Night",
+    "Keepers of Tradition",
+    "First Blood",
+    "Fifth Edition (Companion)"
+  ],
+  "legality": "2002-08-19",
+  "rulings": [
+    {
+      "text": "If the damage is reduced (eg. {Nephandus}) or not inflicted (eg. {Blood Fury}), the corresponding token is not burned (contrary to prevented damage). [LSJ 20100519]",
+      "references": [
+        {
+          "text": "[LSJ 20100519]",
+          "label": "LSJ 20100519",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/criytfhw97o/m/sj9_vGAi-xQJ"
+        }
+      ],
+      "cards": [
+        {
+          "text": "{Nephandus}",
+          "id": 101272,
+          "name": "Nephandus",
+          "usual_name": "Nephandus",
+          "vekn_name": "Nephandus"
+        },
+        {
+          "text": "{Blood Fury}",
+          "id": 100201,
+          "name": "Blood Fury",
+          "usual_name": "Blood Fury",
+          "vekn_name": "Blood Fury"
+        }
+      ]
+    },
+    {
+      "text": "Full damage is applied if there are any counter left, even just 1. [ANK 20201229-2]",
+      "references": [
+        {
+          "text": "[ANK 20201229-2]",
+          "label": "ANK 20201229-2",
+          "url": "https://www.vekn.net/forum/rules-questions/78958-weighted-walking-stick-with-1-counter-remaining#101326"
+        }
+      ]
+    }
+  ],
+  "name": "Weighted Walking Stick",
+  "printed_name": "Weighted Walking Stick"
+}

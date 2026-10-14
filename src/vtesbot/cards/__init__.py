@@ -106,5 +106,6 @@ _LOADED_MODULES = (
     threats,
     valeriya_zinovieva,
     voter_captivation,
+    weighted_walking_stick,
     wider_view,
 )
