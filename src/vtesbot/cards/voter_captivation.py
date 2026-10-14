@@ -29,25 +29,45 @@ Status: implemented (OQ-36, `docs/OPEN_QUESTIONS.md`, resolved --
 `hooks.resolve_impulse_window` right after a passing political action's own
 `resolve(pending)` call returns).
 
-Who may play it: the card names no specific vampire/Methuselah up front --
-"this vampire" (both clauses) is whichever ready vampire the playing
-Methuselah chooses, not necessarily the referendum's own caller. The hook
-is offered to both `caller`/`other` by its own dispatch (`engine/action.py`),
-so either side may play their own copy for their own eligible vampire; this
-module's own gate is purely "does `context['player']` control a ready
-vampire with the needed discipline, and hold the card in hand" -- mirroring
-`enchant_kindred.py`'s/`fleetness.py`'s own per-vampire `context["player"]`
-eligibility pattern, not `perfect_paragon.py`'s basic clause (which is
-caller-only because its own text says "This vampire gets +3 votes" immediately
-after "[pre] Only usable during the polling step", read there as the calling
-vampire specifically -- Voter Captivation's own trigger carries no such tie).
-Discipline gating reads the plain printed `card.disciplines` (not the
-attachment-aware `effective_disciplines`), the same convention
-`enchant_kindred.py`/`fleetness.py`/`dust_up.py` already use. "This vampire"
-must be in play and not in torpor to receive blood/act as "your" vampire at
-all -- `zone == "ready"` is the gate (mirrors `engine/politics.py`'s own
-"`VampireInPlay.locked` is irrelevant" voting convention: this card is not an
-action, so lock state does not matter either).
+Who may play it (OQ-38, `docs/OPEN_QUESTIONS.md`, resolved -- user ruling,
+Reading A): "this vampire" (both clauses) is the political action's own
+*acting* vampire specifically -- `context["caller_vampire_id"]` -- never a
+free choice among the controller's other ready [pre]/[PRE] vampires, and
+never playable by the non-caller Methuselah at all. Rulebook SS2 Card Types,
+verbatim: "The acting minion can play [action modifier cards]... Some action
+modifier cards are played by minions 'other than the acting minion'. Only
+minions controlled by the same Methuselah can play those cards." Voter
+Captivation carries no such override phrase, so the unqualified default
+applies: only the acting minion, full stop. Unlike Scalpel Tongue (OQ-38's
+other half), this card has no Reaction-typed half to separately justify a
+non-caller use, so the defending Methuselah's own copy of Voter Captivation
+is simply unplayable -- an accepted consequence of this reading, not a gap.
+This replaces this module's earlier, broader reading (any ready [pre]/[PRE]
+vampire of whichever Methuselah played the card) that `rules-auditor`
+flagged as unverified against the Perfect Paragon precedent (OQ-30/31, an
+identical "[pre] This vampire ..." shape immediately after a trigger clause,
+already read there as caller-only).
+
+`REFERENDUM_RESOLVED_HOOK` is still offered to both `caller`/`other` by its
+own dispatch (`engine/action.py`, `hooks.resolve_impulse_window`'s two-sided
+alternation) -- this module's own gate is what actually enforces the
+restriction: `context["player"] != context["caller"]` short-circuits to no
+options, so `other`'s own turn in the window never sees anything from this
+card regardless of what vampires they control.
+
+`context["caller_vampire_id"]` resolves to a live `VampireInPlay` via
+`state.players[context["caller"]].vampires.get(...)` -- `None` (vampire
+removed from the game some other way) or `zone != "ready"` (e.g. sent to
+torpor by combat before resolution, structurally possible since this hook
+fires after any combat the political action's own block attempt produced)
+both mean no option is offered; `VampireInPlay.locked` is irrelevant here
+(mirrors `engine/politics.py`'s own "locked is irrelevant to voting"
+convention -- this card is not an action and raises nothing about the
+vampire's own lock state, and the acting vampire is, in any case, always
+locked by this point, Rulebook SS4, so checking it would make the card
+permanently unplayable). Discipline gating reads the plain printed
+`card.disciplines` (not the attachment-aware `effective_disciplines`), the
+same convention `enchant_kindred.py`/`fleetness.py`/`dust_up.py` already use.
 
 Single, repeatable two-sided window, not a proactive/reactive split (unlike
 OQ-30/31's `INTERCEPT_DECREASE_HOOK` family): Perfect Paragon's own split
@@ -86,21 +106,42 @@ runs, then `gain_pool`s the controller directly. "Up to 2" is a genuine choice
 "single eligible option: bind directly, no decision raised" convention) no
 decision is raised in that edge case.
 
-Per-vampire once-per-action cap (`rules-auditor` finding): Rulebook §2 Card
-Types, verbatim: "A minion cannot play the same action modifier card more
-than once during a single action (even if using a different Discipline
-level)." Two copies of this card in hand previously let the same target
-vampire be fed the option twice in the same `REFERENDUM_RESOLVED_HOOK`
-window (`hooks.resolve_impulse_window` re-offers until both sides pass).
-`context["pending"]` (now threaded through by `engine/action.py`'s own
-dispatch, mirroring `cards/bonding.py`'s `LIMITED_USED_KEY` convention)
-tracks `GRANTED_KEY`, a `set[str]` of target vampire `instance_id`s already
-granted *either* clause this window; both providers below skip a target
-already in that set, and `apply()` adds it. This caps per target vampire,
-not globally -- a second copy may still benefit a *different* ready
-vampire the same controller controls, which the rulebook clause does not
-forbid (it restricts the same card being played twice by *one* minion, not
-a second, independent minion playing its own copy).
+Per-action cap (`rules-auditor` finding): Rulebook SS2 Card Types, verbatim:
+"A minion cannot play the same action modifier card more than once during a
+single action (even if using a different Discipline level)." With "this
+vampire" now pinned to the single acting vampire (OQ-38 above), only one
+vampire is ever a candidate target -- but a second copy of this card in hand
+could still try to feed that same vampire the option a second time in the
+same `REFERENDUM_RESOLVED_HOOK` window (`hooks.resolve_impulse_window`
+re-offers until both sides pass). `context["pending"]` (threaded through by
+`engine/action.py`'s own dispatch, mirroring `cards/bonding.py`'s
+`LIMITED_USED_KEY` convention) tracks `GRANTED_KEY`, a `set[str]` holding the
+acting vampire's own `instance_id` once granted *either* clause this window;
+both providers below skip entirely once it is present. (Kept as a `set`,
+not a plain `bool`, for parity with other per-action caps in this codebase
+that key off an instance id -- only ever holds at most one element now that
+the target can no longer vary.)
+
+Cost paid even if canceled (OQ-38's companion ruling, user ruling): "Action
+modifiers can only be played once [per minion per action]; if [a play is]
+canceled as played, another copy can be played." `apply_chosen_option`
+(`engine/hooks.py`, OQ-32, resolved) already implements the generic half of
+this -- "cost is still paid," effect suppressed, and a canceled attempt does
+not itself trigger a once-per-action limit -- but only for a provider that
+actually splits its own card-play `cost` out of `apply`. This module's
+earlier draft played `play_from_hand` unconditionally inside `apply()`, the
+same atomic-cost-and-effect pattern OQ-32's own review flagged (and fixed,
+for Telepathic Counter) as a landmine: since `REFERENDUM_RESOLVED_HOOK` *is*
+dispatched through `hooks.resolve_impulse_window` (exposed to
+`CANCEL_AS_PLAYED_HOOK`), a future cancellation provider would have left the
+physical card sitting back in hand, unspent, exactly the bug OQ-32 already
+warned about for Organized Resistance/Protection Racket. Both clauses below
+now set `HookOption.cost = play_from_hand(...)`, leaving only the blood/pool
+grant and `GRANTED_KEY` bookkeeping inside `apply` -- so a canceled attempt
+still discards the physical copy (cost paid) but never marks the acting
+vampire as granted (limit not triggered, matching the quoted user ruling: a
+second copy may still be played to the same vampire this window if the
+first attempt was canceled).
 """
 
 from collections.abc import Mapping
@@ -125,9 +166,9 @@ CARD_TYPE = "Action Modifier"
 """`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
 this module's own "Card type" docstring fact above."""
 GRANTED_KEY = "voter_captivation_granted_vampires"
-"""Module docstring's "Per-vampire once-per-action cap": `context["pending"]`
-key holding the `set[str]` of target vampire `instance_id`s already granted
-this window."""
+"""Module docstring's "Per-action cap": `context["pending"]` key holding the
+`set[str]` with the acting vampire's own `instance_id`, once granted either
+clause this window."""
 
 
 def _granted(pending: dict[str, Any]) -> set[str]:
@@ -138,111 +179,111 @@ def _has_card_in_hand(state: GameState, player: str) -> bool:
     return any(card.krcg_id == KRCG_ID for card in state.players[player].hand)
 
 
-def _eligible_vampires(state: GameState, player: str, required: str) -> list[VampireInPlay]:
-    return [
-        v
-        for v in state.players[player].vampires.values()
-        if v.zone == "ready" and required in v.card.disciplines
-    ]
+def _caller_vampire(state: GameState, context: Mapping[str, Any]) -> VampireInPlay | None:
+    """Module docstring's "Who may play it" (OQ-38): "this vampire" is the
+    political action's own acting vampire, `context["caller_vampire_id"]`,
+    never a free choice among the controller's other vampires."""
+    vampire = state.players[context["caller"]].vampires.get(context["caller_vampire_id"])
+    if vampire is None or vampire.zone != "ready":
+        return None
+    return vampire
 
 
 def _provide_voter_captivation_basic(
     state: GameState, context: Mapping[str, Any]
 ) -> list[HookOption]:
     """ "[pre] This vampire gains 1 blood for each vote by which the
-    referendum passed." -- see module docstring for the per-player
+    referendum passed." -- see module docstring for the caller-only
     eligibility gate and the `add_blood` capacity cap."""
     player = context["player"]
-    margin = context["margin"]
-    granted = _granted(context["pending"])
+    if player != context["caller"]:
+        return []
     if not _has_card_in_hand(state, player):
         return []
-    targets = [
-        v
-        for v in state.players[player].vampires.values()
-        if v.zone == "ready"
-        and (BASIC in v.card.disciplines or SUPERIOR in v.card.disciplines)
-        and v.instance_id not in granted
-    ]
-    if not targets:
+    margin = context["margin"]
+    granted = _granted(context["pending"])
+    target = _caller_vampire(state, context)
+    if (
+        target is None
+        or target.instance_id in granted
+        or not (BASIC in target.card.disciplines or SUPERIOR in target.card.disciplines)
+    ):
         return []
 
-    options: list[HookOption] = []
-    for target in targets:
+    def _cost(s: GameState) -> None:
+        play_from_hand(s, player, KRCG_ID)
 
-        def _apply(s: GameState, target_id: str = target.instance_id) -> None:
-            play_from_hand(s, player, KRCG_ID)
-            vampire = s.players[player].vampires[target_id]
-            add_blood(s, vampire, margin)
-            granted.add(target_id)
+    def _apply(s: GameState, target_id: str = target.instance_id) -> None:
+        vampire = s.players[player].vampires[target_id]
+        add_blood(s, vampire, margin)
+        granted.add(target_id)
 
-        options.append(
-            HookOption(
-                choice=Choice(
-                    f"voter_captivation:basic:{target.instance_id}",
-                    f"Voter Captivation [pre]: {target.card.name} gains {margin} blood",
-                ),
-                apply=_apply,
-                played_card_type=CARD_TYPE,
-            )
+    return [
+        HookOption(
+            choice=Choice(
+                f"voter_captivation:basic:{target.instance_id}",
+                f"Voter Captivation [pre]: {target.card.name} gains {margin} blood",
+            ),
+            apply=_apply,
+            cost=_cost,
+            played_card_type=CARD_TYPE,
         )
-    return options
+    ]
 
 
 def _provide_voter_captivation_superior(
     state: GameState, context: Mapping[str, Any]
 ) -> list[HookOption]:
     """ "[PRE] As above, but move up to 2 of those blood to your pool
-    instead of this vampire." -- see module docstring for the nested
-    redirect-amount `Decision`."""
+    instead of this vampire." -- see module docstring for the caller-only
+    eligibility gate and the nested redirect-amount `Decision`."""
     player = context["player"]
-    margin = context["margin"]
-    granted = _granted(context["pending"])
+    if player != context["caller"]:
+        return []
     if not _has_card_in_hand(state, player):
         return []
-    targets = [
-        v for v in _eligible_vampires(state, player, SUPERIOR) if v.instance_id not in granted
-    ]
-    if not targets:
+    margin = context["margin"]
+    granted = _granted(context["pending"])
+    target = _caller_vampire(state, context)
+    if target is None or target.instance_id in granted or SUPERIOR not in target.card.disciplines:
         return []
 
-    options: list[HookOption] = []
-    for target in targets:
+    def _cost(s: GameState) -> None:
+        play_from_hand(s, player, KRCG_ID)
 
-        def _apply(s: GameState, target_id: str = target.instance_id) -> int:
-            play_from_hand(s, player, KRCG_ID)
-            granted.add(target_id)
-            max_redirect = min(MAX_REDIRECT, margin)
-            if max_redirect <= 0:
-                moved = 0
-            else:
-                choices = tuple(
-                    Choice(f"redirect:{n}", f"Move {n} blood to your pool")
-                    for n in range(0, max_redirect + 1)
-                )
-                decision = Decision(
-                    player=player,
-                    kind="voter_captivation_redirect",
-                    choices=choices,
-                )
-                moved = int(s.ask(decision).value.split(":", 1)[1])
-            vampire = s.players[player].vampires[target_id]
-            add_blood(s, vampire, margin - moved)
-            gain_pool(s, player, moved)
-            return moved
-
-        options.append(
-            HookOption(
-                choice=Choice(
-                    f"voter_captivation:superior:{target.instance_id}",
-                    f"Voter Captivation [PRE]: {target.card.name} gains blood "
-                    "(move up to 2 to your pool instead)",
-                ),
-                apply=_apply,
-                played_card_type=CARD_TYPE,
+    def _apply(s: GameState, target_id: str = target.instance_id) -> int:
+        granted.add(target_id)
+        max_redirect = min(MAX_REDIRECT, margin)
+        if max_redirect <= 0:
+            moved = 0
+        else:
+            choices = tuple(
+                Choice(f"redirect:{n}", f"Move {n} blood to your pool")
+                for n in range(0, max_redirect + 1)
             )
+            decision = Decision(
+                player=player,
+                kind="voter_captivation_redirect",
+                choices=choices,
+            )
+            moved = int(s.ask(decision).value.split(":", 1)[1])
+        vampire = s.players[player].vampires[target_id]
+        add_blood(s, vampire, margin - moved)
+        gain_pool(s, player, moved)
+        return moved
+
+    return [
+        HookOption(
+            choice=Choice(
+                f"voter_captivation:superior:{target.instance_id}",
+                f"Voter Captivation [PRE]: {target.card.name} gains blood "
+                "(move up to 2 to your pool instead)",
+            ),
+            apply=_apply,
+            cost=_cost,
+            played_card_type=CARD_TYPE,
         )
-    return options
+    ]
 
 
 hooks.register(REFERENDUM_RESOLVED_HOOK, _provide_voter_captivation_basic)

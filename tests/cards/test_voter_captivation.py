@@ -18,17 +18,22 @@ gating for each clause; "ready" eligibility (torpor excluded); the basic
 clause's blood gain (capped at capacity, per `add_blood`/OQ-8); the superior
 clause's redirect-to-pool choice (bounded at `min(2, margin)`, including the
 `margin < 2` edge case and the no-decision-needed `margin == 0` edge case);
-either Methuselah (not only the referendum's caller) may be offered the play
-for their own eligible vampire; and an end-to-end pass through a real
-political action (Kine Resources Contested) and `minion_phase`. The "played
-after resolution ... before or after [another such effect]" ruling is a
-structural property of `hooks.resolve_impulse_window`'s own repeat-until-
-both-pass loop (already proven generically by `tests/rules/
-test_referendum_resolved.py`), not independently re-tested at the card level;
-the "ousts the acting Methuselah" and "automatically passing, by 0 votes"
-rulings describe timing/engine states this pool cannot yet produce (no
-automatically-passing mechanism exists, `docs/OPEN_QUESTIONS.md` OQ-6) --
-the 0-votes edge case is still covered below directly against the provider.
+OQ-38 (resolved, Reading A): the card is never offered to the non-caller
+Methuselah, and is only ever offered through the political action's own
+acting vampire, never a different ready vampire the caller also controls;
+the once-per-action cap (now necessarily per *action*, not per-target, since
+only one vampire is ever eligible), and that `cost` (OQ-32's "cost is still
+paid" mechanism) discards the card independently of whether `apply` itself
+ever runs; and an end-to-end pass through a real political action (Kine
+Resources Contested) and `minion_phase`. The "played after resolution ...
+before or after [another such effect]" ruling is a structural property of
+`hooks.resolve_impulse_window`'s own repeat-until-both-pass loop (already
+proven generically by `tests/rules/test_referendum_resolved.py`), not
+independently re-tested at the card level; the "ousts the acting
+Methuselah" and "automatically passing, by 0 votes" rulings describe
+timing/engine states this pool cannot yet produce (no automatically-passing
+mechanism exists, `docs/OPEN_QUESTIONS.md` OQ-6) -- the 0-votes edge case is
+still covered below directly against the provider.
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -46,14 +51,14 @@ def _vc_card() -> LibraryCard:
     return LibraryCard(krcg_id=KRCG_ID, name=NAME, card_type="Action Modifier")
 
 
-def _offer(state, player, margin, **extra):
+def _offer(state, player, margin, caller_vampire_id, **extra):
     return hooks.offer(
         REFERENDUM_RESOLVED_HOOK,
         state,
         player=player,
         caller=extra.pop("caller", player),
         other=extra.pop("other", "P2" if player == "P1" else "P1"),
-        caller_vampire_id=extra.pop("caller_vampire_id", None),
+        caller_vampire_id=caller_vampire_id,
         margin=margin,
         pending=extra.pop("pending", {}),
     )
@@ -86,7 +91,7 @@ def test_basic_not_offered_without_the_card_in_hand():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=2)
+    options = _offer(game.state, "P1", margin=2, caller_vampire_id="V1")
 
     assert options == []
 
@@ -98,7 +103,7 @@ def test_basic_not_offered_without_pre():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=2)
+    options = _offer(game.state, "P1", margin=2, caller_vampire_id="V1")
 
     assert options == []
 
@@ -116,7 +121,7 @@ def test_basic_not_offered_for_a_torpid_vampire():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=2)
+    options = _offer(game.state, "P1", margin=2, caller_vampire_id="V1")
 
     assert options == []
 
@@ -130,7 +135,7 @@ def test_superior_not_offered_with_only_basic_pre():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    basic = _offer(game.state, "P1", margin=2)
+    basic = _offer(game.state, "P1", margin=2, caller_vampire_id="V1")
     assert {o.choice.value for o in basic} == {"voter_captivation:basic:V1"}
 
 
@@ -143,29 +148,48 @@ def test_superior_offered_with_superior_pre():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=2)
+    options = _offer(game.state, "P1", margin=2, caller_vampire_id="V1")
 
     values = {o.choice.value for o in options}
     # Superior Presence unlocks either effect (Rulebook SS3) -- both offered.
     assert values == {"voter_captivation:basic:V1", "voter_captivation:superior:V1"}
 
 
-def test_offered_to_either_player_independent_of_who_called_the_referendum():
-    """The hook fires at both `caller` and `other`; P2 (not the caller)
-    controls the only eligible vampire here, so only P2 sees an option."""
+# --- OQ-38 (resolved, Reading A): "this vampire" is the acting vampire -----
+
+
+def test_never_offered_to_the_non_caller_methuselah():
+    """Unlike Scalpel Tongue (OQ-38's other half), this card has no
+    Reaction half to lean on -- the defending Methuselah's own copy is
+    simply unplayable, regardless of which vampire they control."""
     builder = ScenarioBuilder(seed=1)
-    builder.player("P1", pool=30)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=5, blood=0, disciplines=("pre",))
     p2 = builder.player("P2", pool=30).ready_vampire(
         "B1", capacity=5, blood=0, disciplines=("pre",)
     )
     p2.hand.append(_vc_card())
     game = builder.build()
 
-    p1_options = _offer(game.state, "P1", margin=2, caller="P1", other="P2")
-    p2_options = _offer(game.state, "P2", margin=2, caller="P1", other="P2")
+    p2_options = _offer(game.state, "P2", margin=2, caller="P1", other="P2", caller_vampire_id="V1")
 
-    assert p1_options == []
-    assert {o.choice.value for o in p2_options} == {"voter_captivation:basic:B1"}
+    assert p2_options == []
+
+
+def test_only_offered_through_the_callers_own_acting_vampire():
+    """A different ready [pre] vampire the caller also controls, but which
+    is not the political action's own acting vampire, may not play the
+    card either -- only `caller_vampire_id` itself is ever a candidate."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30)
+    p1.ready_vampire("V1", capacity=5, blood=0, disciplines=("pre",))
+    p1.ready_vampire("V2", capacity=5, blood=0, disciplines=("pre",))
+    p1.hand.append(_vc_card())
+    builder.player("P2", pool=30)
+    game = builder.build()
+
+    options = _offer(game.state, "P1", margin=2, caller="P1", other="P2", caller_vampire_id="V1")
+
+    assert {o.choice.value for o in options} == {"voter_captivation:basic:V1"}
 
 
 # --- "[pre] This vampire gains 1 blood for each vote by which the referendum
@@ -181,8 +205,9 @@ def test_basic_gains_margin_blood():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=3)
+    options = _offer(game.state, "P1", margin=3, caller_vampire_id="V1")
     option = next(o for o in options if o.choice.value == "voter_captivation:basic:V1")
+    option.cost(game.state)
     option.apply(game.state)
 
     assert game.blood_of("V1") == 3
@@ -199,7 +224,7 @@ def test_basic_blood_gain_is_capped_at_effective_capacity():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=5)
+    options = _offer(game.state, "P1", margin=5, caller_vampire_id="V1")
     option = next(o for o in options if o.choice.value == "voter_captivation:basic:V1")
     option.apply(game.state)
 
@@ -219,7 +244,9 @@ def test_superior_redirect_choices_bounded_by_min_two_and_margin():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=1)  # margin < 2: only 0 or 1 legal
+    options = _offer(
+        game.state, "P1", margin=1, caller_vampire_id="V1"
+    )  # margin < 2: only 0 or 1 legal
     option = next(o for o in options if o.choice.value == "voter_captivation:superior:V1")
     actor = ScriptedAgent("P1")
     actor.expect("voter_captivation_redirect", "redirect:1")
@@ -241,7 +268,7 @@ def test_superior_moves_up_to_two_blood_to_pool_instead_of_the_vampire():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=4)
+    options = _offer(game.state, "P1", margin=4, caller_vampire_id="V1")
     option = next(o for o in options if o.choice.value == "voter_captivation:superior:V1")
     actor = ScriptedAgent("P1")
     actor.expect("voter_captivation_redirect", "redirect:2")
@@ -263,7 +290,7 @@ def test_superior_redirect_decision_offers_zero_as_a_legal_choice():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=3)
+    options = _offer(game.state, "P1", margin=3, caller_vampire_id="V1")
     option = next(o for o in options if o.choice.value == "voter_captivation:superior:V1")
     actor = ScriptedAgent("P1")
     actor.expect("voter_captivation_redirect", "redirect:0")
@@ -290,7 +317,7 @@ def test_superior_margin_zero_binds_directly_with_no_decision_raised():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    options = _offer(game.state, "P1", margin=0)
+    options = _offer(game.state, "P1", margin=0, caller_vampire_id="V1")
     option = next(o for o in options if o.choice.value == "voter_captivation:superior:V1")
     actor = ScriptedAgent("P1")  # no scripted answers: must not be asked anything
     game.state.agents["P1"] = actor
@@ -302,8 +329,8 @@ def test_superior_margin_zero_binds_directly_with_no_decision_raised():
     actor.assert_exhausted()
 
 
-# --- per-vampire once-per-action cap (Rulebook SS2: "A minion cannot play
-# the same action modifier card more than once during a single action") ----
+# --- once-per-action cap (Rulebook SS2: "A minion cannot play the same
+# action modifier card more than once during a single action") -------------
 
 
 def test_second_copy_cannot_regrant_the_same_vampire_within_one_window():
@@ -320,40 +347,51 @@ def test_second_copy_cannot_regrant_the_same_vampire_within_one_window():
     game = builder.build()
     pending: dict = {}
 
-    first = _offer(game.state, "P1", margin=3, pending=pending)
+    first = _offer(game.state, "P1", margin=3, caller_vampire_id="V1", pending=pending)
     option = next(o for o in first if o.choice.value == "voter_captivation:basic:V1")
     option.apply(game.state)
 
     assert game.blood_of("V1") == 3
 
-    second = _offer(game.state, "P1", margin=3, pending=pending)
+    second = _offer(game.state, "P1", margin=3, caller_vampire_id="V1", pending=pending)
 
     assert second == []  # V1 already granted this window; the second copy has no target.
 
 
-def test_second_copy_may_still_benefit_a_different_vampire_within_one_window():
-    """The once-per-action cap is per *minion* (target vampire), not
-    global: a second copy may still grant a second, different ready
-    vampire of the same controller within the same window."""
+def test_a_canceled_attempt_does_not_count_against_the_once_per_action_cap():
+    """User ruling (OQ-38's companion ruling, `docs/OPEN_QUESTIONS.md`
+    OQ-36's own addendum): "action modifiers can only be played once; if
+    [a play is] canceled as played, another copy can be played." `cost`
+    alone (standing in for a canceled attempt, where `apply` never runs --
+    see `tests/rules/test_hooks.py`'s own generic proof of that mechanism)
+    discards the physical card but never adds to `GRANTED_KEY`, so a second
+    copy may still grant the same (only ever eligible) vampire this
+    window."""
     builder = ScenarioBuilder(seed=1)
-    p1 = builder.player("P1", pool=30)
-    p1.ready_vampire("V1", capacity=5, blood=0, disciplines=("pre",))
-    p1.ready_vampire("V2", capacity=5, blood=0, disciplines=("pre",))
+    p1 = builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=5, blood=0, disciplines=("pre",)
+    )
     p1.hand.append(_vc_card())
     p1.hand.append(_vc_card())
     builder.player("P2", pool=30)
     game = builder.build()
     pending: dict = {}
 
-    first = _offer(game.state, "P1", margin=2, pending=pending)
-    next(o for o in first if o.choice.value == "voter_captivation:basic:V1").apply(game.state)
+    first = _offer(game.state, "P1", margin=3, caller_vampire_id="V1", pending=pending)
+    option = next(o for o in first if o.choice.value == "voter_captivation:basic:V1")
+    option.cost(game.state)  # the canceled attempt's cost -- its own apply never runs
 
-    second = _offer(game.state, "P1", margin=2, pending=pending)
-    assert {o.choice.value for o in second} == {"voter_captivation:basic:V2"}
-    next(o for o in second if o.choice.value == "voter_captivation:basic:V2").apply(game.state)
+    assert game.state.players["P1"].hand == [_vc_card()]  # one copy spent, one remains
+    assert game.blood_of("V1") == 0  # the canceled effect never applied
 
-    assert game.blood_of("V1") == 2
-    assert game.blood_of("V2") == 2
+    second = _offer(game.state, "P1", margin=3, caller_vampire_id="V1", pending=pending)
+
+    assert {o.choice.value for o in second} == {"voter_captivation:basic:V1"}
+    next(o for o in second if o.choice.value == "voter_captivation:basic:V1").cost(game.state)
+    next(o for o in second if o.choice.value == "voter_captivation:basic:V1").apply(game.state)
+
+    assert game.blood_of("V1") == 3
+    assert game.state.players["P1"].hand == []
 
 
 # --- end-to-end through a real political action and minion_phase -----------
