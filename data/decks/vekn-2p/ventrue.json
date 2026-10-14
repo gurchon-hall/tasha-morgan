@@ -52,8 +52,7 @@
       "capacity": 7,
       "group": 6,
       "krcg_id": 201616,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "implementation_status": "implemented"
     },
     {
       "name": "Horst von Brühl",

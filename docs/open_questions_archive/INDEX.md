@@ -32,3 +32,4 @@ an entry.
 | OQ-22 | `001.md` | Fame - contested cards gap beyond crypt/ally |
 | OQ-23 | `001.md` | Oxford University - standalone master-card entity |
 | OQ-24 | `001.md` | Wider View - no influence hook, no removed zone |
+| OQ-25 | `001.md` | Fleetness - no pre-combat maneuver grant |

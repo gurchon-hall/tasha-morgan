@@ -58,28 +58,6 @@ up an OQ number or the highest one used so far.
   cards: none yet reachable (tracked ahead of need, same spirit as OQ-10's
   own original "latent, flagged before live" framing).
 
-## OQ-25 - Fleetness - no pre-combat maneuver grant (status: resolved)
-
-- Situation: Fleetness's (100747) superior clause grants a vampire "1
-  optional maneuver during that combat" from the moment the card is
-  played (announce time) — before whichever combat the action
-  produces has even started — but `run_combat` always starts its
-  scratch state fresh and empty, with no way for an action resolving
-  before combat starts to pre-seed a grant into it.
-- Rules/interactions: plain text; the generic OQ-21 fizzle convention
-  already covers the target-unlocked-by-resolve-time case. A
-  card-module-only scratch dict was rejected as it would live outside
-  `GameState`, breaking the determinism/replay invariant.
-- Solution: `run_combat` gained an optional `initial_combat_state`
-  parameter; `seed_pre_combat_maneuver_grant`/
-  `pre_combat_maneuver_available`/`consume_pre_combat_maneuver_grant`
-  are the shared helpers (a count, not a bool, so grants compose by
-  addition). `ActionCardSpec` gained a `maneuver_grant` field threaded
-  through both the unblocked path (a card's own `resolve()` seeds its
-  direct `run_combat` call) and the blocked path
-  (`perform_minion_action` seeds its own internal call). Fleetness's
-  own card module is not written; the primitive is complete.
-
 ## OQ-26 - Organized Resistance - no forced-block hook (status: resolved)
 
 - Situation: Organized Resistance (102230)'s second clause unlocks a
@@ -747,3 +725,32 @@ up an OQ number or the highest one used so far.
   the contract matters for a future ally-side use of this same hook, not for
   `attempt_block` itself. On the Qui Vive's own card module is not written;
   the primitive is complete.
+
+## OQ-49 - Fiorenza Savona - no vote-cast bonus hook (status: resolved)
+
+- Situation: Fiorenza Savona (krcg id 201616): "Camarilla: If you burn the
+  Edge for a vote, you get +1 vote. If you burn a political action card for
+  a vote, you get +1 vote." OQ-6's general referendum mechanism gives
+  `_collect_vote_sources` a fixed set of `VoteSource`s with `votes` baked in
+  before casting, and neither `POLLING_STEP_HOOK` phase nor
+  `REFERENDUM_TALLIED_HOOK` can add a bonus to one *specific other* source's
+  own vote count at the moment it is actually cast -- a missing engine
+  primitive, not a ruling ambiguity.
+- Rules/interactions: plain printed text; no ruling on file. User ruling
+  2026-10-14 settled the one open scope question: "burning a political
+  action card for a vote" is specifically the non-caller's
+  `political_action_card_hand:{other_player}` burn-from-hand source (the
+  only one actually burned for a vote), never the caller's own
+  `political_action_card:{caller_player}` source (played/shown, not
+  burned).
+- Solution: added `VOTE_SOURCE_CAST_BONUS_HOOK` (`cards/registry.py::
+  Hook.VOTE_SOURCE_CAST_BONUS`), dispatched by `engine/politics.py::
+  _cast_votes` the instant a source is cast -- after its own cast-time side
+  effects, before its votes are added to the tally *and* logged into
+  `casts` (so an OQ-37 mid-cast cancellation of that same source
+  retroactively subtracts the bonus back out too, no special case). Context:
+  `caster`, `burns_edge`, `burns_pac_from_hand`, `direction`. Fiorenza
+  Savona's own card module (`cards/fiorenza_savona.py`, `Status.
+  IMPLEMENTED`) gates on either flag plus "caster controls an in-play
+  (not uncontrolled/burned/removed) Fiorenza" -- no "while ready" qualifier
+  is printed, so no zone/locked gate beyond that.

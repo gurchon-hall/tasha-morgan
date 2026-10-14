@@ -315,6 +315,17 @@ PENDING_REFERENDUM_RESULT_KEY` (a duplicated string literal, not an import
 of this constant, to avoid a circular import -- see that constant's own
 docstring)."""
 
+VOTE_SOURCE_CAST_BONUS_HOOK = "vote_source_cast_bonus"
+"""`hooks.sum_modifiers` hook: a bonus added to one specific `VoteSource`'s
+own cast, dispatched by `_cast_votes` right after that source's cast-time
+side effects (`burns_edge`/`burns_pac_from_hand`) run and before its votes
+are added to the tally/logged into `casts` (OQ-49, `docs/
+OPEN_QUESTIONS.md` -- see `cards/registry.py::Hook.VOTE_SOURCE_CAST_BONUS`
+for the full contract and why neither `POLLING_STEP_HOOK` nor
+`REFERENDUM_TALLIED_HOOK` can express this). Context: `caster` (`source.
+player`), `burns_edge`, `burns_pac_from_hand`, `direction` ("for"/
+"against")."""
+
 VOTE_AGAINST_POOL_COST_HOOK = "vote_against_pool_cost"
 """`hooks.sum_modifiers` hook: pool the casting Methuselah will be forced to
 lose later (e.g. at tally) because of casting *against* this referendum.
@@ -892,6 +903,13 @@ def _cast_votes(
     instant a vote is cast -- Scalpel Tongue's own text requires only
     "usable during the polling step," no faster timing, and OQ-20's rotation
     already governs every other polling-step actor identically.
+
+    OQ-49 (`docs/OPEN_QUESTIONS.md`, Fiorenza Savona): the instant a source
+    is actually cast (just below), `VOTE_SOURCE_CAST_BONUS_HOOK` is summed
+    into that one cast's own total before it is added to `votes_for`/
+    `votes_against` *and* logged into `casts` -- so a later OQ-37 mid-cast
+    cancellation of the *same* source retroactively subtracts the bonus
+    back out too, with no special case.
     """
     votes_for = 0
     votes_against = 0
@@ -977,11 +995,19 @@ def _cast_votes(
                     state.edge_holder = None
                 if source.burns_pac_from_hand:
                     _burn_one_political_action_card_from_hand(state, source.player)
+                cast_votes = source.votes + hooks.sum_modifiers(
+                    VOTE_SOURCE_CAST_BONUS_HOOK,
+                    state,
+                    caster=source.player,
+                    burns_edge=source.burns_edge,
+                    burns_pac_from_hand=source.burns_pac_from_hand,
+                    direction=direction,
+                )
                 if direction == "for":
-                    votes_for += source.votes
+                    votes_for += cast_votes
                 else:
-                    votes_against += source.votes
-                casts.append((source.player, source.source_id, source.votes, direction))
+                    votes_against += cast_votes
+                casts.append((source.player, source.source_id, cast_votes, direction))
         turn = other_player if turn == caller_player else caller_player
     return votes_for, votes_against, casts
 

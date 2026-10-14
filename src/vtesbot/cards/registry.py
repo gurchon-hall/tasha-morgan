@@ -298,6 +298,33 @@ class Hook(StrEnum):
     implemented against this dispatch; see its own docstring for the
     per-vampire once-per-action cap added there (`rules-auditor`
     finding)."""
+    VOTE_SOURCE_CAST_BONUS = "vote_source_cast_bonus"
+    """Passive, mandatory numeric hook (`hooks.sum_modifiers` contract, same
+    shape as `CAPACITY_MODIFIER`/`HAND_SIZE_MODIFIER` above), dispatched by
+    `engine/politics.py::_cast_votes` the instant a specific `VoteSource` is
+    actually cast -- after that source's own cast-time side effects
+    (`burns_edge`/`burns_pac_from_hand`) run, before its votes are added to
+    `votes_for`/`votes_against` and logged into `casts`. Resolves `docs/
+    OPEN_QUESTIONS.md` OQ-49 (Fiorenza Savona, krcg id 201616: "If you burn
+    the Edge for a vote, you get +1 vote. If you burn a political action
+    card for a vote, you get +1 vote."), the first production user -- a
+    conditional bonus *of* a specific other source's own cast, which neither
+    `POLLING_STEP_HOOK` phase can express (`"before_cast"` only adds an
+    independent new source; `"mid_cast"` only cancels one) and which
+    `REFERENDUM_TALLIED_HOOK` fires too late to feed back into the tally
+    that already decided pass/fail. Context: `caster` (`source.player`,
+    whoever is casting -- never the live vampire, information hiding),
+    `burns_edge`/`burns_pac_from_hand` (the cast source's own flags, so a
+    provider can tell which of the two printed clauses applies without
+    needing the `source_id` string format), and `direction` (`"for"`/
+    `"against"`, for a future provider that cares -- Fiorenza's own does
+    not, since the bonus is added to whichever direction the source itself
+    was cast in, uniformly, by the call site). A provider's returned `int`
+    is folded directly into that one cast's own total (which is also what
+    gets logged into `casts` and what a later OQ-37 mid-cast cancellation of
+    the *same* source retroactively subtracts back out) -- never a separate
+    side-channel, so cancellation bookkeeping stays correct with no special
+    case."""
     RANGED_STRIKE = "ranged_strike"
     ALLY_ENTITY = "ally_entity"
     LOCATION_ENTITY = "location_entity"
