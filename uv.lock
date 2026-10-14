@@ -853,7 +853,7 @@ dependencies = [
     { name = "krcg" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "pre-commit-hooks" },
     { name = "pymarkdownlnt" },
@@ -862,14 +862,15 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "krcg", specifier = ">=5.14,<6" },
-    { name = "pre-commit-hooks", marker = "extra == 'dev'", specifier = ">=5.0" },
-    { name = "pymarkdownlnt", marker = "extra == 'dev'", specifier = ">=0.9.40" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
+requires-dist = [{ name = "krcg", specifier = ">=5.14,<6" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pre-commit-hooks", specifier = ">=5.0" },
+    { name = "pymarkdownlnt", specifier = ">=0.9.40" },
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "ruff", specifier = ">=0.6" },
 ]
-provides-extras = ["dev"]
 
 [[package]]
 name = "wcwidth"

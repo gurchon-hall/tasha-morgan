@@ -8,7 +8,7 @@ dependencies = [
     "krcg>=5.14,<6",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pre-commit-hooks>=5.0",
     "pymarkdownlnt>=0.9.40",

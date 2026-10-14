@@ -95,16 +95,13 @@ this module's own "Card type: Reaction" docstring fact above."""
 
 
 def _eligible_locked(state: GameState, player: str) -> list[VampireInPlay]:
-    """"Only usable by a locked minion": `player`'s own in-play, currently
+    """ "Only usable by a locked minion": `player`'s own in-play, currently
     *locked* vampires that are not already `woken` (would be a no-op) and
     have not already played this card since their own last unlock phase."""
     return [
         v
         for v in state.players[player].vampires.values()
-        if v.zone == "ready"
-        and v.locked
-        and not v.woken
-        and not v.qui_vive_played_since_unlock
+        if v.zone == "ready" and v.locked and not v.woken and not v.qui_vive_played_since_unlock
     ]
 
 

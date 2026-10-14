@@ -62,13 +62,13 @@ def test_location_krcg_ids_matches_a_fresh_krcg_sweep_of_the_active_2p_list():
     import json
     from pathlib import Path
 
-    import krcg.vtes as vtes
+    import krcg
 
-    vtes.VTES.load()
+    cards = krcg.load()
     data_path = Path(__file__).resolve().parents[2] / "data" / "formats" / "2p" / "2026-10-03.json"
     data = json.loads(data_path.read_text(encoding="utf-8"))
     ids = {card.get("krcg_id") for card in data["cards"]}
-    swept = {cid for cid in ids if (vtes.VTES[cid].card_text or "").startswith("Unique location.")}
+    swept = {cid for cid in ids if (cards[cid].text or "").startswith("Unique location.")}
 
     assert swept == LOCATION_KRCG_IDS
 
