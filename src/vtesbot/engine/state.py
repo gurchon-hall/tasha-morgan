@@ -257,6 +257,18 @@ class PlayerState:
     turn_cards: dict[str, TurnCardInPlay] = field(default_factory=dict)
     """OQ-34 (`docs/OPEN_QUESTIONS.md`): every `TurnCardInPlay` this player
     controls, keyed by `instance_id` -- mirrors `master_cards`'s own shape."""
+    card_played_turn: dict[int, int] = field(default_factory=dict)
+    """Generic "only one X can be played each turn" scratch, keyed by
+    `krcg_id`, storing the `GameState.turn_number` that card was last
+    played on -- added implementing Loup (krcg id 102273, `src/vtesbot/
+    cards/loup.py`), "Only one Loup can be played each turn." Mirrors
+    `VampireInPlay.ability_used_turn`'s own "store the turn number, compare
+    on next check" shape, but scoped to the controller rather than to one
+    vampire: this cap is a plain card-play restriction (any copy, played by
+    any of the controller's vampires), not a printed ability tied to a
+    specific minion, so per-vampire scoping would not fit. A provider
+    checks `player_state.card_played_turn.get(krcg_id) == state.turn_number`
+    before offering its own "play this card" option."""
     _next_instance_seq: int = 0
     _next_ally_instance_seq: int = 0
     _next_attachment_instance_seq: int = 0

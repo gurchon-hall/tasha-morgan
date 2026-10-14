@@ -1,0 +1,45 @@
+{
+  "id": 102273,
+  "_name": "Loup",
+  "url": "https://static.krcg.org/card/loup.jpg",
+  "types": [
+    "Action Modifier"
+  ],
+  "clans": [
+    "Toreador"
+  ],
+  "card_text": "Only one Loup can be played each turn.\nPut this card in play. Toreador get +1 stealth. Burn this card at the end of the turn or after a Toreador performs a successful action.",
+  "_set": "30th:6",
+  "sets": {
+    "Thirtieth Anniversary": [
+      {
+        "release_date": "2024-07-20",
+        "copies": 6
+      }
+    ]
+  },
+  "scans": {
+    "Thirtieth Anniversary": "https://static.krcg.org/card/set/thirtieth-anniversary/loup.jpg"
+  },
+  "artists": [
+    "Raquel Cornejo"
+  ],
+  "ordered_sets": [
+    "Thirtieth Anniversary"
+  ],
+  "legality": "2024-07-20",
+  "rulings": [
+    {
+      "text": "Can be used even if the stealth is not currently needed. [LSJ 20011214-2]",
+      "references": [
+        {
+          "text": "[LSJ 20011214-2]",
+          "label": "LSJ 20011214-2",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/TinQ8ywzIHU/m/-zW_hcYbiD4J"
+        }
+      ]
+    }
+  ],
+  "name": "Loup",
+  "printed_name": "Loup"
+}

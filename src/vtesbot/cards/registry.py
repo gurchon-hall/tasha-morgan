@@ -180,6 +180,19 @@ class Hook(StrEnum):
     round -- including, as of the same pass, `engine/damage.py::apply_damage`'s
     own "blood lost to damage this round" record (`engine/damage.py::
     blood_lost_to_damage_this_round`, OQ-29 mechanism 2)."""
+    ACTION_SUCCEEDED = "action_succeeded"
+    """A mandatory, non-chosen per-provider reaction fired once a minion
+    action goes unblocked and its own `resolve()` returns (`engine/
+    action.py::perform_minion_action`, dispatched via `hooks.run_effects` --
+    no `Decision`), independent of whether the action's own effect did
+    anything (Rulebook SS4 "Resolve the Action": "successful" means purely
+    "not blocked") -- resolves `docs/OPEN_QUESTIONS.md` OQ-34, built for
+    Loup (krcg id 102273, "Burn this card ... after a Toreador performs a
+    successful action"). Context carries `actor_player`, the acting
+    `vampire` (the live object, not merely its id -- this is trusted
+    engine-internal code, the same tier `VAMPIRE_ENTERS_TORPOR`'s own
+    `vampire` context entry already established) and `action` (the OQ-9
+    discriminator)."""
     CANCEL_AS_PLAYED = "cancel_as_played"
     """Generic "cancel a card as it is played" interception point (`docs/
     OPEN_QUESTIONS.md` OQ-32, resolved): offered to the side *not* making a
