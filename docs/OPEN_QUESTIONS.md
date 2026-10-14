@@ -687,44 +687,35 @@ up an OQ number or the highest one used so far.
   test_can_be_played_proactively_even_when_the_action_is_unblockable`
   proves the fix against the real card.
 
-## OQ-40: Loup - controller-only or table-wide bonus (status: open)
+## OQ-40 - Loup - controller-only or table-wide bonus (status: resolved)
 
 - Situation: `rules-auditor`, reviewing OQ-39's own landing, flagged that
   `cards/loup.py`'s own scope assumption ("Both clauses... bind to the
-  *controller's own* Toreador vampires, never the opponent's") carries no
-  citation and may be wrong — `_provide_loup` only ever reads
-  `active_turn_cards(state, player, KRCG_ID)` for the *acting* player, and
-  `_provide_loup_burn` only ever burns the *acting* player's own copy, so
-  today a Methuselah's Loup can never grant the bonus to, or be burned by,
-  the *other* Methuselah's own Toreador vampire. Pre-existing since OQ-34's
-  original pass, not introduced by OQ-39 — but OQ-39 makes both offer
-  points (not just one) newly reach this same unexamined assumption.
-- Sources read (with URL/section): Loup's own printed text (`krcg.vtes.
-  VTES['Loup'].card_text`, re-verified live 2026-10-14): "Put this card in
-  play. Toreador get +1 stealth. Burn this card at the end of the turn or
-  after a Toreador performs a successful action." — plain "Toreador," no
-  "you control." No on-file krcg ruling for Loup addresses this scope
-  question (confirmed live, no VEKN card-rulings entry for Loup exists
-  beyond the single timing ruling already cited in `cards/loup.py`).
-  Comparative evidence from the installed `krcg` package: the same printed
-  template ("Put this card in play. [clan/sect] get +1 [stat]...") recurs
-  unqualified (table-wide) on Week of Nightmares ("Ravnos get +1 bleed and
-  +1 strength..." — the well-known "every Ravnos in the game" card),
-  Tremere Convocation ("Tremere get +1 stealth..."), and several other
-  Master cards of this shape — contrasted with vampire-printed abilities in
-  the same database that explicitly add "you control" whenever the author
-  does mean controller-only (e.g. Weirich Waldburg: "primogen *you
-  control* get +1 stealth"). This minimal-pair contrast is suggestive but
-  not itself a ruling on Loup specifically.
-- Candidate readings: A) controller-only (current code): Loup only ever
-  benefits, and is only ever burned by, its own controller's Toreador
-  vampires — a conservative reading matching this project's own prior
-  "narrower than the card might allow, never over-applies" acceptance
-  criterion (same shape as OQ-39's own pre-resolution state). B)
-  table-wide: *any* Toreador vampire in play (either Methuselah's) gets
-  the +1 stealth while a copy is in play, and *any* Toreador's successful
-  action burns it — matching the plain, unqualified card text and the
-  comparative "you control" contrast above.
-- Impacted code/cards: `cards/loup.py` (`_provide_loup`/
-  `_provide_loup_burn`, `Status.IMPLEMENTED`, reading A currently shipped,
-  untouched pending resolution).
+  *controller's own* Toreador vampires, never the opponent's") carried no
+  citation — `_provide_loup`/`_provide_loup_burn` only ever read/burned the
+  *acting* player's own `turn_cards`, so a Methuselah's Loup could never
+  grant the bonus to, or be burned by, the *other* Methuselah's own
+  Toreador vampire. Pre-existing since OQ-34's original pass; OQ-39 only
+  made both offer points newly reach this same unexamined assumption.
+- Rules/interactions: Loup's own printed text has no "you control" --
+  plain "Toreador get +1 stealth... after a Toreador performs a successful
+  action." No on-file krcg ruling addressed this scope question directly.
+  Ruling via a trusted VEKN judge on the international rulings forum
+  (pending official publication; posed scenario: a Loup in play, its
+  controller's own vampires all failing to act, a second Methuselah's
+  Masika with an Enkil Cog about to act): "Yes, [Masika] has +1 stealth[,]
+  and Loup burns if [the action] succeeds (card text)." Confirms table-wide
+  on both halves, matching the comparative template evidence found across
+  the card pool (Week of Nightmares, Tremere Convocation: same unqualified
+  "[clan] get +1 [stat]" shape, contrasted with vampire abilities that
+  explicitly add "you control" whenever that narrower scope is meant).
+- Solution: `cards/loup.py::_provide_loup`/`_provide_loup_burn` now check/
+  burn every player's own `turn_cards`, not only the acting player's.
+  `LOUP_STEALTH_GRANTED_KEY` became a per-*instance* cap (a `set[str]` of
+  turn-card `instance_id`s, not a flat flag): two independently-played
+  copies, one per Methuselah, are two separate sources and may both be
+  activated for the same action. Only *playing* a copy from hand stays
+  controller-bound, by construction (a Methuselah can only play from their
+  own hand); that option is now offered alongside, not instead of, any
+  already-in-play copy's own activation option, since OQ-40 means they are
+  independent, additive opportunities.

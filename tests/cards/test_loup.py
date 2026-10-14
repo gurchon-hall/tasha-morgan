@@ -14,10 +14,14 @@ each turn"; both burn conditions, each in the scenario that actually
 isolates it from the other (condition 2 fires immediately after the very
 action Loup was played for if that action succeeds, so condition 1 is only
 reachable when Loup was played for a *blocked* action instead); the
-once-per-action cap on the standing grant (module docstring); and OQ-39
+once-per-*instance* cap on the standing grant (module docstring); OQ-39
 (resolved): the card can now be played proactively, even against a fully
 unblockable action, via `STEALTH_INCREASE_HOOK`'s own two offer points
-(`engine/action.py`), closing what was previously a documented known gap.
+(`engine/action.py`), closing what was previously a documented known gap;
+and OQ-40 (resolved -- ruling via a trusted VEKN judge, see module
+docstring): both the standing bonus and the burn trigger are table-wide,
+proven for a Toreador vampire benefiting from, and burning, the *other*
+Methuselah's own in-play Loup.
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -105,12 +109,12 @@ def test_play_option_removes_the_card_from_hand_brings_it_into_play_and_grants_o
     assert options[0].played_card_type == CARD_TYPE
     options[0].apply(game.state)
     assert pending[PENDING_STEALTH_INCREASE_KEY] == [ActiveStealthIncrease(delta=1)]
-    assert pending[LOUP_STEALTH_GRANTED_KEY] is True
     assert game.state.players["P1"].hand == []
     turn_cards = list(game.state.players["P1"].turn_cards.values())
     assert len(turn_cards) == 1
     assert turn_cards[0].krcg_id == KRCG_ID
     assert turn_cards[0].zone == "in_play"
+    assert pending[LOUP_STEALTH_GRANTED_KEY] == {turn_cards[0].instance_id}
     assert game.state.players["P1"].card_played_turn[KRCG_ID] == game.state.turn_number
 
 
@@ -132,7 +136,7 @@ def test_ongoing_bonus_benefits_a_second_toreador_vampire_without_consuming_hand
     options = _offer(game, acting_vampire="V2", pending=pending)
 
     assert len(options) == 1
-    assert options[0].choice.value == "loup:stealth_bonus"
+    assert options[0].choice.value == f"loup:stealth_bonus:{already_in_play.instance_id}"
     assert options[0].played_card_type is None  # not a card being played (module docstring)
     options[0].apply(game.state)
     assert pending[PENDING_STEALTH_INCREASE_KEY] == [ActiveStealthIncrease(delta=1)]
@@ -165,6 +169,77 @@ def test_ongoing_bonus_capped_at_once_per_action():
     first[0].apply(game.state)
 
     assert _offer(game, pending=pending) == []
+
+
+# --- OQ-40 (resolved): table-wide, not controller-scoped -------------------
+
+
+def test_table_wide_benefit_from_the_other_methuselahs_own_loup():
+    """Ruling (module docstring): "[Masika] has +1 stealth" -- a Toreador
+    vampire benefits from *any* in-play Loup, including one controlled by
+    the other Methuselah entirely."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, clan="Toreador")
+    p2 = builder.player("P2", pool=30)
+    p2.ready_vampire("V2", capacity=3, blood=1, clan="Toreador")
+    game = builder.build()
+    p1_loup = bring_turn_card_into_play(game.state, "P1", krcg_id=KRCG_ID, name=NAME)
+
+    options = _offer(game, player="P2", acting_vampire="V2", defender="P1")
+
+    assert {o.choice.value for o in options} == {f"loup:stealth_bonus:{p1_loup.instance_id}"}
+
+
+def test_table_wide_burn_from_any_toreadors_successful_action():
+    """Ruling (module docstring): "Loup burns if [the action] succeeds" --
+    any Toreador's successful action burns every in-play Loup, including
+    one controlled by a different Methuselah than the acting vampire's own."""
+    from vtesbot.engine.action import ACTION_SUCCEEDED_HOOK
+
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, clan="Toreador")
+    p2 = builder.player("P2", pool=30)
+    p2.ready_vampire("V2", capacity=3, blood=1, clan="Toreador")
+    game = builder.build()
+    p1_loup = bring_turn_card_into_play(game.state, "P1", krcg_id=KRCG_ID, name=NAME)
+
+    hooks.run_effects(
+        ACTION_SUCCEEDED_HOOK,
+        game.state,
+        actor_player="P2",
+        vampire=game.vampire("V2"),
+        action=ACTION_BLEED,
+    )
+
+    assert p1_loup.zone == "burned"
+
+
+def test_two_distinct_in_play_loups_each_grant_their_own_bonus_independently():
+    """Per-*instance* cap (module docstring): two independently-played
+    copies, one per Methuselah, are two separate sources -- both may be
+    activated for the same action, stacking to +2, not collapsed into a
+    single global "already granted" flag."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, clan="Toreador")
+    builder.player("P2", pool=30)
+    game = builder.build()
+    p1_loup = bring_turn_card_into_play(game.state, "P1", krcg_id=KRCG_ID, name=NAME)
+    p2_loup = bring_turn_card_into_play(game.state, "P2", krcg_id=KRCG_ID, name=NAME)
+    pending: dict = {}
+
+    options = _offer(game, pending=pending)
+
+    assert {o.choice.value for o in options} == {
+        f"loup:stealth_bonus:{p1_loup.instance_id}",
+        f"loup:stealth_bonus:{p2_loup.instance_id}",
+    }
+    for option in options:
+        option.apply(game.state)
+
+    assert pending[PENDING_STEALTH_INCREASE_KEY] == [
+        ActiveStealthIncrease(delta=1),
+        ActiveStealthIncrease(delta=1),
+    ]
 
 
 # --- "Only one Loup can be played each turn." -----------------------------
