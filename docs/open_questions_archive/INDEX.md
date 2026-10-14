@@ -23,3 +23,4 @@ an entry.
 | OQ-12 | `001.md` | 47th Street Royals - recruit-ally action not wired |
 | OQ-13 | `001.md` | 47th Street Royals - recruit_ally_play omits acting vampire |
 | OQ-14 | `001.md` | 47th Street Royals - recruit makes contested-ally gap live |
+| OQ-15 | `001.md` | Ally contest resolution loop not wired |

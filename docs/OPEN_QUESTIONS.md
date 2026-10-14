@@ -12,26 +12,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-15 - Ally contest resolution loop not wired (status: resolved)
-
-- Situation: OQ-10 added contest *detection* for allies but nothing
-  let either player ever pay-or-yield to end one — once a contest
-  began, it never ended.
-- Rules/interactions: Rulebook §4 Advanced Rules > Contested Cards
-  gives one unified pay-1-pool-per-unlock-phase-or-yield mechanism for
-  every unique card; the 2P variant's crypt-card override does not
-  change this cost/resolution half, only the face-down/usable half,
-  and only for crypt cards.
-- Solution: added `engine/allies.py::resolve_one_ally_contest` (pay
-  keeps `zone="contested"`, no 2P "stays usable" exception for
-  allies; yield burns the yielding copy, clears the opponent's
-  `contested_with` but leaves its `zone` at `"contested"` until that
-  opponent's own next unlock phase) and `_unlock_own_allies` to
-  perform that delayed restore; extended the unlock phase's
-  pending-effect loop to surface `"contest_ally:"` ids. Shilmulo
-  Tarot's own (Equipment-side) contest tracking is flagged as a
-  separate, still-open gap, out of scope here.
-
 ## OQ-16: "Cannot contest yourself" unimplemented on both paths (status: open)
 
 - Situation: found by `rules-auditor` while reviewing OQ-10/OQ-14's ally
@@ -663,60 +643,88 @@ up an OQ number or the highest one used so far.
   `cards/scalpel_tongue.py::_caller_may_play_basic`/`_caller_may_play_
   superior` implement this. Both cards stay `Status.IMPLEMENTED`.
 
-## OQ-39: Loup - implemented despite a ruling gap (status: open)
+## OQ-39: Loup - implemented despite a ruling gap (status: resolved)
 
 - Situation: Loup's on-file ruling says "Can be used even if the stealth
   is not currently needed" [LSJ 20011214-2], but `cards/loup.py`'s own
-  `STEALTH_MODIFIER_HOOK` provider can only ever be offered from inside
+  `STEALTH_MODIFIER_HOOK` provider could only ever be offered from inside
   `_duel_stealth_intercept`'s reactive "only when needed" ping-pong
-  (`engine/action.py`) — so Loup cannot be played against an unblockable
-  action, or when no block is attempted at all, contrary to that ruling.
-  `tests/cards/test_loup.py::
-  test_known_gap_cannot_be_played_when_the_action_is_unblockable` proves
-  the gap directly. The module shipped `Status.IMPLEMENTED` with the gap
-  noted only in prose/a test name.
-- Sources read: krcg's on-file ruling for Loup (as above); this project's
-  own OQ-30/31 precedent, where an identical shape (Perfect Paragon
-  family needing to add stealth outside the reactive-only window) was
-  treated as needing a new proactive engine primitive
-  (`INTERCEPT_DECREASE_HOOK`) built *before* the card shipped, with the
-  card staying `blocked` until it existed.
-- Proposed plan (user-directed, not yet implemented -- pending confirmation):
-  Reading B. A new `STEALTH_INCREASE_HOOK` (`engine/action.py`), offered
-  proactively via `hooks.offer_until_pass` at the very top of `attempt_
-  block`'s retry loop (alongside the existing `INTERCEPT_DECREASE_HOOK` own
-  offer there) and reactively, merged into `_duel_stealth_intercept`'s
-  existing `STEALTH_MODIFIER_HOOK`/`INTERCEPT_DECREASE_HOOK` union (`_ask_
-  stealth_or_decrease` would need to become a three-way merge, or gain a
-  sibling). Simpler than `ActiveInterceptDecrease`: a stealth increase is
-  not candidate-dependent (intercept decrease's own `qualifies(blocker)`
-  predicate exists only because intercept is a per-blocker value; stealth
-  is a per-action value), so `ActiveStealthIncrease` needs only a `delta`,
-  summed unconditionally into `_duel_stealth_intercept`'s `stealth`
-  baseline the same way `_active_intercept_decrease` already sums into
-  `intercept` -- recomputed fresh every call, never cached, same OQ-11
-  convention. `loup.py`'s own provider moves from `STEALTH_MODIFIER_HOOK`
-  to `STEALTH_INCREASE_HOOK`, gaining its own per-action "already granted"
-  flag in `pending` (now reachable from both offer points, unlike today's
-  single reactive one) so the standing +1 is activated at most once per
-  action. Perfect Paragon itself needs no change: its own superior clause
-  already uses the (also proactive+reactive) `INTERCEPT_DECREASE_HOOK`
-  directly and has no analogous gap -- the "close... Perfect Paragon"
-  framing refers to this shared precedent/primitive family, not a second
-  open gap on that card. Scope: `rules-engineer` (`engine/action.py` new
-  hook/dataclass + `attempt_block`/`_duel_stealth_intercept` wiring),
-  `card-implementer` (`cards/loup.py` migration), `rules-auditor` review
-  before landing (core engine change, CLAUDE.md §7).
-- Candidate readings: A) ship as-is (current state): a documented,
-  conservative under-approximation that never mis-resolves or
-  over-applies the card, merely offers it fewer opportunities to be
-  played than the ruling technically allows — acceptable for the
-  "always legal first" milestone since it never produces an illegal
-  play. B) mark `cards/loup.py` `Status.BLOCKED` until a proactive,
-  `pending`-based stealth-grant primitive exists (mirroring
-  `ActiveInterceptDecrease`/OQ-30's own shape), consistent with how
-  Perfect Paragon's analogous gap was handled, so the project's own
-  "always legal" bar also covers "always offers every legal play" and
-  stays consistent across cards with the same shape.
-- Impacted code/cards: `cards/loup.py` (`Status.IMPLEMENTED`, reading A
-  currently shipped, untouched pending resolution).
+  (`engine/action.py`) — so Loup could not be played against an
+  unblockable action, or when no block is attempted at all, contrary to
+  that ruling. The module shipped `Status.IMPLEMENTED` with the gap noted
+  only in prose/a test name.
+- Rules/interactions: krcg's on-file ruling for Loup (as above); this
+  project's own OQ-30/31 precedent, where an identical shape (Perfect
+  Paragon family needing to add a modifier outside the reactive-only
+  window) was resolved by building a new proactive engine primitive
+  (`INTERCEPT_DECREASE_HOOK`) rather than guessing around the gap.
+- Solution (user-directed, Reading B): a new `STEALTH_INCREASE_HOOK`
+  (`engine/action.py`), `INTERCEPT_DECREASE_HOOK`'s sibling for the acting
+  side's own stealth -- offered proactively via `hooks.offer_until_pass` at
+  the very top of `attempt_block`'s retry loop (alongside the existing
+  `INTERCEPT_DECREASE_HOOK` own offer there) and reactively, merged into
+  `_duel_stealth_intercept`'s existing union (`_ask_stealth_or_decrease`
+  renamed `_ask_stealth_or_modifier`, now a three-way merge). Simpler than
+  `ActiveInterceptDecrease`: a stealth increase is never candidate-
+  dependent (intercept decrease's own `qualifies(blocker)` predicate exists
+  only because intercept is a per-blocker value; stealth is a per-action
+  value), so `ActiveStealthIncrease` needs only a `delta`, summed
+  unconditionally into `_duel_stealth_intercept`'s `stealth` baseline the
+  same way `_active_intercept_decrease` sums into `intercept` -- recomputed
+  fresh every call, never cached, same OQ-11 convention. `cards/loup.py`'s
+  own provider moved from `STEALTH_MODIFIER_HOOK` to `STEALTH_INCREASE_
+  HOOK`, gaining its own per-action `LOUP_STEALTH_GRANTED_KEY` cap in
+  `pending` (now reachable from both offer points, unlike the old single
+  reactive one) so the standing +1 is activated at most once per action --
+  without it, the old reactive-only wiring could in principle have
+  restacked the same flat bonus indefinitely within one action (never
+  exercised by any registered test, but a latent risk the new cap closes as
+  a side effect). Perfect Paragon itself needed no change: its own
+  superior clause already uses the (also proactive+reactive) `INTERCEPT_
+  DECREASE_HOOK` directly and has no analogous gap. `tests/rules/
+  test_stealth_increase.py` proves the mechanism generically (mirroring
+  `test_intercept_decrease.py`); `tests/cards/test_loup.py::
+  test_can_be_played_proactively_even_when_the_action_is_unblockable`
+  proves the fix against the real card.
+
+## OQ-40: Loup - controller-only or table-wide bonus (status: open)
+
+- Situation: `rules-auditor`, reviewing OQ-39's own landing, flagged that
+  `cards/loup.py`'s own scope assumption ("Both clauses... bind to the
+  *controller's own* Toreador vampires, never the opponent's") carries no
+  citation and may be wrong — `_provide_loup` only ever reads
+  `active_turn_cards(state, player, KRCG_ID)` for the *acting* player, and
+  `_provide_loup_burn` only ever burns the *acting* player's own copy, so
+  today a Methuselah's Loup can never grant the bonus to, or be burned by,
+  the *other* Methuselah's own Toreador vampire. Pre-existing since OQ-34's
+  original pass, not introduced by OQ-39 — but OQ-39 makes both offer
+  points (not just one) newly reach this same unexamined assumption.
+- Sources read (with URL/section): Loup's own printed text (`krcg.vtes.
+  VTES['Loup'].card_text`, re-verified live 2026-10-14): "Put this card in
+  play. Toreador get +1 stealth. Burn this card at the end of the turn or
+  after a Toreador performs a successful action." — plain "Toreador," no
+  "you control." No on-file krcg ruling for Loup addresses this scope
+  question (confirmed live, no VEKN card-rulings entry for Loup exists
+  beyond the single timing ruling already cited in `cards/loup.py`).
+  Comparative evidence from the installed `krcg` package: the same printed
+  template ("Put this card in play. [clan/sect] get +1 [stat]...") recurs
+  unqualified (table-wide) on Week of Nightmares ("Ravnos get +1 bleed and
+  +1 strength..." — the well-known "every Ravnos in the game" card),
+  Tremere Convocation ("Tremere get +1 stealth..."), and several other
+  Master cards of this shape — contrasted with vampire-printed abilities in
+  the same database that explicitly add "you control" whenever the author
+  does mean controller-only (e.g. Weirich Waldburg: "primogen *you
+  control* get +1 stealth"). This minimal-pair contrast is suggestive but
+  not itself a ruling on Loup specifically.
+- Candidate readings: A) controller-only (current code): Loup only ever
+  benefits, and is only ever burned by, its own controller's Toreador
+  vampires — a conservative reading matching this project's own prior
+  "narrower than the card might allow, never over-applies" acceptance
+  criterion (same shape as OQ-39's own pre-resolution state). B)
+  table-wide: *any* Toreador vampire in play (either Methuselah's) gets
+  the +1 stealth while a copy is in play, and *any* Toreador's successful
+  action burns it — matching the plain, unqualified card text and the
+  comparative "you control" contrast above.
+- Impacted code/cards: `cards/loup.py` (`_provide_loup`/
+  `_provide_loup_burn`, `Status.IMPLEMENTED`, reading A currently shipped,
+  untouched pending resolution).
