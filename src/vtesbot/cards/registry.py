@@ -213,6 +213,15 @@ class Hook(StrEnum):
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"
     POLLING_STEP = "polling_step"
+    """Wired in `engine/politics.py` (OQ-6): a `"before_cast"`-phase window
+    before casting begins (Perfect Paragon/Queen Anne/Oxford University,
+    England's own shapes), and -- since OQ-37 (`docs/OPEN_QUESTIONS.md`,
+    resolved) -- also a `"mid_cast"`-phase window merged into each player's
+    own per-turn vote-casting `Decision` inside `_cast_votes`, for a card
+    like Scalpel Tongue (krcg id 101686) that retroactively cancels an
+    already-cast source. The two phases share one hook name but differ in
+    what `HookOption.apply(state)` must return -- see `_cast_votes`'s own
+    docstring."""
     REFERENDUM_RESOLVED = "referendum_resolved"
     """Reserved for a moment strictly *after* a political action's referendum
     has fully resolved -- including any pass effects and any combat from a
