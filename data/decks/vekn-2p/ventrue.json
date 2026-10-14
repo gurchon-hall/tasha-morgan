@@ -69,7 +69,7 @@
       "capacity": 6,
       "group": 6,
       "krcg_id": 201557,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     }
   ],
   "library": [
