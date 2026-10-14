@@ -21,8 +21,6 @@ Side Strike actually combined in one round) lives in
 `tests/cards/test_dust_up_side_strike_interaction.py`.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.combat import (
@@ -35,12 +33,6 @@ from vtesbot.engine.combat import (
     run_combat,
 )
 from vtesbot.engine.decision import Choice
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 class _DeclineMendAgent:

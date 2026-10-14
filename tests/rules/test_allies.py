@@ -13,19 +13,11 @@ Royals' own card module -- 47th Street Royals itself remains
 `card-implementer`'s job once this capability exists.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.allies import burn_ally, recruit_ally
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.phases.minion import minion_phase
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def test_recruit_ally_creates_a_ready_locked_ally_under_its_controller():

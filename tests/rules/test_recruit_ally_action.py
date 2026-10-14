@@ -27,12 +27,6 @@ FAKE_ALLY_KRCG_ID = 555
 FAKE_ALLY_COST = 2
 
 
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
-
-
 def _fake_ally_provider(state, context):
     """Stand-in for a real Ally card module's own `"recruit_ally_play"`
     provider: one option, offered only while its own card is in hand."""

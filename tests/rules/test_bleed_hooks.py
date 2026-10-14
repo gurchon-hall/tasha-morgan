@@ -6,18 +6,10 @@ impulse window for library cards like Bonding/Threats/Telepathic Counter).
 No such card is implemented yet -- scenario tests for the mechanism only.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.phases.minion import minion_phase
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _bleed_game():

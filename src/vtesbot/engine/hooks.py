@@ -113,11 +113,34 @@ def clear(hook: str | None = None) -> None:
 
     Test isolation helper only; production code never needs to call this
     (the catalogue is populated once, at import time, and left alone).
-    """
+    Calling this with `hook=None` wipes every *real* card's providers too
+    (`vtesbot.cards` registers them once, at import time, same as this
+    catalogue itself -- re-importing a card module does not re-run its
+    module-level `register()` calls). A test that does this leaves the
+    catalogue empty for the rest of the process, silently turning every
+    later test's real card providers into no-ops with no error raised --
+    prefer `snapshot()`/`restore()` below for test isolation instead."""
     if hook is None:
         _PROVIDERS.clear()
     else:
         _PROVIDERS.pop(hook, None)
+
+
+def snapshot() -> dict[str, list[Provider]]:
+    """Capture the current catalogue, for `restore()` to undo a test's own
+    registrations without disturbing any other hook (test isolation helper;
+    see `clear()`'s own docstring for why a blanket `clear(None)` is unsafe
+    across a test *suite*, not just a single test)."""
+    return {hook: list(providers) for hook, providers in _PROVIDERS.items()}
+
+
+def restore(snapshot: dict[str, list[Provider]]) -> None:
+    """Replace the catalogue with a previously captured `snapshot()`,
+    undoing any `register()`/`clear()` calls made since -- the standard
+    "snapshot before, restore after" pattern for a fixture wrapping a test
+    that registers fake providers."""
+    _PROVIDERS.clear()
+    _PROVIDERS.update(snapshot)
 
 
 def offer(hook: str, state: GameState, **context: Any) -> list[HookOption]:

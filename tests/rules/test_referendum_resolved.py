@@ -14,8 +14,6 @@ exists.
 
 from typing import Any
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import LibraryCard, hooks
 from vtesbot.engine.action import ACTION_POLITICAL, REFERENDUM_RESOLVED_HOOK
@@ -25,12 +23,6 @@ from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, ActionCardSpec, 
 from vtesbot.engine.politics import POLITICAL_ACTION_STEALTH, resolve_referendum
 
 FAKE_PA_KRCG_ID = 701
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _fake_political_action_provider(state, context):

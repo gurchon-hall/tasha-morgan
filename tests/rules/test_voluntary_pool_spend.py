@@ -7,7 +7,6 @@ through their own voluntary choices. Central helper:
 import pytest
 
 from helpers import ScenarioBuilder, ScriptedAgent
-from vtesbot.engine import hooks
 from vtesbot.engine.allies import detect_contest_on_recruit, recruit_ally
 from vtesbot.engine.attachments import attach_card, detect_contest_on_attach
 from vtesbot.engine.master_cards import (
@@ -17,12 +16,6 @@ from vtesbot.engine.master_cards import (
 from vtesbot.engine.phases.unlock import unlock_phase
 from vtesbot.engine.politics import variable_pool_burn_vote_options
 from vtesbot.engine.pool import can_afford_without_ousting, max_voluntary_spend
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 @pytest.mark.parametrize(

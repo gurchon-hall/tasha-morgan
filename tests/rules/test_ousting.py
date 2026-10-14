@@ -77,24 +77,21 @@ def test_influence_phase_stops_asking_once_a_hook_option_ousts_the_actor():
         ]
 
     hooks.register(INFLUENCE_PHASE_ACTION_HOOK, fake_option)
-    try:
-        game = (
-            ScenarioBuilder(seed=1)
-            .player("P1", pool=10)
-            .player("P2", pool=1)
-            .uncontrolled_vampire("U1", capacity=3, blood=0)
-            .build()
-        )
-        p2 = ScriptedAgent("P2").expect("influence_action", "pay_last_pool")
-        game.state.agents["P2"] = p2
+    game = (
+        ScenarioBuilder(seed=1)
+        .player("P1", pool=10)
+        .player("P2", pool=1)
+        .uncontrolled_vampire("U1", capacity=3, blood=0)
+        .build()
+    )
+    p2 = ScriptedAgent("P2").expect("influence_action", "pay_last_pool")
+    game.state.agents["P2"] = p2
 
-        influence_phase(game.state, "P2")
+    influence_phase(game.state, "P2")
 
-        p2.assert_exhausted()
-        assert game.state.game_over is True
-        assert game.pool_of("P2") == 0
-    finally:
-        hooks.clear()
+    p2.assert_exhausted()
+    assert game.state.game_over is True
+    assert game.pool_of("P2") == 0
 
 
 def _offered_on_first_influence_decision(pool: int, *, crypt: bool = False) -> list[str]:
@@ -195,18 +192,15 @@ def test_master_phase_stops_after_a_trifle_ousts_the_actor():
         ]
 
     hooks.register("master_phase_play", fake_trifle)
-    try:
-        game = ScenarioBuilder(seed=1).player("P1", pool=1).player("P2", pool=10).build()
-        p1 = ScriptedAgent("P1").expect("master_phase_action", "play_trifle")
-        game.state.agents["P1"] = p1
+    game = ScenarioBuilder(seed=1).player("P1", pool=1).player("P2", pool=10).build()
+    p1 = ScriptedAgent("P1").expect("master_phase_action", "play_trifle")
+    game.state.agents["P1"] = p1
 
-        master_phase(game.state, "P1")
+    master_phase(game.state, "P1")
 
-        p1.assert_exhausted()
-        assert game.state.game_over is True
-        assert game.state.winner == "P2"
-    finally:
-        hooks.clear()
+    p1.assert_exhausted()
+    assert game.state.game_over is True
+    assert game.state.winner == "P2"
 
 
 def test_unlock_phase_does_not_offer_a_contest_payment_that_would_oust_the_payer():

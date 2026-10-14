@@ -8,20 +8,9 @@ real card -- real card effect modules and their own tests are
 `card-implementer`'s next pass.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.action import attempt_block
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    """Test isolation (CLAUDE.md "no global state"/`docs/DECISIONS.md` D-5):
-    the hook catalogue is shared, process-wide, static state, so fake
-    providers registered by a test must not leak into the next one."""
-    yield
-    hooks.clear()
 
 
 def test_offer_returns_nothing_when_no_provider_is_registered():

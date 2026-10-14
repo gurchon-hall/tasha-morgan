@@ -4,17 +4,9 @@ scaffolding pass; `engine/damage.py`'s "Prevent step"). No prevention card
 the mechanism only, using a trivial fake provider.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.decision import Choice
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _one_vampire_game(capacity: int = 3, blood: int = 0):

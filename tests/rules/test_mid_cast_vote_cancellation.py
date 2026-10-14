@@ -12,19 +12,11 @@ Tongue's own card module remains `card-implementer`'s job once this
 capability exists.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.politics import POLLING_STEP_HOOK, resolve_referendum
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _fake_scalpel_tongue(target_source_id: str, *, burns_blood: bool = False):

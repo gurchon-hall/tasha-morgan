@@ -19,20 +19,12 @@ Per the `rules-scenario-test` skill: these are scenario tests for the
 `card-implementer`'s job once it is wired against this capability.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards._shared import bleed_bookkeeping
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED, attempt_block, perform_minion_action
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.phases.minion import PENDING_BLEED_AMOUNT_KEY, minion_phase
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def test_attempt_block_defaults_to_a_fresh_pending_dict_when_none_supplied():

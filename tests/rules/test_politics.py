@@ -6,8 +6,6 @@ referendum)" path and the referendum's polling step / vote tally itself
 the verbatim sources).
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.decision import Choice
@@ -19,12 +17,6 @@ from vtesbot.engine.politics import (
     resolve_referendum,
     variable_pool_burn_vote_options,
 )
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def test_a_blocked_political_action_goes_to_combat_and_never_calls_a_referendum():

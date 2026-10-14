@@ -9,18 +9,10 @@ condensed mapping): "1 master phase action by default; trifles grant one
 extra (max one per phase); ... unused actions are lost."
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.phases.master import master_phase
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def test_no_decision_is_raised_with_no_master_card_provider_registered():

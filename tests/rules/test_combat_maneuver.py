@@ -29,12 +29,6 @@ from vtesbot.engine.combat import (
 from vtesbot.engine.decision import Choice
 
 
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
-
-
 def _combat_game(*, acting_label: str = "V1", blocking_label: str = "B1", blocking_blood: int = 0):
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire(acting_label, capacity=10, blood=5)

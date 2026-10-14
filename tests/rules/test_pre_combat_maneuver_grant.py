@@ -20,8 +20,6 @@ generic `PRE_COMBAT_MANEUVER_GRANT_KEY` -- Fleetness itself remains
 fleetness.py` stays `Status.BLOCKED` until that pass).
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards._shared import play_from_hand
 from vtesbot.engine import LibraryCard, hooks
@@ -38,12 +36,6 @@ from vtesbot.engine.decision import Choice
 from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, ActionCardSpec, minion_phase
 
 FAKE_FLEETNESS_KRCG_ID = 999_001
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _provide_fake_pre_combat_maneuver(state, context):

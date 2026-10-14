@@ -5,11 +5,14 @@ OPEN_QUESTIONS.md`): `engine/action.py::perform_minion_action`'s generic
 primitives Loup (krcg id 102273) needs.
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
-*mechanism*, using trivial fake providers -- Loup's own card module remains
-`card-implementer`'s job once this capability exists.
-"""
-
-import pytest
+*mechanism*, using trivial fake providers. Loup (krcg id 102273) is now
+implemented for real (`cards/loup.py`, `tests/cards/test_loup.py`) and
+registers permanently, process-wide, at import time, same as every other
+real card -- the two "stand-in" tests below use a sentinel krcg_id (999998)
+for their own turn card instead of Loup's real one, so they stay isolated
+from the real card's own hooks whenever both happen to be registered in the
+same test session (`tests/conftest.py`'s own hook-isolation fixture
+docstring explains why reusing a real card's id here would double-fire)."""
 
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
@@ -24,12 +27,6 @@ from vtesbot.engine.turn_cards import (
 )
 
 LOUP_KRCG_ID = 102273
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 # --- TurnCardInPlay / engine/turn_cards.py -----------------------------------
@@ -218,6 +215,14 @@ def test_action_succeeded_hook_fires_with_no_providers_registered():
 # --- Composed Loup-shaped stand-in -------------------------------------------
 
 
+_STAND_IN_KRCG_ID = 999998
+"""A sentinel, deliberately not Loup's own real krcg id (102273): the two
+tests below actually run `minion_phase` (unlike every other test in this
+file), which dispatches the real, now-implemented `cards/loup.py` module's
+own hooks too -- using Loup's real id here would make this stand-in's fake
+`ACTION_SUCCEEDED_HOOK` provider double up with the real card's."""
+
+
 def test_loup_shaped_stand_in_is_burned_after_a_toreador_performs_a_successful_action():
     """Proves the two primitives compose into Loup's own printed burn
     condition 2 ("Burn this card ... after a Toreador performs a successful
@@ -229,7 +234,7 @@ def test_loup_shaped_stand_in_is_burned_after_a_toreador_performs_a_successful_a
         vampire = context["vampire"]
         if vampire.card.clan != "Toreador":
             return
-        for card in active_turn_cards(state, context["actor_player"], LOUP_KRCG_ID):
+        for card in active_turn_cards(state, context["actor_player"], _STAND_IN_KRCG_ID):
             burn_turn_card(card)
 
     hooks.register(ACTION_SUCCEEDED_HOOK, loup_auto_burn)
@@ -237,7 +242,9 @@ def test_loup_shaped_stand_in_is_burned_after_a_toreador_performs_a_successful_a
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, clan="Toreador")
     builder.player("P2", pool=30)
     game = builder.build()
-    card = bring_turn_card_into_play(game.state, "P1", krcg_id=LOUP_KRCG_ID, name="Loup")
+    card = bring_turn_card_into_play(
+        game.state, "P1", krcg_id=_STAND_IN_KRCG_ID, name="Loup-shaped stand-in"
+    )
     actor = ScriptedAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "bleed")
@@ -255,7 +262,7 @@ def test_loup_shaped_stand_in_is_not_burned_by_a_non_toreador_vampires_successfu
         vampire = context["vampire"]
         if vampire.card.clan != "Toreador":
             return
-        for card in active_turn_cards(state, context["actor_player"], LOUP_KRCG_ID):
+        for card in active_turn_cards(state, context["actor_player"], _STAND_IN_KRCG_ID):
             burn_turn_card(card)
 
     hooks.register(ACTION_SUCCEEDED_HOOK, loup_auto_burn)
@@ -263,7 +270,9 @@ def test_loup_shaped_stand_in_is_not_burned_by_a_non_toreador_vampires_successfu
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, clan="Brujah")
     builder.player("P2", pool=30)
     game = builder.build()
-    card = bring_turn_card_into_play(game.state, "P1", krcg_id=LOUP_KRCG_ID, name="Loup")
+    card = bring_turn_card_into_play(
+        game.state, "P1", krcg_id=_STAND_IN_KRCG_ID, name="Loup-shaped stand-in"
+    )
     actor = ScriptedAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "bleed")

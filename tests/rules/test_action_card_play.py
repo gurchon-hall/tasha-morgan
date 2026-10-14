@@ -31,12 +31,6 @@ FAKE_ACTION_CARD_STEALTH = 0
 FAKE_ACTION_CARD_BLEED_AMOUNT = 2
 
 
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
-
-
 def _fake_action_card() -> LibraryCard:
     return LibraryCard(
         krcg_id=FAKE_ACTION_CARD_KRCG_ID, name="Fake Action Card", card_type="action"

@@ -6,18 +6,10 @@ printed vampire ability). No combat card is implemented yet -- scenario
 tests for the mechanism only, using trivial fake providers.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder
 from vtesbot.engine import hooks
 from vtesbot.engine.combat import run_combat
 from vtesbot.engine.decision import Choice
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 class _RecordingAgent:

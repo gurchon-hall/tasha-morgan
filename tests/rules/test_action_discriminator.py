@@ -13,19 +13,11 @@ Per the `rules-scenario-test` skill: these are scenario tests for the
 `card-implementer`'s job once this capability exists.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.action import attempt_block
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.phases.minion import minion_phase
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def test_attempt_block_without_an_explicit_action_defaults_to_none():

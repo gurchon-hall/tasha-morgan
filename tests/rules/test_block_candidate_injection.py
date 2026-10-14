@@ -15,8 +15,6 @@ provider (not Organized Resistance, krcg 102230, itself -- that remains
 `blocked`/`OQ-26` until then).
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.action import (
@@ -25,12 +23,6 @@ from vtesbot.engine.action import (
     perform_minion_action,
 )
 from vtesbot.engine.decision import Choice
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _fake_forced_block_provider(state, context):

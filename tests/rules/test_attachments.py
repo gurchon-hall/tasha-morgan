@@ -7,10 +7,14 @@ capacity` / `vampire.card.disciplines` directly now goes through them.
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism*, using trivial fake providers standing in for a real attachment
-card (e.g. Celerity) -- Celerity itself remains `card-implementer`'s job.
-"""
-
-import pytest
+card -- Celerity (krcg id 100312, which pioneered this exact hook pair) is
+now implemented for real (`cards/celerity.py`, `tests/cards/test_celerity.py`)
+and registers permanently, process-wide, at import time, same as every other
+real card; the fake providers below deliberately use a sentinel krcg_id
+(999999) that no real card will ever hold, so this file's own scenarios stay
+isolated from whichever real cards happen to already be registered in the
+same test session (`tests/conftest.py`'s own hook-isolation fixture
+docstring explains why reusing a real card's id here would double-count)."""
 
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
@@ -18,12 +22,6 @@ from vtesbot.engine.attachments import effective_capacity, effective_disciplines
 from vtesbot.engine.cards import CardAttachment
 from vtesbot.engine.damage import add_blood
 from vtesbot.engine.phases.influence import influence_phase
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _fake_capacity_bonus_provider(krcg_id: int, bonus: int):
@@ -67,13 +65,13 @@ def test_effective_capacity_with_no_attachments_equals_printed_capacity():
 
 
 def test_effective_capacity_adds_a_registered_attachment_bonus():
-    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=100312, bonus=1))
+    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3)
     builder.player("P2", pool=30)
     game = builder.build()
     vampire = game.vampire("V1")
-    vampire.attachments.append(CardAttachment(krcg_id=100312, name="Celerity"))
+    vampire.attachments.append(CardAttachment(krcg_id=999999, name="Fake Capacity Card"))
 
     assert effective_capacity(game.state, vampire) == 4
 
@@ -81,25 +79,25 @@ def test_effective_capacity_adds_a_registered_attachment_bonus():
 def test_effective_capacity_ignores_an_unrelated_vampires_attachment():
     """The bonus must be scoped to the specific vampire it is attached to,
     not every vampire in play."""
-    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=100312, bonus=1))
+    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3).ready_vampire("V2", capacity=3)
     builder.player("P2", pool=30)
     game = builder.build()
-    game.vampire("V1").attachments.append(CardAttachment(krcg_id=100312, name="Celerity"))
+    game.vampire("V1").attachments.append(CardAttachment(krcg_id=999999, name="Fake Capacity Card"))
 
     assert effective_capacity(game.state, game.vampire("V1")) == 4
     assert effective_capacity(game.state, game.vampire("V2")) == 3
 
 
 def test_effective_disciplines_unions_printed_and_attached_levels():
-    hooks.register("discipline_level_modifier", _fake_discipline_grant_provider(100312, "cel"))
+    hooks.register("discipline_level_modifier", _fake_discipline_grant_provider(999999, "cel"))
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, disciplines=("for",))
     builder.player("P2", pool=30)
     game = builder.build()
     vampire = game.vampire("V1")
-    vampire.attachments.append(CardAttachment(krcg_id=100312, name="Celerity"))
+    vampire.attachments.append(CardAttachment(krcg_id=999999, name="Fake Capacity Card"))
 
     assert effective_disciplines(game.state, vampire) == ("cel", "for")
 
@@ -117,13 +115,13 @@ def test_add_blood_caps_at_effective_capacity_not_printed_capacity():
     """Rulebook SS1 Vampires: blood may never exceed capacity -- now checked
     against the *effective* capacity, so an attached "+1 capacity" card
     actually raises the cap (OQ-8's whole point)."""
-    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=100312, bonus=1))
+    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=3)
     builder.player("P2", pool=30)
     game = builder.build()
     vampire = game.vampire("V1")
-    vampire.attachments.append(CardAttachment(krcg_id=100312, name="Celerity"))
+    vampire.attachments.append(CardAttachment(krcg_id=999999, name="Fake Capacity Card"))
 
     added = add_blood(game.state, vampire, 2)
 
@@ -136,13 +134,13 @@ def test_influence_phase_add_blood_choice_respects_effective_capacity():
     offered once a vampire is already at its *effective* capacity, and must
     still be offered while under it even though it is already at its
     printed capacity (OQ-8)."""
-    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=100312, bonus=1))
+    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
     builder = ScenarioBuilder(seed=1, first_influence_phase_used=True)
     builder.player("P1", pool=30).uncontrolled_vampire("V1", capacity=3, blood=3)
     builder.player("P2", pool=30)
     game = builder.build()
     vampire = game.vampire("V1")
-    vampire.attachments.append(CardAttachment(krcg_id=100312, name="Celerity"))
+    vampire.attachments.append(CardAttachment(krcg_id=999999, name="Fake Capacity Card"))
     offered: list[list[str]] = []
 
     class RecordingAgent(ScriptedAgent):
@@ -168,13 +166,13 @@ def test_influence_phase_reveal_choice_requires_effective_capacity():
     (because of an attachment) must not yet offer the free "reveal" choice
     (OQ-8): Rulebook SS4 Influence Phase, "a vampire with blood >= capacity
     may be revealed"."""
-    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=100312, bonus=1))
+    hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
     builder = ScenarioBuilder(seed=1, first_influence_phase_used=True)
     builder.player("P1", pool=30).uncontrolled_vampire("V1", capacity=3, blood=3)
     builder.player("P2", pool=30)
     game = builder.build()
     vampire = game.vampire("V1")
-    vampire.attachments.append(CardAttachment(krcg_id=100312, name="Celerity"))
+    vampire.attachments.append(CardAttachment(krcg_id=999999, name="Fake Capacity Card"))
     offered_on_first_decision: list[str] = []
 
     class RecordingAgent(ScriptedAgent):

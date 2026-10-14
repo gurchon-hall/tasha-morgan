@@ -24,8 +24,6 @@ those remain `card-implementer`'s job once this capability exists; Perfect
 Paragon stays registered `blocked`/`OQ-30` until then).
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.action import (
@@ -36,12 +34,6 @@ from vtesbot.engine.action import (
     perform_minion_action,
 )
 from vtesbot.engine.decision import Choice
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _fake_decrease_provider_factory(*, delta: int = -1, qualifies_capacity_below: int = 2):

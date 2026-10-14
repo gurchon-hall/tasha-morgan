@@ -21,8 +21,6 @@ module -- none of the named cards is implemented here; that remains
 `card-implementer`'s job once this capability exists.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScenarioGame, ScriptedAgent
 from vtesbot.cards._shared import play_from_hand
 from vtesbot.engine import LibraryCard, build_observation, hooks
@@ -39,12 +37,6 @@ UNIQUE_CARD_KRCG_ID = 101341  # Oxford University, England's own id, reused as a
 UNIQUE_CARD_NAME = "Oxford University, England"
 NON_UNIQUE_CARD_KRCG_ID = 102180  # Wider View's own id, reused as a stand-in
 NON_UNIQUE_CARD_NAME = "Wider View"
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 # --- bring_master_card_into_play ---------------------------------------------

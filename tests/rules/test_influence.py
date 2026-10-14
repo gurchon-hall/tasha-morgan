@@ -32,12 +32,6 @@ from vtesbot.engine.phases.influence import INFLUENCE_PHASE_ACTION_HOOK, influen
 from vtesbot.engine.pool import gain_pool
 
 
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
-
-
 def test_first_influence_phase_of_the_game_grants_three_transfers():
     """2P variant SS2.3: the very first influence phase of the game gets 3
     transfers (not 4); spending all of it on 1-transfer add-blood actions

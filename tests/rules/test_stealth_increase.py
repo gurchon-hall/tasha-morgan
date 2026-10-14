@@ -24,8 +24,6 @@ Loup, krcg 102273 -- see `tests/cards/test_loup.py` for that card's own
 tests against the real provider).
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.action import (
@@ -35,12 +33,6 @@ from vtesbot.engine.action import (
     attempt_block,
 )
 from vtesbot.engine.decision import Choice
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _fake_increase_provider_factory(*, delta: int = 1):

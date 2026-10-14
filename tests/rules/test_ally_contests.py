@@ -12,8 +12,6 @@ Per the `rules-scenario-test` skill: these are scenario tests for the
 touched here (`card-implementer`'s job once this capability exists).
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards._shared import play_from_hand_pending
 from vtesbot.engine import LibraryCard, build_observation, hooks
@@ -23,12 +21,6 @@ from vtesbot.engine.phases.minion import RECRUIT_ALLY_PLAY_HOOK, minion_phase
 
 UNIQUE_ALLY_KRCG_ID = 102217  # 47th Street Royals' own id, reused as a stand-in
 UNIQUE_ALLY_NAME = "47th Street Royals"
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def test_detect_contest_on_recruit_flags_both_same_named_allies():

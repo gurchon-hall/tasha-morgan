@@ -13,19 +13,11 @@ Per the `rules-scenario-test` skill: these are scenario tests for the
 Carmelita's own effect module is a separate `card-implementer` pass.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards._shared import play_from_hand_pending
 from vtesbot.engine import hooks
 from vtesbot.engine.format import FormatConfig
 from vtesbot.engine.hand import effective_hand_size, reconcile_hand_size
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _fake_hand_size_modifier(delta: int):

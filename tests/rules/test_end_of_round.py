@@ -8,8 +8,6 @@ are scenario tests for the generic mechanisms only, using fake providers and
 direct calls to prove the shape rather than any one card's wording.
 """
 
-import pytest
-
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.engine import hooks
 from vtesbot.engine.combat import END_OF_ROUND_HOOK, ROUND_STATE_CONTEXT_KEY, run_combat
@@ -19,12 +17,6 @@ from vtesbot.engine.damage import (
     record_blood_lost_to_damage,
 )
 from vtesbot.engine.decision import Choice
-
-
-@pytest.fixture(autouse=True)
-def _clean_hooks():
-    yield
-    hooks.clear()
 
 
 def _combat_game(*, acting_blood: int = 2, blocking_blood: int = 0, blocking_wounded: bool = False):
