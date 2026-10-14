@@ -223,17 +223,24 @@ class Hook(StrEnum):
     what `HookOption.apply(state)` must return -- see `_cast_votes`'s own
     docstring."""
     REFERENDUM_RESOLVED = "referendum_resolved"
-    """Reserved for a moment strictly *after* a political action's referendum
-    has fully resolved -- including any pass effects and any combat from a
-    blocked attempt -- distinct from, and later than, the pre-cast
-    `POLLING_STEP` and the during-tally `REFERENDUM_TALLIED` above. Named for
-    classification only (same pattern `POLLING_STEP` used before
-    `engine/politics.py` wired it): no engine call site exists yet. This is
-    Voter Captivation's own trigger moment ("[o]nly usable after resolution
-    of a political action whose referendum passed" -- `docs/
-    OPEN_QUESTIONS.md` OQ-6); do not wire a future provider for it against
-    `POLLING_STEP` or `REFERENDUM_TALLIED` instead, since neither has a vote
-    margin or final pass/fail state available at the moment it fires."""
+    """A moment strictly *after* a political action's referendum has fully
+    resolved -- including any pass effects and any combat from a blocked
+    attempt -- distinct from, and later than, the pre-cast `POLLING_STEP`
+    and the during-tally `REFERENDUM_TALLIED` above. Dispatch call site
+    (OQ-36, `docs/OPEN_QUESTIONS.md`, resolved): `engine/action.py::
+    perform_minion_action`, right after its own `resolve(pending)` call
+    returns, offered as a real two-sided `Decision`-raising window
+    (`hooks.resolve_impulse_window`), only when `action ==
+    ACTION_POLITICAL` and the referendum passed. This is Voter
+    Captivation's own trigger moment ("[o]nly usable after resolution of a
+    political action whose referendum passed" -- `docs/OPEN_QUESTIONS.md`
+    OQ-6); do not wire a future provider for it against `POLLING_STEP` or
+    `REFERENDUM_TALLIED` instead, since neither has a vote margin or final
+    pass/fail state available at the moment it fires. Voter Captivation's
+    own card module (`src/vtesbot/cards/voter_captivation.py`) is now
+    implemented against this dispatch; see its own docstring for the
+    per-vampire once-per-action cap added there (`rules-auditor`
+    finding)."""
     RANGED_STRIKE = "ranged_strike"
     ALLY_ENTITY = "ally_entity"
     LOCATION_ENTITY = "location_entity"
