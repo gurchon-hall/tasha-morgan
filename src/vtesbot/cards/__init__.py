@@ -40,6 +40,7 @@ from . import (
     mkhokheli,
     modius,
     octane,
+    on_the_qui_vive,
     organized_resistance,
     oxford_university_england,
     parity_shift,
@@ -58,6 +59,7 @@ from . import (
     threats,
     valeriya_zinovieva,
     voter_captivation,
+    weighted_walking_stick,
     wider_view,
 )
 
@@ -88,6 +90,7 @@ _LOADED_MODULES = (
     mkhokheli,
     modius,
     octane,
+    on_the_qui_vive,
     organized_resistance,
     oxford_university_england,
     parity_shift,

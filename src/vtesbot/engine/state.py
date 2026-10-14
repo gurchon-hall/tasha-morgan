@@ -97,6 +97,23 @@ class VampireInPlay:
     requirement of, never the "other than the acting Methuselah" one; see
     that card's own module docstring)."""
 
+    qui_vive_played_since_unlock: bool = False
+    """Per-vampire cap for On the Qui Vive's (krcg id 101321) own second
+    sentence: "A minion can play only one On the Qui Vive between their
+    unlock phases" -- a window strictly wider than one action (unlike
+    `woken` above, cleared at the end of the action that triggered it) and
+    not aligned to `GameState.turn_number` either (this card is a Reaction,
+    almost always played on the *other* Methuselah's turn, so the window
+    spans that whole intervening turn plus whatever is left of this
+    vampire's controller's own) -- `ability_used_turn`'s "store the turn
+    number, compare for equality" convention does not fit a multi-turn
+    window, so this is instead a plain one-shot flag. Set `True` by `cards/
+    on_the_qui_vive.py`'s own provider; cleared back to `False`
+    unconditionally for every vampire (any zone) by `engine/phases/
+    unlock.py::_unlock_own_vampires`, once per this vampire's controller's
+    own unlock phase -- the literal "between their unlock phases"
+    boundary."""
+
     @property
     def is_ready_unlocked(self) -> bool:
         return self.zone == "ready" and (not self.locked or self.woken)

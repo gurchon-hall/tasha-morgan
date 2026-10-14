@@ -87,8 +87,17 @@ def unlock_phase(state: GameState, player: str) -> None:
 
 
 def _unlock_own_vampires(state: GameState, player: str) -> None:
-    """Rulebook SS4 Unlock Phase: unlock all your (ready-region) cards."""
+    """Rulebook SS4 Unlock Phase: unlock all your (ready-region) cards.
+
+    Also clears `VampireInPlay.qui_vive_played_since_unlock` (`engine/
+    state.py`, On the Qui Vive, krcg id 101321) for every one of this
+    player's own vampires regardless of zone -- the card's own "between
+    their unlock phases" cap is a calendar boundary tied to this player's
+    own unlock phase happening at all, not to whether a given vampire was
+    itself unlocked by it.
+    """
     for vampire in state.players[player].vampires.values():
+        vampire.qui_vive_played_since_unlock = False
         if vampire.zone == "ready":
             vampire.locked = False
 
