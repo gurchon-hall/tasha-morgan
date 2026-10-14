@@ -58,21 +58,55 @@ entries; the targeted vampire is looked up via that entry's own `player`
 (the cast tuple's first element -- its controller) and the instance id
 parsed out of the source id.
 
-Who may play it: either Methuselah, independent of who called the
-referendum -- the card names no caller/defender restriction, and
-`_cast_votes`'s own per-turn rotation (OQ-20) already offers `context["player"]`
-in strict alternation regardless of role, so this module's own gate is
-purely "does `context['player']` control a ready, unlocked [cel][pre] (or
-[CEL][PRE]) vampire, and hold the card in hand" (mirrors
-`voter_captivation.py`'s per-player eligibility shape, plus the
-`is_ready_unlocked` gate `telepathic_counter.py` already uses -- `rules-
-auditor` finding: an earlier draft of this module checked only `zone ==
-"ready"`, which would have let a *locked* vampire play this card's Reaction
-half, contra the glossary's "a ready unlocked minion can play a reaction
-card"). The vampire that *plays* this card is otherwise irrelevant to its
-effect (unlike Voter Captivation's "this vampire" clause) -- only its
-existence/discipline/readiness is checked, no
-specific one is chosen or recorded.
+Who may play it (OQ-38, `docs/OPEN_QUESTIONS.md`, resolved -- user ruling):
+asymmetric by role, unlike this module's earlier, uniform "any ready,
+unlocked qualifying vampire of either Methuselah" reading.
+
+- The *caller* (the Methuselah whose political action this is):
+  `rules-auditor`'s OQ-38 finding applies the Rulebook SS2 Card Types
+  default ("The acting minion can play [action modifier cards]..." absent
+  an "other than the acting minion" override phrase, which this card's text
+  does not carry) -- so the caller may only play Scalpel Tongue through
+  their own acting vampire specifically, `context["caller_vampire_id"]`,
+  never a different ready/unlocked vampire they also control. That specific
+  vampire's own `locked` state is irrelevant to this eligibility check: by
+  the time the polling step is reached, the acting vampire is *always*
+  locked already (Rulebook SS4, locked the instant the action was
+  announced), so requiring `is_ready_unlocked` here would make the caller's
+  own use permanently impossible -- the `is_ready_unlocked` gate below is
+  specifically the Reaction-card requirement for the *non-caller* case,
+  which does not apply to the acting-minion-by-default Action-Modifier
+  case. `_caller_vampire_qualifies_basic`/`_caller_vampire_qualifies_
+  superior` implement this: `zone == "ready"` (still in play) plus the
+  combo-discipline check, nothing more.
+- The *other* Methuselah (not the caller): unaffected by the above default,
+  since they are never "the acting minion" for this political action at
+  all -- their own use is justified independently by this card's Reaction
+  half (`types == ["Action Modifier", "Reaction"]`), governed by the
+  ordinary Reaction rule instead: any ready, *unlocked* qualifying vampire
+  they control, checked by the pre-existing `_controls_basic_vampire`/
+  `_controls_superior_vampire` (`is_ready_unlocked` gate, `telepathic_
+  counter.py`'s own convention -- `rules-auditor` finding: an earlier draft
+  of this module checked only `zone == "ready"`, which would have let a
+  *locked* vampire play this card's Reaction half, contra the glossary's "a
+  ready unlocked minion can play a reaction card").
+
+Either way, the vampire that *plays* this card is otherwise irrelevant to
+its effect (unlike Voter Captivation's "this vampire" clause) -- only its
+existence/discipline/readiness is checked, no specific one is chosen or
+recorded; the targeting logic below (`_target_title_casts`) is identical
+for both roles.
+
+Target may already be locked (user ruling): "Choose a vampire who has cast
+votes or ballots" places no requirement that the target currently be
+*unlocked* -- `VampireInPlay.locked` is irrelevant to voting (`engine/
+politics.py`'s own convention, cited in `voter_captivation.py` too), so a
+vampire that voted while already locked (e.g. it had already performed its
+own action earlier this turn, locking it, before casting a title vote) is a
+perfectly legal target. `apply`'s own `vampire.locked = True` is simply
+idempotent in that case -- the vampire was locked, is chosen, and remains
+locked, with no toggle, no double-lock bookkeeping, and no special-case
+needed in code.
 
 "The chosen vampire is locked and abstains (this cancels the chosen
 vampire's votes and ballots)": two separate effects, per OQ-37's own
@@ -146,6 +180,31 @@ def _controls_superior_vampire(state: GameState, player: str) -> bool:
     )
 
 
+def _caller_may_play_basic(state: GameState, context: Mapping[str, Any]) -> bool:
+    """OQ-38 (`docs/OPEN_QUESTIONS.md`, resolved): the caller's own use is
+    the Action-Modifier default ("the acting minion"), not the Reaction
+    rule -- `zone == "ready"` only, `locked` irrelevant (module docstring's
+    "Who may play it")."""
+    vampire = state.players[context["caller"]].vampires.get(context["caller_vampire_id"])
+    return (
+        vampire is not None
+        and vampire.zone == "ready"
+        and (CEL_BASIC in vampire.card.disciplines or CEL_SUPERIOR in vampire.card.disciplines)
+        and (PRE_BASIC in vampire.card.disciplines or PRE_SUPERIOR in vampire.card.disciplines)
+    )
+
+
+def _caller_may_play_superior(state: GameState, context: Mapping[str, Any]) -> bool:
+    """Superior-level counterpart of `_caller_may_play_basic`."""
+    vampire = state.players[context["caller"]].vampires.get(context["caller_vampire_id"])
+    return (
+        vampire is not None
+        and vampire.zone == "ready"
+        and CEL_SUPERIOR in vampire.card.disciplines
+        and PRE_SUPERIOR in vampire.card.disciplines
+    )
+
+
 def _target_title_casts(context: Mapping[str, Any]) -> list[tuple[str, str, int, str]]:
     """ "A vampire who has cast votes or ballots" -- narrowed to `"title:"`-
     sourced casts only (module docstring)."""
@@ -159,7 +218,11 @@ def _provide_scalpel_tongue_basic(state: GameState, context: Mapping[str, Any]) 
     if context.get("phase") != "mid_cast":
         return []
     player = context["player"]
-    if not _controls_basic_vampire(state, player):
+    if player == context["caller"]:
+        may_play = _caller_may_play_basic(state, context)
+    else:
+        may_play = _controls_basic_vampire(state, player)
+    if not may_play:
         return []
     if not _has_card_in_hand(state, player):
         return []
@@ -202,7 +265,11 @@ def _provide_scalpel_tongue_superior(
     if context.get("phase") != "mid_cast":
         return []
     player = context["player"]
-    if not _controls_superior_vampire(state, player):
+    if player == context["caller"]:
+        may_play = _caller_may_play_superior(state, context)
+    else:
+        may_play = _controls_superior_vampire(state, player)
+    if not may_play:
         return []
     if not _has_card_in_hand(state, player):
         return []

@@ -12,11 +12,15 @@ gating for each clause, card-in-hand gating, the `"mid_cast"`-phase-only
 offer (never `"before_cast"`), narrowing to `"title:"`-sourced casts only
 (a political-action-card/Edge source is never offered as a target), the
 lock+cancel effect (basic clause) through a real `resolve_referendum` call,
-the superior clause's extra "burns 1 blood" (floored at 0), and that either
-Methuselah may be offered the play for their own eligible vampire,
-independent of who called the referendum. The "automatically passing"
-ruling is not independently tested: this engine has no automatically-passing
-mechanism to reach it (module docstring, `docs/OPEN_QUESTIONS.md` OQ-6).
+the superior clause's extra "burns 1 blood" (floored at 0), OQ-38's
+(resolved) asymmetric "who may play it" -- the caller only through their own
+acting vampire (even while it is already locked), the non-caller through any
+ready/unlocked qualifying vampire of their own (the pre-existing Reaction-rule
+check) -- and the user ruling that a target may already be locked when
+chosen, remaining locked afterwards with no special handling. The
+"automatically passing" ruling is not independently tested: this engine has
+no automatically-passing mechanism to reach it (module docstring, `docs/
+OPEN_QUESTIONS.md` OQ-6).
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -104,7 +108,7 @@ def test_basic_not_offered_without_both_disciplines():
     game = builder.build()
     casts = [("P2", "title:B1", 1, "against")]
 
-    options = _offer(game.state, "P1", casts)
+    options = _offer(game.state, "P1", casts, caller_vampire_id="V1")
 
     assert options == []
 
@@ -118,7 +122,7 @@ def test_basic_not_offered_without_the_card_in_hand():
     game = builder.build()
     casts = [("P2", "title:B1", 1, "against")]
 
-    options = _offer(game.state, "P1", casts)
+    options = _offer(game.state, "P1", casts, caller_vampire_id="V1")
 
     assert options == []
 
@@ -139,16 +143,19 @@ def test_only_title_sourced_casts_are_offered_as_targets():
         ("P2", "title:B1", 1, "against"),
     ]
 
-    options = _offer(game.state, "P1", casts)
+    options = _offer(game.state, "P1", casts, caller_vampire_id="V1")
 
     assert {o.choice.value for o in options} == {"scalpel_tongue:basic:title:B1"}
 
 
 def test_basic_not_offered_through_a_locked_playing_vampire():
-    """`rules-auditor` finding: the playing vampire's own `locked` state was
-    previously not checked, letting a locked vampire play this card's
-    Reaction half -- contra the Rulebook glossary's "a ready unlocked
-    minion can play a reaction card"."""
+    """`rules-auditor` finding: the *non-caller's* own Reaction-rule check
+    requires their playing vampire be ready and unlocked -- contra the
+    Rulebook glossary's "a ready unlocked minion can play a reaction card".
+    `caller="P2"` forces P1 onto this Reaction-rule path rather than the
+    caller-side Action-Modifier path (OQ-38), which does not check `locked`
+    at all (see `test_caller_may_play_through_their_own_locked_acting_
+    vampire` below)."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(
         "V1", capacity=5, blood=1, disciplines=("cel", "pre")
@@ -159,12 +166,17 @@ def test_basic_not_offered_through_a_locked_playing_vampire():
     game = builder.build()
     casts = [("P2", "title:B1", 1, "against")]
 
-    options = _offer(game.state, "P1", casts)
+    options = _offer(game.state, "P1", casts, caller="P2", other="P1")
 
     assert options == []
 
 
 def test_offered_to_either_player_independent_of_caller_role():
+    """P1 (the caller) has no `caller_vampire_id` resolving to a qualifying
+    vampire here (not passed -- defaults to `None`), so the caller-side
+    Action-Modifier path (OQ-38) offers nothing; P2 (the non-caller) is
+    unaffected, since their own use is governed by the Reaction rule
+    instead, independent of caller role."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=5, blood=1, title="Primogen")
     p2 = builder.player("P2", pool=30).ready_vampire(
@@ -177,8 +189,49 @@ def test_offered_to_either_player_independent_of_caller_role():
     p1_options = _offer(game.state, "P1", casts, caller="P1", other="P2")
     p2_options = _offer(game.state, "P2", casts, caller="P1", other="P2")
 
-    assert p1_options == []  # P1 (the caller) has no qualifying vampire/card
+    assert p1_options == []
     assert {o.choice.value for o in p2_options} == {"scalpel_tongue:basic:title:V1"}
+
+
+# --- OQ-38 (resolved): caller-side use is pinned to the acting vampire -----
+
+
+def test_caller_may_play_through_their_own_locked_acting_vampire():
+    """The caller's own acting vampire is *always* already locked by the
+    time the polling step is reached (Rulebook SS4) -- the Action-Modifier
+    default does not require it be unlocked, unlike the non-caller's own
+    Reaction-rule check."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=5, blood=1, disciplines=("cel", "pre")
+    )
+    p1.vampires[-1].locked = True
+    p1.hand.append(_st_card())
+    builder.player("P2", pool=30).ready_vampire("B1", capacity=5, blood=1, title="Primogen")
+    game = builder.build()
+    casts = [("P2", "title:B1", 1, "against")]
+
+    options = _offer(game.state, "P1", casts, caller="P1", other="P2", caller_vampire_id="V1")
+
+    assert {o.choice.value for o in options} == {"scalpel_tongue:basic:title:B1"}
+
+
+def test_caller_may_not_play_through_a_different_vampire_they_control():
+    """A different ready/unlocked [cel][pre] vampire the caller also
+    controls, but which is not `caller_vampire_id`, may not play the
+    caller-side half -- only the acting vampire itself qualifies."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30)
+    p1.ready_vampire("V1", capacity=5, blood=1, disciplines=())  # the acting vampire
+    p1.ready_vampire("V2", capacity=5, blood=1, disciplines=("cel", "pre"))  # not acting
+    p1.hand.append(_st_card())
+    builder.player("P2", pool=30).ready_vampire("B1", capacity=5, blood=1, title="Primogen")
+    game = builder.build()
+    casts = [("P2", "title:B1", 1, "against")]
+
+    options = _offer(game.state, "P1", casts, caller="P1", other="P2", caller_vampire_id="V1")
+
+    assert options == []
 
 
 # --- "[cel][pre] ... locked and abstains (cancels votes and ballots)." -----
@@ -211,6 +264,31 @@ def test_basic_locks_the_target_and_cancels_their_vote_via_a_real_referendum():
     defender.assert_exhausted()
 
 
+def test_basic_may_target_an_already_locked_vampire_and_leaves_it_locked():
+    """User ruling: "Choose a vampire who has cast votes or ballots" does
+    not require the target currently be *unlocked* -- `VampireInPlay.locked`
+    is irrelevant to voting (`engine/politics.py`'s own convention), so a
+    vampire that voted while already locked (e.g. it had already performed
+    its own action earlier this turn) is a legal target. `apply`'s own
+    `vampire.locked = True` is simply idempotent: the vampire was locked, is
+    chosen, and remains locked."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=5, blood=1, disciplines=("cel", "pre")
+    )
+    p1.hand.append(_st_card())
+    p2 = builder.player("P2", pool=30).ready_vampire("B1", capacity=5, blood=1, title="Primogen")
+    game = builder.build()
+    p2.vampires[0].locked = True  # already locked before casting its title vote
+    casts = [("P2", "title:B1", 1, "against")]
+
+    options = _offer(game.state, "P1", casts, caller="P2", other="P1")
+    option = next(o for o in options if o.choice.value == "scalpel_tongue:basic:title:B1")
+    option.apply(game.state)
+
+    assert game.vampire("B1").locked is True  # unchanged: was locked, stays locked
+
+
 # --- "[CEL][PRE] As above, and the chosen vampire burns 1 blood." ---------
 
 
@@ -226,7 +304,7 @@ def test_superior_requires_superior_level_of_both_disciplines():
     game = builder.build()
     casts = [("P2", "title:B1", 1, "against")]
 
-    options = _offer(game.state, "P1", casts)
+    options = _offer(game.state, "P1", casts, caller_vampire_id="V1")
 
     assert {o.choice.value for o in options} == {"scalpel_tongue:basic:title:B1"}
 
@@ -241,7 +319,7 @@ def test_superior_offered_with_both_disciplines_at_superior_level():
     game = builder.build()
     casts = [("P2", "title:B1", 1, "against")]
 
-    options = _offer(game.state, "P1", casts)
+    options = _offer(game.state, "P1", casts, caller_vampire_id="V1")
 
     assert {o.choice.value for o in options} == {
         "scalpel_tongue:basic:title:B1",
@@ -259,7 +337,7 @@ def test_superior_burns_one_blood_from_the_target():
     game = builder.build()
     casts = [("P2", "title:B1", 1, "against")]
 
-    options = _offer(game.state, "P1", casts)
+    options = _offer(game.state, "P1", casts, caller_vampire_id="V1")
     option = next(o for o in options if o.choice.value == "scalpel_tongue:superior:title:B1")
     option.apply(game.state)
 
@@ -277,7 +355,7 @@ def test_superior_burn_is_floored_at_zero_blood():
     game = builder.build()
     casts = [("P2", "title:B1", 1, "against")]
 
-    options = _offer(game.state, "P1", casts)
+    options = _offer(game.state, "P1", casts, caller_vampire_id="V1")
     option = next(o for o in options if o.choice.value == "scalpel_tongue:superior:title:B1")
     option.apply(game.state)
 
