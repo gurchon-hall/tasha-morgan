@@ -426,6 +426,76 @@ blood lost by the opposing vampire to damage this round."):
   pass (OQ-29); this pass only builds and tests the two generic engine
   mechanisms (CLAUDE.md "decision points, not hard-coded play" / "card
   hooks" -- the engine must not special-case a card name).
+
+Before Range (resolves OQ-47, `docs/OPEN_QUESTIONS.md` -- Weighted Walking
+Stick, krcg id 102169, "Only usable before range is determined during the
+first round. Put this card with 5 counters on it on this minion; it becomes
+a melee weapon equipment that can strike: strength+1 damage. For each damage
+inflicted by this strike (even if prevented), burn 1 counter from this
+card."):
+
+- Combat Sequence step 1 (verbatim, quoted in full above in "Determine Range
+  and maneuvers"): "1. Before Range: Play cards before range is chosen." --
+  distinct from, and strictly before, step 2 "Determine Range" (maneuvers,
+  already built). `run_combat` previously had no call site for this step at
+  all (this module's own earlier docstring said as much: "the 'before
+  range'/'determine range' steps are no-ops"); step 2 was since built, this
+  step was not.
+- `BEFORE_RANGE_HOOK` is offered exactly once per *combat*, immediately
+  before round 1's own Determine Range step -- never again in a later round
+  of the same combat, even if pressing continues it: "before range is
+  determined during the first round" is a one-shot, whole-combat window, not
+  a per-round one, unlike every other hook this module wires (`MANEUVER_
+  HOOK`/`COMBAT_STRIKE_OPTION_HOOK`/etc., all re-offered every round).
+  `run_combat` tracks this with a single local `before_range_offered: bool`,
+  set once the window has run, checked at the top of every round iteration
+  before `_determine_range` -- mirrors the "guard a one-shot window inside a
+  loop" shape, simpler than `END_OF_ROUND_HOOK`'s own per-round dispatch
+  since there is no "exit path" subtlety here: the window only ever needs to
+  run once, at the very first opportunity, and every combat reaches round 1
+  by construction (a combat is only ever started once a block has already
+  succeeded, so both combatants are already `"ready"` by the time
+  `run_combat` is called).
+- `_ask_before_range` dispatches `BEFORE_RANGE_HOOK` via `hooks.
+  resolve_impulse_window` -- the same two-sided, repeatable "impulse returns
+  to the acting Methuselah, closes on two consecutive passes" shape
+  `_ask_end_of_round` already uses (CLAUDE.md rule 4 / Rulebook SS2
+  Sequencing), not `_ask_press`'s narrower single-binary-choice shape, since
+  Combat Sequence step 1 is a real window where either combatant's
+  controller may play an arbitrary number of "before range" cards. Acting
+  combatant's controller is offered first, the same ordering precedent as
+  Press/End of Round/Determine Range (OQ-3, module docstring). Context
+  carries `acting_player`/`acting_vampire`/`blocking_player`/
+  `blocking_vampire` (plain `str` ids, never the live object -- CLAUDE.md
+  "information hiding", same convention as `_ask_end_of_round`'s own
+  context) -- no `round_state`/`combat_state` key, since this window runs
+  strictly *before* `run_combat`'s per-round `round_state` for round 1 is
+  even created, and no known card needing this step needs anything
+  combat-scoped either.
+- A provider's own `apply(state)` is free to look up either combatant's
+  `VampireInPlay` (via the context ids above) and attach a card directly --
+  e.g. `engine.attachments.attach_card`/a direct `engine.cards.
+  CardAttachment(...)` construction (mirrors `cards/celerity.py`'s own
+  non-unique-attachment pattern: Weighted Walking Stick's own printed text
+  carries no "Unique" marker, so a future card module may construct it
+  exactly the same way, with an initial `counters=5`). The *strike* half of
+  Weighted Walking Stick (a melee weapon strike at strength+1, burning one
+  attachment counter per point of damage inflicted even if prevented) needs
+  no change to `COMBAT_STRIKE_OPTION_HOOK`'s existing contract at all: that
+  hook's own provider `apply(state)` already returns the pre-prevention,
+  post-reduction damage amount (this module's own "Combat-card hook wiring"
+  section above), which is exactly the quantity "for each damage inflicted
+  by this strike (even if prevented)" needs -- a future provider decrements
+  `min(amount, counters)` off its own attachment inside that same `apply`
+  and removes the attachment once its `counters` reaches 0, entirely within
+  its own card module, with no engine-side involvement.
+- With no `BEFORE_RANGE_HOOK` provider registered (every existing test, and
+  every other card in the pool today), `hooks.resolve_impulse_window`
+  returns immediately with no `Decision` ever raised (CLAUDE.md "only when
+  needed") -- byte-for-byte the previous, no-op-step result.
+- Wiring an actual card (Weighted Walking Stick) against this hook is left
+  to a future `card-implementer` pass (OQ-47); this pass only builds and
+  tests the generic engine mechanism.
 """
 
 from collections.abc import Mapping
@@ -461,6 +531,10 @@ END_OF_ROUND_HOOK = "end_of_round"
 """Matches `cards/registry.py::Hook.END_OF_ROUND`'s string value -- see
 module docstring's "End of Round and round-scoped blood-loss tracking"
 section (OQ-29, `docs/OPEN_QUESTIONS.md`)."""
+BEFORE_RANGE_HOOK = "before_range"
+"""Matches `cards/registry.py::Hook.BEFORE_RANGE`'s string value -- see
+module docstring's "Before Range" section (OQ-47, `docs/OPEN_QUESTIONS.md`,
+resolved)."""
 
 CLOSE_RANGE = "close"
 LONG_RANGE = "long"
@@ -1250,6 +1324,38 @@ def _ask_end_of_round(
     )
 
 
+def _ask_before_range(
+    state: GameState,
+    acting_player: str,
+    acting_vampire: VampireInPlay,
+    blocking_player: str,
+    blocking_vampire: VampireInPlay,
+) -> None:
+    """Rulebook SS4 Combat > Combat Sequence, step 1, "Before Range: Play
+    cards before range is chosen" (module docstring's "Before Range"
+    section, OQ-47 `docs/OPEN_QUESTIONS.md`, resolved). Dispatched exactly
+    once per combat by `run_combat`, immediately before round 1's own
+    Determine Range step -- see that call site for the one-shot guard.
+
+    Mirrors `_ask_end_of_round`'s own two-sided, repeatable impulse-window
+    shape and ordering precedent (acting combatant's controller first,
+    OQ-3) -- see this function's own module-docstring section for why a
+    binary `_ask_press`-style ask does not fit here instead.
+    """
+    hooks.resolve_impulse_window(
+        state,
+        BEFORE_RANGE_HOOK,
+        acting_player,
+        blocking_player,
+        context={
+            "acting_player": acting_player,
+            "acting_vampire": acting_vampire.instance_id,
+            "blocking_player": blocking_player,
+            "blocking_vampire": blocking_vampire.instance_id,
+        },
+    )
+
+
 def run_combat(
     state: GameState,
     acting_player: str,
@@ -1274,11 +1380,24 @@ def run_combat(
     # "Determine Range and maneuvers" section, "Per-combat, not per-round,
     # scoping" paragraph.
     combat_state: dict[str, Any] = initial_combat_state if initial_combat_state is not None else {}
+    before_range_offered = False
     while True:
         if state.game_over:
             break  # Rulebook SS5: play continues only while 2+ Methuselahs remain.
         if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
             break  # Rulebook SS4: combat ends at once if a combatant is no longer ready.
+
+        # --- Before Range step (Rulebook SS4 Combat > Combat Sequence step
+        # 1; module docstring's "Before Range" section, OQ-47): offered
+        # exactly once per combat, before round 1's own Determine Range step
+        # -- never again on a later round of the same combat. ---
+        if not before_range_offered:
+            _ask_before_range(
+                state, acting_player, acting_vampire, blocking_player, blocking_vampire
+            )
+            before_range_offered = True
+            if state.game_over:
+                break
 
         # One fresh, shared round-scoped scratch dict per round (module
         # docstring's "Cross-card '(limited)' cap" and "Maneuver bundled with

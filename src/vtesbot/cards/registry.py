@@ -191,6 +191,24 @@ class Hook(StrEnum):
     round -- including, as of the same pass, `engine/damage.py::apply_damage`'s
     own "blood lost to damage this round" record (`engine/damage.py::
     blood_lost_to_damage_this_round`, OQ-29 mechanism 2)."""
+    BEFORE_RANGE = "before_range"
+    """Rulebook SS4 Combat > Combat Sequence, step 1, "Before Range: Play
+    cards before range is chosen" -- offered exactly once per combat, by
+    `engine/combat.py::run_combat` (via `_ask_before_range`), immediately
+    before round 1's own Determine Range step, never again on a later round
+    of the same combat. Modeled as the engine's standard two-sided impulse
+    window (`hooks.resolve_impulse_window`), acting combatant's controller
+    offered first (same ordering precedent as Press/End of Round/Determine
+    Range, `engine/combat.py` module docstring, OQ-3) -- resolves `docs/
+    OPEN_QUESTIONS.md` OQ-47 (Weighted Walking Stick, krcg id 102169, "Only
+    usable before range is determined during the first round"). A
+    provider's own `apply(state)` attaches a card directly (e.g. via
+    `engine/attachments.py::attach_card` or a direct `engine/cards.py::
+    CardAttachment` construction, mirroring `cards/celerity.py`'s own
+    non-unique-attachment pattern) -- no new contract for the strike half
+    of such a card: `COMBAT_STRIKE_OPTION`'s existing provider contract
+    (pre-prevention, post-reduction damage) already supplies everything "for
+    each damage inflicted ... even if prevented" needs."""
     ACTION_SUCCEEDED = "action_succeeded"
     """A mandatory, non-chosen per-provider reaction fired once a minion
     action goes unblocked and its own `resolve()` returns (`engine/
