@@ -58,32 +58,6 @@ up an OQ number or the highest one used so far.
   cards: none yet reachable (tracked ahead of need, same spirit as OQ-10's
   own original "latent, flagged before live" framing).
 
-## OQ-24 - Wider View - no influence hook, no removed zone (status: resolved)
-
-- Situation: Wider View (102180, Trifle, in-play via OQ-23's new
-  entity)'s two transfer-costed clauses ("use 1 transfer to draw from
-  crypt and remove a crypt card from the game"; "use 4 transfers to
-  burn this card and gain 2 pool") needed the Influence phase to be
-  card-hookable (it was a closed, hardcoded implementation) and a
-  "removed from the game" zone distinct from "burned" (needed because
-  the ruling "[c]ards removed from the game are public" [LSJ
-  20080314] only matters for a card that may still be
-  face-down/unrevealed at removal time).
-- Rules/interactions: plain text and ruling; not an ambiguity.
-- Solution: added `INFLUENCE_PHASE_ACTION_HOOK`, offered in
-  `influence_phase` alongside the three hardcoded transfer types;
-  added `Zone` value `"removed_from_game"` and
-  `engine/damage.py::remove_vampire_from_game` (already public by the
-  existing `visible_identity` rule, confirmed — no further Observation
-  change needed). A `rules-auditor` follow-up found and fixed a MAJOR
-  silent-mis-resolution risk: a hook-provided choice could collide in
-  value with one of the three hardcoded choices and silently take over
-  that action — fixed with a new general `hooks.
-  ensure_unique_choice_values` guard (raises instead of silently
-  misrouting), called wherever hook and hardcoded choices are unioned.
-  Wider View's own card module is not written; both engine gaps are
-  resolved.
-
 ## OQ-25 - Fleetness - no pre-combat maneuver grant (status: resolved)
 
 - Situation: Fleetness's (100747) superior clause grants a vampire "1
@@ -729,3 +703,47 @@ up an OQ number or the highest one used so far.
   further engine change, confirmed above. Weighted Walking Stick's own card
   module is now implemented against this mechanism (`cards/
   weighted_walking_stick.py`, `Status.IMPLEMENTED`).
+
+## OQ-48: On the Qui Vive - no wake-before-candidates hook (status: resolved)
+
+- Situation: OQ-46's own `VampireInPlay.woken`/`clear_woken_vampires`/
+  `AllyInPlay.skip_next_unlock` primitives let `is_ready_unlocked` honor a
+  woken locked vampire everywhere it is already consulted (the block
+  candidate list, every existing reaction-card provider's own eligibility
+  check), but nothing in the engine ever offered a *defender*-side option to
+  set `woken = True` on one of their own locked vampires *before*
+  `engine/action.py::attempt_block`'s own candidate list
+  (`state.ready_unlocked_vampires(defender)`) is computed each time around
+  its retry loop -- the moment that matters for this card's primary
+  "attempting to block" clause. The acting side had exactly this shape
+  already (`INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_HOOK`, offered to
+  `actor` via `hooks.offer_until_pass` at the very top of that same loop,
+  before any candidate exists or is recomputed, OQ-30/OQ-39) -- no symmetric
+  offer to `defender` existed anywhere in that function, or in any other
+  hook dispatched before a block candidate is fixed.
+- Rules/interactions: a missing engine primitive, not a ruling question
+  (same category as OQ-46's own "engine-internal design choices, not ruling
+  questions"); `BLOCK_CANDIDATE_INJECTION_HOOK` (OQ-26) was considered and
+  rejected as the vehicle instead, since `attempt_block` always treats a
+  chosen option from it as an *unconditional* successful block ("never runs
+  the stealth/intercept ping-pong for this candidate"), contradicting this
+  card's own block attempt (fully subject to normal stealth/intercept
+  resolution, per [TOM 19951129] "the minion need not attempt to block...
+  that is merely an option").
+- Solution: added `WAKE_LOCKED_MINION_HOOK` (`cards/registry.py::
+  Hook.WAKE_LOCKED_MINION`), offered to `defender` via `hooks.offer_until_
+  pass` at the top of `attempt_block`'s retry loop, immediately after the
+  two acting-side hooks' own offers there (actor's own proactive
+  opportunities keep going first, Rulebook SS2 Sequencing / CLAUDE.md rule
+  4's "acting Methuselah gets the impulse first") and strictly before
+  `candidates = state.ready_unlocked_vampires(defender)` is (re)computed,
+  so a chosen option's own `apply` setting `woken = True` is picked up by
+  that very computation, every time around the loop including on a retry
+  (OQ-11). Same "no return value needed, `apply` just mutates state"
+  contract as its two siblings. A provider waking an *ally* instead sets
+  `AllyInPlay.skip_next_unlock = True` (OQ-46's own field, reused, not
+  duplicated) -- allies are never themselves offered as block candidates in
+  this engine (out of scope, OQ-46's own solution note), so that branch of
+  the contract matters for a future ally-side use of this same hook, not for
+  `attempt_block` itself. On the Qui Vive's own card module is not written;
+  the primitive is complete.

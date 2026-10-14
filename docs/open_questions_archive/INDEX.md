@@ -31,3 +31,4 @@ an entry.
 | OQ-21 | `001.md` | Action-card target chosen at announce vs. resolve time |
 | OQ-22 | `001.md` | Fame - contested cards gap beyond crypt/ally |
 | OQ-23 | `001.md` | Oxford University - standalone master-card entity |
+| OQ-24 | `001.md` | Wider View - no influence hook, no removed zone |

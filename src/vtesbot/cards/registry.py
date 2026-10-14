@@ -72,6 +72,34 @@ class Hook(StrEnum):
     `qualifies` predicate, since stealth is a per-action value, never
     candidate-dependent the way intercept is; `apply()`'s return value is
     ignored."""
+    WAKE_LOCKED_MINION = "wake_locked_minion"
+    """Defender-side sibling of `INTERCEPT_DECREASE`/`STEALTH_INCREASE` above --
+    offered to `defender` (never `actor`), at the same top-of-retry-loop
+    moment in `engine/action.py::attempt_block`, strictly before
+    `state.ready_unlocked_vampires(defender)` is computed each time around
+    (`docs/OPEN_QUESTIONS.md` OQ-48, resolved). Built for On the Qui Vive
+    (krcg id 101321, Reaction): "Only usable by a locked minion ... This
+    minion wakes (they ignore the requirement to be unlocked for ... attempting
+    to block ... until the end of the action)" -- the primary clause, distinct
+    from the "playing reaction cards" eligibility half OQ-46's own
+    `VampireInPlay.woken` already covers everywhere else (every existing
+    reaction-card provider's own hardcoded `is_ready_unlocked` check). A
+    provider's `HookOption.apply(state)` return value is ignored by the
+    caller, the same "no return value needed, `apply` just mutates state"
+    contract as its two acting-side siblings -- it need only set `woken =
+    True` (`engine/state.py::VampireInPlay`) on one of `defender`'s own
+    locked vampires, which `ready_unlocked_vampires`/`attempt_block` then
+    pick up for free, with no injection or unconditional-success shortcut
+    (unlike `BLOCK_CANDIDATE_INJECTION`, rejected for this card -- OQ-48's own
+    write-up) -- the woken vampire is a fully ordinary candidate, still
+    subject to the normal stealth/intercept ping-pong. A provider waking an
+    *ally* instead (On the Qui Vive's own ally footnote: "If this minion is
+    an ally, they do not unlock as normal during their next unlock phase")
+    sets `AllyInPlay.skip_next_unlock = True` (OQ-46's own field, reused, not
+    duplicated) from the same `apply` -- allies are never offered as block
+    candidates in this engine (out of scope, OQ-46's own solution note), so
+    that branch matters only for a future ally-side use of this same hook
+    outside the block-attempt path, not for `attempt_block` itself."""
     BLEED_AMOUNT_MODIFIER = "bleed_amount_modifier"
     BLEED_AMOUNT_FIXED_MODIFIER = "bleed_amount_fixed_modifier"
     DAMAGE_PREVENTION = "damage_prevention"

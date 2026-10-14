@@ -111,6 +111,25 @@ OPEN_QUESTIONS.md`; see each parameter's own docstring for how it is used):
   "end of the action" sourcing and `VampireInPlay.woken`'s own docstring
   (`engine/state.py`) for the eligibility-override half On the Qui Vive
   (krcg id 101321) needs.
+- OQ-48 (resolved): `WAKE_LOCKED_MINION_HOOK` is `INTERCEPT_DECREASE_HOOK`/
+  `STEALTH_INCREASE_HOOK`'s defender-side sibling -- OQ-46 built `VampireInPlay.
+  woken` so a woken locked vampire is picked up everywhere `is_ready_unlocked`
+  is already consulted, but left no engine moment that actually *offers*
+  `defender` the chance to set it on their own locked vampire before
+  `attempt_block`'s own `state.ready_unlocked_vampires(defender)` candidate
+  list is computed -- the moment On the Qui Vive's own primary "attempting to
+  block" clause needs. Offered via `hooks.offer_until_pass` at the same
+  top-of-retry-loop spot as the two acting-side hooks above, immediately
+  after them (actor's own proactive opportunities first, Rulebook SS2
+  Sequencing's "acting Methuselah gets the impulse first" -- CLAUDE.md rule
+  4 -- then the defender's), and before `candidates` is (re)computed, so a
+  chosen option's own `apply` mutation is picked up by that very same
+  computation with no further plumbing. A provider's `apply` return value is
+  ignored, same contract as its two siblings -- see `cards/registry.py::
+  Hook.WAKE_LOCKED_MINION`'s own docstring for the full mechanism and why
+  `BLOCK_CANDIDATE_INJECTION_HOOK` (OQ-26) is the wrong shape to reuse
+  instead (it always resolves as an unconditional successful block, which
+  this card's own normal, fully-contestable block attempt is not).
 """
 
 from collections.abc import Callable
@@ -179,6 +198,24 @@ PENDING_STEALTH_INCREASE_KEY = "stealth_increase_modifiers"
 """`pending[...]` key (OQ-39): holds a `list[ActiveStealthIncrease]`,
 appended to (never replaced) by each activated `STEALTH_INCREASE_HOOK`
 option's own `apply` closure."""
+
+WAKE_LOCKED_MINION_HOOK = "wake_locked_minion"
+"""OQ-48 (`docs/OPEN_QUESTIONS.md`, resolved): mirrors `src/vtesbot/cards/
+registry.py::Hook.WAKE_LOCKED_MINION`'s own string value. `INTERCEPT_
+DECREASE_HOOK`/`STEALTH_INCREASE_HOOK`'s defender-side sibling: offered to
+`defender` (never `actor`) via `hooks.offer_until_pass`, at the same
+top-of-retry-loop spot in `attempt_block` as those two, immediately after
+them, and strictly before `state.ready_unlocked_vampires(defender)` is
+(re)computed each time around. A provider's `HookOption.apply(state)` return
+value is ignored by the caller -- the same "no return value needed, `apply`
+just mutates state" contract as its two siblings -- it need only set `woken
+= True` (`engine/state.py::VampireInPlay`) on one of `defender`'s own
+locked vampires, so `ready_unlocked_vampires` picks it up as an ordinary,
+fully stealth/intercept-subject candidate immediately afterwards, with no
+further plumbing. See `cards/registry.py::Hook.WAKE_LOCKED_MINION`'s own
+docstring for the full mechanism, On the Qui Vive's own (krcg id 101321)
+primary clause this was built for, and why `BLOCK_CANDIDATE_INJECTION_HOOK`
+(OQ-26) is the wrong hook to reuse instead."""
 
 
 @dataclass(frozen=True)
@@ -646,6 +683,16 @@ def attempt_block(
     cards can be exhausted in either order with the same final result,
     since neither's effect depends on the other having happened first. With
     no provider registered for either, this adds nothing.
+
+    `WAKE_LOCKED_MINION_HOOK` (OQ-48, resolved, see module docstring) is
+    offered to `defender` at the same spot, immediately after the two
+    `actor`-side offers above (actor's own proactive opportunities keep
+    going first, per the impulse rule), and -- critically -- strictly
+    before `candidates` below is (re)computed, so a provider's own `apply`
+    setting `woken = True` on one of `defender`'s own locked vampires is
+    picked up by that very computation, every time around the loop
+    (including on a retry, same OQ-11 precedent as the other two). With no
+    provider registered, this adds nothing.
     """
     if pending is None:
         pending = {}
@@ -663,6 +710,9 @@ def attempt_block(
         if state.game_over:
             return None
         hooks.offer_until_pass(state, STEALTH_INCREASE_HOOK, actor, proactive_context)
+        if state.game_over:
+            return None
+        hooks.offer_until_pass(state, WAKE_LOCKED_MINION_HOOK, defender, proactive_context)
         if state.game_over:
             return None
         candidates = state.ready_unlocked_vampires(defender)
