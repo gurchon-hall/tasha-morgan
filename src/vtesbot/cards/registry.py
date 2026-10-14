@@ -61,6 +61,17 @@ class Hook(StrEnum):
     action.py::PENDING_INTERCEPT_DECREASE_KEY]`, re-evaluated against
     whichever candidate is fixed on every call; `apply()`'s return value is
     ignored."""
+    STEALTH_INCREASE = "stealth_increase"
+    """`INTERCEPT_DECREASE`'s sibling for the acting side's own stealth,
+    offered at the same two points (`docs/OPEN_QUESTIONS.md` OQ-39,
+    resolved -- built for Loup, krcg id 102273, whose on-file ruling "[c]an
+    be used even if the stealth is not currently needed" the old
+    `STEALTH_MODIFIER`-only wiring could not reach without a block attempt
+    in progress). A provider appends an `ActiveStealthIncrease(delta)` to
+    `pending[engine/action.py::PENDING_STEALTH_INCREASE_KEY]`; no
+    `qualifies` predicate, since stealth is a per-action value, never
+    candidate-dependent the way intercept is; `apply()`'s return value is
+    ignored."""
     BLEED_AMOUNT_MODIFIER = "bleed_amount_modifier"
     BLEED_AMOUNT_FIXED_MODIFIER = "bleed_amount_fixed_modifier"
     DAMAGE_PREVENTION = "damage_prevention"
@@ -180,6 +191,19 @@ class Hook(StrEnum):
     round -- including, as of the same pass, `engine/damage.py::apply_damage`'s
     own "blood lost to damage this round" record (`engine/damage.py::
     blood_lost_to_damage_this_round`, OQ-29 mechanism 2)."""
+    ACTION_SUCCEEDED = "action_succeeded"
+    """A mandatory, non-chosen per-provider reaction fired once a minion
+    action goes unblocked and its own `resolve()` returns (`engine/
+    action.py::perform_minion_action`, dispatched via `hooks.run_effects` --
+    no `Decision`), independent of whether the action's own effect did
+    anything (Rulebook SS4 "Resolve the Action": "successful" means purely
+    "not blocked") -- resolves `docs/OPEN_QUESTIONS.md` OQ-34, built for
+    Loup (krcg id 102273, "Burn this card ... after a Toreador performs a
+    successful action"). Context carries `actor_player`, the acting
+    `vampire` (the live object, not merely its id -- this is trusted
+    engine-internal code, the same tier `VAMPIRE_ENTERS_TORPOR`'s own
+    `vampire` context entry already established) and `action` (the OQ-9
+    discriminator)."""
     CANCEL_AS_PLAYED = "cancel_as_played"
     """Generic "cancel a card as it is played" interception point (`docs/
     OPEN_QUESTIONS.md` OQ-32, resolved): offered to the side *not* making a
@@ -200,21 +224,52 @@ class Hook(StrEnum):
     # rules-engineer milestone-3 scaffolding report for what each needs):
     POLITICAL_ACTION = "political_action"
     POLLING_STEP = "polling_step"
+    """Wired in `engine/politics.py` (OQ-6): a `"before_cast"`-phase window
+    before casting begins (Perfect Paragon/Queen Anne/Oxford University,
+    England's own shapes), and -- since OQ-37 (`docs/OPEN_QUESTIONS.md`,
+    resolved) -- also a `"mid_cast"`-phase window merged into each player's
+    own per-turn vote-casting `Decision` inside `_cast_votes`, for a card
+    like Scalpel Tongue (krcg id 101686) that retroactively cancels an
+    already-cast source. The two phases share one hook name but differ in
+    what `HookOption.apply(state)` must return -- see `_cast_votes`'s own
+    docstring."""
     REFERENDUM_RESOLVED = "referendum_resolved"
-    """Reserved for a moment strictly *after* a political action's referendum
-    has fully resolved -- including any pass effects and any combat from a
-    blocked attempt -- distinct from, and later than, the pre-cast
-    `POLLING_STEP` and the during-tally `REFERENDUM_TALLIED` above. Named for
-    classification only (same pattern `POLLING_STEP` used before
-    `engine/politics.py` wired it): no engine call site exists yet. This is
-    Voter Captivation's own trigger moment ("[o]nly usable after resolution
-    of a political action whose referendum passed" -- `docs/
-    OPEN_QUESTIONS.md` OQ-6); do not wire a future provider for it against
-    `POLLING_STEP` or `REFERENDUM_TALLIED` instead, since neither has a vote
-    margin or final pass/fail state available at the moment it fires."""
+    """A moment strictly *after* a political action's referendum has fully
+    resolved -- including any pass effects and any combat from a blocked
+    attempt -- distinct from, and later than, the pre-cast `POLLING_STEP`
+    and the during-tally `REFERENDUM_TALLIED` above. Dispatch call site
+    (OQ-36, `docs/OPEN_QUESTIONS.md`, resolved): `engine/action.py::
+    perform_minion_action`, right after its own `resolve(pending)` call
+    returns, offered as a real two-sided `Decision`-raising window
+    (`hooks.resolve_impulse_window`), only when `action ==
+    ACTION_POLITICAL` and the referendum passed. This is Voter
+    Captivation's own trigger moment ("[o]nly usable after resolution of a
+    political action whose referendum passed" -- `docs/OPEN_QUESTIONS.md`
+    OQ-6); do not wire a future provider for it against `POLLING_STEP` or
+    `REFERENDUM_TALLIED` instead, since neither has a vote margin or final
+    pass/fail state available at the moment it fires. Voter Captivation's
+    own card module (`src/vtesbot/cards/voter_captivation.py`) is now
+    implemented against this dispatch; see its own docstring for the
+    per-vampire once-per-action cap added there (`rules-auditor`
+    finding)."""
     RANGED_STRIKE = "ranged_strike"
     ALLY_ENTITY = "ally_entity"
     LOCATION_ENTITY = "location_entity"
+    """A generic "location" entity concept Disputed Territory (krcg id
+    100557, "Successful referendum means the chosen Methuselah takes
+    control of the chosen location") needs -- resolved (OQ-35, `docs/
+    OPEN_QUESTIONS.md`) not by a new entity (OQ-23 already found "location"
+    is free text on an ordinary standalone Master card or an attached
+    Equipment, not a distinct krcg type) but by two generic control-transfer
+    primitives over the two existing shapes that can carry one:
+    `engine/attachments.py::transfer_attachment_control` (always re-hosts,
+    per the "on another controlled card" ruling) and `engine/master_cards.py
+    ::transfer_master_card_control` (never re-hosts: a standalone card is
+    never "on" anything). Disputed Territory (`cards/disputed_territory.py`)
+    is now implemented against the latter primitive only -- no "equipment
+    representing a location" card is on the active 2P list -- so its own
+    registration does not cite this value, mirroring Oxford University,
+    England's own choice not to cite it either (that module's docstring)."""
     DIABLERIE = "diablerie"
     BLOCK_CANDIDATE_INJECTION = "block_candidate_injection"
     EQUIPMENT_ATTACHMENT = "equipment_attachment"

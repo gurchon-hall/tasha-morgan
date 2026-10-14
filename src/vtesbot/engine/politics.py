@@ -147,6 +147,14 @@ pattern for `BLEED_AMOUNT_MODIFIER_HOOK`); `HookOption.apply(state)` returns
 convention), since the actual data is written to `pending` via closure, not
 via the return value.
 
+A fifth shape (OQ-37, `docs/OPEN_QUESTIONS.md`), Scalpel Tongue's own
+mid-cast vote cancellation, reuses this same hook under a third
+`context["phase"]` value, `"mid_cast"`, offered from inside `_cast_votes`'s
+own per-turn rotation rather than only once before casting begins -- see
+`_cast_votes`'s own docstring for the full mechanism and this phase's
+different `apply(state)` return contract (it returns the canceled
+`VoteSource.source_id`, not `None`).
+
 A third shape, Marcos Belegrad's "Methuselahs casting [...] votes or ballots
 against a referendum called by Marcos burn 1 pool once results are
 tallied," needs a *mandatory*, non-chosen reaction dispatched *after* the
@@ -169,9 +177,17 @@ needs in `context["casts"]` (who cast against, and how many votes) without
 re-deriving it. This is a materially *earlier* moment than Voter
 Captivation's own trigger, which needs the referendum's pass/fail outcome
 (and any pass effects, and any combat from a blocked attempt) already
-settled -- `cards/registry.py::Hook.REFERENDUM_RESOLVED` is reserved for
-that later moment but has no dispatch call site yet (no card in this pass
-needs one built; see `voter_captivation.py`'s own docstring).
+settled -- `cards/registry.py::Hook.REFERENDUM_RESOLVED` is for that later
+moment. Its dispatch call site (OQ-36, `docs/OPEN_QUESTIONS.md`) lives in
+`engine/action.py::perform_minion_action`, not here: this function only
+writes its own tally/pass-fail outcome into whatever `action_pending` dict
+it is given (`REFERENDUM_RESULT_KEY` below), since "fully resolved" must
+come strictly after a political-action card's own `resolve()` closure
+(which calls this function, then runs its own pass effects) returns --
+later than this function's own return. `political_action` below never
+passes `action_pending`, so it never triggers this dispatch; every real
+political-action card (`cards/kine_resources_contested.py`, `cards/
+parity_shift.py`) does, via `perform_minion_action`.
 
 `resolve_referendum` threads the identity of `caller_vampire`, the
 `VampireInPlay` instance that announced the political action (not just
@@ -287,6 +303,15 @@ nothing for a player to choose here, see module docstring) once
 `resolve_referendum`'s tally is known, before its pass/fail effects take
 place -- the hook site Marcos Belegrad's mandatory "burn 1 pool" reaction
 needs (OQ-6)."""
+
+REFERENDUM_RESULT_KEY = "referendum_result"
+"""OQ-36 (`docs/OPEN_QUESTIONS.md`): the key `resolve_referendum` writes its
+own tally/pass-fail outcome into, inside whatever `action_pending` dict it
+is given (a `{"votes_for", "votes_against", "passed"}` dict) -- see that
+function's own `action_pending` docstring and `engine/action.py::
+PENDING_REFERENDUM_RESULT_KEY` (a duplicated string literal, not an import
+of this constant, to avoid a circular import -- see that constant's own
+docstring)."""
 
 POLITICAL_ACTION_CARD_TYPE = "Political Action"
 """`LibraryCard.card_type` value for a political action card (confirmed
@@ -442,6 +467,19 @@ def political_action(
     (Rulebook SS4 "The Political Action") is left to the caller (a future
     political-action card module): this function only resolves whether the
     referendum passes, not what a passing referendum's terms do.
+
+    Not the right entry point for a real Political Action card module
+    (`rules-auditor` finding, `docs/OPEN_QUESTIONS.md` OQ-34/OQ-36): this
+    function never calls `perform_minion_action`, so a card built directly
+    against it never dispatches `ACTION_SUCCEEDED_HOOK` or `REFERENDUM_
+    RESOLVED_HOOK` -- every real Political Action card (`cards/kine_
+    resources_contested.py`, `cards/parity_shift.py`) instead goes through
+    `engine/phases/minion.py::ACTION_CARD_PLAY_HOOK`/`ActionCardSpec` with
+    `action=ACTION_POLITICAL`, whose own `resolve()` closure calls
+    `resolve_referendum` directly. This function exists for scenario tests
+    exercising the generic announce/block/referendum path in isolation
+    (`tests/rules/test_politics.py`), not as a card's own engine entry
+    point.
     """
     defender_player = state.other_player(actor_player)
     vampire.locked = True
@@ -468,6 +506,7 @@ def resolve_referendum(
     caller_player: str,
     other_player: str,
     caller_vampire: VampireInPlay,
+    action_pending: dict[str, Any] | None = None,
 ) -> tuple[int, int, list[tuple[str, str, int, str]]]:
     """Run an unblocked referendum's polling step and tally (Rulebook SS4
     "The Referendum", steps 2-3 -- see module docstring for the verbatim
@@ -491,14 +530,39 @@ def resolve_referendum(
     vampire's controller" (see module docstring). `political_action` is this
     function's only caller today, always passing the acting Methuselah and
     vampire.
+
+    `action_pending` (OQ-36, `docs/OPEN_QUESTIONS.md`): when given, this
+    *outer* scratch dict -- `engine/action.py::perform_minion_action`'s own
+    per-attempt `pending` (OQ-11), shared with that same action's earlier
+    block-attempt phase and later threaded into a political-action card's
+    own `resolve()` closure -- is not this function's own internal `pending`
+    local variable below (the polling-step-only scratch for `extra_sources`/
+    `forced_abstain`, unrelated and unchanged). It exists solely so this
+    function can write its own tally/pass-fail outcome into `REFERENDUM_
+    RESULT_KEY`, letting `perform_minion_action` dispatch `REFERENDUM_
+    RESOLVED_HOOK` once its *own* `resolve(pending)` call fully returns --
+    strictly after this function, and after whichever political-action
+    card's own pass effects run on top of it (see `engine/action.py::
+    REFERENDUM_RESOLVED_HOOK`'s own docstring for why that later point, not
+    this function's own return, is where the dispatch belongs). `None` (the
+    default, `political_action` below and every pre-existing caller) is a
+    no-op for this, preserving exact prior behaviour.
     """
     pending: dict[str, Any] = {"extra_sources": [], "forced_abstain": set()}
     _run_pre_cast_hook_window(state, caller_player, other_player, caller_vampire, pending)
     sources = _collect_vote_sources(state, caller_player, other_player, pending)
-    votes_for, votes_against, casts = _cast_votes(state, caller_player, other_player, sources)
+    votes_for, votes_against, casts = _cast_votes(
+        state, caller_player, other_player, caller_vampire.instance_id, sources, pending
+    )
     _dispatch_referendum_tallied(
         state, caller_player, other_player, caller_vampire, votes_for, votes_against, casts
     )
+    if action_pending is not None:
+        action_pending[REFERENDUM_RESULT_KEY] = {
+            "votes_for": votes_for,
+            "votes_against": votes_against,
+            "passed": votes_for > votes_against,
+        }
     return votes_for, votes_against, casts
 
 
@@ -696,7 +760,9 @@ def _cast_votes(
     state: GameState,
     caller_player: str,
     other_player: str,
+    caller_vampire_id: str,
     sources: list[VoteSource],
+    pending: dict[str, Any],
 ) -> tuple[int, int, list[tuple[str, str, int, str]]]:
     """Rulebook SS4 "The Referendum", step 2 casting + step 3 tally: "all
     Methuselahs may now cast any votes and ballots they have [...] in any
@@ -721,15 +787,68 @@ def _cast_votes(
     extra lap, exactly matching "repeat laps" above -- within a lap, each
     side gets exactly one opportunity, same as going around a table once).
     `consecutive_passes` counts consecutive turns (by either player) with no
-    cast; because `turn` always alternates, any two consecutive turns are
-    always one from each player, i.e. exactly one full lap -- so
-    `consecutive_passes reaching 2` is precisely "a full lap completes with
-    nobody casting anything," the quoted closing condition, regardless of
-    which player the count happens to start on. A cast resets the counter to
-    0, so a fresh full lap (both players, in order) is required to close the
-    window after any cast. The loop also ends immediately once `remaining`
-    is empty (no sources left for anyone to cast), without waiting out a
-    final idle lap.
+    cast (or, since OQ-37, no mid-cast cancellation either -- see below);
+    because `turn` always alternates, any two consecutive turns are always
+    one from each player, i.e. exactly one full lap -- so `consecutive_
+    passes reaching 2` is precisely "a full lap completes with nobody
+    casting anything," the quoted closing condition, regardless of which
+    player the count happens to start on. A cast resets the counter to 0,
+    so a fresh full lap (both players, in order) is required to close the
+    window after any cast.
+
+    Before OQ-37, the loop additionally ended the instant `remaining`
+    became empty (no sources left for anyone to cast), without waiting out
+    a final idle lap -- a pure optimization, since with nothing left to
+    offer, both players' next turns would only ever produce an empty "no
+    options" pass anyway. That optimization is no longer correct once a
+    `"mid_cast"` cancellation opportunity can exist with `remaining` already
+    empty (every source already cast): dropping it from the loop condition
+    costs nothing new for the no-provider case (an empty-options turn never
+    calls `state.ask` at all, so this is still a cheap, decision-free
+    iteration, not an extra prompt) and is required for `remaining`-empty
+    cancellation to ever be reachable.
+
+    OQ-37 (`docs/OPEN_QUESTIONS.md`): on each player's own turn in the
+    rotation above, `turn` is *also* offered any `POLLING_STEP_HOOK` option
+    currently on offer with `context["phase"] == "mid_cast"` (Scalpel Tongue,
+    krcg id 101686: "Choose a vampire who has cast votes or ballots in this
+    referendum. The chosen vampire is locked and abstains (this cancels the
+    chosen vampire's votes and ballots)") -- merged into the *same*
+    `"polling_step_cast"` `Decision` as `turn`'s own cast-from-my-sources
+    choices (mirrors `engine/action.py::_ask_stealth_or_decrease`'s own
+    precedent for merging two distinct hooks into one offer point, OQ-30/
+    OQ-31), not a separate ask. Reusing the one existing `POLLING_STEP_HOOK`
+    (rather than a new hook) and widening *when* it is offered -- previously
+    only once, before casting began (`_run_pre_cast_hook_window`) -- means a
+    provider now sees two distinct `context["phase"]` values at different
+    moments and must gate on it; a `"mid_cast"`-phase option's own
+    `apply(state)` has a different contract from a `"before_cast"`-phase
+    option's (which returns `None`, mutating `pending` via closure instead):
+    it must perform its own card-specific effect directly (e.g. locking the
+    target vampire, burning its blood) *and* return the `str` `source_id`
+    (see `VoteSource.source_id`'s own format table) of the `VoteSource` it
+    targets, so this function can perform the generic retroactive-tally
+    correction below -- a provider has no access to this function's own
+    local `remaining`/`casts`/`votes_for`/`votes_against`, so it cannot do
+    that bookkeeping itself. `context["casts"]` (a snapshot of this
+    function's own `casts` log so far) is what lets a provider identify an
+    eligible target ("has cast votes or ballots in this referendum");
+    `context["pending"]` is the *outer* `resolve_referendum`-local polling
+    scratch dict (its own `extra_sources`/`forced_abstain`, unrelated to
+    `action_pending`/`REFERENDUM_RESULT_KEY` above), and `context["caller_
+    vampire_id"]` is `caller_vampire.instance_id` (never the live object,
+    same convention as the `"before_cast"` phase) -- both threaded through
+    for parity with that earlier phase's own context shape, so a provider
+    registered once against this hook sees a consistent context no matter
+    which phase actually calls it. Choosing such an option is treated
+    exactly like a cast for the alternation/closing logic
+    (`consecutive_passes` resets to 0): something happened this turn, so
+    the window must not prematurely close. Eligibility is bound to the
+    targeting vampire's own controller's turn in this same table-order
+    rotation (OQ-20), not an immediate reactive interrupt the
+    instant a vote is cast -- Scalpel Tongue's own text requires only
+    "usable during the polling step," no faster timing, and OQ-20's rotation
+    already governs every other polling-step actor identically.
     """
     votes_for = 0
     votes_against = 0
@@ -738,14 +857,28 @@ def _cast_votes(
     remaining = {source.source_id: source for source in sources}
     turn = caller_player
     consecutive_passes = 0
-    while remaining and consecutive_passes < 2:
+    while consecutive_passes < 2:
         mine = sorted(
             (source for source in remaining.values() if source.player == turn),
             key=lambda source: source.source_id,
         )
-        if not mine:
+        cancel_options = hooks.offer(
+            POLLING_STEP_HOOK,
+            state,
+            player=turn,
+            phase="mid_cast",
+            caller=caller_player,
+            caller_vampire_id=caller_vampire_id,
+            other=other_player,
+            votes_for=votes_for,
+            votes_against=votes_against,
+            casts=list(casts),
+            pending=pending,
+        )
+        if not mine and not cancel_options:
             consecutive_passes += 1
         else:
+            cancel_by_value = {o.choice.value: o for o in cancel_options}
             choices: tuple[Choice, ...] = ()
             for source in mine:
                 choices += (
@@ -758,7 +891,9 @@ def _cast_votes(
                         f"Cast {source.votes} vote(s) against ({source.label})",
                     ),
                 )
+            choices += tuple(o.choice for o in cancel_options)
             choices += (Choice("pass", "Pass (hold back remaining votes for now)"),)
+            hooks.ensure_unique_choice_values(choices, decision_kind="polling_step_cast")
             decision = Decision(
                 player=turn,
                 kind="polling_step_cast",
@@ -772,6 +907,12 @@ def _cast_votes(
             answer = state.ask(decision).value
             if answer == "pass":
                 consecutive_passes += 1
+            elif answer in cancel_by_value:
+                consecutive_passes = 0
+                canceled_source_id = cancel_by_value[answer].apply(state)
+                votes_for, votes_against = _apply_retroactive_vote_cancellation(
+                    canceled_source_id, remaining, casts, votes_for, votes_against
+                )
             else:
                 consecutive_passes = 0
                 direction, source_id = answer.split(":", 1)
@@ -787,3 +928,46 @@ def _cast_votes(
                 casts.append((source.player, source.source_id, source.votes, direction))
         turn = other_player if turn == caller_player else caller_player
     return votes_for, votes_against, casts
+
+
+def _apply_retroactive_vote_cancellation(
+    source_id: str,
+    remaining: dict[str, VoteSource],
+    casts: list[tuple[str, str, int, str]],
+    votes_for: int,
+    votes_against: int,
+) -> tuple[int, int]:
+    """OQ-37 (`docs/OPEN_QUESTIONS.md`): the generic half of a mid-cast
+    `POLLING_STEP_HOOK` cancellation (Scalpel Tongue, krcg id 101686) a
+    provider's own `apply(state)` cannot perform itself (see `_cast_votes`'s
+    own docstring) -- "this cancels the chosen vampire's votes and ballots":
+
+    - if `source_id` has not cast yet (still sitting in `remaining`, not
+      actually reachable by Scalpel Tongue's own printed targeting, "a
+      vampire who has cast votes or ballots" -- but handled defensively
+      regardless, for any future card reusing this same `"mid_cast"` phase
+      with looser targeting), it is removed from `remaining` so it can never
+      cast later this same referendum;
+    - if it already cast (`VoteSource`'s own "cast as a group" invariant
+      guarantees at most one matching `casts` entry), that entry is removed
+      from the log entirely -- not merely marked -- and its own votes are
+      retroactively subtracted from whichever direction it was cast in, so
+      `REFERENDUM_TALLIED_HOOK`'s own later `casts` consumers see the
+      corrected picture, not the stale original cast.
+
+    Either way, the targeted source can never cast again this referendum:
+    once already removed from `remaining` by a prior cast, there is nothing
+    left to pop; the card-specific provider itself is responsible for
+    actually locking the targeted vampire (so it cannot, independently,
+    become eligible to cast some *other*, not-yet-existing source later).
+    """
+    remaining.pop(source_id, None)
+    for index, (_player, cast_source_id, votes, direction) in enumerate(casts):
+        if cast_source_id == source_id:
+            del casts[index]
+            if direction == "for":
+                votes_for -= votes
+            else:
+                votes_against -= votes
+            break
+    return votes_for, votes_against

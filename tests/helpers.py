@@ -118,6 +118,7 @@ class _PlayerBuilder:
         name: str | None = None,
         disciplines: tuple[str, ...] = (),
         title: str | None = None,
+        clan: str | None = None,
     ) -> _PlayerBuilder:
         instance_id = self._instance_id(label)
         card = CryptCard(
@@ -127,6 +128,7 @@ class _PlayerBuilder:
             group=5,
             disciplines=disciplines,
             title=title,
+            clan=clan,
         )
         self.vampires.append(
             VampireInPlay(

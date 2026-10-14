@@ -1,0 +1,225 @@
+{
+  "_i18n": {
+    "es": {
+      "name": "Cautivar al votante",
+      "card_text": "Sólo utilizable tras la resolución de una acción política cuyo referéndum haya prosperado.\n[pre] Este vampiro gana 1 de sangre por cada voto de diferencia por el cual el referéndum haya prosperado.\n[PRE] Como antes, pero pasa hasta 2 de esa sangre a tu reserva sanguínea en vez de a este vampiro.",
+      "url": "https://static.krcg.org/card/es/votercaptivation.jpg"
+    },
+    "fr": {
+      "name": "Envoûtement des électeurs",
+      "card_text": "Seulement utilisable après résolution d'une action politique dont le référendum est passé.\n[pre] Ce vampire gagne 1 point de sang pour chaque voix de différence.\n[PRE] Comme ci-dessus, mais déplacez jusqu'à 2 de ces points de sang vers votre réserve au lieu de vers ce vampire.",
+      "url": "https://static.krcg.org/card/fr/votercaptivation.jpg"
+    }
+  },
+  "id": 102131,
+  "_name": "Voter Captivation",
+  "url": "https://static.krcg.org/card/votercaptivation.jpg",
+  "types": [
+    "Action Modifier"
+  ],
+  "disciplines": [
+    "pre"
+  ],
+  "card_text": "Only usable after resolution of a political action whose referendum passed.\n[pre] This vampire gains 1 blood for each vote by which the referendum passed.\n[PRE] As above, but move up to 2 of those blood to your pool instead of this vampire.",
+  "_set": "Jyhad:U2, VTES:U, Sabbat:U, CE:U/PTo2/PV, Anarchs:PAB3, KMW:PAn3, LoB:PG3, Third:U/PB2/SKB2, V5:PTo6/PV2, NB:PTo2, NB2:PMi2, 30th:6, SV5:PPower2",
+  "sets": {
+    "Jyhad": [
+      {
+        "release_date": "1994-08-16",
+        "rarity": "Uncommon",
+        "frequency": 2
+      }
+    ],
+    "Vampire: The Eternal Struggle": [
+      {
+        "release_date": "1995-09-15",
+        "rarity": "Uncommon"
+      }
+    ],
+    "Sabbat": [
+      {
+        "release_date": "1996-10-28",
+        "rarity": "Uncommon"
+      }
+    ],
+    "Camarilla Edition": [
+      {
+        "release_date": "2002-08-19",
+        "rarity": "Uncommon"
+      },
+      {
+        "release_date": "2002-08-19",
+        "precon": "Toreador",
+        "copies": 2
+      },
+      {
+        "release_date": "2002-08-19",
+        "precon": "Ventrue",
+        "copies": 1
+      }
+    ],
+    "Anarchs": [
+      {
+        "release_date": "2003-05-19",
+        "precon": "Anarch Barons",
+        "copies": 3
+      }
+    ],
+    "Kindred Most Wanted": [
+      {
+        "release_date": "2005-02-21",
+        "precon": "Anathema",
+        "copies": 3
+      }
+    ],
+    "Legacies of Blood": [
+      {
+        "release_date": "2005-11-14",
+        "precon": "Guruhi",
+        "copies": 3
+      }
+    ],
+    "Third Edition": [
+      {
+        "release_date": "2006-09-04",
+        "rarity": "Uncommon"
+      },
+      {
+        "release_date": "2006-09-04",
+        "precon": "Brujah antitribu",
+        "copies": 2
+      },
+      {
+        "release_date": "2006-09-04",
+        "precon": "Starter Kit Brujah antitribu",
+        "copies": 2
+      }
+    ],
+    "Fifth Edition": [
+      {
+        "release_date": "2020-11-30",
+        "precon": "Toreador",
+        "copies": 6
+      },
+      {
+        "release_date": "2020-11-30",
+        "precon": "Ventrue",
+        "copies": 2
+      }
+    ],
+    "New Blood": [
+      {
+        "release_date": "2022-04-17",
+        "precon": "Toreador",
+        "copies": 2
+      }
+    ],
+    "New Blood II": [
+      {
+        "release_date": "2022-08-01",
+        "precon": "Ministry",
+        "copies": 2
+      }
+    ],
+    "Thirtieth Anniversary": [
+      {
+        "release_date": "2024-07-20",
+        "copies": 6
+      }
+    ],
+    "Sabbat V5": [
+      {
+        "release_date": "2025-10-26",
+        "precon": "Path of Power and the Inner Voice",
+        "copies": 2
+      }
+    ]
+  },
+  "scans": {
+    "Jyhad": "https://static.krcg.org/card/set/jyhad/votercaptivation.jpg",
+    "Vampire: The Eternal Struggle": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/votercaptivation.jpg",
+    "Sabbat": "https://static.krcg.org/card/set/sabbat/votercaptivation.jpg",
+    "Camarilla Edition": "https://static.krcg.org/card/set/camarilla-edition/votercaptivation.jpg",
+    "Anarchs": "https://static.krcg.org/card/set/anarchs/votercaptivation.jpg",
+    "Kindred Most Wanted": "https://static.krcg.org/card/set/kindred-most-wanted/votercaptivation.jpg",
+    "Legacies of Blood": "https://static.krcg.org/card/set/legacies-of-blood/votercaptivation.jpg",
+    "Third Edition": "https://static.krcg.org/card/set/third-edition/votercaptivation.jpg",
+    "Fifth Edition": "https://static.krcg.org/card/set/fifth-edition/votercaptivation.jpg",
+    "New Blood": "https://static.krcg.org/card/set/new-blood/votercaptivation.jpg",
+    "New Blood II": "https://static.krcg.org/card/set/new-blood-ii/votercaptivation.jpg",
+    "Thirtieth Anniversary": "https://static.krcg.org/card/set/thirtieth-anniversary/votercaptivation.jpg",
+    "Sabbat V5": "https://static.krcg.org/card/set/sabbat-v5/votercaptivation.jpg"
+  },
+  "artists": [
+    "Stuart Beel",
+    "Tom Gianni"
+  ],
+  "ordered_sets": [
+    "Jyhad",
+    "Vampire: The Eternal Struggle",
+    "Sabbat",
+    "Camarilla Edition",
+    "Anarchs",
+    "Kindred Most Wanted",
+    "Legacies of Blood",
+    "Third Edition",
+    "Fifth Edition",
+    "New Blood",
+    "New Blood II",
+    "Thirtieth Anniversary",
+    "Sabbat V5"
+  ],
+  "legality": "1994-08-16",
+  "rulings": [
+    {
+      "text": "Is played after resolution, after all combats (if any) are handled, but still during the action. Action modifiers and effects that can be played \"after resolution\" can be played before or after it. [PIB 20150915] [LSJ 19981028] [ANK 20190425]",
+      "references": [
+        {
+          "text": "[PIB 20150915]",
+          "label": "PIB 20150915",
+          "url": "https://www.vekn.net/forum/rules-questions/73134-learjet#73139"
+        },
+        {
+          "text": "[LSJ 19981028]",
+          "label": "LSJ 19981028",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/JZHY1bTCAa0/m/XqDVERty0roJ"
+        },
+        {
+          "text": "[ANK 20190425]",
+          "label": "ANK 20190425",
+          "url": "https://www.vekn.net/forum/rules-questions/77581-action-modifiers-played-at-beginning-and-end-of-an-action#94652"
+        }
+      ],
+      "group": "Played after resolution"
+    },
+    {
+      "text": "Is played after the referendum is resolved. If the effect of the referendum ousts the acting Methuselah, there is no time to play it to prevent the ousting. [RTR 19951110]",
+      "references": [
+        {
+          "text": "[RTR 19951110]",
+          "label": "RTR 19951110",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/TXfganI5B2o/m/QYh3AdPNbUwJ"
+        }
+      ],
+      "group": "Pool gain after referendum"
+    },
+    {
+      "text": "Can be used after a referendum that is automatically passing, but the vote is considered to have passed by 0 votes. [LSJ 19980107] [PIB 20150105]",
+      "references": [
+        {
+          "text": "[LSJ 19980107]",
+          "label": "LSJ 19980107",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/aUUs4VCR_Ec/m/PLecvfrEqbgJ"
+        },
+        {
+          "text": "[PIB 20150105]",
+          "label": "PIB 20150105",
+          "url": "https://www.vekn.net/forum/rules-questions/68465-voting-is-complicated#68493"
+        }
+      ],
+      "group": "Pool gain after referendum"
+    }
+  ],
+  "name": "Voter Captivation",
+  "printed_name": "Voter Captivation"
+}

@@ -93,6 +93,14 @@ already documents that there is only ever one oust event, which ends the
 game immediately (not a gap this card needs to fill, and not an Open
 Question -- the engine's existing 2P oust model already fully covers the
 only case that can actually arise here).
+
+`resolve_referendum`'s own `action_pending=pending` argument (OQ-36,
+`docs/OPEN_QUESTIONS.md`) is this `resolve()` closure's own `pending`
+argument, forwarded through unchanged -- lets `perform_minion_action`
+dispatch `REFERENDUM_RESOLVED_HOOK` (Voter Captivation's own trigger
+moment) once this whole `resolve()` closure, including the allocation
+above, returns. No provider is registered against that hook by this
+module (Voter Captivation's own card module is a separate pass).
 """
 
 from collections.abc import Mapping
@@ -134,8 +142,9 @@ def _provide_kine_resources_contested(
         play_from_hand(s, player, KRCG_ID)
 
         def resolve(pending: dict[str, Any]) -> None:
-            del pending  # no later hook window of its own to feed.
-            votes_for, votes_against, _casts = resolve_referendum(s, player, other, acting_vampire)
+            votes_for, votes_against, _casts = resolve_referendum(
+                s, player, other, acting_vampire, action_pending=pending
+            )
             if votes_for <= votes_against:
                 return  # referendum fails ("tied referendums fail"): no effect at all.
 

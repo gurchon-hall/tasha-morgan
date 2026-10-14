@@ -12,137 +12,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-9 - Bonding - stealth_modifier omits action type (status: resolved)
-
-- Situation: Bonding (100236)'s superior clause grants "+1 stealth,"
-  usable only during a bleed action — but the `"stealth_modifier"`
-  hook context carried no field saying which action (bleed vs. hunt)
-  was in progress, so a provider could not correctly gate on it.
-- Rules/interactions: card text and rulings ([TOM 19951109],
-  [LSJ 19980824]/[RTR 19941109]) are explicit and consistent — not a
-  ruling ambiguity, a missing engine capability.
-- Solution: threaded an `action: str | None` discriminator through
-  `perform_minion_action`/`attempt_block`/`_duel_stealth_intercept`
-  into the stealth/intercept hook context and the block-attempt
-  decision; production call sites pass named constants
-  `ACTION_BLEED`/`ACTION_HUNT`/`ACTION_POLITICAL` (added so a future
-  typo can't silently fail to match a provider's own check). Card
-  itself stays `blocked` (see OQ-11 for the remaining gap).
-
-## OQ-10 - Contested unique allies lack hidden state (status: resolved)
-
-- Situation: `AllyView`/`build_observation` showed every in-play ally
-  unconditionally to both players — correct for a non-unique ally but
-  not for a contested unique one.
-- Rules/interactions: Rulebook §4 Advanced Rules > Contested Cards is
-  one unified mechanism for every unique card, crypt or not (face
-  down, out of play, 1 pool/unlock-phase or yield); the 2P variant's
-  "stays in play, usable" override is scoped to crypt cards only (by
-  its own title and aside) — so a contested ally follows the
-  unmodified rulebook rule. A recruited ally is itself played face up,
-  so unlike an uncontrolled vampire a contested ally's identity is
-  never actually secret — no anonymization branch is needed, only a
-  zone/usability marker.
-- Solution: added `AllyInPlay.contested_with` and a `"contested"` zone
-  value; `engine/allies.py::detect_contest_on_recruit` (mirrors the
-  vampire-side function), wired into `_perform_recruit_ally`;
-  `AllyView.contested: bool`. A pool sweep found six more unique
-  allies plus one unique Equipment (Shilmulo Tarot) sharing this gap.
-  The resolution loop itself (pay/yield) was deliberately left to
-  OQ-15; Equipment-side tracking is left open (no card needs it yet).
-
-## OQ-11 - Bonding - carrying an early hook effect forward (status: resolved)
-
-- Situation: Bonding's superior clause must produce two effects from
-  one play — "+1 stealth" (usable only in the earlier block-attempt
-  window) and "+1 bleed" (only readable by the later bleed-amount
-  window) — and nothing in the engine let one hook application leave
-  something for a later one to pick up within the same action.
-- Rules/interactions: not a ruling ambiguity (OQ-9 already settled the
-  action-type gating); a missing engine primitive. Applying the bleed
-  bonus immediately instead (bypassing the later clamp) was rejected:
-  it desynchronizes from the amount-window's floor-at-0 clamp and
-  Edge-holder check, overcharging the defender in a worked example.
-- Solution: `perform_minion_action` now builds a shared, mutable
-  `pending: dict` before `attempt_block` runs, threaded into both the
-  stealth/intercept hook context and the later bleed-amount-modifier
-  context; `_perform_bleed` folds `pending[PENDING_BLEED_AMOUNT_KEY]`
-  into the base amount before the clamp. Bonding was then implemented
-  against both providers; a related cross-card "(limited)" bookkeeping
-  gap (Threats vs. Bonding's superior clause) was fixed by re-keying
-  `bleed_bookkeeping` off `pending` instead of the later-window-only
-  `amount_box`. `Status.IMPLEMENTED`.
-
-## OQ-12 - 47th Street Royals - recruit-ally action not wired (status: resolved)
-
-- Situation: OQ-7 built the ally representation, but no minion action
-  let a player actually recruit one in a real game —
-  `_choose_and_perform_action` only ever offered bleed/hunt.
-- Rules/interactions: Rulebook §4 "Recruit Ally": any ready minion,
-  cost as listed on the card, undirected, +1 stealth; a played card is
-  set aside (not yet ash-heaped) until the action resolves, burned
-  only on a block (cost not paid).
-- Solution: added a "recruit ally" minion action generalizing
-  `perform_minion_action` with an `on_blocked` callback (fires instead
-  of `resolve` on a block, after combat), `RecruitAllySpec` as the
-  hook-option contract, and `play_from_hand_pending` (card leaves hand
-  immediately but isn't ash-heaped until the action resolves). Folded
-  into the same top-level action-choice decision as bleed/hunt. 47th
-  Street Royals' own card module stays `blocked` (its own provider is
-  a follow-up); deliberately not extended to allies-as-actor (no card
-  needs it, and allies aren't unlocked by the engine yet).
-
-## OQ-13 - 47th Street Royals - recruit_ally_play omits acting vampire (status: resolved)
-
-- Situation: a card's clan requirement (47th Street Royals requires
-  Brujah) binds to the specific minion playing it, not merely "the
-  Methuselah controls some vampire of that clan" — but the
-  `"recruit_ally_play"` hook's context carried no identifier for which
-  of possibly several ready-unlocked vampires was acting.
-- Rules/interactions: Rulebook §2 "Requirements for Playing Cards"
-  draws the minion-card vs. master-card distinction explicitly; a
-  minion card (which Ally cards are) binds to the acting minion
-  itself.
-- Solution: `_choose_and_perform_action` now also passes
-  `vampire=vampire.instance_id` into the hook's offer context, letting
-  a provider look up the specific acting vampire and check its clan.
-  Card module itself stays `blocked` for a future pass.
-
-## OQ-14 - 47th Street Royals - recruit makes contested-ally gap live (status: resolved)
-
-- Situation: with OQ-12/OQ-13 resolved, two independently-built
-  2P-legal decks could both recruit their own copy of 47th Street
-  Royals — making OQ-10's then-still-open uniqueness gap reachable in
-  an ordinary game, not merely latent.
-- Rules/interactions: same Contested Cards rule as OQ-10; shipping
-  as-is would have silently created two independent, fully-visible
-  `AllyInPlay` instances under two controllers instead of the
-  mandated face-down/out-of-play treatment.
-- Solution: resolved by OQ-10's own fix landing (contest detection on
-  recruit). The remaining piece — actually *resolving* a contest once
-  created (pay/yield) — was deliberately left to OQ-15. Card stays
-  `blocked`.
-
-## OQ-15 - Ally contest resolution loop not wired (status: resolved)
-
-- Situation: OQ-10 added contest *detection* for allies but nothing
-  let either player ever pay-or-yield to end one — once a contest
-  began, it never ended.
-- Rules/interactions: Rulebook §4 Advanced Rules > Contested Cards
-  gives one unified pay-1-pool-per-unlock-phase-or-yield mechanism for
-  every unique card; the 2P variant's crypt-card override does not
-  change this cost/resolution half, only the face-down/usable half,
-  and only for crypt cards.
-- Solution: added `engine/allies.py::resolve_one_ally_contest` (pay
-  keeps `zone="contested"`, no 2P "stays usable" exception for
-  allies; yield burns the yielding copy, clears the opponent's
-  `contested_with` but leaves its `zone` at `"contested"` until that
-  opponent's own next unlock phase) and `_unlock_own_allies` to
-  perform that delayed restore; extended the unlock phase's
-  pending-effect loop to surface `"contest_ally:"` ids. Shilmulo
-  Tarot's own (Equipment-side) contest tracking is flagged as a
-  separate, still-open gap, out of scope here.
-
 ## OQ-16: "Cannot contest yourself" unimplemented on both paths (status: open)
 
 - Situation: found by `rules-auditor` while reviewing OQ-10/OQ-14's ally
@@ -604,3 +473,249 @@ up an OQ number or the highest one used so far.
   against it, gated to Reaction-type options, to a referendum Diana herself
   called, and capped once per referendum via `pending["diana_iadanza_
   canceled"]`. `Status.IMPLEMENTED`.
+
+## OQ-34 - Loup - no action-succeeded signal or turn card (status: resolved)
+
+- Situation: Loup (krcg id 102273, Action Modifier, Toreador): "Only one
+  Loup can be played each turn. Put this card in play. Toreador get +1
+  stealth. Burn this card at the end of the turn or after a Toreador
+  performs a successful action." Needed two missing primitives: a generic
+  "this action just succeeded" signal (independent of whether the
+  action's own effect did anything), and a "stays in play for the rest of
+  the turn, until burned" entity distinct from both `CardAttachment` and
+  the cross-turn `MasterCardInPlay`.
+- Rules/interactions: Rulebook §4 "Resolve the Action" (re-fetched live),
+  verbatim: "An action is successful only if it is not blocked" / "If the
+  action is successful (all block attempts were unsuccessful), then the
+  cost of the action is paid and the effects of the successful action
+  take place" — success is purely "not blocked." "The turn" in Loup's own
+  burn clause is unambiguous: VTES turns are strictly sequential (never
+  two in progress at once), and this card can only ever be played by its
+  own controller's own acting Toreador vampire, so "the turn" and "the
+  controller's own turn" coincide by construction — no further question
+  needed on that sub-point.
+- Solution: added `engine/action.py::ACTION_SUCCEEDED_HOOK`
+  (`cards/registry.py::Hook.ACTION_SUCCEEDED`), dispatched via
+  `hooks.run_effects` immediately after `perform_minion_action`'s own
+  `resolve(pending)` call returns (never on the blocked branch), carrying
+  `actor_player`/`vampire`/`action`. Added `engine/state.py::
+  TurnCardInPlay`/`PlayerState.turn_cards` and `engine/turn_cards.py`
+  (`bring_turn_card_into_play`/`burn_turn_card`/`active_turn_cards`/
+  `clear_turn_cards_at_end_of_turn`, the last wired into `engine/phases/
+  turn.py::play_turn` right before the turn flips). Loup's own card module
+  (`cards/loup.py`, `Status.IMPLEMENTED`) was written in a later pass; see
+  its own docstring for the "only one Loup per turn" cap and a
+  self-documented timing gap against the "can be used even if the stealth
+  is not currently needed" ruling.
+
+## OQ-35 - Disputed Territory - no location control-transfer (status: resolved)
+
+- Situation: Disputed Territory (krcg id 100557, Political Action):
+  "Choose a location and a Methuselah. Successful referendum means the
+  chosen Methuselah takes control of the chosen location." Needed a
+  generic way to change who controls an existing in-play "location" — a
+  concept OQ-23 already found is not a distinct krcg type, but free text
+  on either a standalone Master card or an attached Equipment.
+- Rules/interactions: rulings on file via krcg, verbatim: "If used to
+  steal an equipment representing a location, it can be placed on any
+  minion controlled by the new controller" [RTR 19960112]; "Changing the
+  controller of a location has no other effect, unless specified by card
+  text. Exception: A location 'on' another controlled card is moved onto
+  an appropriate card controlled by the new controller of the location"
+  [RTR 19980623]; "If used to 'change' the control of a location... to
+  the same Methuselah, the location cannot be moved to another minion
+  controlled by the same Methuselah" [LSJ 19971002].
+- Solution: added `engine/attachments.py::transfer_attachment_control`
+  (always re-hosts onto a caller-supplied destination vampire, per the
+  Exception clause — an attached card is always "on" a vampire; rejects
+  a same-controller call whose `new_host` is not the attachment's own
+  current host, per [LSJ 19971002] — a `rules-auditor` finding fixed
+  after this entry's first landing omitted that clause entirely) and
+  `engine/master_cards.py::transfer_master_card_control` (never re-hosts a
+  standalone card, only moves it between `PlayerState.master_cards` dicts
+  and reassigns `controller`). Which destination vampire/controller to use
+  is left to whichever future card module calls these (its own `Decision`,
+  not built here). Disputed Territory's own card module (`cards/
+  disputed_territory.py`, `Status.IMPLEMENTED`) was written in a later
+  pass.
+
+## OQ-36 - Voter Captivation - no post-resolution dispatch (status: resolved)
+
+- Situation: Voter Captivation (krcg id 102131): "Only usable after
+  resolution of a political action whose referendum passed. [pre] This
+  vampire gains 1 blood for each vote by which the referendum passed."
+  `cards/registry.py::Hook.REFERENDUM_RESOLVED` was reserved for exactly
+  this moment but had no engine dispatch call site — a moment strictly
+  after a political-action card's own `resolve()` closure (which itself
+  calls `resolve_referendum` and then runs its own pass effects) fully
+  returns, later than `POLLING_STEP`/`REFERENDUM_TALLIED`.
+- Rules/interactions: a missing engine primitive, not a ruling question —
+  the hook's own trigger semantics were already settled when it was
+  named/reserved (its own docstring).
+- Solution: `engine/politics.py::resolve_referendum` gained an optional
+  `action_pending` parameter, writing its own tally/pass-fail outcome into
+  `REFERENDUM_RESULT_KEY` inside whatever dict it is given (never its own
+  internal polling-step `pending` scratch); `cards/kine_resources_
+  contested.py`/`cards/parity_shift.py` now pass their own `resolve()`
+  closure's `pending` through as `action_pending` (both still
+  `Status.IMPLEMENTED`, no new provider registered). `engine/action.py::
+  perform_minion_action` dispatches the new `REFERENDUM_RESOLVED_HOOK`
+  (`hooks.resolve_impulse_window`, a real two-sided window — unlike
+  `ACTION_SUCCEEDED_HOOK`, this is a card a player chooses to play) right
+  after its own `resolve(pending)` returns, only when `action ==
+  ACTION_POLITICAL` and the referendum passed; context carries
+  `caller`/`other`/`caller_vampire_id`/`margin`/`pending` (the last added
+  in a later pass, a per-action once-per-minion cap, `rules-auditor`
+  finding). Voter Captivation's own card module (`cards/
+  voter_captivation.py`, `Status.IMPLEMENTED`) was written in a later
+  pass.
+
+## OQ-37 - Scalpel Tongue - no mid-cast vote cancellation (status: resolved)
+
+- Situation: Scalpel Tongue (krcg id 101686): "Only usable during the
+  polling step of a political action. [cel][pre] Choose a vampire who has
+  cast votes or ballots in this referendum. The chosen vampire is locked
+  and abstains (this cancels the chosen vampire's votes and ballots)."
+  Needed a way to retroactively undo an already-cast vote source mid-way
+  through `_cast_votes`'s own casting loop — distinct from
+  `pending["forced_abstain"]` (OQ-6), which only ever prevents a future
+  cast, applied once before casting begins.
+- Rules/interactions: ruling on file, "Cannot be used during a referendum
+  that is automatically passing" [PIB 20150105]/[LSJ 19980107] — not
+  itself built (no auto-passing mechanism exists in the engine yet, per
+  OQ-6's own note); otherwise a missing engine primitive, not a ruling
+  ambiguity.
+- Solution: `engine/politics.py::_cast_votes` now also offers
+  `POLLING_STEP_HOOK` on every player's own turn in the existing
+  table-order rotation (OQ-20), under a new `context["phase"] ==
+  "mid_cast"` value, merged into the same `"polling_step_cast"` `Decision`
+  (mirrors `engine/action.py::_ask_stealth_or_decrease`'s own
+  two-hooks-into-one-offer precedent); a `"mid_cast"` option's own
+  `apply(state)` returns the canceled `VoteSource.source_id` instead of
+  `None`. `_apply_retroactive_vote_cancellation` removes that source from
+  `remaining` (if not yet cast) and its own entry from the `casts` log
+  (if already cast), subtracting its votes from whichever direction it
+  was cast in. The loop's former "end immediately once `remaining` is
+  empty" shortcut was removed (no longer correct once a cancellation
+  opportunity can exist with nothing left to cast) — a pure optimization,
+  so no existing decision sequence changes. Scalpel Tongue's own card
+  module (`cards/scalpel_tongue.py`, `Status.IMPLEMENTED`) was written in
+  a later pass.
+
+## OQ-38: Voter Captivation/Scalpel Tongue - who may play it (status: resolved)
+
+- Situation: both cards are typed (at least partly) Action Modifier. Their
+  earlier implementations (`cards/voter_captivation.py`,
+  `cards/scalpel_tongue.py`'s basic/superior clauses) offered the play to
+  *any* ready (Scalpel Tongue: ready and unlocked) vampire either
+  Methuselah controls, independent of who is the political action's own
+  acting/caller vampire. `rules-auditor` flagged this as a candidate rules
+  violation, not a verified-safe implementer's choice: it contradicted this
+  project's own Perfect Paragon precedent (OQ-30/31), where the
+  structurally identical "[pre] This vampire gets +3 votes" immediately
+  after a trigger clause was read as caller-only.
+- Rules/interactions: Rulebook §2 Card Types (`data/sources/rulebook/
+  2026-10-09/2-card-types.md:305-311`), verbatim: "The acting minion can
+  play these cards... Some action modifier cards are played by minions
+  'other than the acting minion'. Only minions controlled by the same
+  Methuselah can play those cards." No on-file krcg ruling, nor a live
+  VEKN card-rulings fetch, settles whether "this vampire" on either card
+  means the acting vampire specifically, or any ready vampire of the
+  controller.
+- Solution (user ruling): Reading A -- "only usable by the acting vampire."
+  Both cards now restrict any caller-side use strictly to the political
+  action's own acting vampire, `context["caller_vampire_id"]`, per the
+  quoted Rulebook default (absent an "other than the acting minion"
+  override phrase on either card's text, the unqualified default applies).
+  `voter_captivation.py` has no Reaction half to lean on, so this fully
+  removes the non-caller Methuselah's own use of the card -- their copy of
+  Voter Captivation is simply unplayable, an accepted consequence, not a
+  gap. `scalpel_tongue.py` is asymmetric instead: its own Reaction half
+  (`types == ["Action Modifier", "Reaction"]`) independently justifies the
+  *non*-caller Methuselah's use (never "the acting minion" for this
+  political action at all, so the Action-Modifier default does not reach
+  them), kept exactly as it was -- any ready, unlocked qualifying vampire
+  of theirs; only the caller-side half of its own eligibility changed, now
+  requiring their own acting vampire specifically, with that vampire's own
+  (necessarily already-locked, Rulebook SS4) `locked` state correctly
+  ignored for that check, unlike the non-caller Reaction-rule check.
+  `cards/voter_captivation.py::_caller_vampire`,
+  `cards/scalpel_tongue.py::_caller_may_play_basic`/`_caller_may_play_
+  superior` implement this. Both cards stay `Status.IMPLEMENTED`.
+
+## OQ-39: Loup - implemented despite a ruling gap (status: resolved)
+
+- Situation: Loup's on-file ruling says "Can be used even if the stealth
+  is not currently needed" [LSJ 20011214-2], but `cards/loup.py`'s own
+  `STEALTH_MODIFIER_HOOK` provider could only ever be offered from inside
+  `_duel_stealth_intercept`'s reactive "only when needed" ping-pong
+  (`engine/action.py`) — so Loup could not be played against an
+  unblockable action, or when no block is attempted at all, contrary to
+  that ruling. The module shipped `Status.IMPLEMENTED` with the gap noted
+  only in prose/a test name.
+- Rules/interactions: krcg's on-file ruling for Loup (as above); this
+  project's own OQ-30/31 precedent, where an identical shape (Perfect
+  Paragon family needing to add a modifier outside the reactive-only
+  window) was resolved by building a new proactive engine primitive
+  (`INTERCEPT_DECREASE_HOOK`) rather than guessing around the gap.
+- Solution (user-directed, Reading B): a new `STEALTH_INCREASE_HOOK`
+  (`engine/action.py`), `INTERCEPT_DECREASE_HOOK`'s sibling for the acting
+  side's own stealth -- offered proactively via `hooks.offer_until_pass` at
+  the very top of `attempt_block`'s retry loop (alongside the existing
+  `INTERCEPT_DECREASE_HOOK` own offer there) and reactively, merged into
+  `_duel_stealth_intercept`'s existing union (`_ask_stealth_or_decrease`
+  renamed `_ask_stealth_or_modifier`, now a three-way merge). Simpler than
+  `ActiveInterceptDecrease`: a stealth increase is never candidate-
+  dependent (intercept decrease's own `qualifies(blocker)` predicate exists
+  only because intercept is a per-blocker value; stealth is a per-action
+  value), so `ActiveStealthIncrease` needs only a `delta`, summed
+  unconditionally into `_duel_stealth_intercept`'s `stealth` baseline the
+  same way `_active_intercept_decrease` sums into `intercept` -- recomputed
+  fresh every call, never cached, same OQ-11 convention. `cards/loup.py`'s
+  own provider moved from `STEALTH_MODIFIER_HOOK` to `STEALTH_INCREASE_
+  HOOK`, gaining its own per-action `LOUP_STEALTH_GRANTED_KEY` cap in
+  `pending` (now reachable from both offer points, unlike the old single
+  reactive one) so the standing +1 is activated at most once per action --
+  without it, the old reactive-only wiring could in principle have
+  restacked the same flat bonus indefinitely within one action (never
+  exercised by any registered test, but a latent risk the new cap closes as
+  a side effect). Perfect Paragon itself needed no change: its own
+  superior clause already uses the (also proactive+reactive) `INTERCEPT_
+  DECREASE_HOOK` directly and has no analogous gap. `tests/rules/
+  test_stealth_increase.py` proves the mechanism generically (mirroring
+  `test_intercept_decrease.py`); `tests/cards/test_loup.py::
+  test_can_be_played_proactively_even_when_the_action_is_unblockable`
+  proves the fix against the real card.
+
+## OQ-40 - Loup - controller-only or table-wide bonus (status: resolved)
+
+- Situation: `rules-auditor`, reviewing OQ-39's own landing, flagged that
+  `cards/loup.py`'s own scope assumption ("Both clauses... bind to the
+  *controller's own* Toreador vampires, never the opponent's") carried no
+  citation — `_provide_loup`/`_provide_loup_burn` only ever read/burned the
+  *acting* player's own `turn_cards`, so a Methuselah's Loup could never
+  grant the bonus to, or be burned by, the *other* Methuselah's own
+  Toreador vampire. Pre-existing since OQ-34's original pass; OQ-39 only
+  made both offer points newly reach this same unexamined assumption.
+- Rules/interactions: Loup's own printed text has no "you control" --
+  plain "Toreador get +1 stealth... after a Toreador performs a successful
+  action." No on-file krcg ruling addressed this scope question directly.
+  Ruling via a trusted VEKN judge on the international rulings forum
+  (pending official publication; posed scenario: a Loup in play, its
+  controller's own vampires all failing to act, a second Methuselah's
+  Masika with an Enkil Cog about to act): "Yes, [Masika] has +1 stealth[,]
+  and Loup burns if [the action] succeeds (card text)." Confirms table-wide
+  on both halves, matching the comparative template evidence found across
+  the card pool (Week of Nightmares, Tremere Convocation: same unqualified
+  "[clan] get +1 [stat]" shape, contrasted with vampire abilities that
+  explicitly add "you control" whenever that narrower scope is meant).
+- Solution: `cards/loup.py::_provide_loup`/`_provide_loup_burn` now check/
+  burn every player's own `turn_cards`, not only the acting player's.
+  `LOUP_STEALTH_GRANTED_KEY` became a per-*instance* cap (a `set[str]` of
+  turn-card `instance_id`s, not a flat flag): two independently-played
+  copies, one per Methuselah, are two separate sources and may both be
+  activated for the same action. Only *playing* a copy from hand stays
+  controller-bound, by construction (a Methuselah can only play from their
+  own hand); that option is now offered alongside, not instead of, any
+  already-in-play copy's own activation option, since OQ-40 means they are
+  independent, additive opportunities.

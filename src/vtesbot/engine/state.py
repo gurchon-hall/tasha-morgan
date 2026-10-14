@@ -203,6 +203,47 @@ class MasterCardInPlay:
 
 
 @dataclass
+class TurnCardInPlay:
+    """One non-unique library card whose own printed text puts it into play
+    for the rest of the turn it was played, until burned -- either by its
+    own printed trigger or by the generic end-of-turn sweep (`engine/
+    turn_cards.py::clear_turn_cards_at_end_of_turn`) -- OQ-34 (`docs/
+    OPEN_QUESTIONS.md`), the first-needed example being Loup (krcg id
+    102273, `types == ["Action Modifier"]`, `clans == ["Toreador"]`): "Put
+    this card in play. Toreador get +1 stealth. Burn this card at the end
+    of the turn or after a Toreador performs a successful action."
+
+    Distinct from `MasterCardInPlay` (OQ-23): that entity models a
+    *persistent, cross-turn* standalone Master card (no built-in expiry,
+    and -- for the Unique subset -- real Contested Cards tracking). A
+    `TurnCardInPlay` by contrast self-destructs by the end of the turn it
+    was played in at the latest, by construction, and -- per every known
+    instance of this shape so far -- is never itself printed "Unique" (a
+    future card that is both "Unique" and turn-scoped would need its own
+    look, not an assumed fit here, CLAUDE.md "no guessing"), so it carries
+    no `contested_with`/`controller`-pair contest machinery at all.
+
+    `zone` takes only two values: `"in_play"` (the default) and `"burned"`.
+    The per-card "only one X can be played each turn" cap some cards in
+    this shape print (e.g. Loup) is deliberately not modeled here -- it is
+    a provider-side play-offer eligibility check (whether to offer the play
+    at all), not a property of an already-in-play instance, and no card
+    module exists yet to need it (see `docs/OPEN_QUESTIONS.md` OQ-34's own
+    resolution for what is, and is not, built here).
+    """
+
+    instance_id: str
+    krcg_id: int
+    name: str
+    controller: str
+    zone: str = "in_play"
+
+    @property
+    def is_in_play(self) -> bool:
+        return self.zone == "in_play"
+
+
+@dataclass
 class PlayerState:
     player_id: str
     pool: int = 0
@@ -213,10 +254,26 @@ class PlayerState:
     vampires: dict[str, VampireInPlay] = field(default_factory=dict)
     allies: dict[str, AllyInPlay] = field(default_factory=dict)
     master_cards: dict[str, MasterCardInPlay] = field(default_factory=dict)
+    turn_cards: dict[str, TurnCardInPlay] = field(default_factory=dict)
+    """OQ-34 (`docs/OPEN_QUESTIONS.md`): every `TurnCardInPlay` this player
+    controls, keyed by `instance_id` -- mirrors `master_cards`'s own shape."""
+    card_played_turn: dict[int, int] = field(default_factory=dict)
+    """Generic "only one X can be played each turn" scratch, keyed by
+    `krcg_id`, storing the `GameState.turn_number` that card was last
+    played on -- added implementing Loup (krcg id 102273, `src/vtesbot/
+    cards/loup.py`), "Only one Loup can be played each turn." Mirrors
+    `VampireInPlay.ability_used_turn`'s own "store the turn number, compare
+    on next check" shape, but scoped to the controller rather than to one
+    vampire: this cap is a plain card-play restriction (any copy, played by
+    any of the controller's vampires), not a printed ability tied to a
+    specific minion, so per-vampire scoping would not fit. A provider
+    checks `player_state.card_played_turn.get(krcg_id) == state.turn_number`
+    before offering its own "play this card" option."""
     _next_instance_seq: int = 0
     _next_ally_instance_seq: int = 0
     _next_attachment_instance_seq: int = 0
     _next_master_card_instance_seq: int = 0
+    _next_turn_card_instance_seq: int = 0
 
     def new_instance_id(self) -> str:
         self._next_instance_seq += 1
@@ -244,6 +301,14 @@ class PlayerState:
         `engine/master_cards.py::bring_master_card_into_play`)."""
         self._next_master_card_instance_seq += 1
         return f"{self.player_id}-M{self._next_master_card_instance_seq}"
+
+    def new_turn_card_instance_id(self) -> str:
+        """Mints a turn-scoped card instance id in its own namespace,
+        distinct from every other card category's own (OQ-34, `docs/
+        OPEN_QUESTIONS.md`; `engine/turn_cards.py::
+        bring_turn_card_into_play`)."""
+        self._next_turn_card_instance_seq += 1
+        return f"{self.player_id}-T{self._next_turn_card_instance_seq}"
 
 
 @dataclass

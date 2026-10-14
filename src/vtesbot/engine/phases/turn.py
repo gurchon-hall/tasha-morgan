@@ -7,10 +7,17 @@ Discard; the acting Methuselah alternates each turn in a 2-player duel.
 separately-sourced rules) that drive the phase functions in order and stop
 as soon as `state.game_over` becomes true (Rulebook SS5 Ending the Game:
 the game ends immediately on an oust in a 2-player duel).
+
+`clear_turn_cards_at_end_of_turn` (OQ-34, `docs/OPEN_QUESTIONS.md`) runs
+after the discard phase, before the turn flips: Loup-shaped cards ("Burn
+this card at the end of the turn...") self-destruct here if nothing more
+specific burned them first -- see that function's own docstring
+(`engine/turn_cards.py`) for why "the turn" is unambiguous.
 """
 
 from typing import TYPE_CHECKING
 
+from ..turn_cards import clear_turn_cards_at_end_of_turn
 from .discard import discard_phase
 from .influence import influence_phase
 from .master import master_phase
@@ -36,6 +43,7 @@ def play_turn(state: GameState) -> None:
         phase_fn(state, player)
         if state.game_over:
             return
+    clear_turn_cards_at_end_of_turn(state, player)
     state.turn_number += 1
     state.active_player = state.other_player(player)
 
