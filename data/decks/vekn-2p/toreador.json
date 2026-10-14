@@ -87,8 +87,7 @@
       "type": "Political Action",
       "count": 1,
       "krcg_id": 100557,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "implementation_status": "implemented"
     },
     {
       "name": "Kine Resources Contested",
@@ -109,7 +108,7 @@
       "type": "Action Modifier",
       "count": 3,
       "krcg_id": 102273,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Perfect Paragon",
@@ -123,30 +122,28 @@
       "type": "Action Modifier",
       "count": 2,
       "krcg_id": 102131,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "implementation_status": "implemented"
     },
     {
       "name": "Scalpel Tongue",
       "type": "Action Modifier/Reaction",
       "count": 1,
       "krcg_id": 101686,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "implementation_status": "implemented"
     },
     {
       "name": "On the Qui Vive",
       "type": "Reaction",
       "count": 2,
       "krcg_id": 101321,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Second Tradition: Domain",
       "type": "Reaction",
       "count": 2,
       "krcg_id": 101706,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Telepathic Counter",
@@ -174,7 +171,7 @@
       "type": "Combat",
       "count": 3,
       "krcg_id": 102169,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     }
   ],
   "unmatched": []
