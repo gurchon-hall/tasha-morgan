@@ -132,8 +132,10 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
     # Iadanza (201694) are also checked separately below: OQ-6/OQ-30/OQ-31
     # and OQ-32/OQ-33 (respectively) are all resolved, so both are now
     # `implemented` too (`cards/perfect_paragon.py`, `cards/diana_iadanza.py`).
+    # Disputed Territory (100557) is also checked separately below: OQ-6/
+    # OQ-35 are both resolved, so it is now `implemented` too
+    # (`cards/disputed_territory.py`).
     for krcg_id in (
-        100557,  # Disputed Territory
         101686,  # Scalpel Tongue
         102131,  # Voter Captivation
         201529,  # Alexa Draper
@@ -151,6 +153,7 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
         101341,  # Oxford University, England
         101387,  # Perfect Paragon
         201694,  # Diana Iadanza
+        100557,  # Disputed Territory
     ):
         reg = registry.get(krcg_id)
         assert reg is not None, f"expected a registry entry for krcg_id {krcg_id}"

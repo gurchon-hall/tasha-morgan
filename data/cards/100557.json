@@ -1,0 +1,193 @@
+{
+  "id": 100557,
+  "_name": "Disputed Territory",
+  "url": "https://static.krcg.org/card/disputedterritory.jpg",
+  "types": [
+    "Political Action"
+  ],
+  "card_text": "Choose a location and a Methuselah. Successful referendum means the chosen Methuselah takes control of the chosen location.",
+  "_set": "Jyhad:C, VTES:C, Sabbat:C, SW:PL/PV2, FN:PG, CE:PN/PV, Anarchs:PAB, BH:PTo, LoB:PG, Third:PB/SKB1, NB2:PB1",
+  "sets": {
+    "Jyhad": [
+      {
+        "release_date": "1994-08-16",
+        "rarity": "Common"
+      }
+    ],
+    "Vampire: The Eternal Struggle": [
+      {
+        "release_date": "1995-09-15",
+        "rarity": "Common"
+      }
+    ],
+    "Sabbat": [
+      {
+        "release_date": "1996-10-28",
+        "rarity": "Common"
+      }
+    ],
+    "Sabbat War": [
+      {
+        "release_date": "2000-10-31",
+        "precon": "Lasombra",
+        "copies": 1
+      },
+      {
+        "release_date": "2000-10-31",
+        "precon": "Ventrue antitribu",
+        "copies": 2
+      }
+    ],
+    "Final Nights": [
+      {
+        "release_date": "2001-06-11",
+        "precon": "Giovanni",
+        "copies": 1
+      }
+    ],
+    "Camarilla Edition": [
+      {
+        "release_date": "2002-08-19",
+        "precon": "Nosferatu",
+        "copies": 1
+      },
+      {
+        "release_date": "2002-08-19",
+        "precon": "Ventrue",
+        "copies": 1
+      }
+    ],
+    "Anarchs": [
+      {
+        "release_date": "2003-05-19",
+        "precon": "Anarch Barons",
+        "copies": 1
+      }
+    ],
+    "Black Hand": [
+      {
+        "release_date": "2003-11-17",
+        "precon": "Toreador antitribu",
+        "copies": 1
+      }
+    ],
+    "Legacies of Blood": [
+      {
+        "release_date": "2005-11-14",
+        "precon": "Guruhi",
+        "copies": 1
+      }
+    ],
+    "Third Edition": [
+      {
+        "release_date": "2006-09-04",
+        "precon": "Brujah antitribu",
+        "copies": 1
+      },
+      {
+        "release_date": "2006-09-04",
+        "precon": "Starter Kit Brujah antitribu",
+        "copies": 1
+      }
+    ],
+    "New Blood II": [
+      {
+        "release_date": "2022-08-01",
+        "precon": "Brujah",
+        "copies": 1
+      }
+    ]
+  },
+  "scans": {
+    "Jyhad": "https://static.krcg.org/card/set/jyhad/disputedterritory.jpg",
+    "Vampire: The Eternal Struggle": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/disputedterritory.jpg",
+    "Sabbat": "https://static.krcg.org/card/set/sabbat/disputedterritory.jpg",
+    "Sabbat War": "https://static.krcg.org/card/set/sabbat-war/disputedterritory.jpg",
+    "Final Nights": "https://static.krcg.org/card/set/final-nights/disputedterritory.jpg",
+    "Camarilla Edition": "https://static.krcg.org/card/set/camarilla-edition/disputedterritory.jpg",
+    "Anarchs": "https://static.krcg.org/card/set/anarchs/disputedterritory.jpg",
+    "Black Hand": "https://static.krcg.org/card/set/black-hand/disputedterritory.jpg",
+    "Legacies of Blood": "https://static.krcg.org/card/set/legacies-of-blood/disputedterritory.jpg",
+    "Third Edition": "https://static.krcg.org/card/set/third-edition/disputedterritory.jpg",
+    "New Blood II": "https://static.krcg.org/card/set/new-blood-ii/disputedterritory.jpg"
+  },
+  "artists": [
+    "L. A. Williams",
+    "Stuart Beel"
+  ],
+  "ordered_sets": [
+    "Jyhad",
+    "Vampire: The Eternal Struggle",
+    "Sabbat",
+    "Sabbat War",
+    "Final Nights",
+    "Camarilla Edition",
+    "Anarchs",
+    "Black Hand",
+    "Legacies of Blood",
+    "Third Edition",
+    "New Blood II"
+  ],
+  "legality": "1994-08-16",
+  "rulings": [
+    {
+      "text": "Requirements do not apply when taking control of a card already in play. [TOM 19960226-1]",
+      "references": [
+        {
+          "text": "[TOM 19960226-1]",
+          "label": "TOM 19960226-1",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/16y-ZD7Xats/m/oMeZDnSFdYAJ"
+        }
+      ]
+    },
+    {
+      "text": "If used to steal an equipment representing a location, it can be placed on any minion controlled by the new controller. [RTR 19960112]",
+      "references": [
+        {
+          "text": "[RTR 19960112]",
+          "label": "RTR 19960112",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/d3n3StNS7no/m/k2NmZFUl9fAJ"
+        }
+      ]
+    },
+    {
+      "text": "If used to \"change\" the control of a location or equipment representing a location to the same Methuselah, the location cannot be moved to another minion controlled by the same Methuselah. [LSJ 19971002]",
+      "references": [
+        {
+          "text": "[LSJ 19971002]",
+          "label": "LSJ 19971002",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/RY_nhdykKP0/m/fOdKJtOy4kgJ"
+        }
+      ]
+    },
+    {
+      "text": "Changing the controller of a location has no other effect, unless specified by card text. Exception: A location \"on\" another controlled card is moved onto an appropriate card controlled by the new controller of the location. [RTR 19980623]",
+      "references": [
+        {
+          "text": "[RTR 19980623]",
+          "label": "RTR 19980623",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/tSpd9dtTElc/m/-CuHJF54_n0J"
+        }
+      ],
+      "group": "Changes controller of location"
+    },
+    {
+      "text": "Cannot be used or played if the conditions for the terms of the referendum cannot be met (e.g. no legal selection, insufficient cards/players to choose from, prohibited by card text, uniqueness, etc). [LSJ 20100129] [ANK 20191228]",
+      "references": [
+        {
+          "text": "[LSJ 20100129]",
+          "label": "LSJ 20100129",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/X8Uu7Sk56P4/m/fgP7NfnDpCkJ"
+        },
+        {
+          "text": "[ANK 20191228]",
+          "label": "ANK 20191228",
+          "url": "https://www.vekn.net/forum/rules-questions/78262-parity-shift-without-target#98358"
+        }
+      ],
+      "group": "Political action with illegal terms"
+    }
+  ],
+  "name": "Disputed Territory",
+  "printed_name": "Disputed Territory"
+}
