@@ -114,3 +114,27 @@ def test_run_many_report_dir_writes_a_batch_report(brujah_deck, tmp_path: Path):
     assert len(sample_files) == 4  # 2 samples x (summary + decisions)
     csv_rows = (tmp_path / "batch_results.csv").read_text(encoding="utf-8").splitlines()
     assert len(csv_rows) == len(batch.results) + 1  # header + one row per game
+
+
+def test_alternating_seat_batch_is_clean(brujah_deck):
+    """Seat-alternated Brujah mirror: no crash (incl. oust-activity invariant
+    violations, which `run_match` raises), no stuck game."""
+    from vtesbot.sim.benchmark import run_alternating
+
+    batch = run_alternating({"P1": brujah_deck, "P2": brujah_deck}, range(20))
+
+    assert batch.crashes == []
+    assert batch.stuck_seeds == []
+    assert len(batch.results) == 20
+    assert all(set(r.final_pools) == {"P1", "P2"} for r in batch.results)
+
+
+@pytest.mark.parametrize("seed", [270, 942])
+def test_fame_oust_mid_combat_seeds_do_not_crash(brujah_deck, seed):
+    """Regression: GameOverError 'mend_damage' requested after game over."""
+    from vtesbot.sim.benchmark import run_alternating
+
+    batch = run_alternating({"P1": brujah_deck, "P2": brujah_deck}, [seed])
+
+    assert batch.crashes == []
+    assert batch.results[0].game_over

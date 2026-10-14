@@ -17,6 +17,7 @@ from vtesbot.engine.log import ReplayLog
 from vtesbot.engine.phases.turn import run_until_game_over
 from vtesbot.engine.setup import DeckSpec, setup_game
 
+from .invariants import action_counts, check_no_activity_after_oust, is_self_oust
 from .report import write_batch_report, write_match_report
 
 AgentFactory = Callable[[str, int], Agent]
@@ -30,6 +31,9 @@ class MatchResult:
     winner: str | None
     victory_points: dict[str, int]
     log: ReplayLog
+    final_pools: dict[str, int] = field(default_factory=dict)
+    action_counts: dict[str, dict[str, int]] = field(default_factory=dict)
+    self_oust: bool = False
 
     @property
     def stuck(self) -> bool:
@@ -37,6 +41,11 @@ class MatchResult:
         of this match's play (e.g. two purely-random agents stalling), not
         necessarily an engine bug; see `run_many` for batch-level triage."""
         return not self.game_over
+
+    @property
+    def tie(self) -> bool:
+        """Simultaneous oust of both Methuselahs (OQ-44): over, no winner."""
+        return self.game_over and self.winner is None
 
 
 def run_match(
@@ -60,6 +69,7 @@ def run_match(
     state = setup_game(decks, agents, turn_order=turn_order, seed=setup_seed)
     run_until_game_over(state, max_turns=max_turns)
 
+    check_no_activity_after_oust(state.log)
     result = MatchResult(
         seed=seed,
         turns_played=state.turn_number,
@@ -67,6 +77,9 @@ def run_match(
         winner=state.winner,
         victory_points=dict(state.victory_points),
         log=state.log,
+        final_pools={p: ps.pool for p, ps in state.players.items()},
+        action_counts=action_counts(state.log, list(turn_order)),
+        self_oust=is_self_oust(state.log),
     )
     if report_dir is not None:
         write_match_report(result, report_dir)
@@ -81,6 +94,10 @@ class BatchResult:
     @property
     def stuck_seeds(self) -> list[int]:
         return [r.seed for r in self.results if r.stuck]
+
+    @property
+    def tie_seeds(self) -> list[int]:
+        return [r.seed for r in self.results if r.tie]
 
 
 def run_many(

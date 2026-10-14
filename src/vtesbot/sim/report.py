@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING
 
 from vtesbot.engine.log import ReplayLog
 
+from .invariants import ACTION_NAMES
+
 if TYPE_CHECKING:
     from .runner import BatchResult, MatchResult
 
@@ -31,7 +33,12 @@ def format_crash(seed: int, exc: BaseException) -> str:
 
 
 def format_summary(result: MatchResult) -> str:
-    outcome = f"winner={result.winner}" if result.game_over else "STUCK (max_turns reached)"
+    if not result.game_over:
+        outcome = "STUCK (max_turns reached)"
+    elif result.winner is None:
+        outcome = "TIE (simultaneous oust, no winner)"
+    else:
+        outcome = f"winner={result.winner}"
     vp = ", ".join(f"{player}={points}" for player, points in result.victory_points.items())
     return f"seed={result.seed} turns_played={result.turns_played} {outcome}\nvictory_points: {vp}"
 
@@ -39,11 +46,11 @@ def format_summary(result: MatchResult) -> str:
 def format_decision_log(log: ReplayLog) -> str:
     lines: list[str] = []
     for entry in log.entries:
-        if entry.kind == "decision":
+        if entry.kind in ("decision", "forced"):
             data = entry.data
             offered = ", ".join(data["offered"])
             lines.append(
-                f"[decision] {data['player']} {data['decision_kind']}: "
+                f"[{entry.kind}] {data['player']} {data['decision_kind']}: "
                 f"chose {data['choice']!r} (offered: [{offered}])"
             )
         elif entry.kind == "random":
@@ -77,10 +84,20 @@ def write_batch_report(batch: BatchResult, directory: Path, *, sample_count: int
     csv_path = directory / "batch_results.csv"
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["seed", "turns_played", "game_over", "stuck", "winner", "victory_points"])
+        players = sorted({p for r in batch.results for p in r.final_pools})
+        writer.writerow(
+            ["seed", "turns_played", "game_over", "stuck", "winner", "victory_points"]
+            + ["self_oust", "tie"]
+            + [f"{p}_final_pool" for p in players]
+            + [f"{p}_{a}" for p in players for a in ACTION_NAMES]
+        )
         for r in batch.results:
             vp = ";".join(f"{player}={points}" for player, points in r.victory_points.items())
-            writer.writerow([r.seed, r.turns_played, r.game_over, r.stuck, r.winner, vp])
+            writer.writerow(
+                [r.seed, r.turns_played, r.game_over, r.stuck, r.winner, vp, r.self_oust, r.tie]
+                + [r.final_pools.get(p, "") for p in players]
+                + [r.action_counts.get(p, {}).get(a, 0) for p in players for a in ACTION_NAMES]
+            )
 
     crashes_path = directory / "crashes.log"
     with open(crashes_path, "w", encoding="utf-8") as f:

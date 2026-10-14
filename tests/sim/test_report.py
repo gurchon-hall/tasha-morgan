@@ -67,3 +67,31 @@ def test_write_match_report_writes_both_files(tmp_path: Path):
     assert decisions_path == tmp_path / "123.decisions.log"
     assert summary_path.read_text(encoding="utf-8").strip() == format_summary(result)
     assert decisions_path.read_text(encoding="utf-8").strip() == format_decision_log(result.log)
+
+
+def test_format_summary_reports_a_tie_distinctly_from_stuck():
+    tie = MatchResult(
+        seed=2,
+        turns_played=9,
+        game_over=True,
+        winner=None,
+        victory_points={"P1": 1, "P2": 1},
+        log=ReplayLog(),
+    )
+    assert tie.tie and not tie.stuck
+    text = format_summary(tie)
+    assert "TIE" in text and "STUCK" not in text
+
+
+def test_benchmark_summaries_count_ties_separately():
+    from vtesbot.sim.benchmark import summarize, summarize_versus
+    from vtesbot.sim.runner import BatchResult
+
+    tie = MatchResult(
+        seed=2, turns_played=9, game_over=True, winner=None, victory_points={}, log=ReplayLog()
+    )
+    batch = BatchResult(results=[_sample_result(), tie])
+    assert batch.tie_seeds == [2]
+    assert batch.stuck_seeds == []
+    assert "ties=1" in summarize(batch)
+    assert "ties=1" in summarize_versus(batch, 500)
