@@ -29,3 +29,5 @@ an entry.
 | OQ-19 | `001.md` | Cross-card "(limited)" additional-strike cap not pooled |
 | OQ-20 | `001.md` | Vote/ballot casting order for two Methuselahs |
 | OQ-21 | `001.md` | Action-card target chosen at announce vs. resolve time |
+| OQ-22 | `001.md` | Fame - contested cards gap beyond crypt/ally |
+| OQ-23 | `001.md` | Oxford University - standalone master-card entity |

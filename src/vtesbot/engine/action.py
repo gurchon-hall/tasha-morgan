@@ -104,6 +104,13 @@ OPEN_QUESTIONS.md`; see each parameter's own docstring for how it is used):
   MODIFIER_HOOK`-only wiring could not reach when no block attempt was
   possible at all -- `cards/loup.py` now registers against this hook
   instead.
+- OQ-46 (resolved, Reading A): every one of `perform_minion_action`'s exit
+  points (unblocked-resolved; blocked-then-combat-resolved; and both
+  `state.game_over` short-circuits) calls `clear_woken_vampires`
+  immediately before returning -- see that function's own docstring for the
+  "end of the action" sourcing and `VampireInPlay.woken`'s own docstring
+  (`engine/state.py`) for the eligibility-override half On the Qui Vive
+  (krcg id 101321) needs.
 """
 
 from collections.abc import Callable
@@ -313,6 +320,57 @@ action modifier card more than once during a single action"), the same
 already uses for its own per-action cap. `rules-auditor` finding: Voter
 Captivation's own module previously had no such cap and could double-grant
 its blood-gain clause onto the same vampire via two copies in hand."""
+
+
+def clear_woken_vampires(state: GameState) -> None:
+    """Clear `VampireInPlay.woken` (OQ-46, `docs/OPEN_QUESTIONS.md`, resolved)
+    for every vampire of both players -- On the Qui Vive's own "...until the
+    end of the action" scope. Called from every one of `perform_minion_
+    action`'s own exit points: the unblocked-resolved branch, the blocked-
+    then-combat-resolved branch, and -- `rules-auditor` finding -- both
+    `state.game_over` short-circuit `return`s (right after `attempt_block`
+    and right after `run_combat`), reached when a block-attempt-phase
+    reaction's own cost (e.g. paying pool) ousts a Methuselah mid-action.
+    Those two short-circuits were previously *not* swept: harmless in
+    practice only because `state.game_over` means no further `Decision` is
+    ever raised that could read a stale `woken` flag, but that safety
+    argument was an accident of control flow, not an intended exception --
+    swept here too so "always cleared, no exceptions" is actually true
+    rather than true-by-accident. The "declined-with-no-block" case needs no
+    separate branch of its own: it funnels into the same unblocked-resolved
+    exit as any other unblocked outcome. Every minion action in this engine
+    runs through `perform_minion_action` (see its own module docstring), so
+    this is a complete sweep of every path, mirroring `engine/turn_cards.py::
+    clear_turn_cards_at_end_of_turn`'s own "mandatory, no decision" shape
+    (CLAUDE.md rule 3's exception) for an analogous end-of-scope cleanup.
+
+    A sweep across *both* players, not just the acting pair, because the
+    woken minion is always the *defending* Methuselah's own vampire (the
+    general Reaction-card rule On the Qui Vive's own "Only usable by a
+    locked minion" clause only ever relaxes the lock requirement of, never
+    the "other than the acting Methuselah" one -- see `cards/
+    on_the_qui_vive.py`'s own module docstring), so scoping this to only one
+    side's vampires by id would be an unnecessary, easy-to-get-wrong
+    optimization for no real benefit.
+
+    `rules-auditor` finding: two callers read `is_ready_unlocked`/
+    `ready_unlocked_vampires` outside the set `VampireInPlay.woken`'s own
+    docstring enumerates (the block-candidate list and reaction-card
+    eligibility checks) -- `engine/phases/minion.py::minion_phase`'s
+    mandatory-hunt loop (a ready, unlocked, bloodless vampire must hunt) and
+    its own optional act-with candidate list. Both are safe only because
+    this function is called, unconditionally, at the end of *every* minion
+    action (see above) before either player's `minion_phase` can run again
+    for any vampire: by the time `minion_phase` next reads `is_ready_
+    unlocked` for a vampire, any `woken` flag it carried during the action
+    just finished is already gone, so neither caller can ever see a stale
+    one. This reasoning is pinned by a regression test (`tests/rules/
+    test_woken_eligibility.py`); a future change that weakens the "cleared
+    at every exit point" guarantee above should fail that test before it can
+    silently break either caller."""
+    for player_state in state.players.values():
+        for vampire in player_state.vampires.values():
+            vampire.woken = False
 
 
 def _active_intercept_decrease(pending: dict[str, Any] | None, blocker: VampireInPlay) -> int:
@@ -733,6 +791,7 @@ def perform_minion_action(
         pending=pending,
     )
     if state.game_over:
+        clear_woken_vampires(state)
         return
     if blocker is not None:
         blocker.locked = True
@@ -741,9 +800,11 @@ def perform_minion_action(
         )
         run_combat(state, actor_player, vampire, defender_player, blocker, initial_combat_state)
         if state.game_over:
+            clear_woken_vampires(state)
             return
         if on_blocked is not None:
             on_blocked(pending)
+        clear_woken_vampires(state)
         return
     resolve(pending)
     hooks.run_effects(
@@ -769,3 +830,4 @@ def perform_minion_action(
                     "pending": pending,
                 },
             )
+    clear_woken_vampires(state)

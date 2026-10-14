@@ -66,6 +66,25 @@ def test_ready_and_torpor_vampires_are_public_for_both_players():
     assert public.blood == 1
 
 
+def test_woken_locked_vampire_exposes_its_real_block_eligibility():
+    """OQ-46 (`docs/OPEN_QUESTIONS.md`, resolved) regression, `rules-auditor`
+    repro: once `woken` can make `locked=True, is_ready_unlocked=True` true
+    at the same time, `locked` alone is no longer a complete proxy for
+    block/reaction eligibility -- `VampireView.is_ready_unlocked` must
+    reflect the real value, not just mirror `locked`."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1")
+    builder.player("P2").ready_vampire("B1", capacity=3, locked=True)
+    game = builder.build()
+    game.vampire("B1").woken = True
+
+    obs = build_observation(game.state, "P1")
+
+    view = next(v for v in obs.vampires if v.instance_id == "B1")
+    assert view.locked is True
+    assert view.is_ready_unlocked is True
+
+
 def test_a_recruited_ally_is_fully_visible_to_the_other_player():
     """Rules-auditor finding: an ally in the ready region is public, same as
     a ready vampire (Rulebook SS4 Recruit Ally) -- there is no face-down

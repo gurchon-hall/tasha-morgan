@@ -75,10 +75,31 @@ class VampireInPlay:
     repurposing of either. Default-valued like every other field here
     (`blood`/`zone`/`locked`/`wounded`/`contested_with`); adding it changes
     no existing behaviour."""
+    woken: bool = False
+    """Transient, action-scoped eligibility override (OQ-46, `docs/
+    OPEN_QUESTIONS.md`, resolved -- Reading A): On the Qui Vive (krcg id
+    101321), "This minion wakes (they ignore the requirement to be unlocked
+    for playing reaction cards and attempting to block until the end of the
+    action)." While `True`, `is_ready_unlocked` below reports `True` even
+    though `locked` stays `True` -- "while remaining structurally locked"
+    per that card's own module docstring -- so this vampire is offered as an
+    ordinary block candidate (`ready_unlocked_vampires`, `engine/action.py::
+    attempt_block`) and passes every existing reaction-card provider's own
+    hardcoded `vampire.is_ready_unlocked` eligibility check (`cards/
+    telepathic_counter.py`, `cards/protection_racket.py`, `cards/
+    scalpel_tongue.py`, ...), with no per-card change needed. Cleared
+    unconditionally for every vampire of both players at every exit point of
+    one minion action (`engine/action.py::clear_woken_vampires`, called from
+    `perform_minion_action`) -- "until the end of the action" (the
+    vampire that played On the Qui Vive is always the *non*-acting
+    Methuselah's own, per the general Reaction-card rule this card's own
+    "Only usable by a locked minion" clause only relaxes the lock
+    requirement of, never the "other than the acting Methuselah" one; see
+    that card's own module docstring)."""
 
     @property
     def is_ready_unlocked(self) -> bool:
-        return self.zone == "ready" and not self.locked
+        return self.zone == "ready" and (not self.locked or self.woken)
 
 
 @dataclass
@@ -104,6 +125,18 @@ class AllyInPlay:
     zone: str = "ready"
     locked: bool = False
     contested_with: str | None = None  # instance_id of the opposing copy, if contested
+    skip_next_unlock: bool = False
+    """One-shot override consumed by `engine/phases/unlock.py::
+    _unlock_own_allies`'s own unconditional unlock step (OQ-46, `docs/
+    OPEN_QUESTIONS.md`, resolved): On the Qui Vive's own ally footnote, "If
+    this minion is an ally, they do not unlock as normal during their next
+    unlock phase." Distinct from `VampireInPlay.woken` above (which is
+    cleared at the end of the *current* action) -- this flag instead reaches
+    forward to this ally's own *next* unlock phase specifically, independent
+    of whatever `woken` is doing meanwhile. Set `True` by a future On the
+    Qui Vive provider's own `apply` when the playing minion is an ally;
+    `_unlock_own_allies` consumes it (skips that one unlock, then resets it
+    to `False`) rather than leaving it set forever."""
 
     @property
     def is_ready_unlocked(self) -> bool:

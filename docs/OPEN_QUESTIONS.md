@@ -58,56 +58,6 @@ up an OQ number or the highest one used so far.
   cards: none yet reachable (tracked ahead of need, same spirit as OQ-10's
   own original "latent, flagged before live" framing).
 
-## OQ-22 - Fame - contested cards gap beyond crypt/ally (status: resolved)
-
-- Situation: Fame (100698, Unique master card attached via
-  `CardAttachment`) has the same "two independently-built decks could
-  both play a copy" exposure OQ-10 already fixed for allies, but
-  `CardAttachment` had no contest tracking of its own at all.
-- Rules/interactions: the same unified Contested Cards mechanism
-  (OQ-10/OQ-15) applies unmodified to an attached Unique master card —
-  the 2P crypt-card override does not reach it.
-- Solution: `CardAttachment` gained `controller`/`instance_id`/`zone`/
-  `contested_with` (no longer frozen); `engine/attachments.py::
-  attach_card`/`detect_contest_on_attach`/
-  `resolve_one_attachment_contest` mirror the ally-side functions;
-  `unlock.py` extended with a `"contest_attachment:"` branch. A
-  contest is tracked against the attachment's own *controller* (who
-  played it), not the host vampire's controller — clarified in a
-  follow-up addendum after a `rules-auditor` finding that the initial
-  docstring overclaimed the Master-card controller rule as if it
-  covered a future Equipment/Retainer attachment too (it doesn't —
-  those follow the Minion-card controller rule instead; corrected by
-  documentation only, no card uses this yet). Fame itself stays
-  `blocked`.
-
-## OQ-23 - Oxford University - standalone master-card entity (status: resolved)
-
-- Situation: Oxford University, England (101341, "Unique location...
-  lock this card and burn X pool during the polling step... to get
-  +2X votes") needed a generic "a Master card that stays in play,
-  mutable, rather than attaching or resolving once" entity, which did
-  not exist. First widened from "a standalone *Unique* location" to
-  any standalone Master card, Unique or not, after the project owner
-  pointed to Wider View (102180, no "Unique" clause, same shape).
-- Rules/interactions: "location" is not a structured krcg card type —
-  "Unique location." is free text on an ordinary Master card. A sweep
-  of the full 2P allowed list found 18 cards sharing this shape (17 of
-  them Unique). Contested Cards (OQ-10/15/22) applies unmodified to
-  the Unique subset.
-- Solution: added `MasterCardInPlay`/`engine/master_cards.py`
-  (`bring_master_card_into_play`, `detect_contest_on_bring_into_play`
-  — called only for cards actually printed Unique,
-  `resolve_one_master_card_contest`), unlock-phase lock/unlock +
-  delayed-restore wiring, `MasterCardView`/`Observation.master_cards`,
-  and `engine/politics.py::variable_pool_burn_vote_options` (the
-  reusable "burn X pool for Y·X votes" polling-step primitive Oxford's
-  own ability needs). Deliberately not built: a `counters` field
-  (needed by 6 of the 18 sweep cards) and an opponent-burn/steal
-  primitive (needed by 4 more) — flagged for whichever future pass
-  needs them. Oxford itself, and the other 17 sweep cards, stay
-  unimplemented.
-
 ## OQ-24 - Wider View - no influence hook, no removed zone (status: resolved)
 
 - Situation: Wider View (102180, Trifle, in-play via OQ-23's new
@@ -710,3 +660,43 @@ up an OQ number or the highest one used so far.
   payable. Windows after the tally (reactions beyond Marcos' mandatory
   burn; `REFERENDUM_RESOLVED` for Voter Captivation) have no engine
   dispatch yet. `docs/DECISIONS.md` D-9.
+
+## OQ-46 - On the Qui Vive - no "woken" eligibility override (status: resolved)
+
+- Situation: On the Qui Vive (krcg id 101321, Reaction): "Only usable by a
+  locked minion... This minion wakes (they ignore the requirement to be
+  unlocked for playing reaction cards and attempting to block until the end
+  of the action). If this minion is an ally, they do not unlock as normal
+  during their next unlock phase." Unlike Organized Resistance/Second
+  Tradition: Domain's "burn to unlock and force a block" shape
+  (`BLOCK_CANDIDATE_INJECTION_HOOK`, OQ-26), this card forces nothing and
+  grants no intercept — it only restores the playing minion's own ordinary
+  *eligibility* to be offered as a normal block candidate (still subject to
+  the usual stealth/intercept ping-pong) and to play further reaction
+  cards, for the rest of the current action, while remaining structurally
+  `locked`. Neither `engine/action.py::attempt_block` (candidates hardcoded
+  to `state.ready_unlocked_vampires`) nor any existing reaction-card
+  provider's own hardcoded `vampire.is_ready_unlocked` check had a hook for
+  this override; allies additionally had no unconditional unlock step at
+  all (`engine/phases/unlock.py::_unlock_own_allies`), making the card's own
+  ally footnote incoherent to build on top of.
+- Rules/interactions: plain card text; no ruling settles the engine shape
+  (the two candidate readings were engine-internal design choices, not
+  ruling questions).
+- Solution (Reading A, the more generalizable of the two candidates):
+  `VampireInPlay.woken` (`engine/state.py`), a transient per-vampire flag —
+  `is_ready_unlocked` now also returns `True` while `woken` is set, even if
+  `locked`, so `ready_unlocked_vampires`/`attempt_block` and every existing
+  reaction-card provider's own `is_ready_unlocked` check pick it up with no
+  per-card change. `engine/action.py::clear_woken_vampires`, called from
+  both of `perform_minion_action`'s own exit points (unblocked-resolved;
+  blocked-then-combat-resolved — the only two ways an action can end,
+  since every minion action runs through that function), sweeps the flag
+  back off for both players at the end of the action. `_unlock_own_allies`
+  (`engine/phases/unlock.py`) gained the unconditional "unlock all ready
+  allies" step it was missing entirely (a real, if previously dormant, gap
+  — ally bleed/block/combat participation stays out of engine scope, so
+  nothing read a ready ally's own `locked` state before now), plus
+  `AllyInPlay.skip_next_unlock`, the one-shot override the card's own ally
+  footnote needs. On the Qui Vive's own card module is not written; both
+  primitives are complete.

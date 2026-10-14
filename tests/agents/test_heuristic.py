@@ -13,6 +13,7 @@ def _vamp(iid: str, zone: str, blood: int, capacity: int = 5, controller: str = 
         controller=controller,
         zone=zone,
         locked=False,
+        is_ready_unlocked=zone == "ready",
         wounded=False,
         blood=blood,
         contested=False,

@@ -94,7 +94,27 @@ def _unlock_own_vampires(state: GameState, player: str) -> None:
 
 
 def _unlock_own_allies(state: GameState, player: str) -> None:
-    """OQ-15 (`docs/OPEN_QUESTIONS.md`): Rulebook SS4 Advanced Rules >
+    """Rulebook SS4 Unlock Phase: "unlock all your cards" -- applies to every
+    minion, not only vampires (`_unlock_own_vampires` above). Before OQ-46
+    (`docs/OPEN_QUESTIONS.md`, resolved) this function only ever handled the
+    contested-restore branch below, with no unconditional unlock step at
+    all: a recruited ally (`engine/allies.py::recruit_ally`, entering
+    `locked=True`, "recruited ally cannot act this turn") never unlocked
+    again by any engine mechanism -- latent and unobserved until now because
+    "ally bleed/block/combat participation" is itself still out of engine
+    scope (`engine/allies.py` module docstring), so nothing yet reads a
+    ready ally's own `locked` state for anything that matters. Fixed here
+    (a real, if dormant, gap -- not a new one introduced by this pass)
+    because On the Qui Vive's own ally footnote, "If this minion is an
+    ally, they do not unlock as normal during their next unlock phase," is
+    incoherent without a normal unlock to override in the first place.
+
+    `skip_next_unlock` (`AllyInPlay`, OQ-46) is that one-shot override: a
+    ready ally with it set skips this one unlock (and the flag resets to
+    `False`, so it only ever reaches the *next* unlock phase, never
+    further).
+
+    OQ-15 (`docs/OPEN_QUESTIONS.md`): Rulebook SS4 Advanced Rules >
     Contested Cards -- "If all other cards contesting your unique card are
     yielded, then the card is unlocked and turned face up during your next
     unlock phase, ending the contest." An ally whose opposing copy already
@@ -109,7 +129,12 @@ def _unlock_own_allies(state: GameState, player: str) -> None:
     (`_pending_effect_ids` / `resolve_one_ally_contest`).
     """
     for ally in state.players[player].allies.values():
-        if ally.zone == "contested" and ally.contested_with is None:
+        if ally.zone == "ready":
+            if ally.skip_next_unlock:
+                ally.skip_next_unlock = False
+            else:
+                ally.locked = False
+        elif ally.zone == "contested" and ally.contested_with is None:
             ally.zone = "ready"
             ally.locked = False
 

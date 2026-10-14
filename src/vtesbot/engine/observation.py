@@ -23,6 +23,19 @@ class VampireView:
     controller: str
     zone: str  # "uncontrolled" | "ready" | "torpor" | "burned" | "removed_from_game"
     locked: bool
+    is_ready_unlocked: bool
+    """`VampireInPlay.is_ready_unlocked` (`engine/state.py`), not just a
+    restatement of `locked`: block/reaction eligibility is public information
+    in VTES (a block attempt and a reaction-card play are both visible
+    actions, not hidden-zone contents -- CLAUDE.md SS5 "information hiding"
+    only concerns hand/library/face-down contents), and since OQ-46 (`docs/
+    OPEN_QUESTIONS.md`, resolved) `locked` alone no longer fully determines
+    it: a `woken` vampire (On the Qui Vive, krcg id 101321) can be
+    `locked=True` and still `is_ready_unlocked=True` for "until the end of
+    the action." Exposed under the engine property's own name, mirroring it
+    exactly, rather than exposing raw `woken` -- so an agent reasoning about
+    "can this vampire block/react right now" never has to re-derive the
+    `locked`+`woken` combination itself."""
     wounded: bool
     blood: int
     contested: bool
@@ -159,6 +172,7 @@ def build_observation(state: GameState, viewer: str) -> Observation:
             controller=v.controller,
             zone=v.zone,
             locked=v.locked,
+            is_ready_unlocked=v.is_ready_unlocked,
             wounded=v.wounded,
             blood=v.blood if visible_identity else 0,
             contested=v.contested_with is not None,
