@@ -1,0 +1,98 @@
+{
+  "id": 201557,
+  "printed_name": "Madison",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Madison"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Madison (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/madisong6.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/madisong6.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Madison",
+      "text": "Camarilla.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/madisong6.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Madison",
+      "text": "Camarilla.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/madisong6.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/madisong6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Ken Meyer, Jr."
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Camarilla.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2020-12-30",
+  "banned": null,
+  "clan": "Ventrue",
+  "path": "",
+  "advanced": false,
+  "capacity": 6,
+  "group": "G6",
+  "disciplines": [
+    "DOM",
+    "FOR",
+    "PRE"
+  ],
+  "title": null
+}

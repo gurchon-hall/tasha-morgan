@@ -99,7 +99,7 @@
       "type": "Master",
       "count": 1,
       "krcg_id": 102180,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Dominate Kine",
@@ -176,15 +176,14 @@
       "type": "Action Modifier",
       "count": 2,
       "krcg_id": 102131,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "implementation_status": "implemented"
     },
     {
       "name": "Second Tradition: Domain",
       "type": "Reaction",
       "count": 4,
       "krcg_id": 101706,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Pulled Fangs",
@@ -212,7 +211,7 @@
       "type": "Combat",
       "count": 2,
       "krcg_id": 102169,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     }
   ],
   "unmatched": []

@@ -1,0 +1,64 @@
+{
+  "id": 201629,
+  "printed_name": "Kevin Jackson",
+  "unicity_suffix": "",
+  "suffix": "G7",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Kevin Jackson"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Kevin Jackson (G7)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/kevinjacksong7.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/kevinjacksong7.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Amy Wilkins"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Camarilla Prince of Chicago: Kevin gets +1 strength in combat with a Brujah. Brujah get +1 strength in combat with him.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2022-05-17",
+  "banned": null,
+  "clan": "Ventrue",
+  "path": "",
+  "advanced": false,
+  "capacity": 7,
+  "group": "G7",
+  "disciplines": [
+    "DOM",
+    "FOR",
+    "PRE"
+  ],
+  "title": "Prince"
+}

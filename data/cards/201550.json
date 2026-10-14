@@ -1,0 +1,82 @@
+{
+  "id": 201550,
+  "printed_name": "Horst von Brühl",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Horst von Brühl"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Horst von Brühl (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/horstvonbruhlg6.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Horst von Brühl",
+      "text": "Príncipe Camarilla de Mannheim.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/horstvonbruhlg6.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Horst von Brühl",
+      "text": "Camarilla. Prince de Mannheim.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/horstvonbruhlg6.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/horstvonbruhlg6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Ginés Quiñonero-Santiago"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Camarilla Prince of Mannheim.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2020-12-30",
+  "banned": null,
+  "clan": "Ventrue",
+  "path": "",
+  "advanced": false,
+  "capacity": 6,
+  "group": "G6",
+  "disciplines": [
+    "aus",
+    "dom",
+    "pre",
+    "FOR"
+  ],
+  "title": "Prince"
+}
