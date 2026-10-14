@@ -116,6 +116,37 @@ def detect_contest_on_bring_into_play(state: GameState, brought_in: MasterCardIn
             return
 
 
+def transfer_master_card_control(
+    state: GameState, card: MasterCardInPlay, new_controller: str
+) -> None:
+    """Change who controls a standalone `MasterCardInPlay` (OQ-35, `docs/
+    OPEN_QUESTIONS.md`; Disputed Territory, krcg id 100557, "Successful
+    referendum means the chosen Methuselah takes control of the chosen
+    location").
+
+    Source, verbatim via the installed `krcg` package: "Changing the
+    controller of a location has no other effect, unless specified by card
+    text. Exception: A location 'on' another controlled card is moved onto
+    an appropriate card controlled by the new controller of the location."
+    [RTR 19980623] -- a standalone card (never "on" anything else, unlike
+    `engine/attachments.py::CardAttachment`) is never covered by the
+    Exception clause, so only the controller/ownership-dict bookkeeping
+    changes here (contrast `engine/attachments.py::
+    transfer_attachment_control`, which always re-hosts).
+
+    Moves `card` out of its old controller's `master_cards` dict and into
+    the new controller's own -- every reader of that dict (contest
+    detection, the unlock phase's own per-player loops) indexes by
+    controller, so leaving `card` keyed under its old controller while only
+    reassigning `.controller` would make it invisible to its own new
+    controller's unlock phase.
+    """
+    old_controller = card.controller
+    del state.players[old_controller].master_cards[card.instance_id]
+    card.controller = new_controller
+    state.players[new_controller].master_cards[card.instance_id] = card
+
+
 def resolve_one_master_card_contest(state: GameState, player: str, card: MasterCardInPlay) -> None:
     """Rulebook SS4 Unlock Phase + Advanced Rules > Contested Cards (OQ-15's
     pay-1-pool-or-yield mechanism, generalized a third time by OQ-23): pay 1

@@ -179,6 +179,77 @@ over a re-typed literal. `ACTION_ACTION_CARD` is the one fixed discriminator
 every `"action_card_play"` hook play shares, regardless of which specific
 library card of printed `types == ["Action"]` is being played."""
 
+ACTION_SUCCEEDED_HOOK = "action_succeeded"
+"""OQ-34 (`docs/OPEN_QUESTIONS.md`): mirrors `cards/registry.py::
+Hook.ACTION_SUCCEEDED`'s own string value. Rulebook SS4 "Resolve the
+Action" (re-fetched live, `data/sources/rulebook/2026-10-09/
+4-detailed-turn-sequence.md:616-617`), verbatim: "If the action is
+successful (all block attempts were unsuccessful), then the cost of the
+action is paid and the effects of the successful action take place." --
+i.e. "successful" means purely "not blocked," independent of whether the
+action's own effect did anything once it resolved. Dispatched via
+`hooks.run_effects` (mandatory, non-chosen: nothing for a player to pick,
+CLAUDE.md rule 3's exception) by `perform_minion_action` below, immediately
+after its own `resolve(pending)` call returns -- the generic "this action
+just succeeded" signal Loup (krcg id 102273, "Burn this card ... after a
+Toreador performs a successful action") needs, kept entirely card-agnostic
+here (CLAUDE.md SS6): this module never checks a clan or a specific card,
+only dispatches `actor_player`, the acting `vampire` (the live object, not
+merely its id -- this call site is trusted engine-internal code, never
+itself building a `Decision`, the same tier `VAMPIRE_ENTERS_TORPOR_HOOK`'s
+own `vampire` context entry already established, `engine/damage.py::
+send_to_torpor`) and `action` (the OQ-9 discriminator above). Never
+dispatched from the `blocked` branch -- a blocked action is, by the quoted
+rule, simply not successful."""
+
+PENDING_REFERENDUM_RESULT_KEY = "referendum_result"
+"""Mirrors `engine/politics.py::REFERENDUM_RESULT_KEY`'s own string value
+(not imported -- `engine/politics.py` already imports `ACTION_POLITICAL`/
+`attempt_block` from this module, so the reverse import would be circular;
+same precedent `engine/politics.py::POLLING_STEP_HOOK`/`REFERENDUM_TALLIED_
+HOOK`'s own string literals already set for duplicating a hook/key name
+instead of importing it). See `REFERENDUM_RESOLVED_HOOK` below."""
+
+REFERENDUM_RESOLVED_HOOK = "referendum_resolved"
+"""OQ-36 (`docs/OPEN_QUESTIONS.md`): mirrors `cards/registry.py::
+Hook.REFERENDUM_RESOLVED`'s own string value -- reserved there for "a moment
+strictly *after* a political action's referendum has fully resolved...
+distinct from, and later than, the pre-cast `POLLING_STEP` and the
+during-tally `REFERENDUM_TALLIED`" (Voter Captivation's own trigger,
+"[o]nly usable after resolution of a political action whose referendum
+passed"). Dispatched here, inside `perform_minion_action`, rather than
+inside `engine/politics.py::resolve_referendum` itself, because the
+"fully resolved" moment must come strictly after a political-action card's
+*own* `resolve()` closure returns (which itself calls `resolve_referendum`
+and then runs that specific card's own pass effects, e.g. `cards/
+kine_resources_contested.py`'s allocation) -- `resolve_referendum` finishing
+is not yet "resolution," only the tally is known by then.
+
+Only dispatched when `action == ACTION_POLITICAL` and `pending[PENDING_
+REFERENDUM_RESULT_KEY]` (written by `resolve_referendum`, when given this
+same `pending` dict as its own `action_pending=` argument -- see that
+function's docstring) reports the referendum passed; never for a blocked
+political action (no referendum ever ran) nor a failed one (no "resolution
+... whose referendum passed"). A real two-sided `Decision`-raising window
+(`hooks.resolve_impulse_window`, not `hooks.run_effects`): unlike
+`ACTION_SUCCEEDED_HOOK` above, Voter Captivation is a card a player
+*chooses* to play reactively, not a mandatory effect. Context carries only
+plain data (`caller`/`other`/`caller_vampire_id`/`margin`/`pending`), never
+the live `vampire` object -- this dispatch may raise a real agent-visible
+`Decision`, unlike `ACTION_SUCCEEDED_HOOK`'s own `hooks.run_effects`
+dispatch (CLAUDE.md "Information hiding," the same convention `engine/
+politics.py::_run_pre_cast_hook_window`'s own docstring already explains for
+`POLLING_STEP_HOOK`).
+
+`pending` (the same per-minion-action scratch dict `resolve(pending)` just
+ran with, not a copy) is included so a provider can cap itself at "once per
+minion per action" (Rulebook §2 Card Types: "A minion cannot play the same
+action modifier card more than once during a single action"), the same
+`pending`-as-scratch convention `cards/bonding.py`'s `LIMITED_USED_KEY`
+already uses for its own per-action cap. `rules-auditor` finding: Voter
+Captivation's own module previously had no such cap and could double-grant
+its blood-gain clause onto the same vampire via two copies in hand."""
+
 
 def _active_intercept_decrease(pending: dict[str, Any] | None, blocker: VampireInPlay) -> int:
     """Sum every `ActiveInterceptDecrease` (OQ-30) in `pending[PENDING_
@@ -535,6 +606,13 @@ def perform_minion_action(
     unlike the unblocked branch's `resolve()` callback, this function has no
     `ActionCardSpec`-shaped hook of its own to extend it -- see `engine/
     combat.py`'s "Pre-combat grant seeding" section.
+
+    Once `resolve(pending)` returns (the unblocked branch only -- see
+    `ACTION_SUCCEEDED_HOOK`'s own docstring), this function dispatches
+    `ACTION_SUCCEEDED_HOOK` unconditionally (OQ-34), then, only when
+    `action == ACTION_POLITICAL` and `pending` reports the referendum
+    passed, `REFERENDUM_RESOLVED_HOOK` (OQ-36) -- see each hook constant's
+    own docstring above for the full sourcing and contract.
     """
     vampire.locked = True
     pending: dict[str, Any] = {}
@@ -558,3 +636,26 @@ def perform_minion_action(
             on_blocked(pending)
         return
     resolve(pending)
+    hooks.run_effects(
+        ACTION_SUCCEEDED_HOOK,
+        state,
+        actor_player=actor_player,
+        vampire=vampire,
+        action=action,
+    )
+    if action == ACTION_POLITICAL:
+        result = pending.get(PENDING_REFERENDUM_RESULT_KEY)
+        if result is not None and result["passed"]:
+            hooks.resolve_impulse_window(
+                state,
+                REFERENDUM_RESOLVED_HOOK,
+                actor_player,
+                defender_player,
+                context={
+                    "caller": actor_player,
+                    "other": defender_player,
+                    "caller_vampire_id": vampire.instance_id,
+                    "margin": result["votes_for"] - result["votes_against"],
+                    "pending": pending,
+                },
+            )

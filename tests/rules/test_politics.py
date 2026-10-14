@@ -331,7 +331,11 @@ def test_the_pre_cast_decision_context_never_leaks_the_live_vampire_object():
             return super().decide(observation, decision)
 
     def fake_provider(state, context):
-        if context.get("player") != "P1":
+        # OQ-37 (`docs/OPEN_QUESTIONS.md`): `POLLING_STEP_HOOK` is now also
+        # offered mid-cast (`context["phase"] == "mid_cast"`), whose own
+        # `apply` contract differs (returns a `str` source id, not `None`)
+        # -- this fake provider only ever stands in for the pre-cast shape.
+        if context.get("player") != "P1" or context.get("phase") != "before_cast":
             return []
         return [hooks.HookOption(choice=Choice("noop", "No-op option"), apply=lambda s: None)]
 

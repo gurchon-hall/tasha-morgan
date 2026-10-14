@@ -241,6 +241,73 @@ def detect_contest_on_attach(state: GameState, attachment: CardAttachment) -> No
             return
 
 
+def transfer_attachment_control(
+    state: GameState,
+    attachment: CardAttachment,
+    *,
+    new_controller: str,
+    new_host: VampireInPlay,
+) -> None:
+    """Change who controls `attachment` and re-host it onto `new_host`
+    (OQ-35, `docs/OPEN_QUESTIONS.md`; Disputed Territory, krcg id 100557,
+    "Successful referendum means the chosen Methuselah takes control of the
+    chosen location").
+
+    Source, verbatim via the installed `krcg` package (Disputed Territory's
+    own rulings): "If used to steal an equipment representing a location,
+    it can be placed on any minion controlled by the new controller."
+    [RTR 19960112]; "Changing the controller of a location has no other
+    effect, unless specified by card text. Exception: A location 'on'
+    another controlled card is moved onto an appropriate card controlled by
+    the new controller of the location." [RTR 19980623] -- an attached
+    card is, by definition, "on" a vampire, so the Exception clause always
+    applies to this shape (contrast `engine/master_cards.py::
+    transfer_master_card_control`, which is never "on" anything and so
+    never re-hosts). A third ruling gates this specifically when
+    `new_controller` is not actually a *different* Methuselah: "If used to
+    'change' the control of a location or equipment representing a
+    location to the same Methuselah, the location cannot be moved to
+    another minion controlled by the same Methuselah." [LSJ 19971002] --
+    `rules-auditor` finding (first landing of this entry omitted this
+    clause entirely, letting a same-controller call silently relocate the
+    attachment to any `new_host` with no check at all). Enforced below:
+    when `new_controller == attachment.controller`, the only legal
+    `new_host` is the attachment's own *current* host (a true no-op, since
+    there is no actual controller change to carry out); any other
+    `new_host` raises `ValueError` rather than silently relocating it.
+
+    `new_host` is caller-supplied, not chosen here: *which* of the new
+    controller's own minions receives it ("any minion controlled by the new
+    controller") is a `Decision` specific to whichever card drives the
+    control change (e.g. a future `cards/disputed_territory.py` raising it
+    once the referendum passes) -- this function only performs the
+    mechanical re-host + re-assign once a destination is already chosen,
+    mirroring `attach_card`'s own "caller supplies `controller`" contract.
+    `new_controller` need not equal `new_host.controller`'s caller-intended
+    value by construction -- callers are responsible for only ever passing
+    a `new_host` actually controlled by `new_controller` (not enforced
+    here, the same trust boundary `attach_card`'s own docstring already
+    places on its caller).
+    """
+    current_host: VampireInPlay | None = None
+    for host, existing in iter_attachments(state):
+        if existing is attachment:
+            current_host = host
+            break
+    if new_controller == attachment.controller:
+        if new_host is not current_host:
+            raise ValueError(
+                "transfer_attachment_control: the controller is not actually "
+                "changing -- cannot move a location to a different minion "
+                "controlled by the same Methuselah [LSJ 19971002]"
+            )
+        return  # no-op: same controller, same host -- nothing to carry out.
+    if current_host is not None:
+        current_host.attachments.remove(attachment)
+    new_host.attachments.append(attachment)
+    attachment.controller = new_controller
+
+
 def resolve_one_attachment_contest(
     state: GameState, player: str, attachment: CardAttachment
 ) -> None:
