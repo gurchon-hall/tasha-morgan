@@ -244,6 +244,21 @@ class Hook(StrEnum):
     RANGED_STRIKE = "ranged_strike"
     ALLY_ENTITY = "ally_entity"
     LOCATION_ENTITY = "location_entity"
+    """A generic "location" entity concept Disputed Territory (krcg id
+    100557, "Successful referendum means the chosen Methuselah takes
+    control of the chosen location") needs -- resolved (OQ-35, `docs/
+    OPEN_QUESTIONS.md`) not by a new entity (OQ-23 already found "location"
+    is free text on an ordinary standalone Master card or an attached
+    Equipment, not a distinct krcg type) but by two generic control-transfer
+    primitives over the two existing shapes that can carry one:
+    `engine/attachments.py::transfer_attachment_control` (always re-hosts,
+    per the "on another controlled card" ruling) and `engine/master_cards.py
+    ::transfer_master_card_control` (never re-hosts: a standalone card is
+    never "on" anything). Disputed Territory (`cards/disputed_territory.py`)
+    is now implemented against the latter primitive only -- no "equipment
+    representing a location" card is on the active 2P list -- so its own
+    registration does not cite this value, mirroring Oxford University,
+    England's own choice not to cite it either (that module's docstring)."""
     DIABLERIE = "diablerie"
     BLOCK_CANDIDATE_INJECTION = "block_candidate_injection"
     EQUIPMENT_ATTACHMENT = "equipment_attachment"

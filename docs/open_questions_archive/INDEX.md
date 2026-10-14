@@ -17,3 +17,9 @@ an entry.
 | OQ-6 | `001.md` | Referendum vote tally for two Methuselahs |
 | OQ-7 | `001.md` | 47th Street Royals - no ally-in-play entity |
 | OQ-8 | `001.md` | Celerity - attachment effects unconsulted |
+| OQ-9 | `001.md` | Bonding - stealth_modifier omits action type |
+| OQ-10 | `001.md` | Contested unique allies lack hidden state |
+| OQ-11 | `001.md` | Bonding - carrying an early hook effect forward |
+| OQ-12 | `001.md` | 47th Street Royals - recruit-ally action not wired |
+| OQ-13 | `001.md` | 47th Street Royals - recruit_ally_play omits acting vampire |
+| OQ-14 | `001.md` | 47th Street Royals - recruit makes contested-ally gap live |
