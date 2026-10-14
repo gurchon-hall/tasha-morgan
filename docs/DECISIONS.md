@@ -168,3 +168,66 @@ are recorded here as design choices, not as VtES facts.
   revisit if that becomes wrong for a specific card); the second is
   already handled correctly (no sect assigned, matching the existing
   `None`-means-"does not qualify" convention).
+
+## D-8: Heuristic agent v0 rules (design choices, not VtES facts)
+
+- Context: milestone 5. A random-legal log showed ~2 reveals/game,
+  add_blood 82 vs remove_blood 40 per game (blood shuffled back and
+  forth), early end of influence, and few minion-phase actions.
+- Decision: `agents/heuristic.py` applies the rules below by
+  `decision.kind`; every other kind falls back to a seeded random
+  choice. All thresholds are untested assumptions, not community
+  strategy content.
+  1. `influence_action`: reveal if offered; with pool above 2, bring a
+     crypt card when no uncontrolled vampire exists, else add blood to
+     the uncontrolled vampire nearest capacity; with pool at most 2,
+     remove blood from the fullest uncontrolled vampire (2 transfers)
+     if offered; otherwise `end_phase`.
+  2. `minion_phase_choice`: act with the ready vampire holding the
+     most blood before ending the phase.
+  3. `action_choice`: hunt when the acting vampire has at most 1
+     blood, otherwise bleed (in 2P the opponent is both prey and
+     predator). Card-granted action options are never chosen.
+  4. `master_phase_action`: play the first offered card (no card
+     evaluation, so "harmless" is not established); `discard_phase_action`:
+     pass; `hand_size_discard`: first offered card.
+- Not handled yet (random): blocks, combat steps, damage mending,
+  votes, contest resolution, edge gain, card-specific targets.
+
+## D-9: No voluntary self-oust in the 2P duel (2026-10-13)
+
+- Context: OQ-41/OQ-42. The rulebook's Influence Phase "Nora" example
+  says she "cannot use both counters in her pool to put that vampire
+  into play because that would put her out of the game"; the engine
+  offered self-ousting.
+- Decision: user ruling (not derived from the rulebook): "à 2 joueurs,
+  tu peux tomber à 0 pools à cause de tes actions mais l'objectif étant
+  de gagner, on va dire que cela est interdit quelle que soit la
+  manière de perdre du pool", and "auto-oust impossible à 2 et 3
+  joueurs, possible à 4 et 5 joueurs". A Methuselah never gets an
+  option that would bring their own pool to 0 by their own choice;
+  `engine/pool.py::can_afford_without_ousting` is the single gate.
+  Losses caused by the opponent still oust. Addendum (OQ-43, user
+  ruling 2026-10-13: "fame continue de fonctionner normalement car
+  aucun choix n'est fait une fois fame en jeu. les choix qui mène
+  l'agent lui même à 0 sont interdits"): forced effects with no choice
+  at resolution (Fame) still oust normally; any choice whose
+  consequence, even downstream (voting against Marcos Belegrad), would
+  take the chooser to 0 is not offered.
+- Consequence: a deliberate simplification of the 2P duel, to be
+  revisited if 4-5 player games are ever in scope.
+
+## D-10: Simultaneous ousts are a tie (2026-10-13)
+
+- Context: OQ-44. Both Methuselahs reaching 0 pool from one event.
+- Decision: user ruling (project ruling, supported but not dictated by
+  Rulebook SS5): "oust simultané semble ok si pas de solution de
+  gagner". Same event = tie, no winner; 1 VP each, no 6 pool (SS5
+  EXCEPTION). "Same event" is mechanical: one card effect or one
+  simultaneous strike pair, wrapped in `engine/pool.py::
+  simultaneous_pool_losses`.
+- Consequence: `MatchResult.winner` may be `None` with `game_over`
+  True (`tie`), a draw (user ruling 2026-10-13: "1 VP chacun,
+  conclusion = match nul"); sim summaries count ties apart from stuck games. The
+  second side of a strike pair still resolves its damage (mend
+  decision) before the oust is decided.

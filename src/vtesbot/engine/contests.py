@@ -22,7 +22,7 @@ and the alternative reading (contest on simultaneous uncontrolled presence).
 from typing import TYPE_CHECKING
 
 from .decision import Choice, Decision
-from .pool import lose_pool
+from .pool import can_afford_without_ousting, lose_pool
 
 if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
@@ -41,8 +41,10 @@ def resolve_one_contest(state: GameState, player: str, vampire: VampireInPlay) -
     """Rulebook SS4 Unlock Phase + 2P variant: pay 1 pool to keep contesting
     `vampire` this unlock phase, or yield (burn your copy, clearing the
     opposing copy's contested status too since nothing contests it anymore)."""
+    # OQ-42: paying must not leave the payer at 0 pool; yielding stays.
+    pay = (Choice("pay", "Pay 1 pool to keep contesting"),)
     choices = (
-        Choice("pay", "Pay 1 pool to keep contesting"),
+        *(pay if can_afford_without_ousting(state, player, 1) else ()),
         Choice("yield", "Yield: burn this vampire"),
     )
     decision = Decision(
@@ -51,7 +53,7 @@ def resolve_one_contest(state: GameState, player: str, vampire: VampireInPlay) -
         choices=choices,
         context={"vampire": vampire.instance_id, "contested_with": vampire.contested_with},
     )
-    choice = state.ask(decision)
+    choice = state.ask_unless_forced(decision)
     if choice.value == "pay":
         lose_pool(state, player, 1)
     else:

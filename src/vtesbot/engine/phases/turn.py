@@ -6,7 +6,9 @@ Discard; the acting Methuselah alternates each turn in a 2-player duel.
 `play_turn`/`run_until_game_over` are pure control-flow conveniences (not
 separately-sourced rules) that drive the phase functions in order and stop
 as soon as `state.game_over` becomes true (Rulebook SS5 Ending the Game:
-the game ends immediately on an oust in a 2-player duel).
+the game ends immediately on an oust in a 2-player duel: "The game
+continues until only one Methuselah is left"; in a 2-player duel any oust
+leaves one).
 
 `clear_turn_cards_at_end_of_turn` (OQ-34, `docs/OPEN_QUESTIONS.md`) runs
 after the discard phase, before the turn flips: Loup-shaped cards ("Burn

@@ -281,6 +281,8 @@ def apply_chosen_option(
     """
     if option.cost is not None:
         option.cost(state)
+        if state.game_over:
+            return None
     cancel_context = {
         **context,
         "canceled_by": played_by,
@@ -327,7 +329,7 @@ def offer_until_pass(
     the generic "cancel as played" interception point, for any hook, with no
     further engine work needed.
     """
-    while True:
+    while not state.game_over:
         options = offer(hook, state, player=player, **context)
         if not options:
             return
@@ -373,7 +375,7 @@ def resolve_impulse_window(
     """
     turn = acting_player
     consecutive_passes = 0
-    while consecutive_passes < 2:
+    while consecutive_passes < 2 and not state.game_over:
         options = offer(hook, state, player=turn, **context)
         if not options:
             consecutive_passes += 1
@@ -433,9 +435,12 @@ def run_effects(hook: str, state: GameState, **context: Any) -> None:
     Providers for a `run_effects` hook are plain
     `Callable[[GameState, Mapping], None]` functions (return value ignored),
     registered the same way via `register`, and must simply do nothing when
-    they do not apply.
+    they do not apply. Remaining providers are skipped once `state.game_over`
+    (a provider's pool loss ousted someone; Rulebook SS5 Ending the Game).
     """
     for provider in _PROVIDERS.get(hook, ()):
+        if state.game_over:
+            return
         provider(state, context)  # type: ignore[arg-type]
 
 

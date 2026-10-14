@@ -24,9 +24,9 @@ live `api.krcg.org/card/102180` endpoint and the installed `krcg` package
 value=1)`: this card costs 1 pool to play. Rulebook SS2 "Requirements for
 Playing Cards" (quoted in full in `oxford_university_england.py`'s
 docstring): "Only a Methuselah with enough pool can play a card with a pool
-cost." So playing Wider View both requires >= 1 pool and burns it --
-implemented via `lose_pool` in the master-phase-play `apply`, gated by
-`pool >= POOL_COST` in the provider.
+cost." So playing Wider View burns 1 pool -- implemented via `lose_pool` in the
+master-phase-play `apply`, gated by `can_afford_without_ousting` in the
+provider (OQ-42: the card needs pool >= 2).
 
 Three independent clauses, matching `data/cards/102180.json`'s own `text`
 field split at each sentence:
@@ -93,7 +93,7 @@ from vtesbot.engine.decision import Choice, Decision
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.master_cards import bring_master_card_into_play
 from vtesbot.engine.phases.influence import INFLUENCE_PHASE_ACTION_HOOK
-from vtesbot.engine.pool import gain_pool, lose_pool
+from vtesbot.engine.pool import can_afford_without_ousting, gain_pool, lose_pool
 from vtesbot.engine.state import GameState, MasterCardInPlay, VampireInPlay
 
 KRCG_ID = 102180
@@ -128,7 +128,7 @@ def _provide_wider_view_master_phase_play(
     player = context["player"]
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
         return []
-    if state.players[player].pool < POOL_COST:
+    if not can_afford_without_ousting(state, player, POOL_COST):
         return []
 
     def _apply(s: GameState) -> bool:

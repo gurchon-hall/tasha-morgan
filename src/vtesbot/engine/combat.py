@@ -435,6 +435,7 @@ from typing import TYPE_CHECKING, Any
 from . import hooks
 from .damage import apply_damage
 from .decision import Choice, Decision
+from .pool import simultaneous_pool_losses
 
 if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
@@ -979,6 +980,8 @@ def _resolve_strike_pair(
         round_state,
         participates=acting_participates,
     )
+    if state.game_over:
+        return
     damage_to_acting, blocking_dodges, blocking_ignore_dodge = _resolve_one_strike(
         state,
         blocking_player,
@@ -997,22 +1000,30 @@ def _resolve_strike_pair(
     # state` is forwarded so `apply_damage` can record this round's "blood
     # lost to damage" total (module docstring's "End of Round and
     # round-scoped blood-loss tracking" section, OQ-29).
-    if damage_to_blocking:
-        apply_damage(
-            state,
-            blocking_player,
-            blocking_vampire,
-            normal=damage_to_blocking,
-            round_state=round_state,
-        )
-    if damage_to_acting:
-        apply_damage(
-            state,
-            acting_player,
-            acting_vampire,
-            normal=damage_to_acting,
-            round_state=round_state,
-        )
+    # OQ-44: torpor-triggered pool losses (e.g. Fame) from both sides are one
+    # event; ousting is decided once afterwards (both at 0 = tie). The second
+    # side's damage is therefore still resolved (mend decision included),
+    # deliberately: it can turn a single oust into a tie or save the other
+    # side. Inside the window the `game_over` guards in damage.py do not
+    # short-circuit, and `resolve_pending_ousts` re-filters pool <= 0, so a
+    # pool gain by a doomed player in the window would cancel the queued oust.
+    with simultaneous_pool_losses(state):
+        if damage_to_blocking:
+            apply_damage(
+                state,
+                blocking_player,
+                blocking_vampire,
+                normal=damage_to_blocking,
+                round_state=round_state,
+            )
+        if damage_to_acting:
+            apply_damage(
+                state,
+                acting_player,
+                acting_vampire,
+                normal=damage_to_acting,
+                round_state=round_state,
+            )
 
 
 def _ask_additional_strike(
@@ -1158,7 +1169,7 @@ def _determine_range(
     )
     turn_index = 0
     consecutive_declines = 0
-    while consecutive_declines < 2:
+    while consecutive_declines < 2 and not state.game_over:
         player, vampire, opponent = turns[turn_index]
         if _ask_maneuver(state, player, vampire, opponent, combat_state, round_state):
             state.combat_range = _flip_range(state.combat_range)
@@ -1264,6 +1275,8 @@ def run_combat(
     # scoping" paragraph.
     combat_state: dict[str, Any] = initial_combat_state if initial_combat_state is not None else {}
     while True:
+        if state.game_over:
+            break  # Rulebook SS5: play continues only while 2+ Methuselahs remain.
         if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
             break  # Rulebook SS4: combat ends at once if a combatant is no longer ready.
 
@@ -1289,11 +1302,15 @@ def run_combat(
             combat_state,
             round_state,
         )
+        if state.game_over:
+            break
 
         # --- Strike step: acting minion's controller chooses first; simultaneous resolution. ---
         _resolve_strike_pair(
             state, acting_player, acting_vampire, blocking_player, blocking_vampire, round_state
         )
+        if state.game_over:
+            break
 
         # `still_ready` tracks whether this round's processing continues past
         # each "combat ends at once if a combatant is no longer ready" check
@@ -1312,7 +1329,7 @@ def run_combat(
         # entirely once `still_ready` is already False, same as the previous
         # immediate `break` would have skipped it. ---
         if still_ready:
-            while True:
+            while not state.game_over:
                 acting_extra = _ask_additional_strike(
                     state, acting_player, acting_vampire, blocking_vampire, round_state
                 )
@@ -1331,7 +1348,9 @@ def run_combat(
                     acting_participates=acting_extra,
                     blocking_participates=blocking_extra,
                 )
-                if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
+                if state.game_over or not (
+                    _is_ready(acting_vampire) and _is_ready(blocking_vampire)
+                ):
                     break
             still_ready = _is_ready(acting_vampire) and _is_ready(blocking_vampire)
 
@@ -1340,7 +1359,7 @@ def run_combat(
         # entirely if the round already ended prematurely (`still_ready` is
         # False) -- same as the previous immediate `break` would have. ---
         pressed = False
-        if still_ready:
+        if still_ready and not state.game_over:
             order = [(acting_player, acting_vampire), (blocking_player, blocking_vampire)]
             for player, vampire in order:
                 if _ask_press(state, player, vampire) == "press":
@@ -1358,6 +1377,6 @@ def run_combat(
             state, acting_player, acting_vampire, blocking_player, blocking_vampire, round_state
         )
 
-        if not still_ready or not pressed:
+        if state.game_over or not still_ready or not pressed:
             break
     state.combat_range = None  # no combat in progress once run_combat returns

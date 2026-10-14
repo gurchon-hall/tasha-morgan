@@ -236,7 +236,7 @@ def test_a_second_independently_played_copy_triggers_a_contest_with_no_oxford_sp
 
 def test_offers_one_option_per_legal_pool_burn_amount_during_the_polling_step():
     builder = ScenarioBuilder(seed=1)
-    builder.player("P1", pool=3)
+    builder.player("P1", pool=4)
     builder.player("P2", pool=30)
     game = builder.build()
     location = bring_master_card_into_play(game.state, "P1", krcg_id=KRCG_ID, name=NAME)

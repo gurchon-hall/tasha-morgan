@@ -31,3 +31,13 @@ class IllegalChoiceError(Exception):
     This is the engine-side enforcement of CLAUDE.md's "legality by
     construction" invariant: agents may only ever pick from the offered list.
     """
+
+
+class GameOverError(Exception):
+    """Raised by `GameState.ask` if a decision is requested after the game ended.
+
+    Rulebook SS5 Ending the Game: "The game continues until only one
+    Methuselah is left"; in a 2P duel (each is the other's prey, CLAUDE.md
+    SS3) any oust leaves one, so no further player decision may be solicited.
+    Phase loops must return once `state.game_over` is set; this is only the safety net behind that.
+    """

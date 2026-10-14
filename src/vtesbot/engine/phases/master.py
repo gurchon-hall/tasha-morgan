@@ -42,7 +42,7 @@ def master_phase(state: GameState, player: str) -> None:
     actions_remaining = BASE_MASTER_ACTIONS
     trifle_bonus_used = False
 
-    while actions_remaining > 0:
+    while actions_remaining > 0 and not state.game_over:
         options = hooks.offer(MASTER_PHASE_PLAY_HOOK, state, player=player)
         if not options:
             return  # nothing legal to play: no vacuous decision raised.
@@ -62,6 +62,8 @@ def master_phase(state: GameState, player: str) -> None:
             return
 
         is_trifle = bool(by_value[answer.value].apply(state))
+        if state.game_over:
+            return
         actions_remaining -= 1
         if is_trifle and not trifle_bonus_used:
             trifle_bonus_used = True

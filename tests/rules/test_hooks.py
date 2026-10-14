@@ -645,3 +645,27 @@ def test_stealth_modifier_hook_lets_the_actor_rescue_a_currently_succeeding_bloc
     assert blocker is None
     actor.assert_exhausted()
     defender.assert_exhausted()
+
+
+def test_run_effects_stops_calling_providers_once_the_game_is_over():
+    """Rulebook SS5 Ending the Game: once an oust ends the game, no later
+    provider may keep mutating state."""
+    from vtesbot.engine.pool import lose_pool
+
+    calls: list[str] = []
+
+    def ousting_provider(state, context):
+        calls.append("ousting")
+        lose_pool(state, "P1", 1)
+
+    def later_provider(state, context):
+        calls.append("later")
+
+    hooks.register("fake_effects_over", ousting_provider)
+    hooks.register("fake_effects_over", later_provider)
+    game = ScenarioBuilder(seed=1).player("P1", pool=1).player("P2", pool=30).build()
+
+    hooks.run_effects("fake_effects_over", game.state)
+
+    assert game.state.game_over is True
+    assert calls == ["ousting"]

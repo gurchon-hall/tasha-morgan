@@ -58,116 +58,6 @@ up an OQ number or the highest one used so far.
   cards: none yet reachable (tracked ahead of need, same spirit as OQ-10's
   own original "latent, flagged before live" framing).
 
-## OQ-17 - Enchant Kindred - no action-card entry point (status: resolved)
-
-- Situation: Enchant Kindred (100640, `types==["Action"]`) is itself
-  the acting vampire's whole minion action for the turn — but the
-  engine had no generic way for a played library card to supply its
-  own alternate minion action (only Bleed/Hunt/Recruit-Ally were
-  wired into `_choose_and_perform_action`).
-- Rules/interactions: plain text; faking it as an Action-Modifier on a
-  separately-chosen bleed would wrongly let the vampire bleed for free
-  and play the card as a bonus. "A younger vampire" (superior clause)
-  reads, per the project owner, as younger than the acting vampire,
-  matching the unqualified-comparative convention other cards' texts
-  use.
-- Solution: added `ACTION_CARD_PLAY_HOOK`/`ActionCardSpec` (base
-  stealth, directed/undirected, `resolve`, optional `on_blocked`, and
-  an `action` field so a clause can declare its real mechanical
-  identity, e.g. `ACTION_BLEED`, so it doesn't silently suppress
-  another card's bleed-gated provider sharing the window), offered
-  alongside the existing top-level choices. Enchant Kindred was then
-  implemented: basic clause as a +2 bleed tagged `ACTION_BLEED`;
-  superior clause raises a plain "pick an eligible uncontrolled
-  vampire" decision and adds blood via `effective_capacity` (OQ-8).
-  `Status.IMPLEMENTED`.
-
-## OQ-18 - Dust Up - no sect, no dodge/extra strike (status: resolved)
-
-- Situation: Dust Up (100597, "Requires an Anarch", three discipline
-  clauses) was blocked by two independent gaps: (1) the engine had no
-  vampire-sect concept at all, and (2) the `[cel]` clause ("dodge,
-  with 1 additional strike (limited)") needed dodge and same-round
-  additional-strike mechanics `engine/combat.py` didn't have.
-- Rules/interactions: Rulebook §6 Vampire Sects + §7 (Laibon) name the
-  five sects; §4 Combat's Choose Strike / Additional Strikes sections
-  cover dodge and repeat strikes; [LSJ 20030902-2]/[LSJ 20060808-1]
-  confirm a dodge-proof strike ("cannot be dodged") still lets the
-  opponent dodge, it just has no effect against that one strike.
-- Solution: added `Sect` enum + `CryptCard.sect` + `derive_sect
-  (card_text)` (a regex classifier over the printed sect preamble,
-  100% hit rate across the full krcg crypt dataset; raises
-  `UnresolvedRulingError` rather than guessing on a non-match). Added
-  `COMBAT_DODGE_OPTION_HOOK` (zeroes the opponent's simultaneous
-  damage unless the attacking strike is flagged
-  `StrikeDamage(ignore_dodge=True)`) and
-  `COMBAT_ADDITIONAL_STRIKE_HOOK` (re-enters the full strike-choice
-  machinery). Dust Up was then implemented (all three clauses, gated
-  on `sect is Sect.ANARCH`); the `[cel]` "(limited)" cap was initially
-  enforced per-vampire-forever rather than per-round (stricter than
-  the rule, never looser) until OQ-19 fixed this properly with shared
-  round-scoped state. `Status.IMPLEMENTED`.
-
-## OQ-19 - Cross-card "(limited)" additional-strike cap not pooled (status: resolved)
-
-- Situation: Dust Up and Side Strike each tracked their own
-  "(limited)" additional-strike cap privately per-card,
-  per-vampire-instance — so nothing stopped one vampire from using
-  *both* cards' grants in the same round (an illegal-play risk), and
-  the cap never reset between rounds.
-- Rules/interactions: SS8 glossary, verbatim: "A minion cannot use
-  more than one card or effect to gain additional strikes per round
-  of combat."
-- Solution: `run_combat` now creates a fresh, round-scoped
-  `round_state` dict threaded into the dodge/additional-strike hook
-  contexts; `additional_strike_limit_used`/
-  `mark_additional_strike_limit_used` read/write a shared flag in it
-  (degrading gracefully when offered outside `run_combat`). Both cards
-  were migrated onto the shared helpers. A `rules-auditor` follow-up
-  found and fixed a regression in the first landing: the flag was
-  briefly a single flat boolean shared across *both* combatants,
-  wrongly pooling the cap jointly instead of per-minion — fixed by
-  keying it per `context["vampire"]`.
-
-## OQ-20 - Vote/ballot casting order for two Methuselahs (status: resolved)
-
-- Situation: the rulebook's "cast ... in any order" leaves the actual
-  turn structure unspecified; the engine's first implementation
-  asserted its own strict "impulse always returns to the caller"
-  procedure was sourced from the general impulse rule, when it was
-  not — that procedure in fact gave the caller an unsourced tactical
-  edge (casting every source back-to-back before the opponent ever
-  got a look).
-- Rules/interactions: no official text specifies an
-  alternation/priority rule for vote-casting order beyond "in any
-  order."
-- Solution (user ruling, from real-table play experience): votes are
-  cast in table order — seating order, repeating laps until a full
-  lap passes with nobody casting. In this 2P engine: a fixed two-seat
-  rotation, caller first each lap, alternating strictly after every
-  step (cast or pass) regardless of who just acted; a full lap
-  completing with no casts (`consecutive_passes` reaching 2) closes
-  the window.
-
-## OQ-21 - Action-card target chosen at announce vs. resolve time (status: resolved)
-
-- Situation: `line_brawl.py`'s `[pot]` clause ("Enter combat with a
-  minion") picked its target inside `resolve()`, after the
-  block-attempt window had already run — the defender was asked to
-  block before the specific minion that would be forced into combat
-  was ever fixed.
-- Rules/interactions: Rulebook §4 "Announce the Action": "All details
-  of the action are defined when the action is announced, including
-  the target(s)"; this engine's own `ActionCardSpec` contract already
-  documented the same. The general "fizzle" ruling (target no longer
-  eligible at resolve time ⇒ cost paid, successful, no effect — never
-  re-picked) confirms a target is fixed once, at announce, and only
-  re-validated later.
-- Solution: both `line_brawl.py` and `enchant_kindred.py`'s own
-  clauses now choose their target inside `apply()` (announce time),
-  with `resolve()` only looking up the already-chosen id. Any future
-  Action card targeting a specific minion must do the same.
-
 ## OQ-22 - Fame - contested cards gap beyond crypt/ally (status: resolved)
 
 - Situation: Fame (100698, Unique master card attached via
@@ -719,3 +609,104 @@ up an OQ number or the highest one used so far.
   own hand); that option is now offered alongside, not instead of, any
   already-in-play copy's own activation option, since OQ-40 means they are
   independent, additive opportunities.
+
+## OQ-41 - Self-oust by spending your last pool on a transfer (status: resolved)
+
+- Situation: a Methuselah with exactly 1 pool could spend 1 transfer
+  (or 4 transfers + 1 pool) and be ousted by their own influence-phase
+  payment; the engine offered it.
+- Rules/interactions: the rulebook's Influence Phase worked example
+  "Nora" says she "cannot use both counters in her pool to put that
+  vampire into play because that would put her out of the game";
+  the user ruled: "auto-oust impossible à 2 et 3 joueurs, possible à
+  4 et 5 joueurs" (earlier wording: "c'est un cas réservé aux parties
+  à 3+p, bloquer dans le format 2p"; the later statement supersedes
+  "3+p"). Blocked in the 2P format.
+- Solution: `engine/phases/influence.py::_available_choices` offers
+  `add_blood` and `bring_crypt` only when
+  `engine/pool.py::can_afford_without_ousting(state, player, 1)` holds
+  (pool >= 2). Hook-offered influence options (Wider View) spend no
+  pool. Generalised to every voluntary self-paid pool cost by OQ-42.
+
+## OQ-42 - Burning your whole pool for votes (status: resolved)
+
+- Situation: `engine/politics.py::variable_pool_burn_vote_options`
+  offered X = 1..pool, letting a Methuselah burn their entire pool for
+  votes (Oxford University, England) and be ousted; the same held for
+  every other self-paid pool cost (contest payments, Wider View's play
+  cost, Kine Resources Contested's self share).
+- Rules & interactions: no rulebook or card-ruling source. User ruling
+  2026-10-13: "à 2 joueurs, tu peux tomber à 0 pools à cause de tes
+  actions mais l'objectif étant de gagner, on va dire que cela est
+  interdit quelle que soit la manière de perdre du pool" (with OQ-41's
+  "auto-oust impossible à 2 et 3 joueurs, possible à 4 et 5 joueurs").
+  A project simplification for the 2P duel (`docs/DECISIONS.md` D-9);
+  pool lost to the opponent's actions still ousts normally.
+- Solution: central helpers `engine/pool.py::can_afford_without_ousting`
+  / `max_voluntary_spend` gate every voluntary option: influence
+  transfers, burn-for-votes (X <= pool - 1, minus
+  `pending["pool_reserve"]`), the four contest pay-or-yield decisions
+  (only yield remains), Wider View's play, Kine Resources Contested
+  (own share <= pool - 1, pool reserved during its referendum). Forced
+  self-inflicted losses are not filtered; see OQ-43.
+
+## OQ-43 - Forced self-inflicted pool loss may oust the payer (status: resolved)
+
+- Situation: some effects make a Methuselah lose pool with no choice at
+  the moment of loss (Fame's torpor burn of 3 and unlock-phase burn of
+  1; Marcos Belegrad's burn for those who voted against; Kine Resources
+  Contested if the caller's pool dropped).
+- Rules & interactions: no rulebook or card-ruling source. User ruling
+  2026-10-13: "fame continue de fonctionner normalement car aucun choix
+  n'est fait une fois fame en jeu. les choix qui mène l'agent lui même
+  à 0 sont interdits".
+- Solution: a forced effect with no choice at resolution applies
+  normally and may oust its controller (Fame unchanged). Any choice
+  whose consequence, even downstream, takes the chooser to 0 is not
+  offered: a vote against a Marcos Belegrad referendum is withheld when
+  `pool - 1 - reserve < 1`, via `politics.VOTE_AGAINST_POOL_COST_HOOK`
+  (checked at casting time, burn happens at tally). `docs/DECISIONS.md`
+  D-9. Residual gap: OQ-45 (resolved).
+
+## OQ-44 - Simultaneous ousts: who wins? (status: resolved)
+
+- Situation: two Methuselahs can reach 0 pool in one resolution (Marcos
+  Belegrad's tally burn, Kine Resources Contested, double Fame torpor in
+  one strike pair); the engine silently picked the first processed.
+- Rules & interactions: rulebook `5-ending-the-game.md`: "In the case of
+  a tie there is no winner of the game"; EXCEPTION: a Methuselah ousted
+  at the same time as their prey "gets the victory point but does not
+  gain 6 pool counters". Card ruling on file (Kine Resources Contested,
+  verified in `data/cards/101056.json`): "If multiple ousts happen,
+  players whose prey gets ousted get a victory point, even if they are
+  being ousted themselves. Only the surviving ones get 6 pool" [LSJ
+  20000309] -- consistent with the EXCEPTION. User ruling 2026-10-13:
+  "oust simultané semble ok si pas de solution de gagner" (reading B).
+- Solution: both at 0 from the same event = tie, `game_over` with
+  `winner = None` (`engine/pool.py::simultaneous_pool_losses` defers the
+  oust check to the end of the event; `ousting.resolve_pending_ousts`).
+  Each gets 1 VP and no pool per the EXCEPTION (each is the other's prey;
+  no last-Methuselah VP). User ruling 2026-10-13 on the VP
+  assignment: "1 VP chacun, conclusion = match nul"; the outcome is a
+  draw. `docs/DECISIONS.md` D-10.
+
+## OQ-45 - Kine allocation when every split zeroes the caller (status: resolved)
+
+- Situation: Kine Resources Contested's caller chose the 4-point split
+  after the vote; a Marcos Belegrad tally burn could leave no legal
+  split (D-9), yet the allocation is mandatory.
+- Rules & interactions: Rulebook SS4 "The Referendum" lists step 1
+  "Choose the terms" before step 2 "Polling"; the card text and rulings
+  (LSJ 20000622, 20020819) are silent on timing. User ruling
+  2026-10-13: "la répartition est verrouillée avant le vote puis fenetre
+  d'avant votes (poison pill par exemple, pas au format 2p) puis le vote
+  a lieu puis fenetre de fin de tally pour les réactions (delaying
+  tactics par exemple) puis résolution des effets du vote puis fenetre
+  d'action modifier de fin d'action (voter captivation par exemple)".
+- Solution: the split is chosen and locked first
+  (`cards/kine_resources_contested.py`), its self share must be
+  affordable (pool >= share + 1) and is passed as `pool_reserve`, so
+  the vote-time gates (Marcos against-cost, Oxford burn) always leave it
+  payable. Windows after the tally (reactions beyond Marcos' mandatory
+  burn; `REFERENDUM_RESOLVED` for Voter Captivation) have no engine
+  dispatch yet. `docs/DECISIONS.md` D-9.

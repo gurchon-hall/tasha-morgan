@@ -44,7 +44,7 @@ sweep, not built here).
 from typing import TYPE_CHECKING
 
 from .decision import Choice, Decision
-from .pool import lose_pool
+from .pool import can_afford_without_ousting, lose_pool
 from .state import MasterCardInPlay
 
 if TYPE_CHECKING:
@@ -165,8 +165,10 @@ def resolve_one_master_card_contest(state: GameState, player: str, card: MasterC
     rulebook's "unlocked and turned face up during your *next* unlock
     phase" wording.
     """
+    # OQ-42: paying must not leave the payer at 0 pool; yielding stays.
+    pay = (Choice("pay", "Pay 1 pool to keep contesting"),)
     choices = (
-        Choice("pay", "Pay 1 pool to keep contesting"),
+        *(pay if can_afford_without_ousting(state, player, 1) else ()),
         Choice("yield", "Yield: burn this card"),
     )
     decision = Decision(
@@ -175,7 +177,7 @@ def resolve_one_master_card_contest(state: GameState, player: str, card: MasterC
         choices=choices,
         context={"card": card.instance_id, "contested_with": card.contested_with},
     )
-    choice = state.ask(decision)
+    choice = state.ask_unless_forced(decision)
     if choice.value == "pay":
         lose_pool(state, player, 1)
     else:

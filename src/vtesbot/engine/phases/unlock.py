@@ -81,6 +81,8 @@ def unlock_phase(state: GameState, player: str) -> None:
     _unlock_own_attachments(state, player)
     _unlock_own_master_cards(state, player)
     hooks.run_effects(UNLOCK_PHASE_MANDATORY_EFFECT_HOOK, state, player=player)
+    if state.game_over:
+        return
     _resolve_optional_effects_in_chosen_order(state, player)
 
 
@@ -205,7 +207,7 @@ def _pending_effect_ids(state: GameState, player: str, resolved: set[str]) -> li
 
 def _resolve_optional_effects_in_chosen_order(state: GameState, player: str) -> None:
     resolved: set[str] = set()
-    while True:
+    while not state.game_over:
         pending = _pending_effect_ids(state, player, resolved)
         if not pending:
             return

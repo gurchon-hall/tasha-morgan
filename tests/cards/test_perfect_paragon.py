@@ -79,9 +79,7 @@ def test_basic_offered_with_basic_pre_discipline():
 
 def test_basic_not_offered_without_the_card_in_hand():
     builder = ScenarioBuilder(seed=1)
-    builder.player("P1", pool=30).ready_vampire(
-        "V1", capacity=3, blood=1, disciplines=("pre",)
-    )
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, disciplines=("pre",))
     builder.player("P2", pool=30)
     game = builder.build()
 
@@ -111,9 +109,7 @@ def test_basic_not_offered_to_the_other_methuselahs_own_polling_step_window():
     even if that Methuselah also holds a copy and controls a `[pre]`
     vampire."""
     builder = ScenarioBuilder(seed=1)
-    builder.player("P1", pool=30).ready_vampire(
-        "V1", capacity=3, blood=1, disciplines=("pre",)
-    )
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, disciplines=("pre",))
     p2 = builder.player("P2", pool=30).ready_vampire(
         "V2", capacity=3, blood=1, disciplines=("pre",)
     )
@@ -126,7 +122,7 @@ def test_basic_not_offered_to_the_other_methuselahs_own_polling_step_window():
 
 
 def test_basic_not_offered_through_a_different_ready_vampire_of_the_caller():
-    """"This vampire" is specifically the referendum's own calling vampire
+    """ "This vampire" is specifically the referendum's own calling vampire
     (`caller_vampire_id`), never some *other* ready vampire the caller
     happens to control, even one with `[pre]` and the card in hand -- the
     provider never enumerates "which of my vampires plays this"."""
@@ -226,9 +222,7 @@ def test_superior_offered_with_superior_pre_discipline():
 
 def test_superior_not_offered_without_the_card_in_hand():
     builder = ScenarioBuilder(seed=1)
-    builder.player("P1", pool=30).ready_vampire(
-        "V1", capacity=3, blood=1, disciplines=("PRE",)
-    )
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, disciplines=("PRE",))
     builder.player("P2", pool=30)
     game = builder.build()
 
@@ -349,7 +343,7 @@ def test_superior_clause_declined_proactively_can_still_be_played_reactively_onc
 
 
 def test_superior_clauses_allies_half_is_currently_unreachable():
-    """"Allies ... get -1 intercept": `engine/action.py::attempt_block`'s
+    """ "Allies ... get -1 intercept": `engine/action.py::attempt_block`'s
     own candidate pool (`state.ready_unlocked_vampires`) is built only from
     `PlayerState.vampires`, never `PlayerState.allies` (`engine/allies.py`'s
     own "ally block participation ... deliberately out of scope" module

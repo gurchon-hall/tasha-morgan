@@ -21,7 +21,7 @@ swapped for Marcos's real printed identity where the test calls for it.
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards import registry
 from vtesbot.cards.marcos_belegrad import KRCG_ID
-from vtesbot.engine import CryptCard
+from vtesbot.engine import CryptCard, hooks
 from vtesbot.engine.politics import political_action
 
 
@@ -192,3 +192,143 @@ def test_a_referendum_called_by_a_different_titled_vampire_never_triggers_marcos
     assert game.pool_of("P2") == 30  # Marcos never triggers: this was not his referendum
     actor.assert_exhausted()
     defender.assert_exhausted()
+
+
+def test_both_methuselahs_casting_against_at_one_pool_is_a_tie():
+    """OQ-44 (user ruling): both reaching 0 from Marcos's one tally effect is
+    a tie -- no winner -- and swapping `turn_order` does not change it."""
+    for order in (["P1", "P2"], ["P2", "P1"]):
+        builder = ScenarioBuilder(seed=1)
+        p1 = builder.player("P1", pool=1)
+        p1.ready_vampire("Marcos1", capacity=8, blood=1)
+        _make_marcos(p1, "Marcos1")
+        builder.player("P2", pool=1)
+        game = builder.build()
+        game.state.turn_order = order
+        context = {
+            "caller_vampire": game.vampire("Marcos1"),
+            "casts": [
+                ("P1", "a", 1, "against"),
+                ("P2", "b", 1, "against"),
+            ],
+        }
+
+        hooks.run_effects("referendum_tallied", game.state, **context)
+
+        assert game.state.game_over is True
+        assert game.state.winner is None
+        assert game.state.eliminated == {"P1", "P2"}
+
+
+def test_only_one_caster_at_one_pool_is_still_an_ordinary_oust():
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=1)
+    p1.ready_vampire("Marcos1", capacity=8, blood=1)
+    _make_marcos(p1, "Marcos1")
+    builder.player("P2", pool=5)
+    game = builder.build()
+    context = {
+        "caller_vampire": game.vampire("Marcos1"),
+        "casts": [("P1", "a", 1, "against"), ("P2", "b", 1, "for")],
+    }
+
+    hooks.run_effects("referendum_tallied", game.state, **context)
+
+    assert game.state.winner == "P2"
+    assert game.state.eliminated == {"P1"}
+
+
+def _offered_choices_in_marcos_referendum(defender_pool: int) -> list[str]:
+    """Choices P2 is offered at its first polling_step_cast."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30)
+    p1.ready_vampire("Marcos1", capacity=8, blood=1)
+    _make_marcos(p1, "Marcos1")
+    builder.player("P2", pool=defender_pool).ready_vampire(
+        "B1", capacity=3, blood=1, title="Primogen"
+    )
+    game = builder.build()
+    seen: list[str] = []
+
+    class Recorder(ScriptedAgent):
+        def decide(self, observation, decision):
+            if decision.kind == "polling_step_cast":
+                seen.extend(c.value for c in decision.choices)
+            return next(c for c in decision.choices if c.value in ("pass", "decline"))
+
+    actor = ScriptedAgent("P1")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    actor.expect("polling_step_cast", "pass")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = Recorder("P2")
+    political_action(game.state, "P1", game.vampire("Marcos1"))
+    return seen
+
+
+def test_voting_against_marcos_is_not_offered_when_it_would_zero_the_voter():
+    """OQ-43 (user ruling 2026-10-13): choices leading the chooser to 0 pool
+    are forbidden; the burn happens at tally, but the choice is the cast."""
+    seen = _offered_choices_in_marcos_referendum(defender_pool=1)
+    assert "for:title:B1" in seen
+    assert "against:title:B1" not in seen
+
+
+def test_voting_against_marcos_is_offered_at_two_pool():
+    seen = _offered_choices_in_marcos_referendum(defender_pool=2)
+    assert "against:title:B1" in seen
+
+
+def test_caller_cannot_vote_against_their_own_marcos_referendum_at_pool_one():
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=1)
+    p1.ready_vampire("Marcos1", capacity=8, blood=1)
+    _make_marcos(p1, "Marcos1")
+    builder.player("P2", pool=30)
+    game = builder.build()
+    seen: list[str] = []
+
+    class Rec(ScriptedAgent):
+        def decide(self, observation, decision):
+            seen.extend(c.value for c in decision.choices)
+            return next(c for c in decision.choices if c.value == "pass")
+
+    game.state.agents["P1"] = Rec("P1")
+    game.state.agents["P2"] = ScriptedAgent("P2")
+    political_action(game.state, "P1", game.vampire("Marcos1"))
+
+    assert "for:political_action_card:P1" in seen
+    assert not any(v.startswith("against:") for v in seen)
+
+
+def test_a_second_against_cast_costs_nothing_extra_so_stays_offered():
+    """One burn per Methuselah: after the first against-cast (pool 3 -> 2
+    left at tally), a second source against is still offered."""
+    builder = ScenarioBuilder(seed=1).edge_holder("P2")
+    p1 = builder.player("P1", pool=30)
+    p1.ready_vampire("Marcos1", capacity=8, blood=1)
+    _make_marcos(p1, "Marcos1")
+    builder.player("P2", pool=2).ready_vampire("B1", capacity=3, blood=1, title="Primogen")
+    game = builder.build()
+    seen: list[list[str]] = []
+
+    class Passer(ScriptedAgent):
+        def decide(self, observation, decision):
+            return next(c for c in decision.choices if c.value == "pass")
+
+    actor = Passer("P1")
+
+    class Def(ScriptedAgent):
+        def decide(self, observation, decision):
+            if decision.kind == "polling_step_cast":
+                seen.append([c.value for c in decision.choices])
+                if "against:title:B1" in seen[-1]:
+                    return next(c for c in decision.choices if c.value == "against:title:B1")
+                return next(c for c in decision.choices if c.value.startswith("against:edge"))
+            return next(c for c in decision.choices if c.value == "decline")
+
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = Def("P2")
+    political_action(game.state, "P1", game.vampire("Marcos1"))
+
+    assert any("against:edge:P2" in s for s in seen)
+    assert game.pool_of("P2") == 1

@@ -420,8 +420,8 @@ def test_end_to_end_through_a_real_passing_political_action():
     actor = ScriptedAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "kine_resources_contested:play")
-    actor.expect("polling_step_cast", "for:political_action_card:P1")
     actor.expect("kine_resources_contested_allocation", "allocate:2")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
     actor.expect("referendum_resolved", "voter_captivation:basic:V1")
     # No further decision follows: the card is now gone from hand, so the
     # next `resolve_impulse_window` offer is empty for both sides and the

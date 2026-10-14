@@ -116,9 +116,7 @@ def test_unmatched_name_is_reported_not_guessed(cards, tiny_allowed_list):
 
 def test_real_ventrue_suggested_decklist_is_legal(cards):
     repo_root = Path(__file__).resolve().parents[2]
-    allowed = load_allowed_list(
-        repo_root / "data" / "formats" / "2p" / "2026-10-03.json"
-    )
+    allowed = load_allowed_list(repo_root / "data" / "formats" / "2p" / "2026-10-03.json")
     fixture = json.loads(
         (repo_root / "data" / "decks" / "vekn-2p" / "ventrue.json").read_text(encoding="utf-8")
     )

@@ -141,8 +141,8 @@ def _provide_parity_shift(state: GameState, context: Mapping[str, Any]) -> list[
             votes_for, votes_against, _casts = resolve_referendum(
                 s, player, other, acting_vampire, action_pending=pending
             )
-            if votes_for <= votes_against:
-                return  # referendum fails ("tied referendums fail"): no effect at all.
+            if s.game_over or votes_for <= votes_against:
+                return  # oust at tally, or fails ("tied referendums fail"): no effect.
 
             # "1 or more other Methuselahs" excludes the target itself; with
             # only two Methuselahs total, the caller is the only possible

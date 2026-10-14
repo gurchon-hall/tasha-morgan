@@ -387,7 +387,7 @@ def _duel_stealth_intercept(
             if not options:
                 return stealth, intercept
             delta = _ask_modifier(state, defender, INTERCEPT_MODIFIER_HOOK, options, context)
-            if delta is None:
+            if delta is None or state.game_over:
                 return stealth, intercept
             intercept += delta
         else:
@@ -433,6 +433,8 @@ def _duel_stealth_intercept(
             option, kind = chosen
             if kind == "intercept_decrease":
                 option.apply(state)
+                if state.game_over:
+                    return stealth, intercept
                 # Re-evaluated fresh, same as the baseline at the top of
                 # this function: never cached (OQ-11).
                 intercept = _active_intercept_decrease(pending, blocker)
@@ -441,6 +443,8 @@ def _duel_stealth_intercept(
                 stealth = base_stealth + _active_stealth_increase(pending)
             else:
                 stealth += option.apply(state)
+                if state.game_over:
+                    return stealth, intercept
 
 
 def _ask_modifier(
@@ -587,7 +591,7 @@ def attempt_block(
     """
     if pending is None:
         pending = {}
-    while True:
+    while not state.game_over:
         proactive_context = {
             "actor": actor,
             "defender": defender,
@@ -598,7 +602,11 @@ def attempt_block(
             "pending": pending,
         }
         hooks.offer_until_pass(state, INTERCEPT_DECREASE_HOOK, actor, proactive_context)
+        if state.game_over:
+            return None
         hooks.offer_until_pass(state, STEALTH_INCREASE_HOOK, actor, proactive_context)
+        if state.game_over:
+            return None
         candidates = state.ready_unlocked_vampires(defender)
         candidate_choices = tuple(
             Choice(f"block_with:{v.instance_id}", f"Block with {v.card.name}") for v in candidates
@@ -642,7 +650,8 @@ def attempt_block(
         if choice.value in by_injected_value:
             # OQ-26: an immediate, unconditional successful block -- never
             # runs the stealth/intercept ping-pong for this candidate.
-            return by_injected_value[choice.value].apply(state)
+            injected_blocker = by_injected_value[choice.value].apply(state)
+            return None if state.game_over else injected_blocker
 
         instance_id = choice.value.split(":", 1)[1]
         blocker = state.players[defender].vampires[instance_id]
@@ -658,6 +667,8 @@ def attempt_block(
             directed=directed,
             pending=pending,
         )
+        if state.game_over:
+            return None
         if intercept >= stealth:
             return blocker
         # Failed attempt: does not lock the blocker, does not end the
@@ -721,12 +732,16 @@ def perform_minion_action(
         directed=directed,
         pending=pending,
     )
+    if state.game_over:
+        return
     if blocker is not None:
         blocker.locked = True
         initial_combat_state = (
             seed_pre_combat_maneuver_grant(maneuver_grant) if maneuver_grant is not None else None
         )
         run_combat(state, actor_player, vampire, defender_player, blocker, initial_combat_state)
+        if state.game_over:
+            return
         if on_blocked is not None:
             on_blocked(pending)
         return

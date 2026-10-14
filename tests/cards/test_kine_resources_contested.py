@@ -24,12 +24,17 @@ only ever one oust event in a duel, per `engine/ousting.py`).
 
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards.kine_resources_contested import KRCG_ID
+from vtesbot.cards.marcos_belegrad import KRCG_ID as MARCOS_ID
+from vtesbot.cards.oxford_university_england import KRCG_ID as OXFORD_ID
+from vtesbot.cards.oxford_university_england import NAME as OXFORD_NAME
 from vtesbot.cards.registry import Status, get
-from vtesbot.engine import LibraryCard, hooks
+from vtesbot.engine import CryptCard, LibraryCard, hooks
 from vtesbot.engine.action import ACTION_POLITICAL
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
+from vtesbot.engine.master_cards import bring_master_card_into_play
 from vtesbot.engine.phases.minion import minion_phase
+from vtesbot.engine.politics import POLLING_STEP_HOOK
 
 NAME = "Kine Resources Contested"
 
@@ -90,8 +95,8 @@ def test_offered_and_a_passing_referendum_burns_the_chosen_split():
     actor = ScriptedAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "kine_resources_contested:play")
-    actor.expect("polling_step_cast", "for:political_action_card:P1")
     actor.expect("kine_resources_contested_allocation", "allocate:2")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
     game.state.agents["P1"] = actor
     game.state.agents["P2"] = ScriptedAgent("P2")
 
@@ -116,6 +121,7 @@ def test_a_referendum_that_fails_has_no_effect():
     actor = ScriptedAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "kine_resources_contested:play")
+    actor.expect("kine_resources_contested_allocation", "allocate:2")
     actor.expect("polling_step_cast", "for:political_action_card:P1")
     defender = ScriptedAgent("P2")
     defender.expect("block_attempt", "decline")
@@ -202,8 +208,8 @@ def test_allocation_choices_never_let_a_single_methuselah_get_all_four_or_zero()
     actor = RecordingAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "kine_resources_contested:play")
-    actor.expect("polling_step_cast", "for:political_action_card:P1")
     actor.expect("kine_resources_contested_allocation", "allocate:1")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
     game.state.agents["P1"] = actor
     game.state.agents["P2"] = ScriptedAgent("P2")
 
@@ -230,8 +236,8 @@ def test_can_allocate_more_points_than_a_methuselah_has_pool_and_it_ousts_them()
     actor = ScriptedAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "kine_resources_contested:play")
-    actor.expect("polling_step_cast", "for:political_action_card:P1")
     actor.expect("kine_resources_contested_allocation", "allocate:1")  # other gets 3, only has 2
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
     game.state.agents["P1"] = actor
     game.state.agents["P2"] = ScriptedAgent("P2")
 
@@ -244,3 +250,327 @@ def test_can_allocate_more_points_than_a_methuselah_has_pool_and_it_ousts_them()
     assert game.state.victory_points["P1"] == 2  # 1 (ousted prey) + 1 (last Methuselah)
     assert game.pool_of("P1") == 35  # 30 - 1 (self-allocated) + 6 (oust bonus)
     actor.assert_exhausted()
+
+
+def test_oust_at_tally_applies_no_allocation_burn():
+    """A tally-time oust (REFERENDUM_TALLIED reaction) ends the game: the
+    locked split is never applied (Rulebook SS5)."""
+    from vtesbot.engine.pool import lose_pool
+
+    def oust_caller(state, context):
+        lose_pool(state, "P1", 30)
+
+    hooks.register("referendum_tallied", oust_caller)
+    try:
+        builder = ScenarioBuilder(seed=1)
+        p1 = builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)
+        p1.hand.append(_kine_card())
+        builder.player("P2", pool=30)
+        game = builder.build()
+        actor = ScriptedAgent("P1")
+        actor.expect("minion_phase_choice", "act_with:V1")
+        actor.expect("action_choice", "kine_resources_contested:play")
+        actor.expect("kine_resources_contested_allocation", "allocate:2")
+        actor.expect("polling_step_cast", "for:political_action_card:P1")
+        game.state.agents["P1"] = actor
+        game.state.agents["P2"] = ScriptedAgent("P2")
+
+        minion_phase(game.state, "P1")
+
+        assert game.state.game_over is True
+        assert game.pool_of("P2") == 36  # 30 + 6 oust bonus, nothing burned
+    finally:
+        hooks.unregister("referendum_tallied", oust_caller)
+
+
+def _action_choices_for_kine_caller(pool: int) -> list[str]:
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=pool).ready_vampire("V1", capacity=3, blood=1)
+    p1.hand.append(_kine_card())
+    builder.player("P2", pool=30)
+    game = builder.build()
+    seen: list[str] = []
+
+    class Rec(ScriptedAgent):
+        def decide(self, observation, decision):
+            if decision.kind == "action_choice":
+                seen.extend(c.value for c in decision.choices)
+            return super().decide(observation, decision)
+
+    actor = Rec("P1")
+    actor.expect("minion_phase_choice", "act_with:V1")
+    actor.expect("action_choice", "bleed")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+    minion_phase(game.state, "P1")
+    return seen
+
+
+def test_not_offered_when_no_split_can_leave_the_caller_above_zero_pool():
+    """OQ-42 (user ruling): the caller picks the split, so the caller's own
+    share must leave them 1+ pool; with pool 1 every split (1/3, 2/2, 3/1)
+    would self-oust."""
+    assert "kine_resources_contested:play" not in _action_choices_for_kine_caller(1)
+    assert "kine_resources_contested:play" in _action_choices_for_kine_caller(2)
+
+
+def test_allocation_never_offers_a_self_share_that_zeroes_the_caller():
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=3).ready_vampire("V1", capacity=3, blood=1)
+    p1.hand.append(_kine_card())
+    builder.player("P2", pool=30)
+    game = builder.build()
+    seen: list[list[str]] = []
+
+    class Rec(ScriptedAgent):
+        def decide(self, observation, decision):
+            if decision.kind == "kine_resources_contested_allocation":
+                seen.append(sorted(c.value for c in decision.choices))
+            return super().decide(observation, decision)
+
+    actor = Rec("P1")
+    actor.expect("minion_phase_choice", "act_with:V1")
+    actor.expect("action_choice", "kine_resources_contested:play")
+    actor.expect("kine_resources_contested_allocation", "allocate:2")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    minion_phase(game.state, "P1")
+
+    assert seen == [["allocate:1", "allocate:2"]]  # pool 3: self share <= 2
+    assert game.pool_of("P1") == 1
+
+
+def test_kine_with_oxford_burn_is_capped_by_the_pool_reserve_and_allocation_stays_legal():
+    """`resolve_referendum(pool_reserve={player: 1})` keeps Kine's mandatory
+    self share payable: at pool 3 with allocate:1 locked first Oxford may burn only X=1."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=3).ready_vampire("V1", capacity=3, blood=1)
+    p1.hand.append(_kine_card())
+    builder.player("P2", pool=30)
+    game = builder.build()
+    location = bring_master_card_into_play(game.state, "P1", krcg_id=OXFORD_ID, name=OXFORD_NAME)
+    burn_options: list[str] = []
+
+    class Rec(ScriptedAgent):
+        def decide(self, observation, decision):
+            if decision.kind == POLLING_STEP_HOOK:
+                burn_options.extend(c.value for c in decision.choices)
+            return super().decide(observation, decision)
+
+    actor = Rec("P1")
+    actor.expect("minion_phase_choice", "act_with:V1")
+    actor.expect("action_choice", "kine_resources_contested:play")
+    actor.expect("kine_resources_contested_allocation", "allocate:1")
+    actor.expect(POLLING_STEP_HOOK, f"oxford:{location.instance_id}:1")
+    actor.expect("polling_step_cast", f"for:oxford:{location.instance_id}:1")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    minion_phase(game.state, "P1")
+
+    assert [v for v in burn_options if v.startswith("oxford:")] == [
+        f"oxford:{location.instance_id}:1"
+    ]
+    assert game.pool_of("P1") == 1  # 3 - 1 (Oxford) - 1 (allocate:1)
+    assert game.pool_of("P2") == 27
+    assert game.state.game_over is False
+    actor.assert_exhausted()
+
+
+def test_kine_under_marcos_never_dead_ends_on_the_callers_own_against_vote():
+    """Audit repro: P1 (pool 2) acts with Marcos and plays Kine. Voting
+    against their own referendum would cost the Marcos burn (pool -> 1, no
+    legal split left); OQ-43 (choices leading to own 0 are forbidden) means
+    that vote is not offered, so the allocation can no longer dead-end."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=2)
+    p1.ready_vampire("Marcos1", capacity=8, blood=1)
+    p1.hand.append(_kine_card())
+    builder.player("P2", pool=30)
+    game = builder.build()
+    game.vampire("Marcos1").card = CryptCard(
+        krcg_id=MARCOS_ID,
+        name="Marcos Belegrad",
+        capacity=8,
+        group=7,
+        clan="Toreador",
+        title="Prince",
+        disciplines=("ani", "AUS", "CEL", "PRE"),
+    )
+    offered: list[str] = []
+
+    class Rec(ScriptedAgent):
+        def decide(self, observation, decision):
+            if decision.kind == "polling_step_cast":
+                offered.extend(c.value for c in decision.choices)
+            return super().decide(observation, decision)
+
+    actor = Rec("P1")
+    actor.expect("minion_phase_choice", "act_with:Marcos1")
+    actor.expect("action_choice", "kine_resources_contested:play")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    actor.expect("polling_step_cast", "for:title:Marcos1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    minion_phase(game.state, "P1")
+
+    assert not any(v.startswith("against:") for v in offered)
+    assert game.state.game_over is False
+    assert game.pool_of("P1") == 1  # allocate:1 (auto-resolved)
+    assert game.pool_of("P2") == 27
+    actor.assert_exhausted()
+
+
+def _marcos_scenario(pool: int, p2_pool: int = 30):
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=pool)
+    p1.ready_vampire("Marcos1", capacity=8, blood=1)
+    p1.hand.append(_kine_card())
+    builder.player("P2", pool=p2_pool)
+    game = builder.build()
+    game.vampire("Marcos1").card = CryptCard(
+        krcg_id=MARCOS_ID,
+        name="Marcos Belegrad",
+        capacity=8,
+        group=7,
+        clan="Toreador",
+        title="Prince",
+        disciplines=("ani", "AUS", "CEL", "PRE"),
+    )
+    return game
+
+
+def test_allocation_is_locked_before_the_first_vote_and_pre_vote_window():
+    """User ruling 2026-10-13 (OQ-45): the split is locked before the vote,
+    then the pre-vote window, then votes, then end-of-tally reactions, then
+    the effects. Rulebook SS4 "The Referendum" step 1 "Choose the terms"
+    precedes step 2 "Polling"."""
+    log: list[str] = []
+
+    def pre_vote(state, context):
+        if context.get("phase") == "before_cast" and (not log or log[-1] != "pre_vote_window"):
+            log.append("pre_vote_window")
+        return []
+
+    def tallied(state, context):
+        log.append("tally_reactions")
+
+    hooks.register(POLLING_STEP_HOOK, pre_vote)
+    hooks.register("referendum_tallied", tallied)
+    try:
+        builder = ScenarioBuilder(seed=1)
+        p1 = builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)
+        p1.hand.append(_kine_card())
+        builder.player("P2", pool=30)
+        game = builder.build()
+
+        class Rec(ScriptedAgent):
+            def decide(self, observation, decision):
+                log.append(decision.kind)
+                if decision.kind == "kine_resources_contested_allocation":
+                    assert game.pool_of("P1") == 30 and game.pool_of("P2") == 30
+                return super().decide(observation, decision)
+
+        actor = Rec("P1")
+        actor.expect("minion_phase_choice", "act_with:V1")
+        actor.expect("action_choice", "kine_resources_contested:play")
+        actor.expect("kine_resources_contested_allocation", "allocate:2")
+        actor.expect("polling_step_cast", "for:political_action_card:P1")
+        game.state.agents["P1"] = actor
+        game.state.agents["P2"] = ScriptedAgent("P2")
+
+        minion_phase(game.state, "P1")
+
+        trimmed = [e for e in log if e not in ("minion_phase_choice", "action_choice")]
+        assert trimmed[:4] == [
+            "kine_resources_contested_allocation",
+            "pre_vote_window",
+            "polling_step_cast",
+            "tally_reactions",
+        ]
+        assert game.pool_of("P1") == 28 and game.pool_of("P2") == 28
+    finally:
+        hooks.unregister(POLLING_STEP_HOOK, pre_vote)
+        hooks.unregister("referendum_tallied", tallied)
+
+
+def test_marcos_against_vote_is_withheld_when_the_locked_share_would_become_unpayable():
+    """Audit repro (pool 2, Marcos, Kine): with share 1 locked, an against
+    vote (tally burn 1) would leave pool 1 < share + 1. Not offered; the
+    referendum then resolves legally."""
+    game = _marcos_scenario(pool=2)
+    offered: list[str] = []
+
+    class Rec(ScriptedAgent):
+        def decide(self, observation, decision):
+            if decision.kind == "polling_step_cast":
+                offered.extend(c.value for c in decision.choices)
+            return super().decide(observation, decision)
+
+    actor = Rec("P1")
+    actor.expect("minion_phase_choice", "act_with:Marcos1")
+    actor.expect("action_choice", "kine_resources_contested:play")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    actor.expect("polling_step_cast", "for:title:Marcos1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    minion_phase(game.state, "P1")
+
+    assert not any(v.startswith("against:") for v in offered)
+    assert game.state.game_over is False
+    assert game.pool_of("P1") == 1
+    assert game.pool_of("P2") == 27
+
+
+def test_marcos_against_vote_is_offered_when_pool_covers_tally_burn_and_locked_share():
+    """Pool 4, share 1 locked: against costs 1 (Marcos) and share 1 still
+    leaves 2 >= 1. With share 3 locked it is withheld (4 - 1 - 3 = 0)."""
+
+    def run(share: int) -> tuple[list[str], int]:
+        game = _marcos_scenario(pool=4)
+        offered: list[str] = []
+
+        class Rec(ScriptedAgent):
+            def decide(self, observation, decision):
+                if decision.kind == "polling_step_cast":
+                    offered.extend(c.value for c in decision.choices)
+                return super().decide(observation, decision)
+
+        actor = Rec("P1")
+        actor.expect("minion_phase_choice", "act_with:Marcos1")
+        actor.expect("action_choice", "kine_resources_contested:play")
+        actor.expect("kine_resources_contested_allocation", f"allocate:{share}")
+        direction = "against" if share == 1 else "for"
+        actor.expect("polling_step_cast", f"{direction}:political_action_card:P1")
+        actor.expect("polling_step_cast", "for:title:Marcos1")
+        game.state.agents["P1"] = actor
+        game.state.agents["P2"] = ScriptedAgent("P2")
+        minion_phase(game.state, "P1")
+        assert game.state.game_over is False
+        return offered, game.pool_of("P1")
+
+    offered, pool = run(1)
+    assert "against:political_action_card:P1" in offered
+    assert pool == 2  # 4 - 1 (Marcos tally burn) - 1 (locked share)
+    offered, _ = run(3)
+    assert not any(v.startswith("against:") for v in offered)
+
+
+def test_locked_share_must_be_affordable_when_locked():
+    """Pool 2: only share 1 is lockable (own pool >= share + 1, D-9)."""
+    assert [p for p in _legal_self_points_for(2)] == [1]
+    assert [p for p in _legal_self_points_for(4)] == [1, 2, 3]
+
+
+def _legal_self_points_for(pool: int):
+    from vtesbot.cards.kine_resources_contested import _legal_self_points
+
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=pool)
+    builder.player("P2", pool=30)
+    return _legal_self_points(builder.build().state, "P1")

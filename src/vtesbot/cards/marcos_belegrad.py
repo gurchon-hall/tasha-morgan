@@ -49,10 +49,9 @@ ballot against Marcos's referendum (not per source, not per vote) -- a
 plain reading of the verbatim printed text (CLAUDE.md SS2 "Golden Rule for
 Cards"), there being no ruling on file either way.
 
-Effect: `lose_pool(state, player, 1)` (`engine/pool.py`) for each such
-Methuselah -- already floors at 0 and triggers the oust check, so a
-Methuselah reduced to 0 pool by this reaction is ousted exactly like any
-other pool loss (Rulebook SS5).
+Effect: `lose_pool_simultaneously` (`engine/pool.py`), 1 pool for each such
+Methuselah as one event -- floors at 0; a lone Methuselah reduced to 0 is
+ousted like any other pool loss, both reduced to 0 tie (OQ-44, Rulebook SS5).
 
 Fires regardless of the referendum's own eventual pass/fail outcome (the
 card's own trigger is "once results are tallied", a moment strictly before
@@ -68,7 +67,8 @@ from typing import Any
 
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
-from vtesbot.engine.pool import lose_pool
+from vtesbot.engine.politics import VOTE_AGAINST_POOL_COST_HOOK
+from vtesbot.engine.pool import lose_pool_simultaneously
 from vtesbot.engine.state import GameState
 
 KRCG_ID = 201702
@@ -85,11 +85,24 @@ def _provide_marcos_belegrad(state: GameState, context: Mapping[str, Any]) -> No
         for (player, _source_id, _votes, direction) in context["casts"]
         if direction == "against"
     }
-    for player in casters_against:
-        lose_pool(state, player, 1)
+    lose_pool_simultaneously(state, dict.fromkeys(casters_against, 1))
+
+
+def _marcos_against_cost(state: GameState, context: Mapping[str, Any]) -> int:
+    """OQ-43 (user ruling 2026-10-13): casting against must not be offered
+    if the tally burn would take the caster to 0 pool. One burn per
+    Methuselah, so a second against-cast costs nothing more."""
+    caller_vampire = context["caller_vampire"]
+    if caller_vampire is None or caller_vampire.card.krcg_id != KRCG_ID:
+        return 0
+    player = context["player"]
+    if any(p == player and d == "against" for (p, _s, _v, d) in context["casts"]):
+        return 0
+    return 1
 
 
 hooks.register(REFERENDUM_TALLIED_HOOK, _provide_marcos_belegrad)
+hooks.register(VOTE_AGAINST_POOL_COST_HOOK, _marcos_against_cost)
 
 register(
     CardRegistration(

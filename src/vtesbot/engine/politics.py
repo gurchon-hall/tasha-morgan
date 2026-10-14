@@ -252,7 +252,8 @@ implementation and returns what it gives back (optionally chained with its
 own, unrelated `HookOption`s, e.g. for a card with more than one ability).
 X = 0 is deliberately never offered (burning 0 pool for 0 votes is not a
 meaningful choice, CLAUDE.md "only when needed"); the upper bound is
-`player`'s current pool (a Methuselah cannot burn more pool than they have).
+`player`'s current pool minus 1 minus any `pool_reserve` (OQ-42/OQ-43: a
+Methuselah may not burn themself to 0).
 
 Vote/ballot *casting order* for exactly two Methuselahs was an open question
 (`docs/OPEN_QUESTIONS.md` OQ-20, now resolved): the quoted rule above only
@@ -272,7 +273,7 @@ before the other Methuselah gets a look). `_cast_votes` below implements
 exactly that; see its own docstring for the loop's mechanics.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -281,7 +282,7 @@ from .action import ACTION_POLITICAL, attempt_block
 from .combat import run_combat
 from .decision import Choice, Decision
 from .hooks import HookOption
-from .pool import lose_pool
+from .pool import lose_pool, max_voluntary_spend
 
 if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
@@ -305,13 +306,23 @@ place -- the hook site Marcos Belegrad's mandatory "burn 1 pool" reaction
 needs (OQ-6)."""
 
 REFERENDUM_RESULT_KEY = "referendum_result"
-"""OQ-36 (`docs/OPEN_QUESTIONS.md`): the key `resolve_referendum` writes its
-own tally/pass-fail outcome into, inside whatever `action_pending` dict it
-is given (a `{"votes_for", "votes_against", "passed"}` dict) -- see that
-function's own `action_pending` docstring and `engine/action.py::
+"""OQ-36 (`docs/OPEN_QUESTIONS.md`, Voter Captivation's own post-resolution
+dispatch): the key `resolve_referendum` writes its own tally/pass-fail
+outcome into, inside whatever `action_pending` dict it is given (a
+`{"votes_for", "votes_against", "passed"}` dict) -- see that function's own
+`action_pending` docstring and `engine/action.py::
 PENDING_REFERENDUM_RESULT_KEY` (a duplicated string literal, not an import
 of this constant, to avoid a circular import -- see that constant's own
 docstring)."""
+
+VOTE_AGAINST_POOL_COST_HOOK = "vote_against_pool_cost"
+"""`hooks.sum_modifiers` hook: pool the casting Methuselah will be forced to
+lose later (e.g. at tally) because of casting *against* this referendum.
+Context: `player`, `caller_vampire`, `casts` (casts so far). Used only to
+gate the choice (OQ-43, user ruling 2026-10-13, D-9): a cast whose
+consequence would take the caster to 0 pool is not offered. The loss itself
+stays a forced effect (`REFERENDUM_TALLIED_HOOK`). Plain string: engine
+modules never import `cards/registry.py`."""
 
 POLITICAL_ACTION_CARD_TYPE = "Political Action"
 """`LibraryCard.card_type` value for a political action card (confirmed
@@ -385,7 +396,7 @@ def variable_pool_burn_vote_options(
     on_burn: Callable[[GameState], None] | None = None,
 ) -> list[HookOption]:
     """Build one `POLLING_STEP_HOOK` `HookOption` per legal pool-burn amount
-    X (1..`player`'s current pool) for a "burn X pool during the polling
+    X (1..`player`'s pool - 1, OQ-42) for a "burn X pool during the polling
     step of a political action to get <votes_per_pool>*X votes" ability
     (module docstring, "A fourth `POLLING_STEP_HOOK` shape" -- Oxford
     University, England, OQ-23 `docs/OPEN_QUESTIONS.md`: "You can lock this
@@ -419,13 +430,13 @@ def variable_pool_burn_vote_options(
 
     X = 0 is deliberately never offered: burning 0 pool for 0 votes is a
     no-op, not a meaningful choice (CLAUDE.md "only when needed" -- no
-    vacuous option). Capped at `player`'s current pool (a Methuselah cannot
-    burn pool they do not have); if `player` has 0 pool, this returns an
-    empty list.
+    vacuous option). Capped at `max_voluntary_spend` (pool - 1; OQ-42, user
+    ruling: no voluntary self-oust in the 2P duel); with pool <= 1 this
+    returns an empty list.
     """
-    pool = state.players[player].pool
     options: list[HookOption] = []
-    for x in range(1, pool + 1):
+    reserve = pending.get("pool_reserve", {}).get(player, 0)
+    for x in range(1, max_voluntary_spend(state, player) - reserve + 1):
         votes = votes_per_pool * x
 
         def _apply(s: GameState, x: int = x, votes: int = votes) -> None:
@@ -461,7 +472,9 @@ def political_action(
     """Announce (lock) -> block attempt -> (blocked: combat) | (unblocked: referendum).
 
     Returns `None` if the action was blocked (no referendum ever occurs,
-    per OQ-5's verbatim rulebook quote in the module docstring); otherwise
+    per OQ-5's verbatim rulebook quote in the module docstring) or if an
+    oust ended the game first (`state.game_over` is then True; callers
+    must check it and apply no further effect); otherwise
     returns the referendum's pass/fail result from `resolve_referendum`
     (`True` = passes, `False` = fails). "Terms chosen only after success"
     (Rulebook SS4 "The Political Action") is left to the caller (a future
@@ -491,6 +504,8 @@ def political_action(
         vampire,
         action=ACTION_POLITICAL,
     )
+    if state.game_over:
+        return None
     if blocker is not None:
         blocker.locked = True
         run_combat(state, actor_player, vampire, defender_player, blocker)
@@ -498,6 +513,8 @@ def political_action(
     votes_for, votes_against, _casts = resolve_referendum(
         state, actor_player, defender_player, vampire
     )
+    if state.game_over:
+        return None
     return votes_for > votes_against
 
 
@@ -507,6 +524,8 @@ def resolve_referendum(
     other_player: str,
     caller_vampire: VampireInPlay,
     action_pending: dict[str, Any] | None = None,
+    *,
+    pool_reserve: Mapping[str, int] | None = None,
 ) -> tuple[int, int, list[tuple[str, str, int, str]]]:
     """Run an unblocked referendum's polling step and tally (Rulebook SS4
     "The Referendum", steps 2-3 -- see module docstring for the verbatim
@@ -531,29 +550,52 @@ def resolve_referendum(
     function's only caller today, always passing the acting Methuselah and
     vampire.
 
-    `action_pending` (OQ-36, `docs/OPEN_QUESTIONS.md`): when given, this
-    *outer* scratch dict -- `engine/action.py::perform_minion_action`'s own
-    per-attempt `pending` (OQ-11), shared with that same action's earlier
-    block-attempt phase and later threaded into a political-action card's
-    own `resolve()` closure -- is not this function's own internal `pending`
-    local variable below (the polling-step-only scratch for `extra_sources`/
-    `forced_abstain`, unrelated and unchanged). It exists solely so this
-    function can write its own tally/pass-fail outcome into `REFERENDUM_
-    RESULT_KEY`, letting `perform_minion_action` dispatch `REFERENDUM_
-    RESOLVED_HOOK` once its *own* `resolve(pending)` call fully returns --
-    strictly after this function, and after whichever political-action
-    card's own pass effects run on top of it (see `engine/action.py::
-    REFERENDUM_RESOLVED_HOOK`'s own docstring for why that later point, not
-    this function's own return, is where the dispatch belongs). `None` (the
-    default, `political_action` below and every pre-existing caller) is a
-    no-op for this, preserving exact prior behaviour.
+    `action_pending` (OQ-36, `docs/OPEN_QUESTIONS.md`, Voter Captivation's
+    own post-resolution dispatch): when given, this *outer* scratch dict -- `engine/
+    action.py::perform_minion_action`'s own per-attempt `pending` (OQ-11),
+    shared with that same action's earlier block-attempt phase and later
+    threaded into a political-action card's own `resolve()` closure -- is
+    not this function's own internal `pending` local variable below (the
+    polling-step-only scratch for `extra_sources`/`forced_abstain`, unrelated
+    and unchanged). It exists solely so this function can write its own
+    tally/pass-fail outcome into `REFERENDUM_RESULT_KEY`, letting
+    `perform_minion_action` dispatch `REFERENDUM_RESOLVED_HOOK` once its
+    *own* `resolve(pending)` call fully returns -- strictly after this
+    function, and after whichever political-action card's own pass effects
+    run on top of it (see `engine/action.py::REFERENDUM_RESOLVED_HOOK`'s own
+    docstring for why that later point, not this function's own return, is
+    where the dispatch belongs). `None` (the default, `political_action`
+    below and every pre-existing caller) is a no-op for this, preserving
+    exact prior behaviour.
+
+    `pool_reserve` (OQ-42/OQ-43/OQ-45): pool a Methuselah must keep for a
+    mandatory post-tally cost
+    of the calling card (e.g. Kine's locked self share, chosen before this
+    call per Rulebook SS4 step 1), deducted from `variable_pool_burn_vote_
+    options`'s cap and from `_cast_votes`'s own `VOTE_AGAINST_POOL_COST_HOOK`
+    gate (via `pending["pool_reserve"]`, threaded to both) so voluntary burns
+    cannot leave that cost unpayable.
     """
-    pending: dict[str, Any] = {"extra_sources": [], "forced_abstain": set()}
+    pending: dict[str, Any] = {
+        "extra_sources": [],
+        "forced_abstain": set(),
+        "pool_reserve": dict(pool_reserve or {}),
+    }
     _run_pre_cast_hook_window(state, caller_player, other_player, caller_vampire, pending)
+    if state.game_over:
+        return 0, 0, []
     sources = _collect_vote_sources(state, caller_player, other_player, pending)
     votes_for, votes_against, casts = _cast_votes(
-        state, caller_player, other_player, caller_vampire.instance_id, sources, pending
+        state,
+        caller_player,
+        other_player,
+        caller_vampire.instance_id,
+        sources,
+        pending,
+        caller_vampire,
     )
+    if state.game_over:
+        return votes_for, votes_against, casts
     _dispatch_referendum_tallied(
         state, caller_player, other_player, caller_vampire, votes_for, votes_against, casts
     )
@@ -763,6 +805,7 @@ def _cast_votes(
     caller_vampire_id: str,
     sources: list[VoteSource],
     pending: dict[str, Any],
+    caller_vampire: VampireInPlay | None = None,
 ) -> tuple[int, int, list[tuple[str, str, int, str]]]:
     """Rulebook SS4 "The Referendum", step 2 casting + step 3 tally: "all
     Methuselahs may now cast any votes and ballots they have [...] in any
@@ -857,7 +900,7 @@ def _cast_votes(
     remaining = {source.source_id: source for source in sources}
     turn = caller_player
     consecutive_passes = 0
-    while consecutive_passes < 2:
+    while consecutive_passes < 2 and not state.game_over:
         mine = sorted(
             (source for source in remaining.values() if source.player == turn),
             key=lambda source: source.source_id,
@@ -880,17 +923,30 @@ def _cast_votes(
         else:
             cancel_by_value = {o.choice.value: o for o in cancel_options}
             choices: tuple[Choice, ...] = ()
+            against_cost = hooks.sum_modifiers(
+                VOTE_AGAINST_POOL_COST_HOOK,
+                state,
+                player=turn,
+                caller_vampire=caller_vampire,
+                casts=casts,
+            )
+            can_cast_against = against_cost <= (
+                max_voluntary_spend(state, turn) - pending.get("pool_reserve", {}).get(turn, 0)
+            )
             for source in mine:
                 choices += (
                     Choice(
                         f"for:{source.source_id}",
                         f"Cast {source.votes} vote(s) for ({source.label})",
                     ),
-                    Choice(
-                        f"against:{source.source_id}",
-                        f"Cast {source.votes} vote(s) against ({source.label})",
-                    ),
                 )
+                if can_cast_against:
+                    choices += (
+                        Choice(
+                            f"against:{source.source_id}",
+                            f"Cast {source.votes} vote(s) against ({source.label})",
+                        ),
+                    )
             choices += tuple(o.choice for o in cancel_options)
             choices += (Choice("pass", "Pass (hold back remaining votes for now)"),)
             hooks.ensure_unique_choice_values(choices, decision_kind="polling_step_cast")

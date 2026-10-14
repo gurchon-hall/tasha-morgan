@@ -64,7 +64,7 @@ from .. import hooks
 from ..attachments import effective_capacity
 from ..damage import add_blood
 from ..decision import Choice, Decision
-from ..pool import gain_pool, lose_pool
+from ..pool import can_afford_without_ousting, gain_pool, lose_pool
 from ..state import VampireInPlay
 
 if TYPE_CHECKING:
@@ -88,7 +88,7 @@ def influence_phase(state: GameState, player: str) -> None:
     else:
         remaining = STANDARD_TRANSFERS
 
-    while True:
+    while not state.game_over:
         hook_options = hooks.offer(
             INFLUENCE_PHASE_ACTION_HOOK, state, player=player, transfers_remaining=remaining
         )
@@ -117,13 +117,15 @@ def influence_phase(state: GameState, player: str) -> None:
             remaining -= int(by_value[choice].apply(state))
         else:
             remaining -= _apply(state, player, choice)
+        if state.game_over:
+            return
 
 
 def _available_choices(state: GameState, player: str, remaining: int) -> tuple[Choice, ...]:
     p = state.players[player]
     choices: list[Choice] = []
 
-    if remaining >= 1 and p.pool >= 1:
+    if remaining >= 1 and can_afford_without_ousting(state, player, 1):
         for v in p.vampires.values():
             if v.zone == "uncontrolled" and v.blood < effective_capacity(state, v):
                 choices.append(
@@ -143,7 +145,7 @@ def _available_choices(state: GameState, player: str, remaining: int) -> tuple[C
                     )
                 )
 
-    if remaining >= 4 and p.pool >= 1 and p.crypt_deck:
+    if remaining >= 4 and can_afford_without_ousting(state, player, 1) and p.crypt_deck:
         choices.append(
             Choice(
                 "bring_crypt",

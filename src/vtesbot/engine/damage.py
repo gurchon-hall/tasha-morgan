@@ -263,7 +263,7 @@ def apply_damage(
     )
     normal = max(0, damage_box["normal"])
     aggravated = max(0, damage_box["aggravated"])
-    if normal == 0 and aggravated == 0:
+    if state.game_over or (normal == 0 and aggravated == 0):
         return
 
     # --- Mend step (normal damage only; aggravated cannot be mended). ---
@@ -298,7 +298,7 @@ def apply_damage(
 
     # --- Aggravated damage: never mendable. Normal is handled first (above). ---
     for _ in range(aggravated):
-        if vampire.zone == "burned":
+        if state.game_over or vampire.zone == "burned":
             break
         if vampire.wounded:
             # "each point burns 1 blood or the vampire is burned" -- a forced

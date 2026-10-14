@@ -377,3 +377,20 @@ def test_burn_for_pool_not_offered_during_the_three_transfer_first_influence_pha
 
     assert game.state.players["P1"].pool == 30
     agent.assert_exhausted()
+
+
+def test_not_offered_when_paying_would_leave_zero_pool():
+    """OQ-42 (user ruling): a voluntary 1-pool card cost may not zero the payer."""
+    for pool, expect_offer in ((1, False), (2, True)):
+        builder = ScenarioBuilder(seed=1)
+        p1 = builder.player("P1", pool=pool)
+        p1.hand.append(_wider_view_card())
+        builder.player("P2", pool=30)
+        game = builder.build()
+        agent = ScriptedAgent("P1")
+        if expect_offer:
+            agent.expect("master_phase_action", "wider_view_play")
+        game.state.agents["P1"] = agent
+        master_phase(game.state, "P1")
+        agent.assert_exhausted()
+        assert game.state.players["P1"].pool == 1

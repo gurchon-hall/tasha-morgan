@@ -24,3 +24,8 @@ an entry.
 | OQ-13 | `001.md` | 47th Street Royals - recruit_ally_play omits acting vampire |
 | OQ-14 | `001.md` | 47th Street Royals - recruit makes contested-ally gap live |
 | OQ-15 | `001.md` | Ally contest resolution loop not wired |
+| OQ-17 | `001.md` | Enchant Kindred - no action-card entry point |
+| OQ-18 | `001.md` | Dust Up - no sect, no dodge/extra strike |
+| OQ-19 | `001.md` | Cross-card "(limited)" additional-strike cap not pooled |
+| OQ-20 | `001.md` | Vote/ballot casting order for two Methuselahs |
+| OQ-21 | `001.md` | Action-card target chosen at announce vs. resolve time |

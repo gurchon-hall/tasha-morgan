@@ -352,3 +352,80 @@ def test_mandatory_pool_burn_coexists_with_another_optional_unlock_effect_in_the
     # 30 - 3 (torpor-entry burn) - 1 (mandatory unlock-phase burn) + 1 (Edge gain) = 27.
     assert game.pool_of("P1") == 27
     agent.assert_exhausted()
+
+
+def test_fame_oust_mid_combat_resolves_the_simultaneous_second_damage_first(monkeypatch):
+    """Fame's torpor pool burn queues P1's oust, but both strikes' damage is
+    one simultaneous event (OQ-44): P2's damage (mend decision included) is
+    still resolved, then the oust is decided once. Only P1 is at 0: ordinary
+    oust. Nothing is asked after the game ends (sim seeds 270/942)."""
+    from vtesbot.engine import combat
+
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=3).ready_vampire("V1", capacity=3, blood=0)
+    builder.player("P2", pool=30).ready_vampire("V2", capacity=3, blood=2)
+    game = builder.build()
+    game.vampire("V1").wounded = True
+    attach_card(game.state, game.vampire("V1"), controller="P1", krcg_id=KRCG_ID, name="Fame")
+    game.state.agents["P1"] = ScriptedAgent("P1")
+    p2 = ScriptedAgent("P2")
+    p2.expect("mend_damage", "1")
+    game.state.agents["P2"] = p2
+    monkeypatch.setattr(combat, "_resolve_one_strike", lambda *a, **k: (1, False, False))
+
+    combat._resolve_strike_pair(game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {})
+
+    assert game.state.game_over is True
+    assert game.state.winner == "P2"
+    assert game.blood_of("V2") == 1
+    p2.assert_exhausted()
+
+
+def test_fame_double_torpor_in_one_strike_pair_is_a_tie(monkeypatch):
+    """Both vampires carry Fame and go to torpor from the same simultaneous
+    strike pair, each controller burning 3 from 3 pool: both reach 0 in the
+    same event, a tie (OQ-44)."""
+    from vtesbot.engine import combat
+
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=3).ready_vampire("V1", capacity=3, blood=0)
+    builder.player("P2", pool=3).ready_vampire("V2", capacity=3, blood=0)
+    game = builder.build()
+    for vid, owner in (("V1", "P1"), ("V2", "P2")):
+        game.vampire(vid).wounded = True
+        attach_card(game.state, game.vampire(vid), controller=owner, krcg_id=KRCG_ID, name="Fame")
+    game.state.agents["P1"] = ScriptedAgent("P1")
+    game.state.agents["P2"] = ScriptedAgent("P2")
+    monkeypatch.setattr(combat, "_resolve_one_strike", lambda *a, **k: (1, False, False))
+
+    combat._resolve_strike_pair(game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {})
+
+    assert game.state.game_over is True
+    assert game.state.winner is None
+    assert game.state.eliminated == {"P1", "P2"}
+
+
+def test_fame_double_torpor_with_the_other_side_above_three_pool_is_an_ordinary_oust(
+    monkeypatch,
+):
+    """Same strike pair as the tie test, but P2 has 4 pool: 4 - 3 = 1 survives,
+    so only P1 is ousted and P2 wins (the second side's Fame burn is still
+    applied inside the deferral window, OQ-44)."""
+    from vtesbot.engine import combat
+
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=3).ready_vampire("V1", capacity=3, blood=0)
+    builder.player("P2", pool=4).ready_vampire("V2", capacity=3, blood=0)
+    game = builder.build()
+    for vid, owner in (("V1", "P1"), ("V2", "P2")):
+        game.vampire(vid).wounded = True
+        attach_card(game.state, game.vampire(vid), controller=owner, krcg_id=KRCG_ID, name="Fame")
+    game.state.agents["P1"] = ScriptedAgent("P1")
+    game.state.agents["P2"] = ScriptedAgent("P2")
+    monkeypatch.setattr(combat, "_resolve_one_strike", lambda *a, **k: (1, False, False))
+
+    combat._resolve_strike_pair(game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {})
+
+    assert game.state.game_over is True
+    assert game.state.winner == "P2"
+    assert game.state.eliminated == {"P1"}

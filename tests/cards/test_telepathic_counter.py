@@ -225,9 +225,7 @@ def test_a_cancellation_still_pays_cost_but_suppresses_the_bleed_reduction():
     from vtesbot.engine.decision import Choice
 
     def always_cancel(state, context):
-        return [
-            hooks.HookOption(choice=Choice("toy_cancel", "Toy cancel"), apply=lambda s: None)
-        ]
+        return [hooks.HookOption(choice=Choice("toy_cancel", "Toy cancel"), apply=lambda s: None)]
 
     hooks.register(hooks.CANCEL_AS_PLAYED_HOOK, always_cancel)
     try:

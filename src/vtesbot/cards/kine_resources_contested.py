@@ -54,14 +54,16 @@ votes_against`, "tied referendums fail" per `resolve_referendum`'s own
 contract), there is no effect at all -- Rulebook SS4 "Resolve the
 Referendum": "Otherwise, the referendum fails and has no effect."
 
-Allocation ("Announce: all terms fixed now, *except referendum terms*" /
-"Terms chosen only after success" -- `vtes-rules-reference` skill's
-Politics section): the specific point split is the referendum's own term,
-so it is decided only *after* `resolve_referendum` reports a pass, as a
-fresh `Decision` (kind `"kine_resources_contested_allocation"`) raised
-directly inside `resolve()` -- the same "decision raised inside resolve(),
-once unblocked" shape `enchant_kindred.py`'s own target-choice decision
-uses.
+Allocation: the split is the referendum's own term. Rulebook SS4 "The
+Referendum" step 1 "Choose the terms" precedes step 2 "Polling", and terms
+are chosen only once the action succeeds (SS4 "The Political Action"), so
+`resolve()` raises the `"kine_resources_contested_allocation"` decision
+first and locks it. User ruling 2026-10-13 (OQ-45, `docs/DECISIONS.md`
+D-9): "la répartition est verrouillée avant le vote puis fenetre d'avant
+votes [...] puis le vote a lieu puis fenetre de fin de tally [...] puis
+résolution des effets du vote puis fenetre d'action modifier de fin
+d'action". The locked self share is passed as `pool_reserve`, so the
+vote-time pool gates keep it payable and the resolution cannot dead-end.
 
 Legal splits in 2P (derived directly from the card's own text): "Allocate
 4 points **among two or more Methuselahs**" requires at least two distinct
@@ -78,9 +80,10 @@ yourself", is not a separate restriction to enforce: `(1, 3)`/`(2, 2)`/
 "Successful referendum means each Methuselah burns 1 pool for each point
 allocated": a pure loss, not a transfer (contrast `parity_shift.py`, whose
 own text has the target's pool "distributed" to a recipient, i.e. actually
-awarded) -- both players' shares are applied via `engine.pool.lose_pool`
-only, never `gain_pool`. "Can allocate more points than a Methuselah has
-pool" needs no extra code: `lose_pool` already floors the loss at the
+awarded) -- both players' shares are applied as one event via
+`engine.pool.lose_pool_simultaneously` (OQ-44), never `gain_pool`.
+"Can allocate more points than a Methuselah has pool" needs no extra
+code: `lose_pool` already floors the loss at the
 player's current pool and still checks ousting (`engine/pool.py`), so
 over-allocating simply drives that player to 0 pool and triggers the
 ordinary oust path.
@@ -111,10 +114,11 @@ from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_POLITICAL
 from vtesbot.engine.decision import Choice, Decision
+from vtesbot.engine.errors import UnresolvedRulingError
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, ActionCardSpec
 from vtesbot.engine.politics import POLITICAL_ACTION_STEALTH, resolve_referendum
-from vtesbot.engine.pool import lose_pool
+from vtesbot.engine.pool import lose_pool_simultaneously, max_voluntary_spend
 from vtesbot.engine.state import GameState
 
 KRCG_ID = 101056
@@ -123,6 +127,13 @@ TOTAL_POINTS = 4
 CARD_TYPE = "Political Action"
 """`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
 this module's own "Card type: Political Action" docstring fact above."""
+
+
+def _legal_self_points(state: GameState, player: str) -> range:
+    """OQ-42 (user ruling, `docs/DECISIONS.md` D-9): the caller picks the
+    split, so their own share may not zero their pool. The opponent's share
+    is unrestricted (an opponent oust by the card is a normal oust)."""
+    return range(1, min(TOTAL_POINTS, max_voluntary_spend(state, player) + 1))
 
 
 def _provide_kine_resources_contested(
@@ -136,18 +147,14 @@ def _provide_kine_resources_contested(
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
         return []
 
+    if not _legal_self_points(state, player):
+        return []
     other = state.other_player(player)
 
     def _apply(s: GameState) -> ActionCardSpec:
         play_from_hand(s, player, KRCG_ID)
 
         def resolve(pending: dict[str, Any]) -> None:
-            votes_for, votes_against, _casts = resolve_referendum(
-                s, player, other, acting_vampire, action_pending=pending
-            )
-            if votes_for <= votes_against:
-                return  # referendum fails ("tied referendums fail"): no effect at all.
-
             choices = tuple(
                 Choice(
                     f"allocate:{self_points}",
@@ -155,19 +162,35 @@ def _provide_kine_resources_contested(
                     f"{TOTAL_POINTS - self_points} to your opponent "
                     "(each point burns 1 pool)",
                 )
-                for self_points in range(1, TOTAL_POINTS)
+                for self_points in _legal_self_points(s, player)
             )
+            if not choices:
+                raise UnresolvedRulingError(
+                    "Kine Resources Contested: no affordable self share when the terms "
+                    "are chosen (pool dropped between announce and success)"
+                )
             decision = Decision(
                 player=player,
                 kind="kine_resources_contested_allocation",
                 choices=choices,
                 context={"caller": player, "other": other},
             )
-            answer = s.ask(decision).value
-            self_points = int(answer.split(":", 1)[1])
+            self_points = int(s.ask_unless_forced(decision).value.split(":", 1)[1])
             other_points = TOTAL_POINTS - self_points
-            lose_pool(s, player, self_points)
-            lose_pool(s, other, other_points)
+
+            # The locked self share is reserved so no vote-time cost (Marcos
+            # tally burn, Oxford burn) can leave it unpayable at resolution.
+            votes_for, votes_against, _casts = resolve_referendum(
+                s,
+                player,
+                other,
+                acting_vampire,
+                action_pending=pending,
+                pool_reserve={player: self_points},
+            )
+            if s.game_over or votes_for <= votes_against:
+                return  # oust at tally, or fails ("tied referendums fail"): no effect.
+            lose_pool_simultaneously(s, {player: self_points, other: other_points})
 
         return ActionCardSpec(
             base_stealth=POLITICAL_ACTION_STEALTH,

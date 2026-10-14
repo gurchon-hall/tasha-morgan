@@ -297,3 +297,32 @@ def test_amount_is_clamped_to_the_targets_actual_pool_and_it_ousts_them():
     assert game.state.victory_points["P1"] == 2  # 1 (ousted prey) + 1 (last Methuselah)
     assert game.pool_of("P1") == 9  # 1 + 2 (awarded) + 6 (oust bonus)
     actor.assert_exhausted()
+
+
+def test_oust_at_tally_stops_before_the_pool_transfer():
+    from vtesbot.engine.pool import lose_pool
+
+    def oust_caller(state, context):
+        lose_pool(state, "P1", 10)
+
+    hooks.register("referendum_tallied", oust_caller)
+    try:
+        builder = ScenarioBuilder(seed=1)
+        p1 = builder.player("P1", pool=10).ready_vampire("V1", capacity=3, blood=1, title="Prince")
+        p1.hand.append(_parity_shift_card())
+        builder.player("P2", pool=30)
+        game = builder.build()
+        actor = ScriptedAgent("P1")
+        actor.expect("minion_phase_choice", "act_with:V1")
+        actor.expect("action_choice", "parity_shift:play")
+        actor.expect("polling_step_cast", "for:political_action_card:P1")
+        actor.expect("polling_step_cast", "pass")
+        game.state.agents["P1"] = actor
+        game.state.agents["P2"] = ScriptedAgent("P2")
+
+        minion_phase(game.state, "P1")
+
+        assert game.state.game_over is True
+        assert game.pool_of("P2") == 36  # 30 + 6 oust bonus, no 3-pool transfer
+    finally:
+        hooks.unregister("referendum_tallied", oust_caller)

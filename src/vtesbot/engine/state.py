@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from .agent import Agent
 from .cards import CardAttachment, CryptCard, LibraryCard
-from .errors import IllegalChoiceError
+from .errors import GameOverError, IllegalChoiceError
 from .format import FormatConfig
 from .log import ReplayLog
 from .observation import build_observation
@@ -328,6 +328,11 @@ class GameState:
     victory_points: dict[str, float] = field(default_factory=dict)
     game_over: bool = False
     winner: str | None = None
+    oust_deferral_depth: int = 0
+    pending_ousts: list[str] = field(default_factory=list)
+    """OQ-44: while `oust_deferral_depth > 0` (`engine/pool.py::
+    simultaneous_pool_losses`) `check_oust` only queues the player here; the
+    queue is resolved once, together, when the outermost deferral exits."""
     combat_range: str | None = None
     """Current combat round's range ("close"/"long"), set by `engine/
     combat.py`'s Determine Range step each round (Rulebook SS4 Combat >
@@ -353,7 +358,16 @@ class GameState:
         for `decision.player`, calls their `Agent.decide`, and enforces that
         the returned `Choice` is one of `decision.choices` -- never letting
         the engine or the agent silently invent an illegal option.
+
+        Rulebook SS5 Ending the Game: "The game continues until only one
+        Methuselah is left" (2P: any oust leaves one), so asking after
+        `game_over` is an engine bug (a phase/hook loop missing its
+        `state.game_over` guard); raises `GameOverError` as a safety net.
         """
+        if self.game_over:
+            raise GameOverError(
+                f"decision {decision.kind!r} for {decision.player} requested after game over"
+            )
         observation = build_observation(self, decision.player)
         agent = self.agents[decision.player]
         answer = agent.decide(observation, decision)
@@ -366,6 +380,15 @@ class GameState:
         canonical = legal[answer.value]
         self.log.record_decision(decision, canonical)
         return canonical
+
+    def ask_unless_forced(self, decision: Decision) -> Choice:
+        """`ask`, except a lone legal choice is taken without a `Decision`
+        (decision.py: "only when needed"; no agent call). The taken choice is
+        logged as a `"forced"` entry (engine/log.py), not a `"decision"`."""
+        if len(decision.choices) == 1:
+            self.log.record_forced(decision, decision.choices[0])
+            return decision.choices[0]
+        return self.ask(decision)
 
     def ready_unlocked_vampires(self, player: str) -> list[VampireInPlay]:
         return [v for v in self.players[player].vampires.values() if v.is_ready_unlocked]

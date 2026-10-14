@@ -559,11 +559,11 @@ def test_referendum_tallied_hook_fires_with_no_providers_registered():
 
 def test_variable_pool_burn_vote_options_offers_one_option_per_pool_amount():
     """Oxford's own shape ("burn X pool ... to get +2X votes"): one
-    `HookOption` per legal X from 1 to the controller's current pool, never
+    `HookOption` per legal X from 1 to the controller's pool minus 1 (OQ-42), never
     X = 0 (CLAUDE.md "only when needed" -- burning 0 pool for 0 votes is not
     a meaningful choice)."""
     builder = ScenarioBuilder(seed=1)
-    builder.player("P1", pool=3)
+    builder.player("P1", pool=4)
     builder.player("P2", pool=30)
     game = builder.build()
     pending = {"extra_sources": []}
