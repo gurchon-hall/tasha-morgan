@@ -13,17 +13,23 @@ Toreador vampire never itself playing a copy; "only one Loup can be played
 each turn"; both burn conditions, each in the scenario that actually
 isolates it from the other (condition 2 fires immediately after the very
 action Loup was played for if that action succeeds, so condition 1 is only
-reachable when Loup was played for a *blocked* action instead); and the
-documented known gap (module docstring) that the on-file ruling's full
-"even when not currently needed" scope is unreachable when no block
-attempt happens at all.
+reachable when Loup was played for a *blocked* action instead); the
+once-per-action cap on the standing grant (module docstring); and OQ-39
+(resolved): the card can now be played proactively, even against a fully
+unblockable action, via `STEALTH_INCREASE_HOOK`'s own two offer points
+(`engine/action.py`), closing what was previously a documented known gap.
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards import registry
-from vtesbot.cards.loup import CARD_TYPE, KRCG_ID, NAME
+from vtesbot.cards.loup import CARD_TYPE, KRCG_ID, LOUP_STEALTH_GRANTED_KEY, NAME
 from vtesbot.engine import LibraryCard, hooks
-from vtesbot.engine.action import ACTION_BLEED, STEALTH_MODIFIER_HOOK
+from vtesbot.engine.action import (
+    ACTION_BLEED,
+    PENDING_STEALTH_INCREASE_KEY,
+    STEALTH_INCREASE_HOOK,
+    ActiveStealthIncrease,
+)
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.phases.minion import minion_phase
@@ -34,9 +40,9 @@ def _loup_card() -> LibraryCard:
     return LibraryCard(krcg_id=KRCG_ID, name=NAME, card_type=CARD_TYPE)
 
 
-def _offer(game, *, acting_vampire="V1", player="P1", defender="P2"):
+def _offer(game, *, acting_vampire="V1", player="P1", defender="P2", pending=None):
     return hooks.offer(
-        STEALTH_MODIFIER_HOOK,
+        STEALTH_INCREASE_HOOK,
         game.state,
         player=player,
         stealth=0,
@@ -44,10 +50,9 @@ def _offer(game, *, acting_vampire="V1", player="P1", defender="P2"):
         actor=player,
         defender=defender,
         acting_vampire=acting_vampire,
-        blocking_vampire="B1",
         action=ACTION_BLEED,
         directed=True,
-        pending={},
+        pending=pending if pending is not None else {},
     )
 
 
@@ -56,7 +61,7 @@ def test_registered_as_implemented_against_both_hooks():
     assert reg is not None
     assert reg.status is registry.Status.IMPLEMENTED
     assert reg.name == NAME
-    assert reg.hooks == (registry.Hook.STEALTH_MODIFIER, registry.Hook.ACTION_SUCCEEDED)
+    assert reg.hooks == (registry.Hook.STEALTH_INCREASE, registry.Hook.ACTION_SUCCEEDED)
     assert reg.blocked_reason is None
 
 
@@ -91,13 +96,16 @@ def test_play_option_removes_the_card_from_hand_brings_it_into_play_and_grants_o
     p1.hand.append(_loup_card())
     builder.player("P2", pool=30)
     game = builder.build()
+    pending: dict = {}
 
-    options = _offer(game)
+    options = _offer(game, pending=pending)
 
     assert len(options) == 1
     assert options[0].choice.value == "loup:play"
     assert options[0].played_card_type == CARD_TYPE
-    assert options[0].apply(game.state) == 1
+    options[0].apply(game.state)
+    assert pending[PENDING_STEALTH_INCREASE_KEY] == [ActiveStealthIncrease(delta=1)]
+    assert pending[LOUP_STEALTH_GRANTED_KEY] is True
     assert game.state.players["P1"].hand == []
     turn_cards = list(game.state.players["P1"].turn_cards.values())
     assert len(turn_cards) == 1
@@ -119,13 +127,15 @@ def test_ongoing_bonus_benefits_a_second_toreador_vampire_without_consuming_hand
     builder.player("P2", pool=30)
     game = builder.build()
     already_in_play = bring_turn_card_into_play(game.state, "P1", krcg_id=KRCG_ID, name=NAME)
+    pending: dict = {}
 
-    options = _offer(game, acting_vampire="V2")
+    options = _offer(game, acting_vampire="V2", pending=pending)
 
     assert len(options) == 1
     assert options[0].choice.value == "loup:stealth_bonus"
     assert options[0].played_card_type is None  # not a card being played (module docstring)
-    assert options[0].apply(game.state) == 1
+    options[0].apply(game.state)
+    assert pending[PENDING_STEALTH_INCREASE_KEY] == [ActiveStealthIncrease(delta=1)]
     assert game.state.players["P1"].hand == []  # nothing consumed
     assert list(game.state.players["P1"].turn_cards.values()) == [already_in_play]  # no new copy
 
@@ -141,6 +151,22 @@ def test_ongoing_bonus_not_offered_to_a_non_toreador_vampires_own_action():
     assert _offer(game, acting_vampire="V2") == []
 
 
+def test_ongoing_bonus_capped_at_once_per_action():
+    """Module docstring's cap: once activated in a given action's own
+    `pending`, offering the hook again (as it now is, both proactively and
+    reactively) must not let the flat "+1 stealth" stack further."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, clan="Toreador")
+    builder.player("P2", pool=30)
+    game = builder.build()
+    bring_turn_card_into_play(game.state, "P1", krcg_id=KRCG_ID, name=NAME)
+    pending: dict = {}
+    first = _offer(game, pending=pending)
+    first[0].apply(game.state)
+
+    assert _offer(game, pending=pending) == []
+
+
 # --- "Only one Loup can be played each turn." -----------------------------
 
 
@@ -153,8 +179,7 @@ def test_cap_blocks_a_second_play_within_the_same_turn_even_after_the_first_is_b
     game = builder.build()
 
     first = _offer(game)
-    played = first[0].apply(game.state)
-    assert played == 1
+    first[0].apply(game.state)
     turn_card = next(iter(game.state.players["P1"].turn_cards.values()))
     turn_card.zone = "burned"  # simulate burn condition 2 firing later the same turn
 
@@ -192,7 +217,9 @@ def test_end_to_end_plays_loup_to_escape_a_block_then_burns_after_the_successful
     actor = ScriptedAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "bleed")
-    actor.expect("stealth_modifier", "loup:play")
+    # OQ-39: offered proactively, at the very top of `attempt_block`'s retry
+    # loop -- before the defender is even asked to pick a blocking candidate.
+    actor.expect("stealth_increase", "loup:play")
     game.state.agents["P1"] = actor
     defender = ScriptedAgent("P2")
     defender.expect("block_attempt", "block_with:B1")
@@ -216,7 +243,11 @@ def test_end_to_end_played_for_a_blocked_action_survives_combat_then_burns_at_en
     """Condition 2 does not fire (the action was blocked, not successful),
     so condition 1 (`clear_turn_cards_at_end_of_turn`, OQ-34, already proven
     generically by `tests/rules/test_turn_cards.py`) is what finally burns
-    it -- the one scenario that actually isolates condition 1 from 2."""
+    it -- the one scenario that actually isolates condition 1 from 2. Loup's
+    own standing grant is capped at once per action (module docstring), so
+    once the defender's extra intercept catches back up to the increased
+    stealth, there is nothing left for the actor to activate again -- no
+    further decision is raised at all."""
 
     def extra_intercept(state, context):
         if context.get("action") != ACTION_BLEED:
@@ -233,8 +264,7 @@ def test_end_to_end_played_for_a_blocked_action_survives_combat_then_burns_at_en
         actor = ScriptedAgent("P1")
         actor.expect("minion_phase_choice", "act_with:V1")
         actor.expect("action_choice", "bleed")
-        actor.expect("stealth_modifier", "loup:play")  # 0 -> 1
-        actor.expect("stealth_modifier", "decline")  # intercept caught up to 1; give up
+        actor.expect("stealth_increase", "loup:play")  # 0 -> 1, proactively
         actor.expect("strike_choice", "no_strike")
         actor.expect("press", "end_combat")
         defender = ScriptedAgent("P2")
@@ -260,31 +290,34 @@ def test_end_to_end_played_for_a_blocked_action_survives_combat_then_burns_at_en
         hooks.unregister("intercept_modifier", extra_intercept)
 
 
-# --- Known gap: the on-file ruling's full scope is unreachable without a --
-# --- block attempt in progress (module docstring) --------------------------
+# --- OQ-39 (resolved): proactive offer closes the "unblockable action" gap -
 
 
-def test_known_gap_cannot_be_played_when_the_action_is_unblockable():
-    """`STEALTH_MODIFIER_HOOK` is only ever offered from within the "only
-    when needed" ping-pong (`engine/action.py::_duel_stealth_intercept`),
-    which never even starts when the defender has no ready vampire at all --
-    so, unlike the ruling's full permission, Loup cannot be played here."""
+def test_can_be_played_proactively_even_when_the_action_is_unblockable():
+    """`STEALTH_INCREASE_HOOK`'s own proactive offer, at the very top of
+    `attempt_block`'s retry loop, fires before the "no candidates at all"
+    short-circuit -- so, unlike the old `STEALTH_MODIFIER_HOOK`-only wiring
+    (which never started at all here, see git history for the previously
+    documented known gap this test used to prove), Loup can now be played
+    even against a fully unblockable action."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1, clan="Toreador")
     p1.hand.append(_loup_card())
-    builder.player("P2", pool=30)  # no ready vampire: unblockable, no stealth window opens
+    builder.player("P2", pool=30)  # no ready vampire: unblockable regardless
     game = builder.build()
     actor = ScriptedAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "bleed")
+    actor.expect("stealth_increase", "loup:play")
     game.state.agents["P1"] = actor
     defender = ScriptedAgent("P2")
     game.state.agents["P2"] = defender
 
     minion_phase(game.state, "P1")
 
-    assert game.pool_of("P2") == 29  # unblockable bleed succeeds on its own
-    assert len(game.state.players["P1"].hand) == 1  # Loup never offered, still in hand
-    assert game.state.players["P1"].turn_cards == {}
+    assert game.pool_of("P2") == 29  # unblockable bleed succeeds regardless
+    assert game.state.players["P1"].hand == []  # Loup was actually played this time
+    turn_card = next(iter(game.state.players["P1"].turn_cards.values()))
+    assert turn_card.zone == "burned"  # condition 2: burned right after the successful action
     actor.assert_exhausted()
     defender.assert_exhausted()

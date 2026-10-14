@@ -61,6 +61,17 @@ class Hook(StrEnum):
     action.py::PENDING_INTERCEPT_DECREASE_KEY]`, re-evaluated against
     whichever candidate is fixed on every call; `apply()`'s return value is
     ignored."""
+    STEALTH_INCREASE = "stealth_increase"
+    """`INTERCEPT_DECREASE`'s sibling for the acting side's own stealth,
+    offered at the same two points (`docs/OPEN_QUESTIONS.md` OQ-39,
+    resolved -- built for Loup, krcg id 102273, whose on-file ruling "[c]an
+    be used even if the stealth is not currently needed" the old
+    `STEALTH_MODIFIER`-only wiring could not reach without a block attempt
+    in progress). A provider appends an `ActiveStealthIncrease(delta)` to
+    `pending[engine/action.py::PENDING_STEALTH_INCREASE_KEY]`; no
+    `qualifies` predicate, since stealth is a per-action value, never
+    candidate-dependent the way intercept is; `apply()`'s return value is
+    ignored."""
     BLEED_AMOUNT_MODIFIER = "bleed_amount_modifier"
     BLEED_AMOUNT_FIXED_MODIFIER = "bleed_amount_fixed_modifier"
     DAMAGE_PREVENTION = "damage_prevention"

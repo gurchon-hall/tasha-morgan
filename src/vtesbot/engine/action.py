@@ -83,10 +83,27 @@ OPEN_QUESTIONS.md`; see each parameter's own docstring for how it is used):
   `else` branch (`stealth <= intercept`, where impulse already returns to
   `actor` with a specific candidate fixed) also offers it, merged into the
   same `Decision` as `STEALTH_MODIFIER_HOOK`'s own choices via `_ask_
-  stealth_or_decrease` (mirrors `engine/combat.py::_ask_strike`'s own
+  stealth_or_modifier` (mirrors `engine/combat.py::_ask_strike`'s own
   two-hooks-into-one-offer precedent). Both opportunities coexist per the
   ruling: the rulebook's generic Action Modifier timing sentence supports
   both a proactive, pre-candidate play and a reactive, per-candidate one.
+- OQ-39 (resolved, user-directed plan): `STEALTH_INCREASE_HOOK` is
+  `INTERCEPT_DECREASE_HOOK`'s sibling for the acting side's own stealth --
+  same two offer points (proactive, top of `attempt_block`'s retry loop;
+  reactive, merged into `_duel_stealth_intercept`'s own union, now renamed
+  `_ask_stealth_or_modifier`), same `pending`-recorded persistence model.
+  Simpler than `ActiveInterceptDecrease`: a stealth increase is never
+  candidate-dependent (intercept's own `qualifies(blocker)` predicate
+  exists only because intercept is a per-*blocker* value; stealth is a
+  per-*action* value), so `ActiveStealthIncrease` carries only a `delta`,
+  summed unconditionally into `_duel_stealth_intercept`'s `stealth`
+  baseline the same way `_active_intercept_decrease` sums into `intercept`
+  -- recomputed fresh every call, never cached (OQ-11). Built for Loup
+  (krcg id 102273), whose on-file ruling ("[c]an be used even if the
+  stealth is not currently needed" [LSJ 20011214-2]) the old `STEALTH_
+  MODIFIER_HOOK`-only wiring could not reach when no block attempt was
+  possible at all -- `cards/loup.py` now registers against this hook
+  instead.
 """
 
 from collections.abc import Callable
@@ -137,6 +154,25 @@ PENDING_INTERCEPT_DECREASE_KEY = "intercept_decrease_modifiers"
 appended to (never replaced) by each activated `INTERCEPT_DECREASE_HOOK`
 option's own `apply` closure."""
 
+STEALTH_INCREASE_HOOK = "stealth_increase"
+"""OQ-39 (`docs/OPEN_QUESTIONS.md`, resolved): mirrors `src/vtesbot/cards/
+registry.py::Hook.STEALTH_INCREASE`'s own string value. `INTERCEPT_
+DECREASE_HOOK`'s sibling for the acting side's own stealth, offered to
+`actor` at the same two points: proactively, via `hooks.offer_until_pass`
+at the top of `attempt_block`'s own retry loop, and reactively, merged into
+`_duel_stealth_intercept`'s own `STEALTH_MODIFIER_HOOK`/`INTERCEPT_
+DECREASE_HOOK` union via `_ask_stealth_or_modifier`. A provider's `HookOption.
+apply(state)` return value is ignored by the caller -- the provider's own
+`apply` closure must instead append an `ActiveStealthIncrease` to
+`pending[PENDING_STEALTH_INCREASE_KEY]`, exactly like `INTERCEPT_DECREASE_
+HOOK`'s own contract, except with no `qualifies` predicate to set (see
+`ActiveStealthIncrease`'s own docstring for why)."""
+
+PENDING_STEALTH_INCREASE_KEY = "stealth_increase_modifiers"
+"""`pending[...]` key (OQ-39): holds a `list[ActiveStealthIncrease]`,
+appended to (never replaced) by each activated `STEALTH_INCREASE_HOOK`
+option's own `apply` closure."""
+
 
 @dataclass(frozen=True)
 class ActiveInterceptDecrease:
@@ -164,6 +200,34 @@ class ActiveInterceptDecrease:
 
     delta: int
     qualifies: Callable[[VampireInPlay], bool]
+
+
+@dataclass(frozen=True)
+class ActiveStealthIncrease:
+    """One acting-side Action Modifier's persistent, action-scoped stealth
+    increase (OQ-39, `docs/OPEN_QUESTIONS.md`, resolved).
+
+    `delta` is the signed `int` contribution to `base_stealth` for the rest
+    of the action -- same "never floored at 0" rulebook sourcing as
+    `ActiveInterceptDecrease`'s own `delta`. Unlike that sibling, there is
+    no `qualifies` predicate here: intercept is a per-*blocker* value, so
+    `ActiveInterceptDecrease` needs a predicate to decide whether a given
+    candidate is affected; stealth is a per-*action* value with no
+    candidate to qualify against, so every active increase simply always
+    applies."""
+
+    delta: int
+
+
+def _active_stealth_increase(pending: dict[str, Any] | None) -> int:
+    """Sum every `ActiveStealthIncrease` (OQ-39) in `pending[PENDING_
+    STEALTH_INCREASE_KEY]` -- mirrors `_active_intercept_decrease` below,
+    minus the per-candidate `qualifies` filter (see `ActiveStealthIncrease`'s
+    own docstring for why one is not needed here)."""
+    if not pending:
+        return 0
+    modifiers: list[ActiveStealthIncrease] = pending.get(PENDING_STEALTH_INCREASE_KEY, [])
+    return sum(modifier.delta for modifier in modifiers)
 
 
 ACTION_BLEED = "bleed"
@@ -283,18 +347,22 @@ def _duel_stealth_intercept(
     modifier was activated -- this is what lets a modifier activated before
     any candidate existed, or before a retried attempt (OQ-11) with a
     different candidate, correctly apply to *this* candidate specifically.
+    `stealth`'s own starting baseline likewise folds in every currently-
+    active `ActiveStealthIncrease` (OQ-39) -- never candidate-dependent, so
+    nothing to re-filter, but still recomputed fresh every call rather than
+    cached, same OQ-11 convention.
 
     The `else` branch below additionally offers `INTERCEPT_DECREASE_HOOK`
-    to `actor` reactively, merged into the same `Decision` as
-    `STEALTH_MODIFIER_HOOK`'s own choices (OQ-31, resolved -- Reading B,
-    see `_ask_stealth_or_decrease`) -- a second opportunity to activate a
-    modifier, alongside OQ-30's own proactive one at `attempt_block`'s own
-    retry-loop top. Either way the activated modifier is recorded into the
-    same `pending[PENDING_INTERCEPT_DECREASE_KEY]` list, so it composes
-    identically with OQ-11's retry case regardless of which call site
-    activated it.
+    and `STEALTH_INCREASE_HOOK` to `actor` reactively, merged into the same
+    `Decision` as `STEALTH_MODIFIER_HOOK`'s own choices (OQ-31, resolved --
+    Reading B; OQ-39 for the stealth-increase sibling -- see `_ask_stealth_
+    or_modifier`) -- a second opportunity to activate either kind of
+    modifier, alongside OQ-30/OQ-39's own proactive ones at `attempt_
+    block`'s own retry-loop top. Either way the activated modifier is
+    recorded into its own `pending[...]` list, so it composes identically
+    with OQ-11's retry case regardless of which call site activated it.
     """
-    stealth = base_stealth
+    stealth = base_stealth + _active_stealth_increase(pending)
     intercept = _active_intercept_decrease(pending, blocker)
     context = {
         "actor": actor,
@@ -324,12 +392,13 @@ def _duel_stealth_intercept(
             intercept += delta
         else:
             # Block currently succeeds: stealth may be added, only now
-            # needed. OQ-31 (`docs/OPEN_QUESTIONS.md`, resolved -- Reading
-            # B, the project owner's own ruling): the acting Methuselah may
-            # also, reactively, at this same impulse-return point -- not
-            # only proactively at `attempt_block`'s own top-of-retry-loop
-            # offer -- decrease this specific, now-known blocker's
-            # intercept. See `_ask_stealth_or_decrease` for the merge.
+            # needed. OQ-31/OQ-39 (`docs/OPEN_QUESTIONS.md`, both
+            # resolved): the acting Methuselah may also, reactively, at
+            # this same impulse-return point -- not only proactively at
+            # `attempt_block`'s own top-of-retry-loop offer -- decrease
+            # this specific, now-known blocker's intercept, or increase
+            # their own stealth. See `_ask_stealth_or_modifier` for the
+            # three-way merge.
             stealth_options = hooks.offer(
                 STEALTH_MODIFIER_HOOK,
                 state,
@@ -346,19 +415,30 @@ def _duel_stealth_intercept(
                 intercept=intercept,
                 **context,
             )
-            if not stealth_options and not decrease_options:
+            increase_options = hooks.offer(
+                STEALTH_INCREASE_HOOK,
+                state,
+                player=actor,
+                stealth=stealth,
+                intercept=intercept,
+                **context,
+            )
+            if not stealth_options and not decrease_options and not increase_options:
                 return stealth, intercept
-            chosen = _ask_stealth_or_decrease(
-                state, actor, stealth_options, decrease_options, context
+            chosen = _ask_stealth_or_modifier(
+                state, actor, stealth_options, decrease_options, increase_options, context
             )
             if chosen is None:
                 return stealth, intercept
-            option, is_decrease = chosen
-            if is_decrease:
+            option, kind = chosen
+            if kind == "intercept_decrease":
                 option.apply(state)
                 # Re-evaluated fresh, same as the baseline at the top of
                 # this function: never cached (OQ-11).
                 intercept = _active_intercept_decrease(pending, blocker)
+            elif kind == "stealth_increase":
+                option.apply(state)
+                stealth = base_stealth + _active_stealth_increase(pending)
             else:
                 stealth += option.apply(state)
 
@@ -391,42 +471,48 @@ def _ask_modifier(
     return by_value[answer.value].apply(state)
 
 
-def _ask_stealth_or_decrease(
+def _ask_stealth_or_modifier(
     state: GameState,
     actor: str,
     stealth_options: list[hooks.HookOption],
     decrease_options: list[hooks.HookOption],
+    increase_options: list[hooks.HookOption],
     context: dict,
-) -> tuple[hooks.HookOption, bool] | None:
-    """Offer `actor` both `STEALTH_MODIFIER_HOOK`'s and `INTERCEPT_DECREASE_
-    HOOK`'s own currently-legal options, unioned into one `Decision`, plus a
-    decline choice (OQ-31, `docs/OPEN_QUESTIONS.md`, resolved -- Reading B).
+) -> tuple[hooks.HookOption, str] | None:
+    """Offer `actor` `STEALTH_MODIFIER_HOOK`'s, `INTERCEPT_DECREASE_HOOK`'s
+    and `STEALTH_INCREASE_HOOK`'s own currently-legal options, unioned into
+    one `Decision`, plus a decline choice (OQ-31, resolved -- Reading B;
+    OQ-39, resolved -- the same merge, extended to a third hook).
 
     Mirrors the "merge two distinct hooks' own choices into one offer for
     the same player at the same impulse moment" shape `engine/combat.py::
     _ask_strike` already establishes for `COMBAT_STRIKE_OPTION_HOOK`/
-    `COMBAT_DODGE_OPTION_HOOK` -- not two sequential asks, since nothing in
-    the rules orders one card type ahead of the other at a single impulse
-    point (Rulebook SS2 glossary "Impulse": "the acting Methuselah always
-    has the impulse... after playing one effect, they may play another").
+    `COMBAT_DODGE_OPTION_HOOK` -- not sequential asks, since nothing in the
+    rules orders one card type ahead of another at a single impulse point
+    (Rulebook SS2 glossary "Impulse": "the acting Methuselah always has the
+    impulse... after playing one effect, they may play another").
 
     Kept under the pre-existing `STEALTH_MODIFIER_HOOK` decision kind, not a
-    third name: whenever `decrease_options` is empty (every provider
-    registered before this entry, and every call with no `INTERCEPT_
-    DECREASE_HOOK` provider registered), this is byte-for-byte the same
+    further new name: whenever `decrease_options`/`increase_options` are
+    both empty (every provider registered before OQ-31, and every call with
+    neither hook's own provider registered), this is byte-for-byte the same
     `Decision` `_ask_modifier` would have built for `STEALTH_MODIFIER_HOOK`
     alone, so no already-`implemented` card's own scripted tests observe any
-    change. Returns `(chosen_option, is_decrease)`, or `None` if declined;
-    interpreting `apply`'s return value (a stealth delta vs. a side-effecting
-    `None`, per each hook's own contract -- see `STEALTH_MODIFIER_HOOK`'s and
-    `INTERCEPT_DECREASE_HOOK`'s own docstrings) is the caller's job, since
-    the two hooks' `apply` contracts differ."""
+    change. Returns `(chosen_option, kind)`, or `None` if declined, where
+    `kind` is one of `"stealth_delta"` (a one-shot delta the caller adds
+    directly), `"intercept_decrease"` or `"stealth_increase"` (both
+    persistent, recorded into `pending` by the option's own `apply` --
+    interpreting which is the caller's job, since the three hooks' `apply`
+    contracts differ)."""
     decrease_values = {o.choice.value for o in decrease_options}
+    increase_values = {o.choice.value for o in increase_options}
     by_value = {o.choice.value: o for o in stealth_options}
     by_value.update({o.choice.value: o for o in decrease_options})
+    by_value.update({o.choice.value: o for o in increase_options})
     choices = (
         tuple(o.choice for o in stealth_options)
         + tuple(o.choice for o in decrease_options)
+        + tuple(o.choice for o in increase_options)
         + (Choice("decline", "Decline"),)
     )
     hooks.ensure_unique_choice_values(choices, decision_kind=STEALTH_MODIFIER_HOOK)
@@ -439,7 +525,12 @@ def _ask_stealth_or_decrease(
     answer = state.ask(decision)
     if answer.value == "decline":
         return None
-    return by_value[answer.value], answer.value in decrease_values
+    option = by_value[answer.value]
+    if answer.value in decrease_values:
+        return option, "intercept_decrease"
+    if answer.value in increase_values:
+        return option, "stealth_increase"
+    return option, "stealth_delta"
 
 
 def attempt_block(
@@ -476,34 +567,38 @@ def attempt_block(
     hardcoded `state.ready_unlocked_vampires(defender)` candidates. With no
     provider registered, this adds nothing.
 
-    `INTERCEPT_DECREASE_HOOK` (OQ-30, resolved, see module docstring) is
-    offered to `actor` at the very top of the loop, every time around it --
-    before `defender`'s own candidate pool is even computed, let alone this
+    `INTERCEPT_DECREASE_HOOK` (OQ-30, resolved) and `STEALTH_INCREASE_HOOK`
+    (OQ-39, resolved, see module docstring for both) are each offered to
+    `actor` at the very top of the loop, every time around it -- before
+    `defender`'s own candidate pool is even computed, let alone this
     attempt's "no candidates at all -> return `None` with no decision
-    raised" short-circuit -- so `actor` can activate it proactively even
+    raised" short-circuit -- so `actor` can activate either proactively even
     when no block attempt is otherwise possible yet, matching Perfect
-    Paragon's own on-file ruling ("a block attempt is not required"). With
-    no provider registered, this adds nothing.
+    Paragon's own on-file ruling ("a block attempt is not required") and
+    Loup's own ("[c]an be used even if the stealth is not currently
+    needed"). Two separate `offer_until_pass` calls, not one merged offer:
+    unlike the reactive point (`_ask_stealth_or_modifier`, where a specific
+    candidate is already fixed and the rules give both hooks the exact same
+    single impulse moment to share), nothing here forces the two hooks'
+    proactive opportunities into one choice -- each hook's own hand of
+    cards can be exhausted in either order with the same final result,
+    since neither's effect depends on the other having happened first. With
+    no provider registered for either, this adds nothing.
     """
     if pending is None:
         pending = {}
     while True:
-        hooks.offer_until_pass(
-            state,
-            INTERCEPT_DECREASE_HOOK,
-            actor,
-            {
-                "actor": actor,
-                "defender": defender,
-                "acting_vampire": acting_vampire.instance_id
-                if acting_vampire is not None
-                else None,
-                "action": action,
-                "directed": directed,
-                "base_stealth": base_stealth,
-                "pending": pending,
-            },
-        )
+        proactive_context = {
+            "actor": actor,
+            "defender": defender,
+            "acting_vampire": acting_vampire.instance_id if acting_vampire is not None else None,
+            "action": action,
+            "directed": directed,
+            "base_stealth": base_stealth,
+            "pending": pending,
+        }
+        hooks.offer_until_pass(state, INTERCEPT_DECREASE_HOOK, actor, proactive_context)
+        hooks.offer_until_pass(state, STEALTH_INCREASE_HOOK, actor, proactive_context)
         candidates = state.ready_unlocked_vampires(defender)
         candidate_choices = tuple(
             Choice(f"block_with:{v.instance_id}", f"Block with {v.card.name}") for v in candidates
