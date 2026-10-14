@@ -61,7 +61,7 @@
       "capacity": 6,
       "group": 6,
       "krcg_id": 201550,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Madison",
