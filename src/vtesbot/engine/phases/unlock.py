@@ -1,39 +1,6 @@
-"""Unlock phase.
-
-Source: Rulebook SS4 Unlock Phase (per the `vtes-rules-reference` skill
-condensed mapping): "unlock all your cards, then unlock-phase effects in the
-order you choose; Edge holder may gain 1 pool. Contests paid here (1 pool
-per contested card ...)." The order of the player's own optional unlock-
-phase effects (each contested crypt card's pay/yield, each contested ally's
-pay/yield, and the optional Edge pool gain) is the acting player's choice --
-this is the impulse/sequencing model (CLAUDE.md SS4 / Rulebook SS2
-Sequencing) applied to the Unlock phase: the player picks which of several
-available effects to resolve next, one at a time, until none remain. When
-only one effect is available there is nothing to "choose the order" of, so
-no vacuous ordering decision is raised (the rules-scenario-test skill's
-"only when needed" principle).
-
-A contested ally (OQ-10/OQ-15), attached master card (OQ-22), and standalone
-Master card (OQ-23) each get the same pay-1-pool-or-yield treatment already
-built for a contested crypt card, plus a delayed "restore to usable once the
-opponent yields" step run alongside `_unlock_own_vampires` (Rulebook SS4
-Advanced Rules > Contested Cards: "the card is unlocked and turned face up
-during your *next* unlock phase, ending the contest" -- a further event
-tied to the surviving controller's own next unlock phase, not instantaneous
-with the opponent's yield). See each `_unlock_own_*` function's own
-docstring below for the mechanics and sourcing specific to that card
-category, and `engine/allies.py`/`engine/attachments.py`/
-`engine/master_cards.py`'s own `resolve_one_*_contest` for why the restore
-cannot happen on the yielding player's own turn.
-
-OQ-22 follow-up (Fame's own torpor clause, "During each Methuselah's unlock
-phase, if this vampire is in torpor, that Methuselah burns 1 pool"): a
-*mandatory* per-unlock-phase effect with no legal alternative, unlike every
-pending effect above (each a genuine pay-or-yield/gain-or-decline choice) --
-dispatched as its own `UNLOCK_PHASE_MANDATORY_EFFECT_HOOK` (`hooks.
-run_effects`, no `Decision`) rather than folded into `_pending_effect_ids`.
-See that constant's own docstring below for why it runs before, not inside,
-the optional-effect loop.
+"""Unlock phase: unlock all cards, then pay-or-yield/Edge-gain effects,
+player-chosen order (Rulebook §4). Contested ally/attachment/master mirror
+the crypt pattern; Fame pool-burn runs first (OQ-22).
 """
 
 from typing import TYPE_CHECKING
@@ -55,24 +22,9 @@ if TYPE_CHECKING:
 
 EDGE_GAIN_EFFECT = "edge_gain"
 UNLOCK_PHASE_MANDATORY_EFFECT_HOOK = "unlock_phase_mandatory_effect"
-"""Mandatory, non-chosen per-provider reaction hook (`hooks.run_effects`,
-`cards/registry.py::Hook.UNLOCK_PHASE_MANDATORY_EFFECT`), dispatched once
-per `unlock_phase` call for the unlocking `player` -- distinct from the
-*optional* pay-or-yield loop below (`_pending_effect_ids`/
-`_resolve_optional_effects_in_chosen_order`), which only ever offers a real
-choice. Added resolving `docs/OPEN_QUESTIONS.md` OQ-22's own remaining
-clause for Fame (100698, "During each Methuselah's unlock phase, if this
-vampire is in torpor, that Methuselah burns 1 pool"): unlike the contested-
-card pay-or-yield effects, Fame's own unlock-phase pool burn has no legal
-alternative at all, so it is dispatched as a plain mandatory effect
-(CLAUDE.md rule 3's "mandatory effects" exception) rather than added to the
-player's own orderable pending-effect list. Dispatched before that list is
-built/resolved: the one ruling on file for Fame ("[p]aying a pool during the
-unlock phase can be ordered with other unlock effects by the acting
-Methuselah") only gives the *acting* Methuselah a genuine choice of order
-among effects that are themselves optional (pay/yield, Edge gain); since
-this effect is unconditional either way, no ordering choice is lost by
-resolving it first."""
+"""Mandatory per-provider hook (`hooks.run_effects`), run once per
+`unlock_phase`, distinct from the optional pay-or-yield loop. Added for
+Fame's OQ-22 pool-burn (no alternative); runs before that loop."""
 
 
 def unlock_phase(state: GameState, player: str) -> None:
@@ -87,15 +39,9 @@ def unlock_phase(state: GameState, player: str) -> None:
 
 
 def _unlock_own_vampires(state: GameState, player: str) -> None:
-    """Rulebook SS4 Unlock Phase: unlock all your (ready-region) cards.
-
-    Also clears `VampireInPlay.qui_vive_played_since_unlock` (`engine/
-    state.py`, On the Qui Vive, krcg id 101321) for every one of this
-    player's own vampires regardless of zone -- the card's own "between
-    their unlock phases" cap is a calendar boundary tied to this player's
-    own unlock phase happening at all, not to whether a given vampire was
-    itself unlocked by it.
-    """
+    """Rulebook §4: unlock all ready-region cards. Also clears
+    `qui_vive_played_since_unlock` for every vampire -- its cap is bound to
+    this player's unlock phase, not to that vampire unlocking."""
     for vampire in state.players[player].vampires.values():
         vampire.qui_vive_played_since_unlock = False
         if vampire.zone == "ready":
@@ -103,40 +49,9 @@ def _unlock_own_vampires(state: GameState, player: str) -> None:
 
 
 def _unlock_own_allies(state: GameState, player: str) -> None:
-    """Rulebook SS4 Unlock Phase: "unlock all your cards" -- applies to every
-    minion, not only vampires (`_unlock_own_vampires` above). Before OQ-46
-    (`docs/OPEN_QUESTIONS.md`, resolved) this function only ever handled the
-    contested-restore branch below, with no unconditional unlock step at
-    all: a recruited ally (`engine/allies.py::recruit_ally`, entering
-    `locked=True`, "recruited ally cannot act this turn") never unlocked
-    again by any engine mechanism -- latent and unobserved until now because
-    "ally bleed/block/combat participation" is itself still out of engine
-    scope (`engine/allies.py` module docstring), so nothing yet reads a
-    ready ally's own `locked` state for anything that matters. Fixed here
-    (a real, if dormant, gap -- not a new one introduced by this pass)
-    because On the Qui Vive's own ally footnote, "If this minion is an
-    ally, they do not unlock as normal during their next unlock phase," is
-    incoherent without a normal unlock to override in the first place.
-
-    `skip_next_unlock` (`AllyInPlay`, OQ-46) is that one-shot override: a
-    ready ally with it set skips this one unlock (and the flag resets to
-    `False`, so it only ever reaches the *next* unlock phase, never
-    further).
-
-    OQ-15 (`docs/OPEN_QUESTIONS.md`): Rulebook SS4 Advanced Rules >
-    Contested Cards -- "If all other cards contesting your unique card are
-    yielded, then the card is unlocked and turned face up during your next
-    unlock phase, ending the contest." An ally whose opposing copy already
-    yielded (`contested_with` cleared by `engine/allies.py::
-    resolve_one_ally_contest`'s "yield" branch) but whose own `zone` was
-    deliberately left at `"contested"` (not instantaneous with the yield --
-    see that function's docstring) is restored to `"ready"` and unlocked
-    here, on this player's own next unlock phase, ending the contest.
-
-    An ally still actively contested (`contested_with` still set) is left
-    untouched: it is picked up instead by the optional pay-or-yield loop
-    (`_pending_effect_ids` / `resolve_one_ally_contest`).
-    """
+    """Rulebook §4: unlock all cards, not just vampires. OQ-46: skips a
+    ready ally's unlock if `skip_next_unlock` is set (one-shot). OQ-15: a
+    contested ally whose opponent yielded is restored to ready here."""
     for ally in state.players[player].allies.values():
         if ally.zone == "ready":
             if ally.skip_next_unlock:
@@ -149,22 +64,9 @@ def _unlock_own_allies(state: GameState, player: str) -> None:
 
 
 def _unlock_own_attachments(state: GameState, player: str) -> None:
-    """OQ-22 (`docs/OPEN_QUESTIONS.md`): mirrors `_unlock_own_allies`
-    exactly, for a contested attached master card (e.g. a future Fame once
-    unblocked) instead of an ally -- Rulebook SS4 Advanced Rules > Contested
-    Cards: "If all other cards contesting your unique card are yielded, then
-    the card is unlocked and turned face up during your next unlock phase,
-    ending the contest." An attachment whose opposing copy already yielded
-    (`contested_with` cleared by `engine/attachments.py::
-    resolve_one_attachment_contest`'s "yield" branch) but whose own `zone`
-    was deliberately left at `"contested"` is restored to `"attached"` here,
-    on this player's own next unlock phase, ending the contest.
-
-    Scanned via `iter_attachments` (not a direct `PlayerState` dict lookup,
-    unlike `_unlock_own_allies`): the attachment may be sitting on either
-    player's vampire, so every in-play attachment is checked and filtered by
-    its own `controller` (who played it), not by whose vampire it is on.
-    """
+    """OQ-22: mirrors `_unlock_own_allies`'s contested-restore, for an
+    attached master card. Scans via `iter_attachments` since the attachment
+    may sit on either player's vampire; filtered by `controller`."""
     for _vampire, attachment in iter_attachments(state):
         if (
             attachment.controller == player
@@ -175,27 +77,9 @@ def _unlock_own_attachments(state: GameState, player: str) -> None:
 
 
 def _unlock_own_master_cards(state: GameState, player: str) -> None:
-    """OQ-23 (`docs/OPEN_QUESTIONS.md`): two independent effects, both
-    mandatory, both sourced by the generic Unlock Phase rule quoted at the
-    top of this module ("you must unlock all of your cards"):
-
-    1. Unlock any `locked` `"in_play"` standalone master card (mirrors
-       `_unlock_own_vampires` exactly) -- the only way Oxford University,
-       England's own repeatable "lock this card ... to get +2X votes"
-       ability can ever be used a second time.
-    2. Restore a `"contested"` card whose opposing copy already yielded
-       (`contested_with is None`) back to `"in_play"`, on this player's own
-       next unlock phase -- mirrors `_unlock_own_allies`/`_unlock_own_
-       attachments`'s identical delayed-restore half, same rulebook wording
-       ("unlocked and turned face up during your *next* unlock phase"). Only
-       ever reachable for a card printed "Unique" (see `engine/master_
-       cards.py`'s own module docstring) -- a non-unique card's
-       `contested_with` is always `None`, so this branch is a no-op for it.
-
-    A card still actively contested (`contested_with` still set) is left
-    untouched: it is picked up instead by the optional pay-or-yield loop
-    (`_pending_effect_ids` / `resolve_one_master_card_contest`).
-    """
+    """OQ-23: unlocks a locked standalone master card, and restores a
+    contested card whose opponent yielded, on this player's next unlock
+    phase (mirrors `_unlock_own_allies`/`_unlock_own_attachments`)."""
     for card in state.players[player].master_cards.values():
         if card.zone == "in_play" and card.locked:
             card.locked = False
@@ -275,7 +159,7 @@ def _resolve_optional_effects_in_chosen_order(state: GameState, player: str) -> 
 
 
 def _resolve_edge_gain(state: GameState, player: str) -> None:
-    """ "Edge holder may gain 1 pool" (optional, Rulebook SS4 Unlock Phase)."""
+    """ "Edge holder may gain 1 pool" (optional, Rulebook §4 Unlock Phase)."""
     choices = (
         Choice("gain_pool", "Gain 1 pool from holding the Edge"),
         Choice("decline", "Decline"),

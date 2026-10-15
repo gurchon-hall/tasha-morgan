@@ -1,61 +1,6 @@
-"""Influence phase: transfers (2P ramp) and the free reveal action.
-
-Source: Rulebook SS4 Influence Phase, replaced by 2P variant SS2.3 (per the
-`vtes-rules-reference` skill condensed mapping): "4 transfers. Rulebook
-ramp-up 1/2/3 is replaced in 2P: first player gets 3 on their first
-influence phase, then 4 for all. Costs: 1 transfer = 1 pool -> uncontrolled
-vampire; 2 transfers = 1 blood from uncontrolled vampire -> pool; 4
-transfers + burn 1 pool = move a crypt card to the uncontrolled region. A
-vampire with blood >= capacity may be revealed into the ready region,
-unlocked, any time in this phase."
-
-Four influence-phase action types are implemented here (CLAUDE.md task
-scope: "all four transfer types from the rules-reference skill"): the three
-costed transfer types quoted above, plus the free reveal action (the
-fourth action type the Influence phase enumerates, even though it does not
-itself cost a transfer).
-
-"capacity" above is a vampire's *effective* capacity (OQ-8,
-`docs/OPEN_QUESTIONS.md`): printed capacity as modified by any attached
-card's own bonus (e.g. Celerity's "+1 capacity") -- see
-`engine/attachments.py::effective_capacity`, consulted below instead of a
-bare `v.card.capacity` read.
-
-OQ-24 (`docs/OPEN_QUESTIONS.md`, resolved): Wider View (krcg id 102180,
-"You can use 1 transfer to draw 1 card from your crypt and then remove a
-crypt card in your uncontrolled region from the game. You can use 4
-transfers to burn this card and gain 2 pool.") needs two further
-transfer-costed options available during this same phase, which no
-hardcoded `kind` branch (below) can express. `INFLUENCE_PHASE_ACTION_HOOK`
-(`"influence_phase_action"`) is offered via `hooks.offer` alongside the
-three hardcoded transfer types (kept as a hardcoded baseline rather than
-reimplemented as hook providers of their own -- see this module's own "Why
-hardcoded baseline, not hook providers" note below for the reasoning) --
-mirrors `master_phase`'s own offer/by-value/dispatch shape. A provider's
-`HookOption.apply(state)` must
-return an `int`: the number of transfers the chosen option consumed (the
-same "`apply`'s return value documents the hook's own contract" pattern
-`master_phase`'s own module docstring already uses for its `bool`
-"is this a trifle" contract). As with every hook, legality of each offered
-option (e.g. Wider View's own 1-transfer draw option needing both a
-non-empty `crypt_deck` *and* at least one uncontrolled vampire to remove)
-is the registering provider's own responsibility (`GameState.ask`'s
-"legality by construction" invariant, `engine/state.py` module docstring) --
-the engine never second-guesses what a provider offers.
-
-Why hardcoded baseline, not hook providers: reimplementing the three
-existing transfer types as the *first* registered providers against
-`INFLUENCE_PHASE_ACTION_HOOK` would mean moving `_available_choices`/
-`_apply`'s existing, already-tested logic into provider functions that live
-in `engine/`, not `src/vtesbot/cards/` (CLAUDE.md SS6: "Card hooks ... lives
-in `src/vtesbot/cards/`. Do not special-case card names in the engine" --
-these three are generic rulebook mechanics, not any card's text, so they
-belong in `engine/` either way, but moving them behind the hook machinery
-would add indirection with no reader-facing benefit, since nothing outside
-this module needs to add to or override them). Keeping them hardcoded and
-simply unioning the hook's own options alongside them is the smaller diff
-and leaves the three types' own byte-for-byte behaviour, and every existing
-test asserting it, untouched.
+"""Influence phase (Rulebook §4, 2P §2.3): blood add/remove, bring crypt
+card, free reveal; 3->4 transfer ramp; OQ-8 capacity.
+`INFLUENCE_PHASE_ACTION_HOOK` adds OQ-24 options alongside.
 """
 
 from typing import TYPE_CHECKING
@@ -71,9 +16,9 @@ if TYPE_CHECKING:
     from ..state import GameState
 
 FIRST_INFLUENCE_PHASE_TRANSFERS = 3
-"""2P variant SS2.3: the first player's very first influence phase of the game."""
+"""2P variant §2.3: the first player's very first influence phase of the game."""
 STANDARD_TRANSFERS = 4
-"""2P variant SS2.3: every influence phase thereafter, for both players."""
+"""2P variant §2.3: every influence phase thereafter, for both players."""
 
 INFLUENCE_PHASE_ACTION_HOOK = "influence_phase_action"
 """OQ-24: a card-sourced, transfer-costed influence-phase option, offered

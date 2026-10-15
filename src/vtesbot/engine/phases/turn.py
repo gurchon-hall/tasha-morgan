@@ -1,20 +1,6 @@
-"""Turn sequence orchestration.
-
-Source: Rulebook SS4 (per the `vtes-rules-reference` skill condensed
-mapping): the five phases in order are Unlock, Master, Minion, Influence,
-Discard; the acting Methuselah alternates each turn in a 2-player duel.
-`play_turn`/`run_until_game_over` are pure control-flow conveniences (not
-separately-sourced rules) that drive the phase functions in order and stop
-as soon as `state.game_over` becomes true (Rulebook SS5 Ending the Game:
-the game ends immediately on an oust in a 2-player duel: "The game
-continues until only one Methuselah is left"; in a 2-player duel any oust
-leaves one).
-
-`clear_turn_cards_at_end_of_turn` (OQ-34, `docs/OPEN_QUESTIONS.md`) runs
-after the discard phase, before the turn flips: Loup-shaped cards ("Burn
-this card at the end of the turn...") self-destruct here if nothing more
-specific burned them first -- see that function's own docstring
-(`engine/turn_cards.py`) for why "the turn" is unambiguous.
+"""Turn sequence (Rulebook §4): Unlock/Master/Minion/Influence/Discard,
+acting Methuselah alternates; stops once `game_over` (Rulebook §5).
+`clear_turn_cards_at_end_of_turn` runs after discard (OQ-34).
 """
 
 from typing import TYPE_CHECKING
@@ -51,12 +37,9 @@ def play_turn(state: GameState) -> None:
 
 
 def run_until_game_over(state: GameState, max_turns: int = 1000) -> None:
-    """Drive `play_turn` until the game ends or `max_turns` is exceeded.
-
-    `max_turns` is a safety valve for tests/sim runs, not a rule; a real
-    game only ends via ousting (Rulebook SS5) or (later) advanced
-    withdrawal rules, which are out of scope for this milestone.
-    """
+    """Drive `play_turn` until game end or `max_turns`. `max_turns` is a
+    safety valve for tests, not a rule -- a real game only ends via ousting
+    (Rulebook §5)."""
     turns_played = 0
     while not state.game_over and turns_played < max_turns:
         play_turn(state)

@@ -1,10 +1,5 @@
-"""Discard phase.
-
-Source: Rulebook SS4 Discard Phase (per the `vtes-rules-reference` skill
-condensed mapping): "1 discard phase action (discard + replace, or play one
-event)." CLAUDE.md milestone-2 scope: event cards are not implemented, so
-only "discard a hand card and draw its replacement" (Rulebook SS2: "replace
-from library after play") or passing are offered.
+"""Discard phase (Rulebook §4): one action -- discard + replace, or pass.
+Event cards are not implemented yet, so "play one event" is never offered.
 """
 
 from typing import TYPE_CHECKING
@@ -36,7 +31,7 @@ def discard_phase(state: GameState, player: str) -> None:
         drawn = p.library.pop(0)
         state.log.record_random(f"{player} draws a discard-phase replacement", drawn.name)
         p.hand.append(drawn)
-    # Rulebook SS2 Drawing Cards: "whenever an effect ... adds or removes
+    # Rulebook §2 Drawing Cards: "whenever an effect ... adds or removes
     # cards from your hand, immediately discard down to or draw up to match
     # your hand size" -- covers the empty-library branch too (the discard
     # with no replacement could still leave hand above a *raised* effective

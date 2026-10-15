@@ -1,4 +1,4 @@
-"""Turn phases (Rulebook SS4): unlock, master, minion, influence, discard."""
+"""Turn phases (Rulebook §4): unlock, master, minion, influence, discard."""
 
 from .discard import discard_phase
 from .influence import influence_phase
