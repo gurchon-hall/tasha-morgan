@@ -1,6 +1,8 @@
-"""Format configuration: gates 2P-variant deltas from the rulebook
-(CLAUDE.md §7). `two_player` defaults to True (§1 scope), but every
-2P-only rule still reads this flag rather than being unconditional."""
+"""Format configuration (CLAUDE.md §7). `two_player` defaults to True
+(§1 scope, 4-5 player out of scope for now) -- no code currently reads
+this flag, since every 2P-only rule is applied unconditionally rather
+than gated by it (`docs/DECISIONS.md` D-11, an accepted simplification,
+not an oversight)."""
 
 from dataclasses import dataclass
 

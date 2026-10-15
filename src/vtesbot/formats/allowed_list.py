@@ -9,8 +9,10 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class AllowedCard:
-    """One entry on the allowed list. `type` is `"Crypt"` or a single
-    library type string (`"Master"`, `"Action"`, `"Political Action"`, ...)."""
+    """One entry on the allowed list. `type` is the coarse bucket
+    `"Crypt"` or `"Library"`, matching `data/formats/2p/<date>.json`'s own
+    granularity -- not a per-card-type string (`"Master"`, `"Action"`,
+    ...)."""
 
     krcg_id: int
     name: str
