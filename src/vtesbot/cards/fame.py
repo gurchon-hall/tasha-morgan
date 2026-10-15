@@ -45,10 +45,10 @@ Clauses:
    (`engine/attachments.py::attach_card`) on a vampire whose `zone ==
    "ready"` *at the moment of play*, either player's (no clan/discipline
    restriction, no "you control" qualifier, mirroring Celerity's own
-   targeting precedent, OQ-8; Rulebook SS2 Card Types: "A master card in
+   targeting precedent, OQ-8; Rulebook §2 Card Types: "A master card in
    play is controlled by the Methuselah who played it, even if it is played
    on a card controlled by another Methuselah"). Unlike Celerity (whose
-   plain "a vampire" also allows a torpid target per Rulebook SS8 glossary
+   plain "a vampire" also allows a torpid target per Rulebook §8 glossary
    "Target"), Fame's text explicitly narrows this to "a ready vampire": a
    torpid vampire is not a legal target.
 3. "After this vampire goes to torpor, their controller burns 3 pool." --
@@ -59,7 +59,7 @@ Clauses:
    `engine/damage.py::send_to_torpor` via the new
    `VAMPIRE_ENTERS_TORPOR_HOOK`. Only fires while Fame's attachment is
    `zone == "attached"`: a contested copy is "turned face down and out of
-   play" (Rulebook SS4 Advanced Rules > Contested Cards) and cannot react
+   play" (Rulebook §4 Advanced Rules > Contested Cards) and cannot react
    (OQ-22's addendum note (c): a future numeric/effect-granting attachment
    must gate its own contribution on `zone == "attached"`).
 4. "During each Methuselah's unlock phase, if this vampire is in torpor,
@@ -149,7 +149,7 @@ def _provide_fame_master_phase_play(
 
         def _apply(s: GameState, vampire: VampireInPlay = vampire) -> bool:
             play_from_hand(s, player, KRCG_ID)
-            # Rulebook SS2 Card Types, "Master Cards": controlled by whoever
+            # Rulebook §2 Card Types, "Master Cards": controlled by whoever
             # played it, which may differ from `vampire.controller` -- the
             # only case `attach_card` has a real caller for today (OQ-22).
             attachment = attach_card(s, vampire, controller=player, krcg_id=KRCG_ID, name="Fame")

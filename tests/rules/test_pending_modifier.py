@@ -261,7 +261,7 @@ def test_hunt_resolve_accepts_but_ignores_the_pending_argument():
 
 
 def test_bleed_bookkeeping_lets_an_exempt_provider_skip_the_shared_limited_flag():
-    """`_shared.py::bleed_bookkeeping`'s "(limited)" convention (SS8
+    """`_shared.py::bleed_bookkeeping`'s "(limited)" convention (§8
     glossary; `cards/threats.py`'s own `LIMITED_USED_KEY`) is a convention a
     provider opts into, not something `bleed_bookkeeping` itself enforces --
     mirrors `engine/combat.py`'s `additional_strike_limit_used`/`mark_

@@ -3,7 +3,7 @@ found implementing Fame, 100698): a `CardAttachment` printed "Unique" can
 collide with a same-named opposing attachment, exactly like the crypt-card
 (`engine/contests.py`) and ally (`engine/allies.py`, OQ-10) cases -- except
 there is no 2P "stays in play and usable" override for this card type
-either, so an attachment contest follows the *unmodified* Rulebook SS4
+either, so an attachment contest follows the *unmodified* Rulebook §4
 Advanced Rules > Contested Cards rule: both copies are "turned face down
 and are out of play" for the contest's duration
 (`engine/attachments.py::detect_contest_on_attach`).
@@ -21,7 +21,7 @@ UNIQUE_ATTACHMENT_NAME = "Fame"
 
 
 def test_detect_contest_on_attach_flags_both_same_named_attachments():
-    """Rulebook SS4 Advanced Rules > Contested Cards: "If more than one
+    """Rulebook §4 Advanced Rules > Contested Cards: "If more than one
     unique card with the same name is brought into play, that means control
     of the card is being contested." Both copies get `contested_with` set
     to each other, mirroring `engine/allies.py::detect_contest_on_recruit`'s
@@ -138,7 +138,7 @@ def test_a_players_own_two_attachments_of_the_same_name_do_not_contest_each_othe
 
 
 def test_an_attachments_controller_may_differ_from_the_vampires_own_controller():
-    """Rulebook SS2 Card Types: "A master card in play is controlled by the
+    """Rulebook §2 Card Types: "A master card in play is controlled by the
     Methuselah who played it, even if it is played on a card controlled by
     another Methuselah." The contest is tracked against the attachment's
     own `controller`, not the vampire it sits on -- here P1 plays both

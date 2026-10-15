@@ -90,7 +90,7 @@ def test_run_effects_is_a_safe_no_op_with_no_providers_registered():
 
 
 def test_union_modifiers_returns_a_sorted_tuple_not_a_frozenset():
-    """Rules-auditor finding (CLAUDE.md SS5 determinism): a `frozenset[str]`
+    """Rules-auditor finding (CLAUDE.md §5 determinism): a `frozenset[str]`
     is a latent non-reproducible-ordering footgun for any future consumer
     that iterates it to build `Decision.choices` (Python's string hashing is
     randomized per process). `union_modifiers` must return a sorted tuple
@@ -637,7 +637,7 @@ def test_stealth_modifier_hook_lets_the_actor_rescue_a_currently_succeeding_bloc
 
 
 def test_run_effects_stops_calling_providers_once_the_game_is_over():
-    """Rulebook SS5 Ending the Game: once an oust ends the game, no later
+    """Rulebook §5 Ending the Game: once an oust ends the game, no later
     provider may keep mutating state."""
     from vtesbot.engine.pool import lose_pool
 

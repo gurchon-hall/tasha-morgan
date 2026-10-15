@@ -52,7 +52,7 @@ def test_not_offered_without_any_ready_vampire_anywhere():
 
 
 def test_adds_one_blood_to_own_ready_vampire_and_the_trifle_grants_an_extra_action():
-    """Trifle (SS8 glossary): a successfully played trifle grants one extra
+    """Trifle (§8 glossary): a successfully played trifle grants one extra
     master phase action, at most once per phase -- tested here by playing
     two copies in a single master phase (base action + the one trifle
     bonus)."""

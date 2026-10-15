@@ -35,7 +35,7 @@ see that module's own docstring). `directed=False`: unlike Parity Shift's
 "Choose a Methuselah who has more pool than you do" (a named victim, fixed
 at announce), neither "a location" nor "a Methuselah" here names anything
 that determines who may block -- this is a plain undirected political
-action, and (Rulebook SS4 "Politics": "Terms chosen only after success")
+action, and (Rulebook §4 "Politics": "Terms chosen only after success")
 both choices are the referendum's own terms, picked by the caller only once
 `resolve_referendum` reports a pass, as a fresh `"disputed_territory_terms"`
 `Decision` raised inside `resolve()` (mirrors Kine Resources Contested's

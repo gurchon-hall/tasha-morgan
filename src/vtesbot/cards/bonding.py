@@ -15,7 +15,7 @@ Rulings (verbatim, via krcg):
 Card type: Action Modifier. `discipline_requirement.disciplines == ["dom"]`
 (basic Dominate required to play the card at all; superior Dominate,
 printed uppercase `"DOM"` on a `CryptCard`, additionally unlocks the
-bold-text effect -- Rulebook SS3 "Discipline symbol within a diamond ... may
+bold-text effect -- Rulebook §3 "Discipline symbol within a diamond ... may
 opt to use either the basic (plain text) or the superior (bold) effect ...
 but not both"). `cost is None` (free).
 
@@ -65,7 +65,7 @@ later by `_perform_bleed`'s `resolve()` (OQ-11): `apply()` both returns `1`
 window runs -- the mechanism OQ-11 built, proved end-to-end by
 `tests/rules/test_pending_modifier.py`'s fake stand-in provider.
 
-Rulebook SS3 "may opt to use either the basic or the superior effect ... but
+Rulebook §3 "may opt to use either the basic or the superior effect ... but
 not both": a superior-Dominate vampire is eligible for *both* providers
 above, but they fire in different hook windows at different times within
 the same minion action. The superior clause can only be legally offered
@@ -73,7 +73,7 @@ while a block attempt is in progress and stealth is currently needed; if
 the defender never attempts a block, the superior clause is never offered,
 and the basic clause (always satisfied by a superior-Dominate vampire too)
 remains available in the later `"bleed_amount_modifier"` window -- the
-vampire ends up using "only" the basic effect, exactly SS3's "may opt to
+vampire ends up using "only" the basic effect, exactly §3's "may opt to
 use either effect" (`tests/cards/test_bonding.py::
 test_superior_vampire_may_opt_to_use_the_basic_effect_instead_when_no_
 block_is_attempted`). Conversely, if a block *is* attempted, declining the
@@ -84,9 +84,9 @@ succeeding at the current intercept (bleed's base stealth is 0, so
 the action is blocked and the later bleed-amount window is never reached.
 Both branches are tested.
 
-"(limited)" (SS8 glossary: "an action modifier card cannot be played to
+"(limited)" (§8 glossary: "an action modifier card cannot be played to
 increase the bleed if the bleed amount is already being increased by
-another action modifier card"; SS2: "A minion cannot play the same action
+another action modifier card"; §2: "A minion cannot play the same action
 modifier card more than once during a single action (even if using a
 different Discipline level)"): tracked via the per-*action*
 `bleed_bookkeeping` scratch space keyed off `pending` (`vtesbot.cards.

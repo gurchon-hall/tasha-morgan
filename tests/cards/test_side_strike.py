@@ -87,7 +87,7 @@ def test_dodge_offered_with_basic_cel():
 
 def test_dodge_also_offered_with_superior_cel():
     """Superior Celerity presence satisfies the basic-level discipline check
-    too (Rulebook SS3 "may opt to use either effect"), the same convention
+    too (Rulebook §3 "may opt to use either effect"), the same convention
     `bonding.py` already uses for its own basic/superior pair."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(
@@ -239,7 +239,7 @@ def test_additional_strike_grants_one_additional_strike_via_the_full_strike_mach
 
     # Two separate hits landed on B1 this round (the normal hand strike, then
     # the granted additional strike): healthy -> wounded -> torpor. Combat
-    # ends at once (Rulebook SS4: "combat ends at once if a combatant is no
+    # ends at once (Rulebook §4: "combat ends at once if a combatant is no
     # longer ready"), with no press step raised for either side.
     assert game.zone_of("B1") == "torpor"
     assert game.zone_of("V1") == "ready"

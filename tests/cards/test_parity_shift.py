@@ -196,7 +196,7 @@ def test_justicar_title_also_qualifies():
 
 
 def test_a_referendum_that_fails_has_no_effect():
-    """Rulebook SS4 "Resolve the Referendum": no effect at all. The caller
+    """Rulebook §4 "Resolve the Referendum": no effect at all. The caller
     declines both of their own sources ("no obligation to cast"); the
     opposing ready Prince's 2 votes "against" then stand alone, 0 to 2."""
     builder = ScenarioBuilder(seed=1)

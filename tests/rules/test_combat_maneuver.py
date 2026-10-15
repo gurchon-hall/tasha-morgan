@@ -55,7 +55,7 @@ def test_no_maneuver_choice_is_offered_without_a_registered_provider():
     """Regression guard: with no `"maneuver"` provider registered, Determine
     Range never raises a `maneuver_choice` decision at all (CLAUDE.md "only
     when needed"), and the round stays at the rulebook's own default --
-    Rulebook SS4 Combat > Determine Range: "Close range is the default for
+    Rulebook §4 Combat > Determine Range: "Close range is the default for
     each round." Byte-for-byte the pre-maneuver result: no existing combat
     test's script needed a new entry for this."""
     captured: list = []
@@ -80,7 +80,7 @@ def test_no_maneuver_choice_is_offered_without_a_registered_provider():
 
 
 def test_ayelech_colette_worked_example():
-    """Rulebook SS4 Combat > Determine Range's own worked example, reproduced
+    """Rulebook §4 Combat > Determine Range's own worked example, reproduced
     exactly: "Ayelech has just blocked Colette, and combat ensues. Ayelech
     has a .44 Magnum that allows her to strike for 2 damage at either close
     or long range, and gives her an optional maneuver. Colette, as the acting
@@ -217,7 +217,7 @@ def test_strike_bundled_maneuver_commits_the_initial_strike_and_skips_the_strike
     optional maneuver, only usable to get to close range" (where "as above"
     bundles the maneuver with "Strike: hand strike at +2 damage") must use --
     fixes the maneuvering combatant's *initial* strike of the round to that
-    same bundled effect. Rulebook SS4 Combat > Strike > Choose Strike: "If a
+    same bundled effect. Rulebook §4 Combat > Strike > Choose Strike: "If a
     minion has used a maneuver from a strike ... this round, then they cannot
     choose any other strike for their initial strike of the round." No
     `strike_choice` decision is raised for P1 at all this round -- not "may
@@ -273,7 +273,7 @@ def test_strike_bundled_maneuver_commits_the_initial_strike_and_skips_the_strike
 def test_committed_strike_lock_does_not_extend_to_additional_strikes():
     """The Rulebook's own restriction is scoped to "their initial strike of
     the round" only (Choose Strike, quoted above) -- Additional Strikes
-    (Rulebook SS4 Combat > Additional Strikes, a separate, later choose-
+    (Rulebook §4 Combat > Additional Strikes, a separate, later choose-
     strike step) are unaffected: a combatant whose initial strike was
     pre-committed by a strike-bundled maneuver still gets a full, independent
     strike choice for any additional strike they separately gain that same
@@ -334,7 +334,7 @@ def test_committed_strike_lock_does_not_extend_to_additional_strikes():
 
     # B1 (0 blood) is wounded by the initial committed strike's 1 damage, then
     # sent to torpor by the additional strike's own hand strike -- combat
-    # ends at once (Rulebook SS4: "combat ends at once if a combatant is no
+    # ends at once (Rulebook §4: "combat ends at once if a combatant is no
     # longer ready"), with no press decision for either side. The scripted
     # answers above are exhausted either way: this is what proves the
     # additional strike actually reached a full, independent `hand_strike`
@@ -384,7 +384,7 @@ def test_plain_maneuver_does_not_commit_a_strike_and_full_choice_remains():
 
 
 def test_second_strike_bundled_maneuver_is_not_offered_once_committed():
-    """Rulebook SS4 Combat > Determine Range: "If a minion uses the maneuver
+    """Rulebook §4 Combat > Determine Range: "If a minion uses the maneuver
     from a strike card or a weapon, they are effectively choosing their
     strike as well. As such, they cannot use a second strike card or weapon
     to maneuver again in the same round." Two independent fake providers

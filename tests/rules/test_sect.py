@@ -3,12 +3,12 @@ pass): `Sect` on `engine/cards.py`, and `derive_sect`, the generic helper
 that classifies a vampire's sect from its own printed `card_text` preamble.
 
 Sources:
-- Rulebook SS6 "Vampire Sects" <https://www.vekn.net/rulebook/6-vampire-sects>
+- Rulebook §6 "Vampire Sects" <https://www.vekn.net/rulebook/6-vampire-sects>
   (re-fetched live 2026-10-10, matching the local cache's `dateModified`
   under `data/sources/rulebook/2026-10-09/6-vampire-sects.md`): "A vampire
   always belongs to one and only one sect." Defines Camarilla, Anarch,
   Sabbat, Independent.
-- Rulebook SS7 "Legacy Sets" > "Other Vampire Sects" > "Laibon"
+- Rulebook §7 "Legacy Sets" > "Other Vampire Sects" > "Laibon"
   <https://www.vekn.net/rulebook/7-legacy-sets> (re-fetched live 2026-10-10,
   matching the local cache's `dateModified`): the fifth sect, documented
   separately because its cards predate 5th Edition, not because it is any
@@ -64,7 +64,7 @@ ADVANCED_SABBAT_RED_LIST_TEXT = (
     "Advanced, Sabbat. Red List: Dylan gets +1 stealth when bleeding. +1 strength. Infernal."
 )
 
-# Imbued are not vampires and have no sect (Rulebook SS6 only speaks of
+# Imbued are not vampires and have no sect (Rulebook §6 only speaks of
 # vampires). Jack "Hannibal137" Harmon, krcg id 200656 (Imbued, creed
 # "Defender") -- his own printed text does not start with a sect keyword.
 IMBUED_TEXT = "Jack gets an optional maneuver on the first round of combat."
@@ -120,9 +120,9 @@ class TestDeriveSect:
         assert derive_sect("Camarilla Prince of Boston.") is Sect.CAMARILLA
 
     def test_imbued_text_has_no_sect_preamble_and_raises(self):
-        """Imbued are not vampires (Rulebook SS6); calling `derive_sect` on
+        """Imbued are not vampires (Rulebook §6); calling `derive_sect` on
         an Imbued's own text must not silently misreport "Independent" --
-        it raises instead, per the no-guessing rule (CLAUDE.md SS2)."""
+        it raises instead, per the no-guessing rule (CLAUDE.md §2)."""
         with pytest.raises(UnresolvedRulingError) as exc_info:
             derive_sect(IMBUED_TEXT)
         assert exc_info.value.oq_id == "OQ-18"

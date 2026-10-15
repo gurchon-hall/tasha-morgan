@@ -1,4 +1,4 @@
-"""Default hunt action (Rulebook SS4 Minion Phase).
+"""Default hunt action (Rulebook §4 Minion Phase).
 
 "hunt (undirected, +1 stealth, +1 blood)." "mandatory actions first (a ready
 vampire with no blood must hunt)."
@@ -30,7 +30,7 @@ def test_hunt_always_evades_a_block_attempt_due_to_its_baseline_stealth():
     """Hunt's baseline stealth (1) always exceeds a blocker's baseline
     intercept (0) when no intercept cards are implemented: the block attempt
     is still offered to the defender (their right to attempt), but it never
-    connects, and the blocking vampire does not lock. Rulebook SS4: a failed
+    connects, and the blocking vampire does not lock. Rulebook §4: a failed
     attempt does not end the block-attempt window, so the defender is
     re-offered another attempt or decline; here they decline."""
     builder = ScenarioBuilder(seed=1)
@@ -55,7 +55,7 @@ def test_hunt_always_evades_a_block_attempt_due_to_its_baseline_stealth():
 
 
 def test_hunt_blood_gain_is_capped_at_capacity():
-    """Rulebook SS1 Vampires: a vampire cannot hold more blood than its capacity."""
+    """Rulebook §1 Vampires: a vampire cannot hold more blood than its capacity."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=2, blood=2)
     builder.player("P2", pool=30)

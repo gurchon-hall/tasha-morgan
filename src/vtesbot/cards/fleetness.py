@@ -22,21 +22,21 @@ itself the acting vampire's entire minion action for the turn, same category
 as Enchant Kindred/Line Brawl). `discipline_requirement == {"type": "Mono",
 "disciplines": ["cel"]}` (basic Celerity required to play the card at all;
 superior Celerity, printed uppercase "CEL" on a `CryptCard`, additionally
-unlocks the second, bracketed clause -- Rulebook SS3 "Discipline symbol
+unlocks the second, bracketed clause -- Rulebook §3 "Discipline symbol
 within a diamond ... may opt to use either the basic (plain text) or the
 superior (bold) effect ... but not both"). `clan_requirement == []`,
 `path_requirement == []`, `burn_option is False`, `trifle is False` (no bonus
 master-phase/minion-phase action; this is an ordinary minion action).
 `cost == {"type": "Blood", "value": 1}`: a genuine *blood* cost, printed in
 the top card-frame cost box, independent of which discipline-level clause is
-used (both clauses below pay it). Rulebook SS2 Card Types > "Requirements for
+used (both clauses below pay it). Rulebook §2 Card Types > "Requirements for
 Playing Cards" (verbatim, `data/sources/rulebook/2026-10-09/
 2-card-types.md:155-157`): "A number in a red drop represents blood cost (the
 amount of blood the vampire must burn). Only a vampire with enough blood on
 them can play a card with a blood cost." -- i.e. the *acting vampire itself*
 (not the Methuselah's pool) must have at least 1 blood to play this card at
 all; this is a precondition for legally playing the card, checked at offer
-time, independent of whether the cost is actually paid. Rulebook SS4 Minion
+time, independent of whether the cost is actually paid. Rulebook §4 Minion
 Phase > Detailed Course of an Action (verbatim, quoted already by
 `src/vtesbot/engine/action.py`'s own module docstring, step 3): "If
 unblocked -> pay cost, resolve. If blocked -> action card burned, cost not
@@ -55,7 +55,7 @@ formats/2p/2026-10-03.json`, krcg id 100747).
 Prey/predator wording check (per the `implement-card` skill, step 3): both
 clauses carry the "Ⓓ" marker, Rulebook glossary "Directed Action" (targets
 one other Methuselah). In a 2P duel this collapses to the single-opponent
-block-attempt model (CLAUDE.md SS3; same reading as `enchant_kindred.py`'s
+block-attempt model (CLAUDE.md §3; same reading as `enchant_kindred.py`'s
 basic clause). Not OQ-1.
 
 Status: implemented. Previously `blocked` (OQ-25, resolved) for want of a
@@ -83,7 +83,7 @@ follow-up requirement) so a bleed-gated provider sharing the same hook
 windows (e.g. `bonding.py`'s superior clause) isn't silently suppressed.
 The printed 1-blood cost is burned from the acting vampire at the start of
 `resolve()`, before the bleed computation -- only reached on the unblocked
-branch (Rulebook SS4 step 3, quoted in `engine/action.py`'s module
+branch (Rulebook §4 step 3, quoted in `engine/action.py`'s module
 docstring: cost is paid only if unblocked).
 
 "[CEL] Ⓓ Enter combat with a locked minion. This acting vampire gets 1
@@ -107,7 +107,7 @@ the seeded grant via `pre_combat_maneuver_available`/
 `consume_pre_combat_maneuver_grant` and offers/claims it, mirroring
 `tests/rules/test_pre_combat_maneuver_grant.py`'s fake provider.
 
-The target is chosen inside `apply()`, at announce time (Rulebook SS4
+The target is chosen inside `apply()`, at announce time (Rulebook §4
 "Announce the Action" + `ActionCardSpec` contract; same timing as
 `line_brawl.py`'s `[pot]` clause, OQ-21). With exactly one eligible locked
 target it is bound directly with no decision raised; with none, the clause
@@ -119,7 +119,7 @@ Basic vs superior discipline gating mirrors `enchant_kindred.py`'s/
 not attachment-aware `effective_disciplines` -- OQ-8 noted, not acted on
 here, matching those precedents). The basic `[cel]` clause is offered
 whenever the acting vampire has either `"cel"` or `"CEL"` (superior unlocks
-either effect, Rulebook SS3); the superior `[CEL]` clause only with `"CEL"`.
+either effect, Rulebook §3); the superior `[CEL]` clause only with `"CEL"`.
 """
 
 from collections.abc import Mapping

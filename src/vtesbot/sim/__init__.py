@@ -1,4 +1,4 @@
-"""Bot-vs-bot runner and replay logs (CLAUDE.md SS5)."""
+"""Bot-vs-bot runner and replay logs (CLAUDE.md §5)."""
 
 from .invariants import InvariantViolation, check_no_activity_after_oust
 from .report import (

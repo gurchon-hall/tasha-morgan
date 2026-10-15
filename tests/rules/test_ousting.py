@@ -1,8 +1,8 @@
-"""Ousting and victory (Rulebook SS5 Ending the Game).
+"""Ousting and victory (Rulebook §5 Ending the Game).
 
 "Pool 0 -> ousted. Prey ousted -> predator gets 1 VP + 6 pool. Last
 Methuselah gets +1 VP. With two players left, each is the other's prey."
-2P structural consequence (CLAUDE.md SS3, settled core rule): the sole
+2P structural consequence (CLAUDE.md §3, settled core rule): the sole
 survivor of a 2-player duel collects both bonuses at once and the game ends.
 """
 
@@ -64,7 +64,7 @@ def test_minion_phase_decision_still_runs_after_oust_check_is_a_no_op_once_over(
 
 def test_influence_phase_stops_asking_once_a_hook_option_ousts_the_actor():
     """A hook-offered influence option that ousts the actor (pool cost to 0)
-    must end the phase with no further decision (Rulebook SS5 Ending the Game:
+    must end the phase with no further decision (Rulebook §5 Ending the Game:
     the game continues only until one Methuselah is left; 2P: that is the
     opponent at once)."""
 

@@ -17,12 +17,12 @@ agree):
 
 Card type: Combat (`types == ["Combat"]`). `discipline_requirement ==
 {"type": "Mono", "disciplines": ["pot"]}` -- a single discipline, Potence,
-printed at two different levels (Rulebook SS3 "Discipline symbol within a
+printed at two different levels (Rulebook §3 "Discipline symbol within a
 diamond ... may opt to use either the basic (plain text) or the superior
 (bold) effect ... but not both"). `clan_requirement == []`, `path_
 requirement == []`, `cost == {"type": "Blood", "value": 1}` -- 1 blood,
 printed cost box, independent of which clause is used (same precondition
-shape as Fleetness's 1-blood cost). Unlike an Action card (Rulebook SS4 "If
+shape as Fleetness's 1-blood cost). Unlike an Action card (Rulebook §4 "If
 unblocked -> pay cost, resolve. If blocked -> ... cost not paid"), a Combat
 card has no block-attempt window of its own -- it is chosen as a strike or
 a maneuver during an already-resolving combat -- so the 1 blood is burned
@@ -33,7 +33,7 @@ resolution step. `burn_option is False`, `trifle is False`. Legal since
 
 No Ⓓ marker, no prey/predator/"other Methuselahs" wording, no political
 vote -- a plain Combat card played during an already-resolving combat, so
-OQ-1 (CLAUDE.md SS3) does not apply.
+OQ-1 (CLAUDE.md §3) does not apply.
 
 Status: implemented. Previously `blocked` (OQ-28, `docs/OPEN_QUESTIONS.md`,
 now resolved) for want of a way to let a `MANEUVER_HOOK` grant pre-commit a
@@ -43,7 +43,7 @@ combatant's strike choice for the round. `rules-engineer`'s fix:
 KEY` entry in the shared, round-scoped `round_state` dict, and `_ask_strike`
 now pops and resolves any such commitment directly for that combatant's
 *initial* strike of the round only (an Additional Strikes pair is
-unaffected -- Rulebook SS4 Combat > Additional Strikes' own "any strike can
+unaffected -- Rulebook §4 Combat > Additional Strikes' own "any strike can
 be chosen, even if a maneuver of a strike card or a weapon has been used"
 sentence). See that module's own "Maneuver bundled with a strike" docstring
 section for the full mechanism, proven generically (not Slam-specific) by
@@ -63,7 +63,7 @@ structurally. No `ignore_dodge` flag: an ordinary, dodgeable strike.
 "[POT] As above, with 1 optional maneuver, only usable to get to close
 range." (superior clause): a `MANEUVER_HOOK` provider, gated on superior
 `"POT"`, the card in hand, at least 1 blood, and
-`not strike_committed_this_round(context)` (Rulebook SS4 Combat > Determine
+`not strike_committed_this_round(context)` (Rulebook §4 Combat > Determine
 Range: "they cannot use a second strike card or weapon to maneuver again in
 the same round", enforced at this provider's own gate). "Only usable to get
 to close range": gated on `state.combat_range == LONG_RANGE`, since

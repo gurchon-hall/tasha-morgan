@@ -15,7 +15,7 @@ Card type: Master (`types == ["Master"]`). `clans == ["Brujah"]`,
 pay on top of the clan requirement below). Not printed "Trifle.", so
 playing it does not grant a bonus master phase action.
 
-Clan requirement (Rulebook SS2 Card Types > "Requirements for Playing
+Clan requirement (Rulebook §2 Card Types > "Requirements for Playing
 Cards"): "... only a Methuselah who controls a ready minion who meets the
 requirements of a master card can play it." Oxford's printed clan symbol
 is Brujah (`clans == ["Brujah"]`) -- unlike a *minion* card's clan
@@ -104,7 +104,7 @@ caller)."""
 
 
 def _controls_a_ready_brujah(state: GameState, player: str) -> bool:
-    """Rulebook SS2 Card Types > "Requirements for Playing Cards" (module
+    """Rulebook §2 Card Types > "Requirements for Playing Cards" (module
     docstring): "only a Methuselah who controls a ready minion who meets
     the requirements of a master card can play it" -- not tied to any one
     specific vampire, unlike a minion card's own acting-minion-scoped

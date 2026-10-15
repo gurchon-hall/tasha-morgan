@@ -21,7 +21,7 @@ Correction to this task's own brief (CLAUDE.md "no guessing" / "text
 first"): the brief asserted `pool_cost=None`. Re-checked against both the
 live `api.krcg.org/card/102180` endpoint and the installed `krcg` package
 (`krcg.load()[102180].cost`) -- both report `cost = Cost(type=Pool,
-value=1)`: this card costs 1 pool to play. Rulebook SS2 "Requirements for
+value=1)`: this card costs 1 pool to play. Rulebook §2 "Requirements for
 Playing Cards" (quoted in full in `oxford_university_england.py`'s
 docstring): "Only a Methuselah with enough pool can play a card with a pool
 cost." So playing Wider View burns 1 pool -- implemented via `lose_pool` in the
@@ -39,7 +39,7 @@ field split at each sentence:
    is never called -- only correct for a card printed "Unique"
    (`engine/master_cards.py`; OQ-23's own sweep names Wider View as the
    non-unique counter-example motivating `MasterCardInPlay`'s generic
-   shape); (b) `apply(state)` returns `True` (Rulebook SS4 Master Phase:
+   shape); (b) `apply(state)` returns `True` (Rulebook §4 Master Phase:
    "trifles grant one extra master phase action"), unlike Oxford's
    `False`. No clan/discipline gate beyond "card is in hand" and "enough
    pool", since this card prints neither.
@@ -49,7 +49,7 @@ field split at each sentence:
    against `INFLUENCE_PHASE_ACTION_HOOK` (OQ-24). `apply(state)` returns
    `1` (transfers consumed), per that hook's contract.
 
-   Sequencing ("draw... and then remove"): SS8 Glossary "Draw": "Crypt
+   Sequencing ("draw... and then remove"): §8 Glossary "Draw": "Crypt
    cards are drawn from the top of the Methuselah's crypt into their
    uncontrolled region." The drawn card is therefore already "in your
    uncontrolled region" before the removal clause is evaluated; the text

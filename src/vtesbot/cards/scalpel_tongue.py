@@ -63,7 +63,7 @@ asymmetric by role, unlike this module's earlier, uniform "any ready,
 unlocked qualifying vampire of either Methuselah" reading.
 
 - The *caller* (the Methuselah whose political action this is):
-  `rules-auditor`'s OQ-38 finding applies the Rulebook SS2 Card Types
+  `rules-auditor`'s OQ-38 finding applies the Rulebook §2 Card Types
   default ("The acting minion can play [action modifier cards]..." absent
   an "other than the acting minion" override phrase, which this card's text
   does not carry) -- so the caller may only play Scalpel Tongue through
@@ -71,7 +71,7 @@ unlocked qualifying vampire of either Methuselah" reading.
   never a different ready/unlocked vampire they also control. That specific
   vampire's own `locked` state is irrelevant to this eligibility check: by
   the time the polling step is reached, the acting vampire is *always*
-  locked already (Rulebook SS4, locked the instant the action was
+  locked already (Rulebook §4, locked the instant the action was
   announced), so requiring `is_ready_unlocked` here would make the caller's
   own use permanently impossible -- the `is_ready_unlocked` gate below is
   specifically the Reaction-card requirement for the *non-caller* case,
@@ -156,7 +156,7 @@ def _has_card_in_hand(state: GameState, player: str) -> bool:
 
 def _controls_basic_vampire(state: GameState, player: str) -> bool:
     """ "[cel][pre]" (module docstring, `combo == True`): at least one ready,
-    unlocked vampire (Rulebook SS2 Card Types glossary: "A ready unlocked
+    unlocked vampire (Rulebook §2 Card Types glossary: "A ready unlocked
     minion can play a reaction card" -- this card's Reaction half, same
     `is_ready_unlocked` gate `telepathic_counter.py` already uses) with
     *both* basic-or-better Celerity and basic-or-better Presence."""

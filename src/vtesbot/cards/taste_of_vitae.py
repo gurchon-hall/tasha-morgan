@@ -31,7 +31,7 @@ suggested 2P decklist `data/decks/vekn-2p/brujah.json` (2 copies).
 
 No Ⓓ marker, no prey/predator/"other Methuselahs" wording, no political
 vote -- a plain Combat card scoped to the current combat's own two
-combatants, so OQ-1 (CLAUDE.md SS3) does not apply.
+combatants, so OQ-1 (CLAUDE.md §3) does not apply.
 
 Status: implemented. Previously `blocked` (OQ-29, resolved) for want of (1)
 an "End of Round" timing window and (2) a round-scoped "blood lost to

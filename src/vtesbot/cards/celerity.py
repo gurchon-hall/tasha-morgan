@@ -17,13 +17,13 @@ City, playing this does *not* grant an extra master phase action).
 Timing window: master phase action (`"master_phase_play"` hook, wired in
 `engine/phases/master.py`, same pattern as `life_in_the_city.py`).
 
-Target ("a vampire", no "you control" qualifier): Rulebook SS2 Card Types
+Target ("a vampire", no "you control" qualifier): Rulebook §2 Card Types
 "A master card in play is controlled by the Methuselah who played it, even
 if it is played on a card controlled by another Methuselah" -- general
 master cards, including the "Discipline" subtype this card belongs to
 ("Disciplines: A Discipline card is played on a controlled vampire...",
 same section), may target either player's vampire. "Controlled" here tracks
-the Rulebook SS8 glossary "Target" rule: "If a card is played on another
+the Rulebook §8 glossary "Target" rule: "If a card is played on another
 card, or targets another card, the target card must be in play (that is,
 controlled). Vampires in the torpor region are eligible targets by default,
 but vampires in the uncontrolled region and contested cards are not." So the

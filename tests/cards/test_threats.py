@@ -6,7 +6,7 @@ Card text: "Only usable during a bleed action.\n[dom] +1 bleed
 One assertion per clause: "only usable during a bleed action" (never
 offered during a hunt), basic level, superior level (and the "may use
 either" choice), "the acting minion" (never offered to the defender), and
-the "(limited)" keyword (SS8 glossary / SS2 "same action modifier card at
+the "(limited)" keyword (§8 glossary / §2 "same action modifier card at
 most once per action").
 """
 
@@ -121,7 +121,7 @@ def test_superior_level_adds_two_bleed():
 
 
 def test_superior_vampire_may_opt_to_use_the_basic_effect_instead():
-    """Rulebook SS3: a superior-level vampire "may opt to use either the
+    """Rulebook §3: a superior-level vampire "may opt to use either the
     basic (plain text) or the superior (bold) effect ... but not both"."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(
@@ -146,7 +146,7 @@ def test_superior_vampire_may_opt_to_use_the_basic_effect_instead():
 
 
 def test_never_offered_to_the_defender_even_with_dominate_and_a_copy_in_hand():
-    """ "The acting minion can play these cards" (SS2 Action modifier cards):
+    """ "The acting minion can play these cards" (§2 Action modifier cards):
     never offered to the defending Methuselah, regardless of their own
     discipline/hand."""
     builder = ScenarioBuilder(seed=1)
@@ -169,9 +169,9 @@ def test_never_offered_to_the_defender_even_with_dominate_and_a_copy_in_hand():
 
 
 def test_limited_keyword_forbids_a_second_bleed_increase_in_the_same_action():
-    """SS8 glossary "Limited": "an action modifier card cannot be played to
+    """§8 glossary "Limited": "an action modifier card cannot be played to
     increase the bleed if the bleed amount is already being increased by
-    another action modifier card"; SS2: "A minion cannot play the same
+    another action modifier card"; §2: "A minion cannot play the same
     action modifier card more than once during a single action"."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(

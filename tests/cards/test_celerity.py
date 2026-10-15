@@ -6,7 +6,7 @@ superior Celerity [CEL]." No rulings on file.
 
 One assertion per clause: the master-phase (non-trifle) timing window, "a
 vampire" (either player's, ready or torpor, never uncontrolled -- Rulebook
-SS2 Card Types / SS8 glossary "Target"), "+1 level of Celerity [cel]" and
+§2 Card Types / §8 glossary "Target"), "+1 level of Celerity [cel]" and
 "+1 capacity" (via `engine/attachments.py::effective_disciplines`/
 `effective_capacity`), and "Cannot be put on a vampire with superior
 Celerity [CEL]" (checked against the vampire's *effective*, not merely
@@ -53,7 +53,7 @@ def test_not_offered_without_the_card_in_hand():
 
 def test_not_offered_without_any_eligible_target():
     """Only an uncontrolled vampire exists anywhere -- "uncontrolled
-    region" vampires are not eligible targets by default (Rulebook SS8
+    region" vampires are not eligible targets by default (Rulebook §8
     glossary "Target")."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)
@@ -89,7 +89,7 @@ def test_attaches_to_own_ready_vampire_granting_one_celerity_level_and_capacity(
 
 
 def test_can_target_the_opponents_vampire():
-    """Rulebook SS2 Card Types: "A master card in play is controlled by the
+    """Rulebook §2 Card Types: "A master card in play is controlled by the
     Methuselah who played it, even if it is played on a card controlled by
     another Methuselah" -- no "you control" qualifier on this card's text."""
     builder = ScenarioBuilder(seed=1)
@@ -110,7 +110,7 @@ def test_can_target_the_opponents_vampire():
 
 
 def test_can_target_a_torpid_vampire():
-    """Rulebook SS8 glossary "Target": "Vampires in the torpor region are
+    """Rulebook §8 glossary "Target": "Vampires in the torpor region are
     eligible targets by default"."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)

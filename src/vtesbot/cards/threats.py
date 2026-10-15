@@ -12,7 +12,7 @@ empty list).
 
 Card type: Action Modifier. `discipline_requirement.disciplines == ["dom"]`
 (basic Dominate required; superior Dominate, printed uppercase `"DOM"` on a
-`CryptCard`, additionally unlocks the bold-text effect -- Rulebook SS3
+`CryptCard`, additionally unlocks the bold-text effect -- Rulebook §3
 "Discipline symbol within a diamond ... may opt to use either the basic
 (plain text) or the superior (bold) effect ... but not both"). `cost is
 None` (free).
@@ -22,7 +22,7 @@ card registers against -- `"bleed_amount_modifier"` is only ever offered
 from `engine/phases/minion.py::_perform_bleed`'s `resolve()`, never from
 `_perform_hunt`, so this restriction needs no extra check here.
 
-"Action modifier card": per Rulebook SS2 Cards in general, "The acting
+"Action modifier card": per Rulebook §2 Cards in general, "The acting
 minion can play these cards to modify their action at any time before
 action resolution." -- played only by the *acting* (bleeding) minion, never
 by the defender. Within the two-sided `"bleed_amount_modifier"` impulse
@@ -32,9 +32,9 @@ Counter), this provider only offers anything when the window's current
 by looking the acting vampire up in `context["player"]`'s own `vampires`
 dict).
 
-"(limited)" (SS8 glossary): "an action modifier card cannot be played to
+"(limited)" (§8 glossary): "an action modifier card cannot be played to
 increase the bleed if the bleed amount is already being increased by
-another action modifier card" -- and SS2 "A minion cannot play the same
+another action modifier card" -- and §2 "A minion cannot play the same
 action modifier card more than once during a single action (even if using a
 different Discipline level)". Since there is only one acting minion per
 bleed action, both rules collapse to the same enforcement here: once

@@ -1,4 +1,4 @@
-"""Deck parsing & validation (CLAUDE.md SS5): turns a user-supplied decklist
+"""Deck parsing & validation (CLAUDE.md §5): turns a user-supplied decklist
 into an `engine.setup.DeckSpec`, gated by `formats.check_deck_legality`.
 """
 

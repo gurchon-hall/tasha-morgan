@@ -1,4 +1,4 @@
-"""End of Round (`engine/combat.py`, Rulebook SS4 Combat > Combat Sequence,
+"""End of Round (`engine/combat.py`, Rulebook §4 Combat > Combat Sequence,
 step 7, "End of Round: End of round cards and effects are played here") and
 the round-scoped "blood lost to damage" tracking (`engine/damage.py`) it was
 built alongside -- both resolve `docs/OPEN_QUESTIONS.md` OQ-29 (Taste of
@@ -250,7 +250,7 @@ def test_blood_lost_to_damage_records_aggravated_burn_only():
 
 def test_blood_lost_to_damage_records_mixed_mend_and_aggravated_burn():
     """One `apply_damage` call resolving both normal (partially mended) and
-    aggravated damage: normal is handled first (Rulebook SS4: "Normal damage
+    aggravated damage: normal is handled first (Rulebook §4: "Normal damage
     is handled before aggravated"), so the vampire is already wounded by the
     time the aggravated point(s) apply."""
     game = _one_vampire_game(capacity=5, blood=3)

@@ -1,4 +1,4 @@
-"""Game setup: 2P variant SS3.
+"""Game setup: 2P variant §3.
 
 "30 pool each; blood bank unlimited; the Edge starts uncontrolled. Shuffle
 crypt and library; predator cuts. Draw 7 library cards; deal 4 crypt cards
@@ -23,7 +23,7 @@ def _deck(prefix: str, crypt_count: int = 12, library_count: int = 40) -> DeckSp
 
 
 def test_setup_deals_starting_resources():
-    """2P variant SS3: 30 pool, 7-card hand, 4 uncontrolled crypt cards, Edge uncontrolled."""
+    """2P variant §3: 30 pool, 7-card hand, 4 uncontrolled crypt cards, Edge uncontrolled."""
     decks = {"P1": _deck("P1"), "P2": _deck("P2")}
     agents = {"P1": ScriptedAgent("P1"), "P2": ScriptedAgent("P2")}
 

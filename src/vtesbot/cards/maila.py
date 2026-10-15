@@ -9,7 +9,7 @@ give a minion you control +1 stealth for the current action."
 Ruling (verbatim, via krcg): "Her ability can only be used once during each
 of your turns. [RBK wording-templates] [ANK 20230122]." The
 `[RBK wording-templates]` citation confirms this is the generic Rulebook
-SS3 "Wording templates" > "During X, do Y" rule, verbatim: "only one Y can
+§3 "Wording templates" > "During X, do Y" rule, verbatim: "only one Y can
 be done per X with this card" (`data/sources/rulebook/2026-10-09/
 3-playing-the-game.md` lines 86-91) -- the same mechanism Diana Iadanza's
 clause 1 already uses for "once per referendum"
@@ -42,7 +42,7 @@ about torpor, unlike Modius), at least one `"Political Action"`-type
 `LibraryCard` in hand, and not already used this `GameState.turn_number`.
 
 Effect: `apply()` discards (hand -> ash heap, no replacement drawn --
-Rulebook SS8 glossary "Discard") the first Political-Action-type card found
+Rulebook §8 glossary "Discard") the first Political-Action-type card found
 in hand -- which card is never a meaningful choice (same reasoning as
 `modius.py::_discard_one_master_card_from_hand`) -- marks the once-per-turn
 flag, and returns `1` (the `STEALTH_MODIFIER_HOOK` `apply` contract: an

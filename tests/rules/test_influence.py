@@ -1,6 +1,6 @@
 """Influence phase: 2P transfer ramp and all four transfer/action types.
 
-Source: Rulebook SS4 Influence Phase, replaced by 2P variant SS2.3 (per the
+Source: Rulebook §4 Influence Phase, replaced by 2P variant §2.3 (per the
 `vtes-rules-reference` skill condensed mapping): "4 transfers. ... first
 player gets 3 on their first influence phase, then 4 for all. Costs: 1
 transfer = 1 pool -> uncontrolled vampire; 2 transfers = 1 blood from
@@ -17,7 +17,7 @@ game. You can use 4 transfers to burn this card and gain 2 pool."),
 exercised through the real, production `influence_phase` call site (not
 just a lower-level helper -- same bar OQ-7/OQ-13/OQ-23's own resolutions
 set), per the `rules-scenario-test` skill. Per the `implement-card`
-skill/CLAUDE.md SS6, Wider View itself is not implemented here -- these are
+skill/CLAUDE.md §6, Wider View itself is not implemented here -- these are
 engine-mechanism scenario tests using trivial fake providers, not the real
 card.
 """
@@ -33,7 +33,7 @@ from vtesbot.engine.pool import gain_pool
 
 
 def test_first_influence_phase_of_the_game_grants_three_transfers():
-    """2P variant SS2.3: the very first influence phase of the game gets 3
+    """2P variant §2.3: the very first influence phase of the game gets 3
     transfers (not 4); spending all of it on 1-transfer add-blood actions
     proves the count."""
     builder = ScenarioBuilder(seed=1, first_influence_phase_used=False)

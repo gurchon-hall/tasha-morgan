@@ -31,7 +31,7 @@ text says, nothing more" pattern (e.g. `threats.py`):
    recruit eligibility, wired against the `"recruit_ally_play"` hook (OQ-12).
    Checked against *this specific* acting vampire (`context["vampire"]`,
    OQ-13) rather than merely "the player controls a Brujah somewhere"
-   (Rulebook SS2 "Requirements for Playing Cards" binds a minion card's
+   (Rulebook §2 "Requirements for Playing Cards" binds a minion card's
    requirement to the specific acting minion), via `acting_vampire.card.clan`
    -- a plain printed-stat field. Returns a `RecruitAllySpec(card=..., life=2,
    strength=1, bleed=0, pay_cost=None)` -- `pay_cost=None` because krcg's own
@@ -39,7 +39,7 @@ text says, nothing more" pattern (e.g. `threats.py`):
    lists none). `_perform_recruit_ally` handles everything else generically:
    announcing, the block-attempt window, paying cost only on success,
    placing the ally in play ready-but-locked, burning the card on a block
-   (Rulebook SS4 "Resolve the Action"), and -- the prerequisite this entry
+   (Rulebook §4 "Resolve the Action"), and -- the prerequisite this entry
    was blocked on -- calling `detect_contest_on_recruit` after every
    successful recruit, so two Methuselahs each recruiting their own copy
    correctly end with both copies `zone == "contested"`. Nothing about
@@ -53,10 +53,10 @@ text says, nothing more" pattern (e.g. `threats.py`):
    controller, and only while this specific ally (matched by `krcg_id`; at
    most one live copy per controller since it is Unique, OQ-16
    notwithstanding) is `zone == "ready"`: a contested ally is "turned face
-   down and out of play" (Rulebook SS4 Advanced Rules > Contested Cards) for
+   down and out of play" (Rulebook §4 Advanced Rules > Contested Cards) for
    the whole contest and cannot react; a burned one is simply gone.
    `AllyInPlay.is_ready_unlocked` is deliberately not used: the card names no
-   playing minion ("you can burn 47th Street Royals"), so SS8 glossary
+   playing minion ("you can burn 47th Street Royals"), so §8 glossary
    "Reaction Card"'s "ready, unlocked" requirement (which governs which
    *minion* may play a reaction) does not apply to the ally being spent as
    the cost -- only `zone == "ready"` is checked, matching `tests/rules/

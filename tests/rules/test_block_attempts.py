@@ -1,4 +1,4 @@
-"""Block attempts: the retry-until-decline state machine (Rulebook SS4 Minion Phase).
+"""Block attempts: the retry-until-decline state machine (Rulebook §4 Minion Phase).
 
 "If one attempt to block fails, another can be made as often as the
 blocking Methuselah wishes" -- only once they decline to make any further
@@ -34,7 +34,7 @@ def test_failed_attempt_is_retried_with_another_vampire_then_declined():
 
 
 def test_failed_attempt_can_be_retried_with_the_same_vampire():
-    """Rulebook SS4: "a minion can attempt to block as often as the blocking
+    """Rulebook §4: "a minion can attempt to block as often as the blocking
     Methuselah wishes" -- the more literal reading permits retrying with the
     *same* minion, not only switching to a different one. A failed attempt
     does not set `locked`, so the candidate is still offered next loop."""

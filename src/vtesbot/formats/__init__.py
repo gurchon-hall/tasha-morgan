@@ -1,5 +1,5 @@
 """2P-variant allowed-list loading and deck-construction legality (CLAUDE.md
-SS5): "legality checks (2P variant), allowed-list loading."
+§5): "legality checks (2P variant), allowed-list loading."
 """
 
 from .allowed_list import AllowedCard, AllowedList, load_allowed_list

@@ -3,7 +3,7 @@ printed "Unique" (e.g. 47th Street Royals) can collide with a same-named
 opposing ally, exactly like the crypt-card case `engine/contests.py`
 already handles -- except the 2P variant's "contested crypt cards stay in
 play and usable" override is scoped to crypt cards only, so an ally contest
-follows the *unmodified* Rulebook SS4 Advanced Rules > Contested Cards rule:
+follows the *unmodified* Rulebook §4 Advanced Rules > Contested Cards rule:
 both copies are "turned face down and are out of play" for the contest's
 duration (`engine/allies.py::detect_contest_on_recruit`).
 
@@ -24,7 +24,7 @@ UNIQUE_ALLY_NAME = "47th Street Royals"
 
 
 def test_detect_contest_on_recruit_flags_both_same_named_allies():
-    """Rulebook SS4 Advanced Rules > Contested Cards: "If more than one
+    """Rulebook §4 Advanced Rules > Contested Cards: "If more than one
     unique card with the same name is brought into play, that means control
     of the card is being contested." Both copies get `contested_with` set to
     each other, mirroring `engine/contests.py::detect_contest_on_reveal`'s
@@ -116,7 +116,7 @@ def test_a_players_own_two_allies_of_the_same_name_do_not_contest_each_other():
 def test_contested_allies_still_show_their_full_identity_to_both_players():
     """OQ-10's own sourcing: a contested ally's identity is not actually
     secret from either player -- "Recruit Ally" is played face up (Rulebook
-    SS4 "Announce the Action"), so both copies were already mutually visible
+    §4 "Announce the Action"), so both copies were already mutually visible
     the instant the second one was recruited, creating the contest. Unlike
     `VampireView`'s `visible_identity` branch, `AllyView` never hides a
     contested ally's name/stats; it only exposes `zone == "contested"` and

@@ -27,7 +27,7 @@ decklist `data/decks/vekn-2p/brujah.json`.
 Status: implemented.
 
 "Requires an Anarch": a card-level legality gate independent of which
-discipline clause is used (Rulebook SS6 Vampire Sects), same shape as
+discipline clause is used (Rulebook §6 Vampire Sects), same shape as
 `dust_up.py`'s gate (OQ-18, resolved). Every provider below checks
 `vampire.card.sect is Sect.ANARCH` on the acting vampire and offers nothing
 otherwise, including when `sect is None` (`CryptCard`'s own docstring:
@@ -42,7 +42,7 @@ own `HookOption` against that hook, so a vampire holding two or three of
 three basic-level clauses on one card, per the multi-Disciplines ruling
 above (in hand/library/ash heap the card requires any/all three; in play,
 only the discipline used applies). All three clauses carry the "Ⓓ"
-directed-action marker (Rulebook SS2 glossary "Directed Action"), so
+directed-action marker (Rulebook §2 glossary "Directed Action"), so
 `ActionCardSpec.directed=True` throughout; none prints a stealth bonus, so
 `base_stealth=0` throughout. Each clause plays the card to the ash heap
 (`vtesbot.cards._shared.play_from_hand`) at announce time: none of the
@@ -50,11 +50,11 @@ three has any other printed destination.
 
 "[cel] Ⓓ Steal 1 pool from another Methuselah.": in a 2P duel "another
 Methuselah" is the sole opponent (`state.other_player`; settled structural
-fact of the format, CLAUDE.md SS3, not a card-text ambiguity). `lose_pool`
+fact of the format, CLAUDE.md §3, not a card-text ambiguity). `lose_pool`
 already floors a pool loss at the target's current pool and returns the
 amount actually lost, so stealing from a Methuselah with 0 pool steals 0;
 the stolen amount is credited via `gain_pool`. This is a pool transfer, not
-a bleed, and sets no Edge (Rulebook SS2 "2P Variant" Edge rules tie Edge to
+a bleed, and sets no Edge (Rulebook §2 "2P Variant" Edge rules tie Edge to
 a successful *bleed* specifically). `ActionCardSpec.action` is left at the
 generic `ACTION_ACTION_CARD` default (OQ-9): this clause is textually
 neither a Bleed nor any other existing default action.
@@ -65,25 +65,25 @@ initiating combat, with no pool/blood payload of its own.
     perform_minion_action` already runs `engine/combat.py::run_combat`
     between the acting vampire and the blocker instead of calling this
     clause's `resolve()` -- that already *is* "enter combat with a minion,"
-    for free from the existing block-attempt plumbing (Rulebook SS4 "Who
+    for free from the existing block-attempt plumbing (Rulebook §4 "Who
     May Attempt to Block" ties eligibility to the targeted *Methuselah*,
     not to the minion this clause names, so any of the opponent's ready
     minions may block).
   - If unblocked, `resolve()` picks one of the opponent's `zone == "ready"`
     vampires (lock state irrelevant: only torpor restricts a combat target,
-    Rulebook SS4 "Leave Torpor"; confirmed against crypt-text precedent,
+    Rulebook §4 "Leave Torpor"; confirmed against crypt-text precedent,
     e.g. Theo Bell) and calls `run_combat` directly. The target is never
     locked by this clause -- contrast Brujah Frenzy, which locks its target
     explicitly; Line Brawl's silence on locking means it doesn't (Golden
-    Rule for Cards, CLAUDE.md SS2). "a minion" means opposing vampires only:
+    Rule for Cards, CLAUDE.md §2). "a minion" means opposing vampires only:
     allies are out of this project's combat scope (`engine/allies.py`,
     `engine/combat.py` milestone-2 scope), so never offered. The Ⓓ marker
-    (Rulebook SS2 glossary) itself settles that the target must be
+    (Rulebook §2 glossary) itself settles that the target must be
     opponent-controlled.
 
   The target vampire is chosen inside `apply()`, at announce time, before
   the block-attempt window opens -- not deferred to `resolve()` (OQ-21,
-  resolved: Rulebook SS4 "Announce the Action" plus this engine's own
+  resolved: Rulebook §4 "Announce the Action" plus this engine's own
   `ActionCardSpec` contract both fix every detail, including the target,
   at announce; a krcg ruling survey further confirms an unblocked action
   whose target stops qualifying by resolve time "fizzles" rather than

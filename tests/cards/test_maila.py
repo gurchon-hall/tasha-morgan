@@ -8,10 +8,10 @@ each of your turns. [RBK wording-templates] [ANK 20230122]."
 One assertion per clause/ruling: the registry entry; the +1 stealth effect
 proven end-to-end through the real stealth/intercept ping-pong
 (`minion_phase`/`attempt_block`), including the political-action-card
-discard cost; the "ready" gate (offered even while locked -- Rulebook SS3
+discard cost; the "ready" gate (offered even while locked -- Rulebook §3
 "locked/unlocked has no impact", same convention already used for titled-
 vampire voting -- but never while in torpor); the "political action card in
-hand" gate; and the once-per-turn cap (Rulebook SS3 "During X, do Y"), both
+hand" gate; and the once-per-turn cap (Rulebook §3 "During X, do Y"), both
 within one turn across two different actions and again on a later turn.
 """
 

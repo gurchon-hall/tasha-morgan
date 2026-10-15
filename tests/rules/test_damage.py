@@ -1,5 +1,5 @@
 """Damage resolution: prevent, then mend; unmended -> wounded -> torpor;
-aggravated cannot be mended (Rulebook SS4 Combat > Damage Resolution).
+aggravated cannot be mended (Rulebook §4 Combat > Damage Resolution).
 
 Reproduces the `rules-scenario-test` skill's own worked example for
 aggravated damage: "a ready vampire with 1 blood takes 2 normal + 1

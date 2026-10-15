@@ -38,7 +38,7 @@ action.py`, OQ-39, resolved -- see below), does double duty, gated
 throughout on the acting vampire (`context["acting_vampire"]`, re-resolved
 fresh every call -- same "bind to the specific acting minion" precedent as
 `forty_seventh_street_royals.py::_provide_recruit`, OQ-13) being Toreador --
-Rulebook SS2 "Requirements for Playing Cards": "Only a minion who meets the
+Rulebook §2 "Requirements for Playing Cards": "Only a minion who meets the
 requirements given on a minion card can play it". Both halves below are
 offered together, not as an either/or branch (OQ-40's table-wide reading
 means they are independent, additive opportunities -- e.g. the acting

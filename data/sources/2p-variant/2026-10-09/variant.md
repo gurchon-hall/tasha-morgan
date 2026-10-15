@@ -1,5 +1,5 @@
 <!--
-Archived snapshot for local reference (CLAUDE.md SS2 sources-of-truth rule: this
+Archived snapshot for local reference (CLAUDE.md §2 sources-of-truth rule: this
 is a cache, not a replacement for the source; re-fetch if it may be stale).
 Source: https://www.vekn.net/two-player-format/655-two-player-variant-for-vampire-the-eternal-struggle
 VEKN dateModified (from page metadata): 2025-05-20T17:36:04+0000

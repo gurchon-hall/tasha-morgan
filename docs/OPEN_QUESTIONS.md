@@ -234,7 +234,7 @@ up an OQ number or the highest one used so far.
   its own `apply` and suppresses the original entirely.
   Zero-behaviour-change with no provider registered. A `rules-auditor`
   follow-up found and fixed a live landmine: Telepathic Counter's own
-  `apply` atomically combined its cost (play-from-hand, SS8 "used"
+  `apply` atomically combined its cost (play-from-hand, §8 "used"
   bookkeeping) with its actual effect — split into `cost`/`apply` so a
   future cancellation can't also undo the card having been played.
   Organized Resistance/Protection Racket have the same atomic pattern
@@ -429,7 +429,7 @@ up an OQ number or the highest one used so far.
   them), kept exactly as it was -- any ready, unlocked qualifying vampire
   of theirs; only the caller-side half of its own eligibility changed, now
   requiring their own acting vampire specifically, with that vampire's own
-  (necessarily already-locked, Rulebook SS4) `locked` state correctly
+  (necessarily already-locked, Rulebook §4) `locked` state correctly
   ignored for that check, unlike the non-caller Reaction-rule check.
   `cards/voter_captivation.py::_caller_vampire`,
   `cards/scalpel_tongue.py::_caller_may_play_basic`/`_caller_may_play_
@@ -597,7 +597,7 @@ up an OQ number or the highest one used so far.
 - Situation: Kine Resources Contested's caller chose the 4-point split
   after the vote; a Marcos Belegrad tally burn could leave no legal
   split (D-9), yet the allocation is mandatory.
-- Rules & interactions: Rulebook SS4 "The Referendum" lists step 1
+- Rules & interactions: Rulebook §4 "The Referendum" lists step 1
   "Choose the terms" before step 2 "Polling"; the card text and rulings
   (LSJ 20000622, 20020819) are silent on timing. User ruling
   2026-10-13: "la répartition est verrouillée avant le vote puis fenetre
@@ -712,7 +712,7 @@ up an OQ number or the highest one used so far.
   Hook.WAKE_LOCKED_MINION`), offered to `defender` via `hooks.offer_until_
   pass` at the top of `attempt_block`'s retry loop, immediately after the
   two acting-side hooks' own offers there (actor's own proactive
-  opportunities keep going first, Rulebook SS2 Sequencing / CLAUDE.md rule
+  opportunities keep going first, Rulebook §2 Sequencing / CLAUDE.md rule
   4's "acting Methuselah gets the impulse first") and strictly before
   `candidates = state.ready_unlocked_vampires(defender)` is (re)computed,
   so a chosen option's own `apply` setting `woken = True` is picked up by

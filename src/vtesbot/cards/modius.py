@@ -50,7 +50,7 @@ their ability to vote" rule already generically true of every vote source).
 Cost/effect: "can discard a master card" -- optional (not "must"), offered
 as a `HookOption` a Methuselah may decline; costs exactly one
 `"Master"`-type `LibraryCard` discarded from Modius's controller's hand to
-their ash heap -- a plain discard (Rulebook SS8 glossary "Discard: Move a
+their ash heap -- a plain discard (Rulebook §8 glossary "Discard: Move a
 card in hand to the ash heap"), not a "play": no replacement is drawn from
 the library (unlike `engine/phases/discard.py::discard_phase`'s own
 "discard phase action", a distinct named rule that does draw one). Which

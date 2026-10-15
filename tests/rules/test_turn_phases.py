@@ -1,4 +1,4 @@
-"""Turn sequence: Unlock, Master, Minion, Influence, Discard (Rulebook SS4)."""
+"""Turn sequence: Unlock, Master, Minion, Influence, Discard (Rulebook §4)."""
 
 from helpers import ScenarioBuilder
 from vtesbot.engine.phases import play_turn
@@ -8,7 +8,7 @@ def test_turn_runs_five_phases_and_alternates_active_player():
     """With no vampires, no hand cards and no uncontrolled crypt cards, every
     phase this milestone resolves with zero decisions (nothing legal to do),
     so a full turn can run start to finish and hand control to the other
-    player (Rulebook SS4 turn sequence)."""
+    player (Rulebook §4 turn sequence)."""
     game = ScenarioBuilder(seed=1).player("P1").player("P2").build()
     state = game.state
     assert state.active_player == "P1"

@@ -151,7 +151,7 @@ def test_superior_offered_with_superior_pre():
     options = _offer(game.state, "P1", margin=2, caller_vampire_id="V1")
 
     values = {o.choice.value for o in options}
-    # Superior Presence unlocks either effect (Rulebook SS3) -- both offered.
+    # Superior Presence unlocks either effect (Rulebook §3) -- both offered.
     assert values == {"voter_captivation:basic:V1", "voter_captivation:superior:V1"}
 
 
@@ -329,7 +329,7 @@ def test_superior_margin_zero_binds_directly_with_no_decision_raised():
     actor.assert_exhausted()
 
 
-# --- once-per-action cap (Rulebook SS2: "A minion cannot play the same
+# --- once-per-action cap (Rulebook §2: "A minion cannot play the same
 # action modifier card more than once during a single action") -------------
 
 

@@ -21,7 +21,7 @@ from vtesbot.engine.phases.minion import minion_phase
 
 
 def test_recruit_ally_creates_a_ready_locked_ally_under_its_controller():
-    """Rulebook SS4 default actions: "recruited ally cannot act this turn"
+    """Rulebook §4 default actions: "recruited ally cannot act this turn"
     -- the ally enters the ready region already locked."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30)

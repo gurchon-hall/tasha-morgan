@@ -14,14 +14,14 @@ Rulings (verbatim, via krcg, cross-checked against
 Card type: Reaction. `discipline_requirement.disciplines == ["aus"]`
 (basic Auspex required to play at all; superior Auspex, printed uppercase
 `"AUS"` on a `CryptCard`, additionally unlocks the bold-text effect --
-Rulebook SS3 "Discipline symbol within a diamond ... may opt to use either
+Rulebook §3 "Discipline symbol within a diamond ... may opt to use either
 the basic (plain text) or the superior (bold) effect ... but not both").
 `cost is None` (free).
 
 Timing window: "a bleed against you" -- the defending Methuselah's reaction,
-played by one of *their* ready, unlocked minions (SS8 glossary "Reaction
+played by one of *their* ready, unlocked minions (§8 glossary "Reaction
 Card: A card played by a Methuselah's ready, unlocked minion in response to
-an action taken by a minion controlled by another Methuselah"; SS2 "A
+an action taken by a minion controlled by another Methuselah"; §2 "A
 minion cannot play the same reaction card more than once during a single
 action (even if using a different Discipline level)" -- restricts the same
 *minion*, not the whole Methuselah: two different eligible minions may each
@@ -56,7 +56,7 @@ resolve_impulse_window`, which now resolves every chosen option via
 `engine/hooks.py::apply_chosen_option` -- the moment any future provider
 registers against `CANCEL_AS_PLAYED_HOOK` (no card does today), a canceled
 option's `apply` is suppressed but its `cost` still runs. "Played from hand"
-(discard-and-replace) and the SS8 "same reaction card once per minion" `used_
+(discard-and-replace) and the §8 "same reaction card once per minion" `used_
 by` registration therefore live in `cost`, since the generic ruling on file
 is explicit that a canceled reaction "has still been played" [ANK 20190104]
 -- a canceled Telepathic Counter must still leave the defender's hand,

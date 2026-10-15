@@ -12,7 +12,7 @@ grant claimed through the engine's own full strike-choice machinery; and the
 "(limited)" restriction on the additional-strike clause only. Plus two
 integration tests specific to this card's own `docs/OPEN_QUESTIONS.md` OQ-27
 resolution: the basic maneuver clause is *not* "a maneuver from a strike"
-(Rulebook SS4 Combat > Strike > Choose Strike), so it does not lock the
+(Rulebook §4 Combat > Strike > Choose Strike), so it does not lock the
 strike choice, and a second physical copy can maneuver again later in the
 same round in response to the opponent's own counter-maneuver.
 """
@@ -88,7 +88,7 @@ def test_maneuver_offered_with_basic_cel():
 
 def test_maneuver_also_offered_with_superior_cel():
     """Superior Celerity presence satisfies the basic-level discipline check
-    too (Rulebook SS3 "may opt to use either effect")."""
+    too (Rulebook §3 "may opt to use either effect")."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(
         "V1", capacity=3, blood=0, disciplines=("CEL",)
@@ -291,7 +291,7 @@ def test_limited_does_not_restrict_the_maneuver_clause():
 
 
 def test_maneuvering_with_pursuit_does_not_lock_the_strike_choice():
-    """Rulebook SS4 Combat > Strike > Choose Strike: the "cannot choose any
+    """Rulebook §4 Combat > Strike > Choose Strike: the "cannot choose any
     other strike" lock applies only to "a maneuver from a strike (either a
     strike card or a weapon)" -- Pursuit's bare "[cel] Maneuver." clause is
     not one (module docstring, OQ-27). After maneuvering with it, the acting

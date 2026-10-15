@@ -54,7 +54,7 @@ def test_registered_as_implemented_against_the_maneuver_hook():
 
 
 def test_a_ready_saku_contributes_2_votes_as_a_baron_title_source():
-    """Rulebook SS4 Politics > Gaining Votes: "2 votes for each ready prince
+    """Rulebook §4 Politics > Gaining Votes: "2 votes for each ready prince
     or baron" -- `engine/politics.py::TITLE_VOTES["Baron"] == 2`. Proven
     here, end to end through the real `political_action`, exactly like
     `test_valeriya_zinovieva.py`'s own equivalent scenario."""

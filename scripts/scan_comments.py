@@ -1,8 +1,8 @@
 """Flag candidate comments/docstrings and doc entries for the `trim-comments` skill.
 
-This is a *candidate scanner*, not a linter: CLAUDE.md SS6's comment rule
+This is a *candidate scanner*, not a linter: CLAUDE.md §6's comment rule
 ("minimal... only when the WHY is non-obvious... never restate what the
-code already says") and the OPEN_QUESTIONS.md/DECISIONS.md formats (SS2,
+code already says") and the OPEN_QUESTIONS.md/DECISIONS.md formats (§2,
 `docs/DECISIONS.md` D-6) both turn on judgment a regex cannot make --
 whether a given sentence is "the why" or just restates the next line is a
 reading-comprehension call. This script only narrows down what a human (or
@@ -24,7 +24,7 @@ Checks:
     verbatim, see any existing card file) -- this is the one place a
     missing citation is a reliable signal rather than a guess. Function/
     class docstrings elsewhere are not checked: deciding whether a given
-    function "implements a rule" (CLAUDE.md SS2) and therefore needs a
+    function "implements a rule" (CLAUDE.md §2) and therefore needs a
     citation is a judgment call this script cannot make reliably, and a
     blanket check there produces mostly noise (plumbing helpers, registry
     glue, dataclass fields -- see the skill's own notes on this).

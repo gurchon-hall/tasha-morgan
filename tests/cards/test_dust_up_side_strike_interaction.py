@@ -2,7 +2,7 @@
 Strike (101778), two real, already-implemented cards (resolves
 `docs/OPEN_QUESTIONS.md` OQ-19).
 
-SS8 glossary / `engine/combat.py` module docstring: "A minion cannot use
+§8 glossary / `engine/combat.py` module docstring: "A minion cannot use
 more than one card or effect to gain additional strikes per round of
 combat" is a *cross-card* cap. Before this pass, `cards/dust_up.py` and
 `cards/side_strike.py` each tracked their own clause's "(limited)" use in a

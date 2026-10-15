@@ -23,7 +23,7 @@ Two components:
 
 1. "Camarilla Prince of Chicago" names the title this specific printed
    vampire carries -- `CryptCard.title == "Prince"` (confirmed above). The
-   vote value a ready Prince contributes (2, Rulebook SS4 Politics > Gaining
+   vote value a ready Prince contributes (2, Rulebook §4 Politics > Gaining
    Votes) is already handled generically by `engine/politics.py::
    TITLE_VOTES` (`{"Prince": 2, ...}`) for every titled vampire -- no
    card-specific code is needed, or added, for that part (same reasoning as

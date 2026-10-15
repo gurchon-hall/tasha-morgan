@@ -1,4 +1,4 @@
-"""Before Range (`engine/combat.py`, Rulebook SS4 Combat > Combat Sequence,
+"""Before Range (`engine/combat.py`, Rulebook §4 Combat > Combat Sequence,
 step 1, "Before Range: Play cards before range is chosen") -- resolves
 `docs/OPEN_QUESTIONS.md` OQ-47 (Weighted Walking Stick, krcg id 102169).
 No combat card registers against `BEFORE_RANGE_HOOK` yet (OQ-47's own card

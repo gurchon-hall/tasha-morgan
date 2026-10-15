@@ -1,4 +1,4 @@
-"""Player interface implementations (CLAUDE.md SS5): random-legal first,
+"""Player interface implementations (CLAUDE.md §5): random-legal first,
 heuristic and search-based later milestones.
 """
 

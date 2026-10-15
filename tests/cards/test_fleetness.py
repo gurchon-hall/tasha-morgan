@@ -134,7 +134,7 @@ def test_basic_offered_with_only_basic_cel():
 
 
 def test_basic_also_offered_with_only_superior_cel():
-    """Rulebook SS3 "may opt to use either the basic or the superior
+    """Rulebook §3 "may opt to use either the basic or the superior
     effect": superior access alone also unlocks the basic clause."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(

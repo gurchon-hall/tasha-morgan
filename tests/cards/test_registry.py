@@ -1,5 +1,5 @@
 """The card implementation registry (`src/vtesbot/cards/registry.py`,
-CLAUDE.md SS6 scaffolding pass). Mechanism-only tests with trivial fake
+CLAUDE.md §6 scaffolding pass). Mechanism-only tests with trivial fake
 registrations; real card registrations and their own tests are
 `card-implementer`'s next pass.
 """

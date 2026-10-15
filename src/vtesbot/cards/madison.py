@@ -33,7 +33,7 @@ to invent handling for an interaction nothing in the pool needs yet.
 There is nothing left for this module to implement beyond registering the
 card: no title, no vote value, no combat bonus, no reaction, no modifier of
 any kind -- this module exists only so Madison has an effect module +
-registry entry per CLAUDE.md SS6.
+registry entry per CLAUDE.md §6.
 """
 
 from vtesbot.cards.registry import CardRegistration, Status, register

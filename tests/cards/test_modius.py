@@ -91,7 +91,7 @@ def test_modius_ability_is_usable_while_modius_is_in_torpor():
     """[LSJ 20011022]: "The ability can be used when in torpor." Modius sits
     in torpor the whole time (a separate vampire calls the referendum); his
     generic ready-titled-vampire vote (worth 2, Prince) correctly does
-    *not* apply while torpid (Rulebook SS4 Politics > Gaining Votes, "a
+    *not* apply while torpid (Rulebook §4 Politics > Gaining Votes, "a
     vampire's `zone == 'ready'`" gate -- unaffected by this card), but his
     own printed discard-for-+1-vote ability still fires. The vote math below
     only passes (2 for vs 1 against) if the torpor ability actually fired;

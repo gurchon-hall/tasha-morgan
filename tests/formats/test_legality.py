@@ -2,7 +2,7 @@
 
 Uses a small synthetic `AllowedList` rather than the real dated
 `data/formats/2p/*.json` file, so these checks stay independent of future
-VEKN updates (CLAUDE.md SS4: the format is a living playtest).
+VEKN updates (CLAUDE.md §4: the format is a living playtest).
 """
 
 from vtesbot.formats import (

@@ -161,7 +161,7 @@ def test_action_succeeded_hook_fires_after_an_unblocked_bleed_with_the_full_cont
 
 
 def test_action_succeeded_hook_does_not_fire_when_the_action_is_blocked():
-    """Rulebook SS4 "Resolve the Action": "An action is successful only if
+    """Rulebook §4 "Resolve the Action": "An action is successful only if
     it is not blocked" -- a blocked action's own effect never happens, and
     neither does this generic signal."""
     seen: list[dict] = []

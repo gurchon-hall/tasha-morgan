@@ -1,4 +1,4 @@
-"""Discard phase (Rulebook SS4): discard + replace, or pass.
+"""Discard phase (Rulebook §4): discard + replace, or pass.
 
 Event play ("play one event") is out of scope this milestone (no event
 cards are implemented), so only discard+replace or passing is offered.

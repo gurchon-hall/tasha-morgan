@@ -2,7 +2,7 @@
 allies are flagged as contesting each other (OQ-10,
 `engine/allies.py::detect_contest_on_recruit`), each controller must be
 offered the rulebook's own pay-1-pool-or-yield decision during their own
-unlock phases (Rulebook SS4 Advanced Rules > Contested Cards), mirroring the
+unlock phases (Rulebook §4 Advanced Rules > Contested Cards), mirroring the
 crypt-card mechanism already proven by `tests/rules/test_unlock.py`'s own
 contest tests -- except an ally has no 2P "stays usable" override, so the
 surviving copy's own `zone` only flips back to `"ready"` on its controller's

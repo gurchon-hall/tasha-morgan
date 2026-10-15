@@ -14,7 +14,7 @@ Card type: Action (`types == ["Action"]`, *not* "Action Modifier").
 `discipline_requirement == {"type": "Mono", "disciplines": ["pre"]}` (basic
 Presence required to play the card at all; superior Presence, printed
 uppercase "PRE" on a `CryptCard`, additionally unlocks the second clause --
-Rulebook SS3 "Discipline symbol within a diamond ... may opt to use either
+Rulebook §3 "Discipline symbol within a diamond ... may opt to use either
 the basic (plain text) or the superior (bold) effect ... but not both").
 `clan_requirement == []`, `cost is None`, `burn_option is False`,
 `trifle is False`.
@@ -29,7 +29,7 @@ superior, two different hooks/providers for one physical card" shape already
 used elsewhere (e.g. `bonding.py`)
 (`disciplines` gating: a vampire with only basic `"pre"` unlocks only the
 basic clause; a vampire with superior `"PRE"` is eligible for either, per
-Rulebook SS3 "may opt to use either effect").
+Rulebook §3 "may opt to use either effect").
 
 "Ⓓ" (basic clause): the rulebook glossary's own "Directed Action" entry
 (`data/sources/rulebook/2026-10-09/8-glossaries.md:59`) -- a *directed*
@@ -85,7 +85,7 @@ clamps defensively).
 
 "which eligible vampire to add blood to" is a new per-card `Decision` (kind
 "enchant_kindred_target") raised inside `apply()`, at announce time, before
-the block-attempt window opens -- not deferred to `resolve()` (Rulebook SS4
+the block-attempt window opens -- not deferred to `resolve()` (Rulebook §4
 "Announce the Action": all action details, including the target, are fixed
 at announce; this engine's own `ActionCardSpec` contract matches. OQ-21,
 resolved: VTES never re-chooses a target at resolve time, only re-validates

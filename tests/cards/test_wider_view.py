@@ -10,7 +10,7 @@ having the card in hand *and* enough pool, since `cost = Pool:1` -- a real
 divergence from this task's own `pool_cost=None` brief, re-verified live and
 documented in the module's own docstring), the 1-transfer draw-and-remove
 ability (including the no-pre-existing-uncontrolled-card-needed reading
-sourced from Rulebook SS8 Glossary "Draw", and the multi-target removal
+sourced from Rulebook §8 Glossary "Draw", and the multi-target removal
 choice), the 4-transfer burn-for-pool ability, and the LSJ "removed cards are
 public" ruling, proven end-to-end through the real production hooks
 (`master_phase`/`influence_phase`), mirroring
@@ -98,7 +98,7 @@ def test_playing_it_brings_a_card_into_play_unlocked_and_costs_one_pool():
 
 
 def test_is_a_trifle_grants_an_extra_master_phase_action():
-    """Rulebook SS4 Master Phase / SS8 glossary "Trifle": playing one grants
+    """Rulebook §4 Master Phase / §8 glossary "Trifle": playing one grants
     one extra master phase action (max one per phase) -- proven by playing
     two copies in a single master phase (base action + the one trifle
     bonus), mirroring `tests/cards/test_life_in_the_city.py`'s own test."""
@@ -197,7 +197,7 @@ def test_draw_and_remove_not_offered_with_zero_transfers_remaining():
 
 def test_draw_and_remove_with_no_pre_existing_uncontrolled_vampire_auto_removes_the_drawn_card():
     """Resolves this task's own sequencing question directly from Rulebook
-    SS8 Glossary "Draw" (quoted in the module docstring): the drawn card is
+    §8 Glossary "Draw" (quoted in the module docstring): the drawn card is
     already "in your uncontrolled region" the instant the draw completes, so
     it is itself a legal removal target -- no pre-existing uncontrolled
     vampire is required, and with only one candidate, no sub-`Decision` is
@@ -251,7 +251,7 @@ def test_draw_and_remove_offers_a_choice_and_can_remove_the_pre_existing_card():
 
 def test_draw_and_remove_can_remove_the_freshly_drawn_card_instead():
     """The freshly-drawn card is itself a legal removal target (see the
-    module docstring's sourced reading of Rulebook SS8 Glossary "Draw") --
+    module docstring's sourced reading of Rulebook §8 Glossary "Draw") --
     proven by choosing it over the pre-existing uncontrolled vampire."""
     builder = ScenarioBuilder(seed=1, first_influence_phase_used=True)
     p1 = builder.player("P1", pool=30)

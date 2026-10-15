@@ -13,7 +13,7 @@ package and the live API (re-checked 2026-10-12).
 Card type: Combat (`types == ["Combat"]`). `discipline_requirement ==
 {"type": "Mono", "disciplines": ["cel"]}` -- a single discipline, Celerity,
 printed at two different levels (same shape as Side Strike,
-`src/vtesbot/cards/side_strike.py`: Rulebook SS3 "Discipline symbol within a
+`src/vtesbot/cards/side_strike.py`: Rulebook §3 "Discipline symbol within a
 diamond ... may opt to use either the basic (plain text) or the superior
 (bold) effect ... but not both"). `clan_requirement == []`,
 `path_requirement == []`, `cost is None`, `burn_option is False`,
@@ -26,9 +26,9 @@ No Ⓓ marker, no prey/predator/"other Methuselahs" wording, no political
 vote -- this is a plain Combat card played during an already-resolving
 combat, so OQ-1 (CLAUDE.md §3) does not apply.
 
-Whether Pursuit's basic "Maneuver." clause carries Rulebook SS4's "cannot
+Whether Pursuit's basic "Maneuver." clause carries Rulebook §4's "cannot
 use a second strike card or weapon to maneuver again"/"cannot choose any
-other strike" restrictions (OQ-27, resolved): SS4 Combat > Choose Strike
+other strike" restrictions (OQ-27, resolved): §4 Combat > Choose Strike
 (`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:824-828`):
 "Each minion chooses their strike. ... If a minion has used a maneuver
 from a strike (either a strike card or a weapon) this round, then they
@@ -43,7 +43,7 @@ no "as above" link to the card's own separate, differently-gated superior
 "Additional strike (limited)" clause -- it is not "a maneuver from a
 strike" in the Rulebook's technical sense, exactly as Dance with the
 Devil's identically bare "[obf] or [tha] Maneuver, only usable to get to
-close range" (krcg id 102315) is not either. Neither SS4 restriction is
+close range" (krcg id 102315) is not either. Neither §4 restriction is
 therefore triggered by playing Pursuit's basic clause: it is a plain
 maneuver, the same category as a vampire's own innate maneuver-granting
 title ability (Saku Pihlajamäki's "1 optional maneuver each combat") or
@@ -52,7 +52,7 @@ Magnum -- still correctly left unbuilt, per `engine/combat.py`'s own
 "Determine Range and maneuvers" docstring section).
 
 "[cel] Maneuver." (basic clause): a plain `MANEUVER_HOOK` grant, offered at
-either Celerity level (Rulebook SS3: superior unlocks either effect), the
+either Celerity level (Rulebook §3: superior unlocks either effect), the
 same hook Saku Pihlajamäki's own innate ability uses -- the only difference
 being this is a played *card* (consumed via `play_from_hand`), so no
 per-combat "already used" bookkeeping is needed: each physical copy is its
@@ -111,7 +111,7 @@ def _has_card_in_hand(state: GameState, player: str) -> bool:
 def _provide_maneuver(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
     """ "[cel] Maneuver." -- a plain maneuver grant at either Celerity level,
     not "from a strike" (module docstring's OQ-27 resolution), so it carries
-    none of Rulebook SS4's strike-lock/"second strike card" restrictions."""
+    none of Rulebook §4's strike-lock/"second strike card" restrictions."""
     vampire = _controllers_vampire(state, context)
     if vampire is None:
         return []

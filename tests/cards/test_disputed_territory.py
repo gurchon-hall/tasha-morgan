@@ -279,7 +279,7 @@ def test_changing_the_controller_has_no_other_effect():
 
 
 def test_a_referendum_that_fails_has_no_effect():
-    """Rulebook SS4 "Resolve the Referendum": "Otherwise, the referendum
+    """Rulebook §4 "Resolve the Referendum": "Otherwise, the referendum
     fails and has no effect." An opposing ready Prince's 2 votes outvote
     the caller's lone 1-vote political-action-card source."""
     builder = ScenarioBuilder(seed=1)

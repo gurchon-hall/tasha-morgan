@@ -41,7 +41,7 @@ engine gaps that previously blocked this card are closed: `Sect`/
 clause's dodge-proof strike).
 
 "Requires an Anarch": a card-level legality gate independent of which
-discipline clause is used (Rulebook SS6 Vampire Sects: "Some cards can only
+discipline clause is used (Rulebook §6 Vampire Sects: "Some cards can only
 be played by Anarch vampires."). `vampire.card.sect` is the engine's own
 per-vampire sect field (OQ-18 Gap 1); every provider below first checks
 `vampire.card.sect is Sect.ANARCH` and offers nothing at all otherwise --
@@ -66,7 +66,7 @@ the ruling "[ani] [pot] Additional damage inherits all of the properties of
 the base damage" (i.e. it stacks with, rather than replaces, any other
 strength bonus already in play) holds structurally, not by coincidence.
 `[ani]`'s strike is additionally flagged `StrikeDamage(ignore_dodge=True)`:
-per the Golden Rule for Cards (CLAUDE.md SS2 / Rulebook SS3) and this card's
+per the Golden Rule for Cards (CLAUDE.md §2 / Rulebook §3) and this card's
 own ruling ("Does not prevent the opponent from dodging, the dodge just has
 no effect" [LSJ 20030902-2] [LSJ 20060808-1]), the opponent may still choose
 to dodge (a real, legal choice, handled generically by `engine/combat.py`'s

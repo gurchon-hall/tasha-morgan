@@ -33,7 +33,7 @@ Who may play it (OQ-38, `docs/OPEN_QUESTIONS.md`, resolved -- user ruling,
 Reading A): "this vampire" (both clauses) is the political action's own
 *acting* vampire specifically -- `context["caller_vampire_id"]` -- never a
 free choice among the controller's other ready [pre]/[PRE] vampires, and
-never playable by the non-caller Methuselah at all. Rulebook SS2 Card Types,
+never playable by the non-caller Methuselah at all. Rulebook §2 Card Types,
 verbatim: "The acting minion can play [action modifier cards]... Some action
 modifier cards are played by minions 'other than the acting minion'. Only
 minions controlled by the same Methuselah can play those cards." Voter
@@ -64,7 +64,7 @@ both mean no option is offered; `VampireInPlay.locked` is irrelevant here
 (mirrors `engine/politics.py`'s own "locked is irrelevant to voting"
 convention -- this card is not an action and raises nothing about the
 vampire's own lock state, and the acting vampire is, in any case, always
-locked by this point, Rulebook SS4, so checking it would make the card
+locked by this point, Rulebook §4, so checking it would make the card
 permanently unplayable). Discipline gating reads the plain printed
 `card.disciplines` (not the attachment-aware `effective_disciplines`), the
 same convention `enchant_kindred.py`/`fleetness.py`/`dust_up.py` already use.
@@ -106,7 +106,7 @@ runs, then `gain_pool`s the controller directly. "Up to 2" is a genuine choice
 "single eligible option: bind directly, no decision raised" convention) no
 decision is raised in that edge case.
 
-Per-action cap (`rules-auditor` finding): Rulebook SS2 Card Types, verbatim:
+Per-action cap (`rules-auditor` finding): Rulebook §2 Card Types, verbatim:
 "A minion cannot play the same action modifier card more than once during a
 single action (even if using a different Discipline level)." With "this
 vampire" now pinned to the single acting vampire (OQ-38 above), only one

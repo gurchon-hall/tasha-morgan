@@ -105,7 +105,7 @@ def test_attaches_to_own_ready_vampire():
 
 
 def test_can_target_the_opponents_ready_vampire():
-    """Rulebook SS2 Card Types: "A master card in play is controlled by the
+    """Rulebook §2 Card Types: "A master card in play is controlled by the
     Methuselah who played it, even if it is played on a card controlled by
     another Methuselah" -- no "you control" qualifier on this card's text."""
     builder = ScenarioBuilder(seed=1)
@@ -122,7 +122,7 @@ def test_can_target_the_opponents_ready_vampire():
     vampire = game.vampire("V1")
     attachment = next(a for a in vampire.attachments if a.krcg_id == KRCG_ID)
     assert vampire.controller == "P2"
-    assert attachment.controller == "P1"  # whoever played it, Rulebook SS2
+    assert attachment.controller == "P1"  # whoever played it, Rulebook §2
     agent.assert_exhausted()
 
 

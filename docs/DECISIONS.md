@@ -33,7 +33,7 @@ are recorded here as design choices, not as VtES facts.
 
 ## D-4: "Predator cuts" modelled as an automatic RNG draw (2026-10-08)
 
-- Context: 2P variant SS3 Game Setup has the predator cut each
+- Context: 2P variant §3 Game Setup has the predator cut each
   shuffled deck before draws are taken, mirroring the physical-table
   anti-stacking ritual. The rulebook does not say *how* the digital
   engine should represent a "cut" of an already-random, engine-owned
@@ -49,7 +49,7 @@ are recorded here as design choices, not as VtES facts.
   stacking by the owner) is already fully guaranteed by the engine's
   trusted seeded shuffle. This is a judgment call about engine
   representation, not a sourced rule, and is recorded here per the
-  project's no-guessing philosophy (CLAUDE.md SS2) rather than left
+  project's no-guessing philosophy (CLAUDE.md §2) rather than left
   as a bare code comment.
 - Consequence: the replay log still records the cut (as a random
   draw) so the step is not silently skipped, but no agent is ever
@@ -59,7 +59,7 @@ are recorded here as design choices, not as VtES facts.
 
 ## D-5: Card-hook/registry catalogues are static, not `GameState` (2026-10-09)
 
-- Context: CLAUDE.md SS5 says "no global state ... in `engine/`";
+- Context: CLAUDE.md §5 says "no global state ... in `engine/`";
   `src/vtesbot/engine/hooks.py` (which hook points exist and which
   card modules answer them) and `src/vtesbot/cards/registry.py`
   (which cards are implemented/blocked) are both module-level dicts
@@ -72,7 +72,7 @@ are recorded here as design choices, not as VtES facts.
   engine's `cards/` package knows how to apply is static program
   configuration, identical in kind to
   `src/vtesbot/cards/registry.py`'s own card catalogue (explicitly
-  asked for by CLAUDE.md SS6: "registry entry"), and does not vary
+  asked for by CLAUDE.md §6: "registry entry"), and does not vary
   within or between games built from the same installed code.
 - Consequence: `engine/hooks.py` functions (`offer`, `sum_modifiers`,
   `offer_until_pass`, `resolve_impulse_window`) take the live
@@ -134,7 +134,7 @@ are recorded here as design choices, not as VtES facts.
 - Decision: built `src/vtesbot/formats/` (allowed-list loading +
   legality rules, typed port of `scripts/validate_deck.py::validate`)
   and `src/vtesbot/decks/` (text parsing, name resolution, and
-  expansion to `engine.setup.DeckSpec`) per CLAUDE.md SS5's own
+  expansion to `engine.setup.DeckSpec`) per CLAUDE.md §5's own
   architecture table. `scripts/krcg_match.py`'s matching logic moved
   into `decks/name_resolution.py`; the script is now a thin CLI
   wrapper around it, so the dev tool and the production pipeline
@@ -221,8 +221,8 @@ are recorded here as design choices, not as VtES facts.
 
 - Context: OQ-44. Both Methuselahs reaching 0 pool from one event.
 - Decision: user ruling (project ruling, supported but not dictated by
-  Rulebook SS5): "oust simultané semble ok si pas de solution de
-  gagner". Same event = tie, no winner; 1 VP each, no 6 pool (SS5
+  Rulebook §5): "oust simultané semble ok si pas de solution de
+  gagner". Same event = tie, no winner; 1 VP each, no 6 pool (§5
   EXCEPTION). "Same event" is mechanical: one card effect or one
   simultaneous strike pair, wrapped in `engine/pool.py::
   simultaneous_pool_losses`.

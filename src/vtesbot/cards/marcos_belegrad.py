@@ -12,7 +12,7 @@ snapshot's own `"rulings": []`, both checked 2026-10-11).
 
 Card type: crypt vampire (`types == ["Vampire"]`). Clan Toreador, title
 Prince, group 7, capacity 8, disciplines `["ani", "AUS", "CEL", "PRE"]`
-(Rulebook SS4 Politics > Gaining Votes > Titled Vampires: a ready Prince is
+(Rulebook §4 Politics > Gaining Votes > Titled Vampires: a ready Prince is
 already worth 2 votes on its own, via the generic `TITLE_VOTES` table in
 `engine/politics.py`; this module only adds the printed ability's *extra*,
 distinct effect on top of that).
@@ -46,12 +46,12 @@ vote" -- nothing scales the loss by how many separate sources or votes a
 single Methuselah cast against the referendum. This module therefore
 charges exactly 1 pool per *Methuselah* who cast at least one vote or
 ballot against Marcos's referendum (not per source, not per vote) -- a
-plain reading of the verbatim printed text (CLAUDE.md SS2 "Golden Rule for
+plain reading of the verbatim printed text (CLAUDE.md §2 "Golden Rule for
 Cards"), there being no ruling on file either way.
 
 Effect: `lose_pool_simultaneously` (`engine/pool.py`), 1 pool for each such
 Methuselah as one event -- floors at 0; a lone Methuselah reduced to 0 is
-ousted like any other pool loss, both reduced to 0 tie (OQ-44, Rulebook SS5).
+ousted like any other pool loss, both reduced to 0 tie (OQ-44, Rulebook §5).
 
 Fires regardless of the referendum's own eventual pass/fail outcome (the
 card's own trigger is "once results are tallied", a moment strictly before

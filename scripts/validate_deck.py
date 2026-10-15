@@ -7,11 +7,11 @@ deck fixture's own `unmatched` list is reported as a violation, never
 silently skipped.
 
 Checks implemented (see SKILL.md for the rule/source table):
-  - Crypt size >= 12 (Rulebook SS1 Deck construction)
+  - Crypt size >= 12 (Rulebook §1 Deck construction)
   - Crypt groups: one group, or two consecutive groups
-  - Library size 40-60 (2P variant SS2.3, replaces 60-90)
+  - Library size 40-60 (2P variant §2.3, replaces 60-90)
   - Every crypt/library krcg_id is on the active 2P allowed list, with the
-    matching Crypt/Library type (2P variant SS2.3 + the dated format file)
+    matching Crypt/Library type (2P variant §2.3 + the dated format file)
   - Any entries left in the deck fixture's "unmatched" array are reported,
     never guessed
 
@@ -62,7 +62,7 @@ def validate(deck: dict, fmt: dict) -> list[str]:
 
     crypt_total = sum(c["count"] for c in deck["crypt"])
     if crypt_total < 12:
-        violations.append(f"Crypt size {crypt_total} < 12 minimum (Rulebook SS1)")
+        violations.append(f"Crypt size {crypt_total} < 12 minimum (Rulebook §1)")
 
     groups = sorted({c["group"] for c in deck["crypt"]})
     if not _consecutive(groups):
@@ -70,7 +70,7 @@ def validate(deck: dict, fmt: dict) -> list[str]:
 
     library_total = sum(c["count"] for c in deck["library"])
     if not (40 <= library_total <= 60):
-        violations.append(f"Library size {library_total} outside 40-60 (2P variant SS2.3)")
+        violations.append(f"Library size {library_total} outside 40-60 (2P variant §2.3)")
 
     for section, expected_type in (("crypt", "Crypt"), ("library", "Library")):
         for c in deck[section]:

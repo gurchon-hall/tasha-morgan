@@ -198,7 +198,7 @@ def test_offered_to_either_player_independent_of_caller_role():
 
 def test_caller_may_play_through_their_own_locked_acting_vampire():
     """The caller's own acting vampire is *always* already locked by the
-    time the polling step is reached (Rulebook SS4) -- the Action-Modifier
+    time the polling step is reached (Rulebook §4) -- the Action-Modifier
     default does not require it be unlocked, unlike the non-caller's own
     Reaction-rule check."""
     builder = ScenarioBuilder(seed=1)

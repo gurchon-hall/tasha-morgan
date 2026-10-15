@@ -128,7 +128,7 @@ def test_superior_level_can_reduce_bleed_by_two():
 
 
 def test_superior_vampire_may_opt_to_use_the_basic_effect_instead():
-    """Rulebook SS3: a superior-level vampire "may opt to use either the
+    """Rulebook §3: a superior-level vampire "may opt to use either the
     basic (plain text) or the superior (bold) effect ... but not both"."""
     builder = _bleed_scenario()
     p2 = builder._players["P2"]
@@ -178,7 +178,7 @@ def test_never_offered_to_the_bleeder_even_with_auspex_and_a_copy_in_hand():
 
 
 def test_a_minion_cannot_play_the_same_reaction_card_twice_in_one_action():
-    """SS2 Cards in general: "A minion cannot play the same reaction card
+    """§2 Cards in general: "A minion cannot play the same reaction card
     more than once during a single action (even if using a different
     Discipline level)" -- a second copy in the *same minion's* hand is not
     offered again this action."""
@@ -216,7 +216,7 @@ def test_a_cancellation_still_pays_cost_but_suppresses_the_bleed_reduction():
     `cost`/`apply` split added to this module survives real play: the card
     still leaves the defender's hand and is replaced (`cost`), the bleed is
     *not* reduced (`apply` suppressed), and the same vampire cannot be
-    offered a second copy of the card again this action -- the SS8 "same
+    offered a second copy of the card again this action -- the §8 "same
     reaction card" `used_by` bookkeeping, also folded into `cost`, still ran
     even though the effect itself was canceled, per the on-file ruling "the
     canceled card has still been played... cannot be played again by the
@@ -261,7 +261,7 @@ def test_a_cancellation_still_pays_cost_but_suppresses_the_bleed_reduction():
 
 
 def test_two_different_minions_may_each_play_their_own_copy_in_one_action():
-    """The SS2 "same reaction card" restriction is per-minion, not
+    """The §2 "same reaction card" restriction is per-minion, not
     per-Methuselah: a second, *different* eligible minion may still play a
     second copy in the same action."""
     builder = _bleed_scenario()

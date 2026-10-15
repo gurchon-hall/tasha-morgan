@@ -43,7 +43,7 @@ NON_UNIQUE_CARD_NAME = "Wider View"
 
 
 def test_bring_master_card_into_play_creates_an_unlocked_in_play_card():
-    """Unlike a recruited ally (Rulebook SS4: "recruited ally cannot act
+    """Unlike a recruited ally (Rulebook §4: "recruited ally cannot act
     this turn" -- enters locked), nothing locks a freshly-played Master card
     (`MasterCardInPlay`'s own docstring): it enters play `zone="in_play"`,
     `locked=False`."""
@@ -110,7 +110,7 @@ def test_a_non_unique_master_card_is_never_contested_by_construction():
 
 
 def test_detect_contest_flags_both_same_named_cards():
-    """Rulebook SS4 Advanced Rules > Contested Cards: "If more than one
+    """Rulebook §4 Advanced Rules > Contested Cards: "If more than one
     unique card with the same name is brought into play, that means control
     of the card is being contested." Both copies get `contested_with` set to
     each other. Only ever correct to call for a card printed "Unique" (e.g.
@@ -245,7 +245,7 @@ def test_uncontested_card_observation_reports_contested_false():
 
 
 def test_unlock_phase_unlocks_a_locked_in_play_card():
-    """Rulebook SS4 Unlock Phase: "you must unlock all of your cards" --
+    """Rulebook §4 Unlock Phase: "you must unlock all of your cards" --
     not restricted to minions. Needed for Oxford's own repeatable "lock this
     card ... to get +2X votes" ability to ever be usable a second time."""
     builder = ScenarioBuilder(seed=1)

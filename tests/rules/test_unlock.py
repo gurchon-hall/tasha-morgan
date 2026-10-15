@@ -1,6 +1,6 @@
 """Unlock phase: unlocking, Edge pool gain, and 2P contested crypt cards.
 
-Source: Rulebook SS4 Unlock Phase + 2P variant (per the `vtes-rules-reference`
+Source: Rulebook §4 Unlock Phase + 2P variant (per the `vtes-rules-reference`
 skill condensed mapping): "unlock all your cards, then unlock-phase effects
 in the order you choose; Edge holder may gain 1 pool. Contests paid here (1
 pool per contested card ...)." 2P variant: "contested crypt cards stay in
@@ -24,7 +24,7 @@ def test_unlock_phase_unlocks_ready_vampires():
 
 
 def test_edge_holder_may_gain_pool():
-    """ "Edge holder may gain 1 pool" -- optional, Rulebook SS4 Unlock Phase."""
+    """ "Edge holder may gain 1 pool" -- optional, Rulebook §4 Unlock Phase."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=10)
     builder.player("P2")
@@ -102,7 +102,7 @@ def test_contest_yield_burns_own_copy_and_clears_opponent_status():
 
 
 def test_multiple_pending_unlock_effects_let_the_player_choose_order():
-    """Rulebook SS4: "unlock-phase effects in the order you choose."""
+    """Rulebook §4: "unlock-phase effects in the order you choose."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=10).ready_vampire("P1-V1", capacity=3, blood=1)
     builder.player("P2", pool=10).ready_vampire("P2-V1", capacity=3, blood=1)

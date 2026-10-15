@@ -1,4 +1,4 @@
-"""Information hiding (CLAUDE.md SS5 engine invariant).
+"""Information hiding (CLAUDE.md §5 engine invariant).
 
 "A bot must not read the opponent's hand, library order or face-down
 uncontrolled vampires." This is enforced at the `Observation` boundary: the
@@ -87,7 +87,7 @@ def test_woken_locked_vampire_exposes_its_real_block_eligibility():
 
 def test_a_recruited_ally_is_fully_visible_to_the_other_player():
     """Rules-auditor finding: an ally in the ready region is public, same as
-    a ready vampire (Rulebook SS4 Recruit Ally) -- there is no face-down
+    a ready vampire (Rulebook §4 Recruit Ally) -- there is no face-down
     state for an ally to hide (`AllyView`'s own docstring), so the *other*
     player's `Observation` must show its existence and full stats, not just
     a count."""

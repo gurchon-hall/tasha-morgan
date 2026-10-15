@@ -18,7 +18,7 @@ Same shape as Atiena (201579, `src/vtesbot/cards/atiena.py`): a single
 clause, the title itself -- no colon, no second sentence, no extra ability
 text. "Anarch Baron of Canberra." names the title this specific printed
 vampire carries -- `CryptCard.title == "Baron"` (confirmed above). The vote
-value a ready Baron contributes (2, Rulebook SS4 Politics > Gaining Votes)
+value a ready Baron contributes (2, Rulebook §4 Politics > Gaining Votes)
 is handled generically by `engine/politics.py::TITLE_VOTES` (`{"Baron": 2,
 ...}`) for every titled vampire regardless of sect preamble, so no
 sect-dependent vote-value question is open here.
@@ -26,7 +26,7 @@ sect-dependent vote-value question is open here.
 There is accordingly nothing left for this module to implement beyond
 registering the card: no combat bonus, no reaction, no modifier of any kind
 -- this module exists only so Leumeah has an effect module + registry entry
-per CLAUDE.md SS6, proving via test that this specific printed vampire's
+per CLAUDE.md §6, proving via test that this specific printed vampire's
 title really is read by the generic title-vote machinery.
 """
 

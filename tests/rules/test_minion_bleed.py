@@ -1,4 +1,4 @@
-"""Default bleed action + block attempts (Rulebook SS4 Minion Phase; 2P Edge mechanic).
+"""Default bleed action + block attempts (Rulebook §4 Minion Phase; 2P Edge mechanic).
 
 "Default actions: bleed (directed, 0 stealth, bleed 1, one bleed per minion
 per turn, successful bleed >=1 takes the Edge ...)." "Block attempts:
@@ -117,7 +117,7 @@ def test_can_end_minion_phase_early_with_a_ready_vampire_remaining():
 
 
 def test_bleed_ousts_prey_at_zero_pool_and_ends_the_game():
-    """Rulebook SS5: pool 0 -> ousted; the sole predator gets 1 VP + 6 pool,
+    """Rulebook §5: pool 0 -> ousted; the sole predator gets 1 VP + 6 pool,
     and (2P structural consequence) +1 more VP as the last Methuselah."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)

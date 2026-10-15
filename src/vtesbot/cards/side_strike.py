@@ -14,7 +14,7 @@ Card type: Combat (`types == ["Combat"]`). `discipline_requirement ==
 {"type": "Mono", "disciplines": ["cel"]}` -- a single discipline, Celerity,
 printed at two different levels (unlike Dust Up's three-way *choice* of
 different disciplines, both clauses here key off the same `"cel"`/`"CEL"`
-presence check, Rulebook SS3 "Discipline symbol within a diamond ... may
+presence check, Rulebook §3 "Discipline symbol within a diamond ... may
 opt to use either the basic (plain text) or the superior (bold) effect ...
 but not both"). `clan_requirement == []`, `path_requirement == []`,
 `cost is None`, `burn_option is False`, `trifle is False`. Legal since
@@ -30,7 +30,7 @@ as two separate lines at two separate discipline levels: `[cel]`
 (inferior) grants only a dodge strike; `[CEL]` (superior) grants only a
 (limited) additional strike, with no dodge attached and no requirement
 that the dodge be played first, or at all. A superior-Celerity vampire is
-eligible for *both* clauses (Rulebook SS3 "may opt to use either effect";
+eligible for *both* clauses (Rulebook §3 "may opt to use either effect";
 same convention as `bonding.py`'s two clauses), but each is an
 *independent* choice offered at its own hook point (dodge at the strike
 step via `COMBAT_DODGE_OPTION_HOOK`, additional strike via
@@ -42,18 +42,18 @@ cards together the way Dust Up's single bundled line does.
 "[cel] Strike: dodge." (inferior clause): a plain `"combat_dodge_option"`
 provider, gated on basic-or-superior `"cel"`/`"CEL"` and the card being in
 hand. Carries no "(limited)" restriction of its own -- the text does not
-print the word, and nothing in SS4 Combat caps repeated non-"(limited)"
-strike/dodge options (Rulebook SS2's "action modifier" cap does not apply
+print the word, and nothing in §4 Combat caps repeated non-"(limited)"
+strike/dodge options (Rulebook §2's "action modifier" cap does not apply
 here: this is a combat card at the strike step, not an action modifier).
 
 "[CEL] Additional strike (limited)." (superior clause): a plain
 `"combat_additional_strike"` provider, gated on superior `"CEL"` only
-(Rulebook SS3: the superior effect is not available at the basic level);
+(Rulebook §3: the superior effect is not available at the basic level);
 using it grants one additional strike through the engine's own full
 strike-choice machinery, exactly like Dust Up's own `[cel]`-granted
 additional strike.
 
-"(limited)" (SS8 glossary: "A minion cannot use more than one card or
+"(limited)" (§8 glossary: "A minion cannot use more than one card or
 effect to gain additional strikes per round of combat"): tracked via
 `engine/combat.py`'s shared, round-scoped
 `additional_strike_limit_used`/`mark_additional_strike_limit_used` helpers

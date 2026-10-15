@@ -1,7 +1,7 @@
 """Simultaneous ousts (OQ-44, user ruling 2026-10-13: both Methuselahs reaching
 0 pool from the same event is a tie, no winner).
 
-Rulebook SS5 Ending the Game: "In the case of a tie there is no winner of the
+Rulebook §5 Ending the Game: "In the case of a tie there is no winner of the
 game"; "EXCEPTION: If a Methuselah is ousted at the same time that their prey
 is ousted, the Methuselah gets the victory point but does not gain 6 pool
 counters." In a duel each is the other's prey, so each gets 1 VP, no pool.

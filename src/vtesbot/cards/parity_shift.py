@@ -23,7 +23,7 @@ Rulings (verbatim, via krcg):
 Card type: Political Action (`types == ["Political Action"]`).
 `clan_requirement == []`, `discipline_requirement is None`, `cost is None`.
 "Requires a prince or justicar" gates *which acting vampire* may play this
-card at all (Rulebook SS2 Card Types > "Requirements for Playing Cards"
+card at all (Rulebook §2 Card Types > "Requirements for Playing Cards"
 binds a minion card's requirement to the specific acting minion, the same
 reading `engine/phases/minion.py`'s own docstring already settled for
 Allies/Action cards, OQ-13) -- checked against `CryptCard.title`, using the
@@ -54,7 +54,7 @@ played if the conditions for the terms of the referendum cannot be met
 (e.g. no legal selection ...)", `_provide_parity_shift` simply does not
 offer the play when the opponent's pool does not strictly exceed the
 acting player's -- no "announce it anyway and let it fizzle" path (matching
-`enchant_kindred.py`'s superior clause). Rulebook SS4 "Announce the
+`enchant_kindred.py`'s superior clause). Rulebook §4 "Announce the
 Action": "all terms fixed now, except referendum terms" -- the target is
 fixed at announce (deterministically the sole opponent), not re-decided
 later.

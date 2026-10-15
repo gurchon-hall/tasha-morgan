@@ -82,7 +82,7 @@ def test_not_offered_without_the_card_in_hand():
 
 
 def test_not_offered_without_controlling_any_ready_brujah():
-    """Rulebook SS2 Card Types > "Requirements for Playing Cards": "only a
+    """Rulebook §2 Card Types > "Requirements for Playing Cards": "only a
     Methuselah who controls a ready minion who meets the requirements of a
     master card can play it" -- a ready vampire of a *different* clan does
     not meet Oxford's own printed Brujah requirement."""
@@ -135,7 +135,7 @@ def test_not_offered_when_only_the_opponent_controls_a_ready_brujah():
 
 
 def test_a_locked_ready_brujah_still_satisfies_the_requirement():
-    """ "Ready" is the only gate (the Ready Region, Rulebook SS8 glossary) --
+    """ "Ready" is the only gate (the Ready Region, Rulebook §8 glossary) --
     whether that vampire happens to be locked or unlocked is irrelevant to
     satisfying a master card's own clan requirement, mirroring
     `engine/politics.py`'s own "locked or unlocked does not have any impact"

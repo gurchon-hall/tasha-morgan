@@ -2,7 +2,7 @@
 OPEN_QUESTIONS.md`): once two same-named unique attachments are flagged as
 contesting each other (`engine/attachments.py::detect_contest_on_attach`),
 each controller must be offered the rulebook's own pay-1-pool-or-yield
-decision during their own unlock phases (Rulebook SS4 Advanced Rules >
+decision during their own unlock phases (Rulebook §4 Advanced Rules >
 Contested Cards), mirroring the ally mechanism OQ-15 already proved
 (`tests/rules/test_ally_contest_resolution.py`) -- except, as with an ally,
 there is no 2P "stays usable" override, so the surviving copy's own `zone`
@@ -126,7 +126,7 @@ def test_zero_regression_an_uncontested_attachments_zone_is_left_untouched_by_un
 
 
 def test_an_attachments_controller_differing_from_its_vampires_controller_resolves_correctly():
-    """Rulebook SS2 Card Types: the contest is resolved during the
+    """Rulebook §2 Card Types: the contest is resolved during the
     *attachment's own controller's* unlock phase, not the vampire's -- here
     P1 plays the contested copy onto P2's own vampire."""
     builder = ScenarioBuilder(seed=1)

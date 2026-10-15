@@ -61,11 +61,11 @@ def _combat_game(*, b1_blood: int = 0, b1_capacity: int = 10):
 
 
 def test_dodge_prevents_the_opponents_simultaneous_strike_from_dealing_damage():
-    """Rulebook SS4 Combat > Strike Effects > Dodge: "A dodge strike deals
+    """Rulebook §4 Combat > Strike Effects > Dodge: "A dodge strike deals
     no damage, but it protects the dodging minion and their possessions
     from the effects of the opposing strike." A fake `combat_dodge_option`
     provider grants B1 a dodge; V1's hand strike (which would otherwise deal
-    1 damage, Rulebook SS4 Combat: "Hand strike = strength (default 1)")
+    1 damage, Rulebook §4 Combat: "Hand strike = strength (default 1)")
     must have no effect on B1 at all."""
 
     def fake_dodge(state, context):
@@ -99,7 +99,7 @@ def test_dodge_prevents_the_opponents_simultaneous_strike_from_dealing_damage():
 
 
 def test_dodge_proof_strike_still_damages_a_dodging_opponent():
-    """Golden Rule for Cards (CLAUDE.md SS2 / Rulebook SS3): a specific
+    """Golden Rule for Cards (CLAUDE.md §2 / Rulebook §3): a specific
     strike's own printed text can override the normal dodge rule for that
     strike -- sourced from Dust Up's own `[ani]` clause ("This strike
     cannot be dodged") and its ruling: "[ani] Does not prevent the opponent
@@ -176,7 +176,7 @@ def test_no_dodge_choice_is_offered_without_a_registered_provider():
 
 
 def test_same_round_additional_strike_reuses_the_full_strike_choice_machinery():
-    """Rulebook SS4 Combat > Additional Strikes: a second strike is resolved
+    """Rulebook §4 Combat > Additional Strikes: a second strike is resolved
     within the same round, "after the first pair of strikes is completed"
     -- and per Choose Strike, that second strike is chosen from the exact
     same menu as any strike ("from a combat card, ... by default from a
@@ -221,7 +221,7 @@ def test_same_round_additional_strike_reuses_the_full_strike_choice_machinery():
     # (the additional strike's card-granted option, not a hand strike).
     assert captured == [1, 3]
     # Second hit on an already-wounded vampire sends it to torpor at once
-    # (Rulebook SS4: "combat ends at once if a combatant is no longer
+    # (Rulebook §4: "combat ends at once if a combatant is no longer
     # ready") -- confirms the additional strike's damage was really applied,
     # within the same round, with no press step raised for either side.
     assert game.zone_of("B1") == "torpor"
@@ -284,7 +284,7 @@ def test_additional_strike_limit_resets_every_round_of_the_same_combat():
 
 
 def test_additional_strike_pair_only_asks_combatants_with_an_available_grant():
-    """Rulebook SS4 Combat > Additional Strikes: "another choose strike step
+    """Rulebook §4 Combat > Additional Strikes: "another choose strike step
     and resolve strike step in which only the minions with additional
     strikes may play strike cards" -- the defender, who was never granted
     an additional strike, must not be asked a second `strike_choice` at all
@@ -332,7 +332,7 @@ def test_additional_strike_pair_only_asks_combatants_with_an_available_grant():
 
 def test_additional_strike_limit_is_shared_across_two_unrelated_providers():
     """Module docstring's "Cross-card '(limited)' cap" section (`docs/
-    OPEN_QUESTIONS.md` OQ-19): SS8 glossary's "A minion cannot use more than
+    OPEN_QUESTIONS.md` OQ-19): §8 glossary's "A minion cannot use more than
     one card or effect to gain additional strikes per round of combat" is a
     *cross-card* cap. Two fake providers stand in for two unrelated cards'
     own "(limited)" clauses -- "Card A" grants via the dodge-bundled hook
@@ -411,7 +411,7 @@ def test_additional_strike_limit_is_independent_per_combatant():
     state` is one object offered to *both* combatants' hook calls each
     round, so a flat flag would wrongly let one combatant's own "(limited)"
     play block the *other*, completely unrelated combatant's own grant for
-    the rest of that round. SS8 glossary phrases the cap per-*minion* ("a
+    the rest of that round. §8 glossary phrases the cap per-*minion* ("a
     minion cannot use more than one card or effect ... per round of
     combat"), not jointly across the whole fight -- and the Wauneka/Flávio
     Gonçalves worked example quoted in the module docstring is itself two

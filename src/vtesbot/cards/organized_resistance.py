@@ -41,12 +41,12 @@ independently audited by `rules-auditor` with no blocking findings; this
 module wires the card's own two clauses against it and against the
 pre-existing `INTERCEPT_MODIFIER_HOOK`).
 
-"Requires a baron. Usable by a locked baron.": per Rulebook SS6 Vampire
+"Requires a baron. Usable by a locked baron.": per Rulebook §6 Vampire
 Sects/Titles (same convention `protection_racket.py`'s docstring documents
 for "Requires an Anarch"), this gates *which vampire plays the card* -- a
 vampire the player controls with printed title "Baron". Normally a
 Reaction card also requires its playing minion to be ready and unlocked
-(SS8 glossary), but this card's second sentence relaxes that to just
+(§8 glossary), but this card's second sentence relaxes that to just
 `zone == "ready"` (in play, not torpor) -- a locked baron may still play
 it. Both clauses share one `_eligible_barons` helper for this gate.
 
@@ -60,7 +60,7 @@ clause can only have an observable effect when that recipient *is* the
 fixed candidate. `_duel_stealth_intercept` already threads that candidate
 into the hook's context as `context["blocking_vampire"]`, so the gate is
 simply "is `context['blocking_vampire']` one of `player`'s own Anarch
-vampires," read fresh on every `offer()` call. (Rulebook SS4 "Stealth and
+vampires," read fresh on every `offer()` call. (Rulebook §4 "Stealth and
 Intercept" describes intercept as the blocking minion's own property,
 corroborating this reading, per a `rules-auditor` review; not itself the
 load-bearing citation.) Missing `blocking_vampire` context (hook asked
@@ -109,10 +109,10 @@ implemented, so nothing today consumes such a flag.
 "Does not ignore the normal prey, predator or target restrictions." [ANK
 20180623]: automatically satisfied -- `attempt_block`'s own `defender`
 parameter scopes every candidate, hardcoded or injected, to the single 2P
-opponent, structurally both prey and predator (CLAUDE.md SS3); both
+opponent, structurally both prey and predator (CLAUDE.md §3); both
 providers below are likewise only ever offered `player=defender`.
 
-SS8 glossary: "A minion cannot play the same reaction card more than once
+§8 glossary: "A minion cannot play the same reaction card more than once
 during a single action (even if using a different Discipline level)."
 Read as keying the restriction on the *physical card use by one minion*,
 not on which of the card's alternative effects that minion chose -- this
@@ -162,7 +162,7 @@ def _blocking_vampire_is_controlled_anarch(
     """Whether the vampire currently attempting to block
     (`context["blocking_vampire"]`, threaded in by `engine/action.py::
     _duel_stealth_intercept`) is one of `player`'s own Anarch vampires --
-    see module docstring's Rulebook SS4 "Stealth and Intercept" citation:
+    see module docstring's Rulebook §4 "Stealth and Intercept" citation:
     intercept is always a property of the blocking minion, so a card
     naming a specific recipient only has an effect when that recipient is
     the vampire currently attempting the block. Missing context (the hook

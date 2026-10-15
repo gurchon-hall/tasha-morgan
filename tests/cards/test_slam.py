@@ -117,7 +117,7 @@ def test_basic_strike_offered_with_basic_pot_and_enough_blood():
 
 def test_basic_strike_also_offered_with_superior_pot():
     """Superior Potence presence satisfies the basic-level discipline check
-    too (Rulebook SS3 "may opt to use either effect")."""
+    too (Rulebook §3 "may opt to use either effect")."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(
         "V1", capacity=3, blood=1, disciplines=("POT",)

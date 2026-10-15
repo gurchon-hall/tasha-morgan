@@ -10,7 +10,7 @@ One assertion per clause/qualifier/ruling: the "Requires a baron"
 card-level gate for each clause (no Baron in play -> nothing offered);
 the "Usable by a locked baron" relaxation for each clause; clause 1's
 "+1 intercept" gated on the *vampire currently attempting the block*
-being an Anarch the player controls (Rulebook SS4 "Stealth and
+being an Anarch the player controls (Rulebook §4 "Stealth and
 Intercept" -- see the module docstring's own citation for why this, not
 a generic "controls some Anarch somewhere", is the correct reading);
 clause 2's unlock-and-force-block gated on controlling at least one
@@ -19,7 +19,7 @@ attempt could never beat, and real combat following through
 `perform_minion_action`; the shared "a minion cannot play the same
 reaction card more than once during a single action" restriction applied
 across *both* clauses for one Baron (module docstring's documented
-reading of SS8), while a second, distinct eligible Baron is unaffected;
+reading of §8), while a second, distinct eligible Baron is unaffected;
 and ruling [ANK 20181122-2] ("can be used by a vampire who is already
 attempting to block"), modeled as "offered again after an earlier
 ordinary block attempt this same action already failed" -- the only
@@ -137,7 +137,7 @@ def test_clause1_locked_baron_may_still_play_it_usable_by_a_locked_baron():
 
 
 def test_clause1_not_offered_when_the_blocking_vampire_is_not_an_anarch():
-    """ "An Anarch you control gets +1 intercept" -- per Rulebook SS4
+    """ "An Anarch you control gets +1 intercept" -- per Rulebook §4
     "Stealth and Intercept" (module docstring citation), intercept is
     always a property of the vampire *currently attempting the block*, so
     this bonus has no effect unless that vampire is itself an Anarch the

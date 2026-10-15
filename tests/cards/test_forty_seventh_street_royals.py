@@ -118,7 +118,7 @@ def test_recruit_not_offered_without_the_card_in_hand():
 
 
 def test_recruit_succeeds_and_creates_a_ready_locked_ally_at_no_cost():
-    """Rulebook SS4 "Recruit Ally": "recruited ally cannot act this turn";
+    """Rulebook §4 "Recruit Ally": "recruited ally cannot act this turn";
     `cost is None` per krcg -- no pool is paid even on success."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)
@@ -153,7 +153,7 @@ def test_recruit_succeeds_and_creates_a_ready_locked_ally_at_no_cost():
 
 
 def test_recruit_blocked_burns_the_card_and_creates_no_ally():
-    """Rulebook SS4 "Resolve the Action": "If the action is blocked, then any
+    """Rulebook §4 "Resolve the Action": "If the action is blocked, then any
     card played to perform the action is burned ... the cost ... is not paid
     if the action is blocked." A fake `"intercept_modifier"` stand-in for a
     reaction card gives +1 intercept so the bare block attempt (recruit
@@ -317,7 +317,7 @@ def test_burn_reaction_not_offered_to_the_bleeding_player():
 
 
 def test_burn_reaction_not_offered_while_the_ally_is_contested():
-    """A contested ally is "turned face down and out of play" (Rulebook SS4
+    """A contested ally is "turned face down and out of play" (Rulebook §4
     Advanced Rules > Contested Cards) for the whole contest -- it cannot
     react, same as `AllyInPlay.zone == "contested"` ever gating anything
     else this ally does."""

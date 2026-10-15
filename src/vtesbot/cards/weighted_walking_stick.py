@@ -57,7 +57,7 @@ project, mirroring `cards/slam.py`'s own "Hidden Lurker" citation (an
 on-file ruling for an interaction with an unimplemented card, vacuously
 satisfied).
 
-Not enforced: the general Rulebook SS4 "Resolve Strike" rule that a melee
+Not enforced: the general Rulebook §4 "Resolve Strike" rule that a melee
 (non-ranged, non-"R") strike is "effective only at close range" -- no
 range-gating mechanism exists for *any* melee strike yet, including the
 engine's own built-in hand strike (`engine/combat.py` module docstring,

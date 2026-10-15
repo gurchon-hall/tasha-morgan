@@ -340,7 +340,7 @@ def test_same_vampire_cannot_use_clause1_then_clause2_in_the_same_action():
     assert "D1" in pending[USED_BY_KEY]
 
     # D1 is still unlocked (clause 1 never locks the playing vampire) -- but
-    # clause 2 also requires `locked`, so to isolate the SS8 restriction
+    # clause 2 also requires `locked`, so to isolate the §8 restriction
     # itself (not the separate "locked" gate) lock D1 by hand here.
     game.vampire("D1").locked = True
     clause2 = _offer_block_candidate(

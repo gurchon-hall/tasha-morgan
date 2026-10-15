@@ -4,7 +4,7 @@ hook (`engine/hooks.py`). No master card is implemented yet -- these are
 scenario tests for the *mechanism*, using a trivial fake card, per the
 `rules-scenario-test` skill.
 
-Source: Rulebook SS4 Master Phase (per the `vtes-rules-reference` skill
+Source: Rulebook §4 Master Phase (per the `vtes-rules-reference` skill
 condensed mapping): "1 master phase action by default; trifles grant one
 extra (max one per phase); ... unused actions are lost."
 """
@@ -74,7 +74,7 @@ def test_passing_ends_the_phase_without_playing():
 
 
 def test_playing_a_trifle_grants_one_extra_action_max_once_per_phase():
-    """Rulebook SS4: "trifles grant one extra [action] (max one per phase)"."""
+    """Rulebook §4: "trifles grant one extra [action] (max one per phase)"."""
     plays = []
 
     def fake_trifle(state, context):

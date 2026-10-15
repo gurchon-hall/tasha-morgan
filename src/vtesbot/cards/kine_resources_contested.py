@@ -36,7 +36,7 @@ action ends up blocked (burned) or the referendum passes or fails -- a
 political action card has no other printed destination either way (mirrors
 `enchant_kindred.py`'s one-shot immediate-consumption cards, not Recruit
 Ally's two-destination dance). `ActionCardSpec.action=ACTION_POLITICAL`,
-`directed=False` (Rulebook SS4 Minion Phase default action list: "political
+`directed=False` (Rulebook §4 Minion Phase default action list: "political
 action (undirected, +1 stealth ...)"; this card's own text names no single
 target Methuselah up front, unlike Parity Shift's "Choose a Methuselah who
 has more pool than you do").
@@ -45,18 +45,18 @@ has more pool than you do").
 phase (run with `action=ACTION_POLITICAL`, `base_stealth=
 POLITICAL_ACTION_STEALTH`) has already gone unblocked -- so it must only
 run the *referendum itself* (`engine/politics.py::resolve_referendum`'s
-polling step + tally, Rulebook SS4 "The Referendum" steps 2-3), not
+polling step + tally, Rulebook §4 "The Referendum" steps 2-3), not
 re-announce or re-attempt a block: `engine/politics.py::political_action`
 (which duplicates the announce/block/combat steps `perform_minion_action`
 already ran) is deliberately *not* called here, to avoid running the
 block-attempt phase twice. If the referendum fails (`votes_for <=
 votes_against`, "tied referendums fail" per `resolve_referendum`'s own
-contract), there is no effect at all -- Rulebook SS4 "Resolve the
+contract), there is no effect at all -- Rulebook §4 "Resolve the
 Referendum": "Otherwise, the referendum fails and has no effect."
 
-Allocation: the split is the referendum's own term. Rulebook SS4 "The
+Allocation: the split is the referendum's own term. Rulebook §4 "The
 Referendum" step 1 "Choose the terms" precedes step 2 "Polling", and terms
-are chosen only once the action succeeds (SS4 "The Political Action"), so
+are chosen only once the action succeeds (§4 "The Political Action"), so
 `resolve()` raises the `"kine_resources_contested_allocation"` decision
 first and locks it. User ruling 2026-10-13 (OQ-45, `docs/DECISIONS.md`
 D-9): "la répartition est verrouillée avant le vote puis fenetre d'avant

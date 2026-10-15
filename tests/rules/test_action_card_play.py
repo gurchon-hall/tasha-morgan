@@ -1,6 +1,6 @@
 """The "action_card_play" hook/call site (OQ-17, `docs/OPEN_QUESTIONS.md`,
 resolved by this pass): the engine entry point for a library card of printed
-`types == ["Action"]` (Rulebook SS2 Card Types) that is itself the acting
+`types == ["Action"]` (Rulebook §2 Card Types) that is itself the acting
 vampire's entire minion action for the turn, rather than a decoration of an
 already-chosen default Bleed/Hunt.
 
@@ -130,7 +130,7 @@ def test_action_card_play_is_not_offered_when_the_provider_has_no_matching_hand_
 def test_action_card_play_is_offered_and_succeeds_resolving_its_own_effect():
     """End-to-end success path: the provider's option is offered alongside
     bleed/hunt, chosen, the card leaves hand immediately (announce time,
-    straight to the ash heap -- Rulebook SS4 "Resolve the Action": a plain
+    straight to the ash heap -- Rulebook §4 "Resolve the Action": a plain
     one-shot Action card's own placement does not depend on the later block
     outcome, OQ-17), and once unblocked `resolve` performs the card's own
     effect (here, a directed bleed stand-in)."""
@@ -167,7 +167,7 @@ def test_action_card_play_is_offered_and_succeeds_resolving_its_own_effect():
 
 
 def test_action_card_play_blocked_does_not_resolve_but_still_consumed_the_card():
-    """Rulebook SS4 "Resolve the Action": a blocked action's own effect never
+    """Rulebook §4 "Resolve the Action": a blocked action's own effect never
     happens. The fake provider here already consumed its card immediately at
     announce time (not via the two-destination dance -- see the generality
     test below for that case), so the card is in the ash heap regardless of
@@ -201,7 +201,7 @@ def test_action_card_play_blocked_does_not_resolve_but_still_consumed_the_card()
     assert not any(c.krcg_id == FAKE_ACTION_CARD_KRCG_ID for c in game.state.players["P1"].hand)
     assert any(c.krcg_id == FAKE_ACTION_CARD_KRCG_ID for c in game.state.players["P1"].ash_heap)
     # The blocking vampire locked and entered combat, per the general block
-    # consequences (Rulebook SS4) -- confirms this is a real block, not a
+    # consequences (Rulebook §4) -- confirms this is a real block, not a
     # degenerate no-op.
     assert game.zone_of("B1") == "ready"
     assert game.vampire("B1").locked is True
@@ -324,7 +324,7 @@ def test_action_card_play_supports_the_two_destination_dance_generically():
     `_perform_recruit_ally`'s own unblocked branch, which calls
     `recruit_ally` to put the Ally card's *effect* into play rather than
     discarding the card; `on_blocked` burns it to the ash heap, mirroring
-    `_perform_recruit_ally`'s own blocked branch (Rulebook SS4 "Resolve the
+    `_perform_recruit_ally`'s own blocked branch (Rulebook §4 "Resolve the
     Action": "any card played to perform the action is burned"). `calls`
     also records which closure actually ran, so this test independently
     confirms `resolve` fires exactly when unblocked and `on_blocked` exactly
@@ -547,7 +547,7 @@ def _run_bonding_integration_scenario(declared_action: str | None) -> list[str]:
 def test_action_card_play_can_declare_itself_a_real_bleed_so_bonding_still_fires():
     """Rules-auditor finding (OQ-17 follow-up): `ActionCardSpec.action` lets
     a provider declare the real mechanical action identity its own clause's
-    card text matches (CLAUDE.md SS2 card-text precedence over rulings --
+    card text matches (CLAUDE.md §2 card-text precedence over rulings --
     settled directly by the text itself, no judgment call needed, when a
     clause's own printed text literally says "Bleed", e.g. Enchant Kindred's
     basic clause "[pre] Ⓓ Bleed with +1 bleed").

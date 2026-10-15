@@ -110,7 +110,7 @@ def test_offered_and_a_passing_referendum_burns_the_chosen_split():
 
 
 def test_a_referendum_that_fails_has_no_effect():
-    """Rulebook SS4 "Resolve the Referendum": "Otherwise, the referendum
+    """Rulebook §4 "Resolve the Referendum": "Otherwise, the referendum
     fails and has no effect." An opposing ready Prince's 2 votes outvote the
     caller's lone 1-vote political-action-card source."""
     builder = ScenarioBuilder(seed=1)
@@ -140,7 +140,7 @@ def test_a_referendum_that_fails_has_no_effect():
 
 
 def test_a_blocked_action_never_calls_a_referendum_and_the_card_is_still_burned():
-    """Rulebook SS4 "Resolve the Action": a blocked action never reaches the
+    """Rulebook §4 "Resolve the Action": a blocked action never reaches the
     referendum at all (OQ-5's verbatim quote, `engine/politics.py`'s own
     module docstring) -- the card is still burned, same destination as an
     unblocked play either way. A temporary fake `"intercept_modifier"`
@@ -254,7 +254,7 @@ def test_can_allocate_more_points_than_a_methuselah_has_pool_and_it_ousts_them()
 
 def test_oust_at_tally_applies_no_allocation_burn():
     """A tally-time oust (REFERENDUM_TALLIED reaction) ends the game: the
-    locked split is never applied (Rulebook SS5)."""
+    locked split is never applied (Rulebook §5)."""
     from vtesbot.engine.pool import lose_pool
 
     def oust_caller(state, context):
@@ -447,7 +447,7 @@ def _marcos_scenario(pool: int, p2_pool: int = 30):
 def test_allocation_is_locked_before_the_first_vote_and_pre_vote_window():
     """User ruling 2026-10-13 (OQ-45): the split is locked before the vote,
     then the pre-vote window, then votes, then end-of-tally reactions, then
-    the effects. Rulebook SS4 "The Referendum" step 1 "Choose the terms"
+    the effects. Rulebook §4 "The Referendum" step 1 "Choose the terms"
     precedes step 2 "Polling"."""
     log: list[str] = []
 

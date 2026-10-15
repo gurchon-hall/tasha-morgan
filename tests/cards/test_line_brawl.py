@@ -410,7 +410,7 @@ def test_pot_with_multiple_eligible_targets_raises_a_choice_decision():
 def test_pot_blocked_enters_combat_with_the_blocker_instead_via_the_generic_path():
     """The target is chosen at `apply()` time (announce), before the
     block-attempt window even opens (rules-auditor finding, 2026-10-11 --
-    Rulebook SS4 "Announce the Action" + this engine's own `ActionCardSpec`
+    Rulebook §4 "Announce the Action" + this engine's own `ActionCardSpec`
     contract both require it). If the opponent then blocks with a
     *different* minion than the one announced, the generic block-attempt
     path's own `run_combat` call supersedes it -- `resolve()` (and so the
@@ -483,7 +483,7 @@ def test_pot_unblocked_target_is_not_locked_by_entering_combat():
 
 
 def test_pot_never_targets_the_acting_players_own_vampire():
-    """The Ⓓ marker (Rulebook SS2 glossary "Directed Action") settles that
+    """The Ⓓ marker (Rulebook §2 glossary "Directed Action") settles that
     the target is controlled by the opponent, never the acting player's own
     side, even though the printed clause names no explicit "controlled by
     your prey or predator" qualifier."""

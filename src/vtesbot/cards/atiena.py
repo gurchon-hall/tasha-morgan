@@ -20,7 +20,7 @@ extra ability text. "Anarch Baron of Mombasa." names the title this
 vampire carries -- `CryptCard.title == "Baron"`, matching
 `engine/politics.py::TITLE_VOTES`'s own parsing convention ("Camarilla
 Prince of London" -> title='Prince'). The vote value a ready Baron
-contributes (2, Rulebook SS4 Politics > Gaining Votes) is already handled
+contributes (2, Rulebook §4 Politics > Gaining Votes) is already handled
 generically by `TITLE_VOTES` (`{"Baron": 2, ...}`) for every titled
 vampire regardless of sect preamble -- that dict has a single plain
 "Baron" key, and nothing in `engine/`/`cards/` reads sect off a titled
@@ -28,7 +28,7 @@ vampire to vary the vote value.
 
 There is accordingly nothing left for this module to implement beyond
 registering the card -- it exists only so Atiena has an effect module +
-registry entry per CLAUDE.md SS6, proving via test that this vampire's
+registry entry per CLAUDE.md §6, proving via test that this vampire's
 title is read by the generic title-vote machinery.
 """
 

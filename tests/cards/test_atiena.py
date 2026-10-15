@@ -47,7 +47,7 @@ def test_registered_as_implemented_with_no_hooks():
 
 
 def test_a_ready_atiena_contributes_2_votes_as_a_baron_title_source():
-    """Rulebook SS4 Politics > Gaining Votes: "2 votes for each ready prince
+    """Rulebook §4 Politics > Gaining Votes: "2 votes for each ready prince
     or baron" -- `engine/politics.py::TITLE_VOTES["Baron"] == 2`. Proven here,
     end to end through the real `political_action`, to confirm this specific
     printed vampire's `title="Baron"` really is wired to the generic

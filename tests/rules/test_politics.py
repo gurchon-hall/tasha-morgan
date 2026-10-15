@@ -2,7 +2,7 @@
 OQ-6 (`docs/OPEN_QUESTIONS.md`) is resolved: these scenarios cover both the
 generic "announce -> block attempt -> (blocked: combat) | (unblocked:
 referendum)" path and the referendum's polling step / vote tally itself
-(Rulebook SS4 "The Referendum", see `engine/politics.py`'s own docstring for
+(Rulebook §4 "The Referendum", see `engine/politics.py`'s own docstring for
 the verbatim sources).
 """
 
@@ -20,7 +20,7 @@ from vtesbot.engine.politics import (
 
 
 def test_a_blocked_political_action_goes_to_combat_and_never_calls_a_referendum():
-    """Political action's baseline stealth is +1 (Rulebook SS4 default
+    """Political action's baseline stealth is +1 (Rulebook §4 default
     action list), which -- like hunt's own +1 baseline (see
     `tests/rules/test_minion_hunt.py`) -- always evades a bare block attempt
     with no intercept-granting card implemented; a fake intercept-modifier
@@ -64,7 +64,7 @@ def test_a_blocked_political_action_goes_to_combat_and_never_calls_a_referendum(
 def test_an_uncontested_referendum_passes_one_to_nothing():
     """No candidate blocker, no titled vampires, no Edge holder: the only
     vote source is the acting Methuselah's own political-action-card vote
-    (Rulebook SS4 Politics > Gaining Votes > Political Action Cards), which
+    (Rulebook §4 Politics > Gaining Votes > Political Action Cards), which
     the acting Methuselah chooses to cast "for", 1-0, which passes (more for
     than against)."""
     builder = ScenarioBuilder(seed=1)
@@ -87,7 +87,7 @@ def test_an_uncontested_referendum_passes_one_to_nothing():
 def test_the_acting_methuselah_may_decline_their_own_political_action_card_vote():
     """The political-action-card vote is an ordinary `VoteSource`, not a
     hardcoded automatic "for": "there is no obligation to cast votes or
-    ballots" (Rulebook SS4 "The Referendum" step 2, quoted in full in
+    ballots" (Rulebook §4 "The Referendum" step 2, quoted in full in
     `engine/politics.py`'s module docstring) applies to it exactly like any
     other source. Declining it leaves 0 votes cast at all, which ties
     (0-0) and fails."""
@@ -137,7 +137,7 @@ def test_a_declined_block_then_a_lone_opposing_title_ties_and_fails():
     it can vote instead); the acting Methuselah casts their own political-
     action-card vote "for", the defender then uses their titled vampire's 1
     vote "against": 1 for vs 1 against ties, and "[t]ied referendums fail"
-    (Rulebook SS4 Politics)."""
+    (Rulebook §4 Politics)."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)
     builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=1, title="Primogen")
@@ -158,7 +158,7 @@ def test_a_declined_block_then_a_lone_opposing_title_ties_and_fails():
 
 
 def test_a_ready_opposing_prince_outvotes_the_lone_actor_and_the_referendum_fails():
-    """A ready prince is worth 2 votes (Rulebook SS4 Politics > Gaining
+    """A ready prince is worth 2 votes (Rulebook §4 Politics > Gaining
     Votes > Titled Vampires); 1 for (actor's own political-action-card vote,
     cast "for") vs 2 against (defender's prince) fails outright, no tie
     involved. The prince is left locked (`locked=True`) on purpose: "[w]hether
@@ -188,7 +188,7 @@ def test_a_ready_opposing_prince_outvotes_the_lone_actor_and_the_referendum_fail
 
 def test_the_edge_holder_burns_it_for_an_extra_vote_and_the_edge_is_returned_uncontrolled():
     """ "The Methuselah who has the Edge can burn it (return it, uncontrolled,
-    to the central area) to gain 1 vote" (Rulebook SS4 Politics > Gaining
+    to the central area) to gain 1 vote" (Rulebook §4 Politics > Gaining
     Votes > The Edge): the acting Methuselah casts their own political-
     action-card vote "for", the defender holds the Edge with no titled
     vampire and burns it against the referendum, tying (1-1, and failing)
@@ -216,7 +216,7 @@ def test_a_polling_step_hook_provider_adds_a_vote_source_and_it_is_cast():
     """Generic dispatch proof (no real card): a fake `POLLING_STEP_HOOK`
     provider -- standing in for e.g. Perfect Paragon's "[pre] ... This
     vampire gets +3 votes" -- adds a new vote source for the acting
-    Methuselah during the pre-cast window (Rulebook SS4 "The Referendum"
+    Methuselah during the pre-cast window (Rulebook §4 "The Referendum"
     step 2: cards usable "before votes and ballots are cast"); the new
     source is then offered, and cast, during the casting step itself."""
 
@@ -356,7 +356,7 @@ def test_the_pre_cast_decision_context_never_leaks_the_live_vampire_object():
 
 
 def test_the_other_methuselah_may_burn_a_political_action_card_from_hand_for_a_vote():
-    """Rulebook SS4 Politics > Gaining Votes > Political Action Cards,
+    """Rulebook §4 Politics > Gaining Votes > Political Action Cards,
     clause 2 (verbatim, re-fetched live this round): "Other political action
     cards used for votes are simply burned without regard to the text on
     the cards." Found missing entirely by `rules-auditor` (round 3): P2

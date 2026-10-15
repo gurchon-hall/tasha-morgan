@@ -22,10 +22,10 @@ suggested 2P decklist `data/decks/vekn-2p/brujah.json`.
 
 Status: implemented.
 
-"Requires an Anarch": per Rulebook SS6 Vampire Sects, "Some cards can only be
+"Requires an Anarch": per Rulebook §6 Vampire Sects, "Some cards can only be
 played by Anarch vampires" -- this restricts the minion *playing* the card,
 not the (textually distinct) "acting minion" named by the card's second
-clause. Protection Racket is a *Reaction* card (SS8 glossary: "A card played
+clause. Protection Racket is a *Reaction* card (§8 glossary: "A card played
 by a Methuselah's ready, unlocked minion in response to an action taken by a
 minion controlled by another Methuselah"), so the minion playing it is the
 *reacting* (defending) Methuselah's own vampire, unrelated to the acting
@@ -60,7 +60,7 @@ modeled either way, per `dust_up.py`'s OQ-21 citation) -- not a fresh gap
 introduced by this card, and no block on implementing the clause's own
 live-reads-every-time behaviour.
 
-SS8 glossary, same page as the Reaction Card definition: "A minion cannot
+§8 glossary, same page as the Reaction Card definition: "A minion cannot
 play the same reaction card more than once during a single action (even if
 using a different Discipline level)" -- restricts the same *minion*, not the
 whole Methuselah (two different eligible Anarch vampires may each play their
@@ -71,7 +71,7 @@ per-action via the shared `pending: dict[str, Any]` scratch container
 OPEN_QUESTIONS.md`), threaded unchanged into this hook's own context across
 every retry of the block-attempt ping-pong for one action.
 
-"A reaction card does not lock the minion playing it." (Rulebook SS2 Card
+"A reaction card does not lock the minion playing it." (Rulebook §2 Card
 Types, same paragraph as the Reaction Card definition): no provider below
 ever sets `.locked` on the vampire it plays through -- the engine's own
 block-attempt machinery already never locks a defending vampire merely for
@@ -104,7 +104,7 @@ this module's own "Card type: Reaction" docstring fact above."""
 
 def _eligible_vampires(state: GameState, player: str, used_by: set[str]) -> list[VampireInPlay]:
     """Candidate *reacting* vampires: `player`'s own ready, unlocked, Anarch
-    vampires (SS8 glossary "Reaction Card" + "Requires an Anarch", see module
+    vampires (§8 glossary "Reaction Card" + "Requires an Anarch", see module
     docstring) that have not already played this card this action."""
     return [
         v

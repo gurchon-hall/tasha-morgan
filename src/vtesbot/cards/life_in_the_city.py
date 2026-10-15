@@ -11,7 +11,7 @@ empty list).
 
 Card type: Master. `discipline_requirement.disciplines == []` (no discipline
 needed), `clan_requirement == []`, `cost is None` (free to play).
-`trifle is True` (Rulebook SS4 Master Phase / SS8 glossary "Trifle": "When a
+`trifle is True` (Rulebook §4 Master Phase / §8 glossary "Trifle": "When a
 Methuselah successfully plays a trifle, they gain an additional master phase
 action... A Methuselah can gain only one master phase action from trifles in
 a given master phase" -- already implemented generically by
@@ -23,17 +23,17 @@ Timing window: master phase action (`"master_phase_play"` hook, wired in
 
 Target: "a ready vampire" -- the printed text carries no "you control"
 qualifier, so the legal target pool is *every* ready vampire in the game,
-either player's (Rulebook SS8 glossary "Ready Region: Area containing a
+either player's (Rulebook §8 glossary "Ready Region: Area containing a
 Methuselah's minions that are not in torpor" -- i.e. any vampire with
 `zone == "ready"`; "ready" is independent of the locked/unlocked flag, which
 only governs whether *that* vampire may currently act or block, not whether
 it is in the ready region). Effect: `add_blood(state, vampire, 1)`
 (`engine/damage.py`), which already caps at the target's effective capacity
-(Rulebook SS1 Vampires; OQ-8, `docs/OPEN_QUESTIONS.md`) -- so targeting an
+(Rulebook §1 Vampires; OQ-8, `docs/OPEN_QUESTIONS.md`) -- so targeting an
 already-full vampire is a legal but effect-less play (the card is still
 spent; this mirrors the engine's own
 `add_blood` contract and the general "play = announce, show, resolve" rule,
-Rulebook SS2, with no exception carved out for a fizzled effect).
+Rulebook §2, with no exception carved out for a fizzled effect).
 
 Cost/requirements surfaced as legal choices (CLAUDE.md "never let an agent
 play an unplayable card"): the card must actually be in `player`'s hand, and

@@ -1,4 +1,4 @@
-"""Basic combat: hand strikes only, close range, damage/mend/press (Rulebook SS4 Combat).
+"""Basic combat: hand strikes only, close range, damage/mend/press (Rulebook §4 Combat).
 
 "Rounds of 7 steps: ... strike (acting minion chooses first; simultaneous
 resolution) -> damage resolution (prevent, then mend) -> press (alternating)
@@ -41,7 +41,7 @@ def test_combat_round_with_mend_and_declined_press():
 def test_combat_ends_immediately_when_a_combatant_enters_torpor():
     """A second unmended normal-damage instance on an already-wounded vampire
     sends it to torpor; combat ends at once, with no press step for that
-    round (Rulebook SS4: "combat ends at once if a combatant is no longer
+    round (Rulebook §4: "combat ends at once if a combatant is no longer
     ready")."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=2)

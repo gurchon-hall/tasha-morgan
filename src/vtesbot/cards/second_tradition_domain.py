@@ -46,7 +46,7 @@ separately-named recipient) and clause 2 has a real blood cost instead of
 being free. Reuses `INTERCEPT_MODIFIER_HOOK`/`BLOCK_CANDIDATE_INJECTION_
 HOOK` with no new engine work.
 
-"Requires a prince or justicar": per Rulebook SS2 Card Types ("Requirements
+"Requires a prince or justicar": per Rulebook §2 Card Types ("Requirements
 for Playing Cards") and this project's own `protection_racket.py`
 precedent ("Requires an Anarch" on a Reaction card gates the *reacting*
 (playing) minion, not some other "acting minion"), checked as `card.title
@@ -57,7 +57,7 @@ Clause 1 ("[REACTION] +2 intercept."): unqualified, like Protection
 Racket's own "+1 intercept" -- a flat bonus to whichever block attempt is
 currently in progress, playable by any of `player`'s own ready, unlocked
 qualifying vampires (no "is this vampire the one attempting to block"
-check -- Rulebook SS4 "Stealth and Intercept" treats intercept as a
+check -- Rulebook §4 "Stealth and Intercept" treats intercept as a
 property of the *attempt*, not tied to the playing card's own identity
 beyond eligibility to play it; `protection_racket.py`'s own module
 docstring already establishes this reading for the project).
@@ -88,7 +88,7 @@ candidates are re-offered every retry; `attempt_block` is simply never
 invoked for an unblockable action; every candidate, hardcoded or injected,
 is already scoped to the single 2P opponent).
 
-SS8 glossary "A minion cannot play the same reaction card more than once
+§8 glossary "A minion cannot play the same reaction card more than once
 during a single action": both clauses name the *same* vampire role, so one
 shared `USED_BY_KEY` set (keyed by vampire instance id) suffices -- a
 vampire that already played clause 1 this action cannot then play clause 2
@@ -133,7 +133,7 @@ def _used_by(pending: dict[str, Any] | None) -> set[str]:
 def _eligible_unlocked(state: GameState, player: str, used_by: set[str]) -> list[VampireInPlay]:
     """Candidate vampires for clause 1: `player`'s own ready, unlocked
     princes/justicars that have not already played this card this action
-    (standard Reaction-card eligibility, SS8 glossary)."""
+    (standard Reaction-card eligibility, §8 glossary)."""
     return [
         v
         for v in state.players[player].vampires.values()

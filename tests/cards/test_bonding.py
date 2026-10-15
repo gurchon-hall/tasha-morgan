@@ -14,7 +14,7 @@ structural "only when needed" ping-pong (the ruling about not needing the
 stealth); the single-play "+1 stealth and +1 bleed" delivered together via
 the `pending` scratch container (OQ-11), proven end-to-end through
 `_perform_bleed`'s own clamp, reproducing OQ-11's own worked example; the
-Rulebook SS3 "may opt to use either effect" interplay between the two
+Rulebook §3 "may opt to use either effect" interplay between the two
 clauses; the "(limited)" keyword, both as Bonding's own self-exclusion across
 the two hook windows and as a cross-card exclusion against Threats (the
 `vtesbot.cards._shared.bleed_bookkeeping` refactor this pass closes a latent
@@ -158,7 +158,7 @@ def test_basic_bleed_bonus_shares_the_clamp_with_a_later_reduction():
 
 
 def test_basic_never_offered_to_the_defender():
-    """ "The acting minion can play these cards" (SS2 Action modifier cards):
+    """ "The acting minion can play these cards" (§2 Action modifier cards):
     never offered to the defending Methuselah, regardless of their own
     discipline/hand."""
     builder = ScenarioBuilder(seed=1)
@@ -181,7 +181,7 @@ def test_basic_never_offered_to_the_defender():
 
 
 def test_basic_limited_keyword_forbids_a_second_copy_in_the_same_action():
-    """SS8 glossary "Limited"; SS2 "a minion cannot play the same action
+    """§8 glossary "Limited"; §2 "a minion cannot play the same action
     modifier card more than once during a single action"."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(
@@ -303,7 +303,7 @@ def test_superior_adds_stealth_and_stashes_bleed_reproducing_oq11_worked_example
 
 
 def test_superior_vampire_may_opt_to_use_the_basic_effect_instead_when_no_block_is_attempted():
-    """Rulebook SS3 "may opt to use either the basic or the superior effect
+    """Rulebook §3 "may opt to use either the basic or the superior effect
     ... but not both". With no defending vampire able to attempt a block at
     all, the superior clause's stealth half is never even reachable (the
     ruling's own "cannot be used if you do not need the stealth" -- there is
@@ -364,7 +364,7 @@ def test_superior_then_basic_blocked_by_the_shared_limited_flag_across_windows()
 
 
 def test_bonding_superior_blocks_a_later_threats_play_via_the_shared_limited_flag():
-    """Cross-card "(limited)" (SS8 glossary): once Bonding's superior clause
+    """Cross-card "(limited)" (§8 glossary): once Bonding's superior clause
     has increased the bleed (from the earlier stealth window), Threats --
     which can only ever act in the later `"bleed_amount_modifier"` window --
     must not also add to it. Proves the `_shared.py` `bleed_bookkeeping`

@@ -27,7 +27,7 @@ from vtesbot.engine.phases.influence import influence_phase
 def _fake_capacity_bonus_provider(krcg_id: int, bonus: int):
     """Stand-in for an attachment card's own `"+N capacity"` text: only
     contributes when its own `krcg_id` is actually attached to the vampire
-    in question (CLAUDE.md SS6: the card module recognizes its own
+    in question (CLAUDE.md §6: the card module recognizes its own
     attachment, the engine never special-cases a card name)."""
 
     def provider(state, context):
@@ -112,7 +112,7 @@ def test_effective_disciplines_with_no_attachments_equals_printed_disciplines():
 
 
 def test_add_blood_caps_at_effective_capacity_not_printed_capacity():
-    """Rulebook SS1 Vampires: blood may never exceed capacity -- now checked
+    """Rulebook §1 Vampires: blood may never exceed capacity -- now checked
     against the *effective* capacity, so an attached "+1 capacity" card
     actually raises the cap (OQ-8's whole point)."""
     hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
@@ -164,7 +164,7 @@ def test_influence_phase_add_blood_choice_respects_effective_capacity():
 def test_influence_phase_reveal_choice_requires_effective_capacity():
     """A vampire at its printed capacity but below its *effective* capacity
     (because of an attachment) must not yet offer the free "reveal" choice
-    (OQ-8): Rulebook SS4 Influence Phase, "a vampire with blood >= capacity
+    (OQ-8): Rulebook §4 Influence Phase, "a vampire with blood >= capacity
     may be revealed"."""
     hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
     builder = ScenarioBuilder(seed=1, first_influence_phase_used=True)

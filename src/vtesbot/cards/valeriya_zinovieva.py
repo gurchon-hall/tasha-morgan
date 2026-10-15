@@ -21,7 +21,7 @@ marcos_belegrad.py`):
 
 1. "Anarch Baron of Moscow" names the title this specific printed vampire
    carries -- `CryptCard.title == "Baron"` (confirmed above). The vote value
-   a ready Baron contributes (2, Rulebook SS4 Politics > Gaining Votes:
+   a ready Baron contributes (2, Rulebook §4 Politics > Gaining Votes:
    "2 votes for each ready prince or baron") is already handled generically
    by `engine/politics.py::TITLE_VOTES` (`{"Baron": 2, ...}`) for *every*
    titled vampire, Valeriya included -- no card-specific code is needed, or

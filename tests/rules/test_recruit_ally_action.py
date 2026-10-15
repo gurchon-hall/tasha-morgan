@@ -116,7 +116,7 @@ def test_recruit_ally_is_offered_and_succeeds_entering_play_locked():
     """End-to-end success path: the provider's option is offered alongside
     bleed/hunt, chosen, the card leaves hand immediately (announce time) and
     never reaches the ash heap, the cost is paid only now (on success), and
-    the ally enters play ready-but-locked under its controller (Rulebook SS4
+    the ally enters play ready-but-locked under its controller (Rulebook §4
     "recruited ally cannot act this turn")."""
     hooks.register(RECRUIT_ALLY_PLAY_HOOK, _fake_ally_provider)
     builder = ScenarioBuilder(seed=1)
@@ -160,7 +160,7 @@ def test_recruit_ally_is_offered_and_succeeds_entering_play_locked():
 
 
 def test_recruit_ally_blocked_burns_the_card_pays_no_cost_and_creates_no_ally():
-    """Rulebook SS4 "Resolve the Action": "If the action is blocked, then any
+    """Rulebook §4 "Resolve the Action": "If the action is blocked, then any
     card played to perform the action is burned ... the cost ... is not paid
     if the action is blocked." The already-set-aside card (removed from hand
     at announce time) goes to the ash heap; no `AllyInPlay` is ever created.
@@ -207,7 +207,7 @@ def test_recruit_ally_blocked_burns_the_card_pays_no_cost_and_creates_no_ally():
     assert any(c.krcg_id == FAKE_ALLY_KRCG_ID for c in game.state.players["P1"].ash_heap)
     assert game.state.players["P1"].allies == {}
     # The blocking vampire locked and entered combat, per the general block
-    # consequences (Rulebook SS4) -- confirms this is a real block, not a
+    # consequences (Rulebook §4) -- confirms this is a real block, not a
     # degenerate no-op.
     assert game.zone_of("B1") == "ready"
     assert game.vampire("B1").locked is True
@@ -216,8 +216,8 @@ def test_recruit_ally_blocked_burns_the_card_pays_no_cost_and_creates_no_ally():
 
 
 def test_recruit_ally_undirected_blockable_by_the_single_2p_opponent():
-    """Rulebook SS4 Recruit Ally: "Default target: None. Undirected action."
-    2P structural collapse (CLAUDE.md SS3): the sole opponent is both prey
+    """Rulebook §4 Recruit Ally: "Default target: None. Undirected action."
+    2P structural collapse (CLAUDE.md §3): the sole opponent is both prey
     and predator, so it is simply offered the block attempt -- already
     exercised by the two tests above; this test only pins down the +1
     stealth baseline (`RECRUIT_ALLY_STEALTH`) via `perform_minion_action`
@@ -253,7 +253,7 @@ def test_recruit_ally_play_hook_context_carries_the_acting_vampires_identity():
     threads the acting vampire's own identity (`vampire=vampire.instance_id`)
     into the `"recruit_ally_play"` hook context, so a provider can gate on
     *which* ready-unlocked vampire is actually attempting the recruit
-    (Rulebook SS2 "Card Types" > "Requirements for Playing Cards": a minion
+    (Rulebook §2 "Card Types" > "Requirements for Playing Cards": a minion
     card's requirement binds to the specific acting minion, e.g. 47th Street
     Royals' clan requirement -- not merely to "the Methuselah controls one
     somewhere").
