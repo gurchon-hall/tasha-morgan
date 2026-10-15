@@ -611,30 +611,31 @@ up an OQ number or the highest one used so far.
   `attempt_block` itself. On the Qui Vive's own card module is not written;
   the primitive is complete.
 
-## OQ-50: Combat Sequence - three strike-effect primitives unbuilt (status: open)
+## OQ-50: Combat Sequence - Steal Blood strike effect unbuilt (status: open)
 
 - Situation: `rules-auditor`, auditing `engine/combat.py` generally (not
-  against a specific card), found three Combat Sequence/Strike-Effect
-  primitives entirely unbuilt: **Combat Ends** (always resolves first,
-  even before first strike), **First Strike** (resolved before a normal
-  strike; the opposing minion simply loses their strike), and **Steal
-  Blood** (occurs before the mend damage step, even if damage is
-  inflicted simultaneously). No `BEFORE_STRIKES_HOOK` call site exists
-  either (Combat Sequence step 3, between Determine Range and the strike
-  pair).
+  against a specific card), found the **Steal Blood** strike effect
+  (occurs before the mend damage step, even if damage is inflicted
+  simultaneously) entirely unbuilt. Unlike its two siblings found in the
+  same audit (Combat Ends, First Strike -- deferred, `docs/DECISIONS.md`
+  D-12), Steal Blood is live in the active 2026-10-03 2P allowed list:
+  Diversion (100563), Theft of Vitae (101966), Form of the Cobra
+  (102224) and Hunger of Marduk (102227) are all unimplemented `Combat`
+  cards printing "Strike, ranged: steal N blood or life (becoming
+  blood)" -- an alternate strike resolution (blood theft instead of
+  damage) that `engine/combat.py::StrikeDamage`/`_resolve_strike_pair`
+  has no path for.
 - Sources read: Rulebook §4 Detailed Turn Sequence (live-fetched
   2026-10-15, also cached `data/sources/rulebook/2026-10-09/
-  4-detailed-turn-sequence.md:736,796-800,1006-1053`): Combat Ends
-  priority, First Strike's "opposing minion simply loses their strike",
-  Steal Blood's "before the mend damage step... even if damage is
-  inflicted simultaneously".
-- Candidate readings: N/A -- missing engine primitives, not a ruling
-  ambiguity; confirmed latent (no registered card under
-  `src/vtesbot/cards/` exercises any of the three, grepped for
-  steal.blood/destroy.equipment/steal.equipment/combat.end/first.strike).
+  4-detailed-turn-sequence.md:1006-1053`): Steal Blood's "before the
+  mend damage step... even if damage is inflicted simultaneously"; krcg
+  card text for the four cards above, cross-checked against
+  `data/formats/2p/2026-10-03.json`.
+- Candidate readings: N/A -- a missing engine primitive, not a ruling
+  ambiguity.
 - Impacted code/cards: `src/vtesbot/engine/combat.py`
-  (`StrikeDamage`/`run_combat`/`_resolve_strike_pair`). No card blocked
-  yet.
+  (`StrikeDamage`/`run_combat`/`_resolve_strike_pair`). Blocks Diversion,
+  Theft of Vitae, Form of the Cobra, Hunger of Marduk (none written yet).
 
 ## OQ-51: Politics - Contested Titles mechanism unimplemented (status: open)
 
@@ -654,7 +655,16 @@ up an OQ number or the highest one used so far.
 - Sources read: Rulebook §4 Advanced Rules "Contested Titles" (live-
   fetched 2026-10-15, cached `data/sources/rulebook/2026-10-09/
   4-detailed-turn-sequence.md:65-84`) and §6 Vampire Sects
-  (`6-vampire-sects.md:30-61`) for the per-city/per-clan scoping.
+  (`6-vampire-sects.md:30-61`) for the per-city/per-clan scoping; 2P
+  variant page re-checked live 2026-10-15
+  (`https://www.vekn.net/two-player-format/655-two-player-variant-for-
+  vampire-the-eternal-struggle`) specifically for a 2P-specific title
+  delta beyond the already-built same-named exception -- it states
+  only "If two contested vampires (two copies of the same vampire)
+  have a title, their title is not contested" and no other
+  title-related rule. The general rulebook contested-titles mechanism
+  (different-named vampires sharing a scoped title) is therefore
+  unmodified in 2P and is exactly what this entry's gap is about.
 - Candidate readings: N/A -- the rule itself is clear; only the
   data-modeling approach (how to add city/clan scope to `CryptCard`) is
   undecided. Confirmed latent against the active 2026-10-03 list (no two
@@ -727,17 +737,25 @@ up an OQ number or the highest one used so far.
   cast during the main referendum's own polling step -- a group/
   block-voting mechanism, not a per-vampire `VoteSource`.
 - Sources read (with URL/section): Rulebook §6 Vampire Sects, live
-  `https://www.vekn.net/rulebook` (re-fetch unavailable in this session --
-  no web-fetch tool; read from the local cache,
-  `data/sources/rulebook/2026-10-09/6-vampire-sects.md:70-80`, fetched
-  2026-10-09, `dateModified` 2025-11-16), verbatim, quoted in full in
-  `engine/politics.py::TITLE_VOTES`'s own docstring pointer.
-- Candidate readings: A) model the Prisci Block as a nested sub-referendum
-  (its own cast/tally loop, feeding a single for/against/abstain `VoteSource`
-  into the main referendum's own tally) vs. B) some other shape -- not
-  decided; building either without a worked example or ruling to check
-  against would be guessing at the engine's own nested-decision shape, not
-  at a rule.
+  re-fetch succeeded 2026-10-15 (`https://www.vekn.net/rulebook`),
+  matching the local cache verbatim
+  (`data/sources/rulebook/2026-10-09/6-vampire-sects.md:70-80`, fetched
+  2026-10-09, `dateModified` 2025-11-16): "The prisci as a group have
+  3 votes. During a referendum, the prisci block of 3 votes is cast
+  'for' or 'against' the referendum according to the prisci
+  sub-referendum. Each ready priscus provides 1 ballot for this
+  sub-referendum, and votes may not be used in this sub-referendum.
+  [...] Whichever side has the greater number of ballots in the
+  sub-referendum gains 3 votes in the main referendum. If the
+  sub-referendum is tied, the prisci block abstains [...] the prisci
+  block of 3 votes might shift [...] as the majority in the
+  sub-referendum changes."
+- Candidate readings: confirmed Reading A -- the quoted text above is
+  itself a description of exactly a nested sub-referendum (its own
+  ballot-cast/tally loop, feeding a single for/against/abstain
+  `VoteSource` into the main referendum's own tally, re-evaluated as
+  ballots are cast); no "B" alternative is needed. Still unbuilt: this
+  confirms the engine shape to build, it does not build it.
 - Impacted code/cards: `src/vtesbot/engine/politics.py` (`TITLE_VOTES`,
   `_collect_vote_sources`, `_cast_votes`). No card blocked yet (the active
   2026-10-03 list has exactly one Priscus, krcg id 201760 Khin Aye; her own
