@@ -12,121 +12,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-16: "Cannot contest yourself" unimplemented on both paths (status: open)
-
-- Situation: found by `rules-auditor` while reviewing OQ-10/OQ-14's ally
-  contest-detection fix. Not a ruling ambiguity -- re-fetched live
-  (<https://www.vekn.net/rulebook/4-detailed-turn-sequence>, "Contested
-  Cards" DECK CONSTRUCTION caution box, cross-checked against the local
-  cache `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`),
-  quoted verbatim: "You cannot control more than one of the same unique
-  card at a time, and you cannot voluntarily contest cards with yourself
-  (if some effect would force you to contest a card with yourself, then
-  you simply burn the incoming copy of the unique card)." Plain and
-  explicit.
-- What's missing: both `engine/contests.py::detect_contest_on_reveal`
-  (pre-existing, vampire/crypt-card side) and `engine/allies.py::
-  detect_contest_on_recruit` (new, OQ-10's own fix) only ever check the
-  *opponent's* same-named minions for a collision, never the acting
-  player's own. Neither function, nor any deck-legality check, currently
-  prevents or reacts to one Methuselah controlling two live copies of the
-  same unique card at once -- confirmed live by
-  `tests/rules/test_ally_contests.py::
-  test_a_players_own_two_allies_of_the_same_name_do_not_contest_each_other`,
-  which asserts both copies end up simultaneously `zone == "ready"` with
-  `contested_with is None`, directly contradicting the quoted rule's "you
-  cannot control more than one... at a time."
-- Why this is open, not yet fixed: not a new gap introduced by OQ-10's own
-  pass -- it mirrors `detect_contest_on_reveal`'s pre-existing scope
-  boundary exactly (an existing, unaudited gap on the vampire side,
-  confirmed by `rules-auditor`'s review). Currently unreachable in a real
-  game: no card can yet recruit a second copy of its own unique ally, and
-  no deck-legality/`format-curator` check yet exists to even flag two
-  copies of the same unique vampire in one crypt (milestone 1 scope, not
-  yet built). Flagged now, before any future card or deck-validation
-  feature makes it reachable, so it is tracked as a known gap rather than
-  silently inherited.
-- What would be needed: when a same-named collision check runs (on reveal
-  for a vampire, on recruit for an ally), also check the *acting player's
-  own* existing same-named minions in play; if found, burn the incoming
-  copy immediately per the quoted rule ("you simply burn the incoming copy
-  of the unique card") rather than leaving both live or routing it through
-  the normal opponent-contest flow. `rules-engineer` scope
-  (`engine/contests.py`, `engine/allies.py`).
-- Impacted code: `src/vtesbot/engine/contests.py::detect_contest_on_reveal`,
-  `src/vtesbot/engine/allies.py::detect_contest_on_recruit`. Impacted
-  cards: none yet reachable (tracked ahead of need, same spirit as OQ-10's
-  own original "latent, flagged before live" framing).
-
-## OQ-26 - Organized Resistance - no forced-block hook (status: resolved)
-
-- Situation: Organized Resistance (102230)'s second clause unlocks a
-  locked Anarch to force an unconditional block attempt with +1
-  intercept, bypassing the normal "only when needed" ping-pong —
-  `attempt_block`'s candidate list was hardcoded to ready-unlocked
-  vampires only, with no way to inject a locked one, unlock it on
-  choice, or skip the ping-pong.
-- Rules/interactions: rulings on file ([LSJ 20090514],
-  [ANK 20181122-2], [LSJ 20010714-2], [ANK 20180623]) confirm the
-  block and any resulting combat happen unconditionally once chosen,
-  and normal prey/predator/target restrictions still apply (already
-  structurally satisfied by the 2P single-opponent collapse, OQ-1).
-- Solution: added `BLOCK_CANDIDATE_INJECTION_HOOK`, offered inside
-  `attempt_block`'s retry loop alongside the hardcoded ready-unlocked
-  candidates (unioned via `ensure_unique_choice_values`); a chosen
-  injected option's `apply` unlocks the vampire and is returned
-  directly as the blocker, never routed through the stealth/intercept
-  ping-pong. The first clause (+1 intercept to an Anarch) is a plain,
-  clean `"intercept_modifier"` provider needing no new mechanism. Card
-  module itself is not written; the mechanism is complete.
-
-## OQ-27 - Pursuit - maneuver/strike bundling question (status: resolved)
-
-- Situation: Pursuit (101523, "[cel] Maneuver. / [CEL] Additional
-  strike (limited).") was initially assumed to be a "maneuver from a
-  strike card" (Rulebook §4: using such a maneuver commits that
-  combatant's strike choice for the round, and bars a second strike
-  card from maneuvering again the same round) — a shape the engine
-  had no mechanism for.
-- Rules/interactions: two owner-raised leads were checked against
-  sources, and the second held up: the Rulebook's own Choose Strike
-  section specifies the commit/cap only applies to a maneuver "from a
-  strike" — i.e. bundled in the same clause as a strike effect
-  (Slam's "as above", .44 Magnum's "with 1 optional maneuver...
-  Strike:"). Pursuit's bare "[cel] Maneuver." clause, textually
-  separate from its unrelated "[CEL] Additional strike" clause, is not
-  that shape.
-- Solution: Pursuit needed no new engine mechanism after all —
-  implemented directly against the existing `MANEUVER_HOOK` (plain
-  grant, no strike-lock, no per-combat bookkeeping) and
-  `COMBAT_ADDITIONAL_STRIKE_HOOK`. `Status.IMPLEMENTED`. Slam and .44
-  Magnum remain the genuine, still-unbuilt "maneuver from a strike"
-  examples (tracked by OQ-28); `engine/combat.py`'s own docstring
-  should be corrected to drop Pursuit from that list in a future pass.
-
-## OQ-28 - Slam - maneuver committing a strike (status: resolved)
-
-- Situation: Slam's (101798) superior clause bundles its maneuver with
-  its own "hand strike at +2 damage" effect ("as above") — a genuine
-  "maneuver from a strike" (per OQ-27's resolution): using it must
-  commit that combatant's one strike choice for the round to this same
-  effect, with no independent later choice. No mechanism existed for a
-  maneuver grant to pre-commit the strike step.
-- Rules/interactions: Rulebook §4 Choose Strike, verbatim, quoted in
-  OQ-27's own resolution; [LSJ 20021028] confirms the maneuver and
-  strike are not independent for this card.
-- Solution: added `COMMITTED_STRIKE_KEY` inside the round-scoped
-  `round_state`; `commit_strike_for_round(context, strike)` (called
-  from a strike-bundled `MANEUVER_HOOK` provider's own grant; raises
-  if called twice for the same vampire the same round, or if its
-  choice-value collides with a built-in strike value); `_ask_strike`
-  pops (not reads) the commitment before offering anything, locking
-  only the *initial* strike of the round, not a later additional
-  strike. A plain, non-strike-bundled maneuver (Saku, Pursuit, Dance
-  with the Devil, Fleetness) is unaffected. Slam itself was then
-  implemented against this mechanism (both clauses).
-  `Status.IMPLEMENTED`.
-
 ## OQ-29 - Taste of Vitae - no end-of-round window (status: resolved)
 
 - Situation: Taste of Vitae (101945, "only usable at the end of a
@@ -726,6 +611,82 @@ up an OQ number or the highest one used so far.
   `attempt_block` itself. On the Qui Vive's own card module is not written;
   the primitive is complete.
 
+## OQ-50: Combat Sequence - three strike-effect primitives unbuilt (status: open)
+
+- Situation: `rules-auditor`, auditing `engine/combat.py` generally (not
+  against a specific card), found three Combat Sequence/Strike-Effect
+  primitives entirely unbuilt: **Combat Ends** (always resolves first,
+  even before first strike), **First Strike** (resolved before a normal
+  strike; the opposing minion simply loses their strike), and **Steal
+  Blood** (occurs before the mend damage step, even if damage is
+  inflicted simultaneously). No `BEFORE_STRIKES_HOOK` call site exists
+  either (Combat Sequence step 3, between Determine Range and the strike
+  pair).
+- Sources read: Rulebook §4 Detailed Turn Sequence (live-fetched
+  2026-10-15, also cached `data/sources/rulebook/2026-10-09/
+  4-detailed-turn-sequence.md:736,796-800,1006-1053`): Combat Ends
+  priority, First Strike's "opposing minion simply loses their strike",
+  Steal Blood's "before the mend damage step... even if damage is
+  inflicted simultaneously".
+- Candidate readings: N/A -- missing engine primitives, not a ruling
+  ambiguity; confirmed latent (no registered card under
+  `src/vtesbot/cards/` exercises any of the three, grepped for
+  steal.blood/destroy.equipment/steal.equipment/combat.end/first.strike).
+- Impacted code/cards: `src/vtesbot/engine/combat.py`
+  (`StrikeDamage`/`run_combat`/`_resolve_strike_pair`). No card blocked
+  yet.
+
+## OQ-51: Politics - Contested Titles mechanism unimplemented (status: open)
+
+- Situation: `rules-auditor`, auditing `engine/politics.py` generally,
+  found that two *different-named* vampires both claiming the same
+  scoped title (Prince/Baron per city, Justicar/Inner Circle per clan,
+  Archbishop per city, Regent unique -- the last two confirmed live by
+  a later `rules-auditor` pass once `TITLE_VOTES` was fixed to grant
+  Sabbat-title votes, same gap) have no contest mechanism at all:
+  `TITLE_VOTES`/`_collect_vote_sources`
+  grants full votes unconditionally, with no competing-title-holder
+  check, no 1-blood-per-unlock cost, no "treated as no title" suppression
+  while contested. `CryptCard` also has no city/clan scope field to even
+  detect this. Distinct from the already-implemented 2P same-named
+  vampire exception (two copies of the same vampire -> title not
+  contested, correctly built).
+- Sources read: Rulebook §4 Advanced Rules "Contested Titles" (live-
+  fetched 2026-10-15, cached `data/sources/rulebook/2026-10-09/
+  4-detailed-turn-sequence.md:65-84`) and §6 Vampire Sects
+  (`6-vampire-sects.md:30-61`) for the per-city/per-clan scoping.
+- Candidate readings: N/A -- the rule itself is clear; only the
+  data-modeling approach (how to add city/clan scope to `CryptCard`) is
+  undecided. Confirmed latent against the active 2026-10-03 list (no two
+  legal crypt cards currently share a contestable title+scope), so a
+  future VEKN list update could make this live with zero code changes.
+- Impacted code/cards: `src/vtesbot/engine/politics.py` (`TITLE_VOTES`,
+  `_collect_vote_sources`), `src/vtesbot/engine/cards.py` (`CryptCard`).
+  No card blocked yet.
+
+## OQ-52: Observation - `wounded` not gated by hidden-identity (status: open)
+
+- Situation: `rules-auditor`, auditing `engine/observation.py` against
+  CLAUDE.md §5's information-hiding invariant, found `build_observation`'s
+  `vampire_view` gates only `blood`/`name`/`capacity` behind
+  `visible_identity` (`zone != "uncontrolled" or controller == viewer`);
+  `wounded` is read straight off `VampireInPlay` with no such gate.
+  Currently inert: every `zone = "uncontrolled"` call site
+  (`engine/setup.py`, `engine/phases/influence.py`, `cards/
+  wider_view.py`) only ever sets it on a freshly-constructed
+  `VampireInPlay` (`wounded=False` by dataclass default); no code path
+  moves an already-revealed, possibly-wounded vampire back to
+  `"uncontrolled"`.
+- Sources read: CLAUDE.md §5 ("agents receive an `Observation`... never
+  the raw `GameState`. A bot must not read... face-down uncontrolled
+  vampires.") -- a project invariant, not an external VEKN source.
+- Candidate readings: N/A -- missing explicit gate, not a ruling
+  question. A future card effect returning a vampire face-down to the
+  crypt while it carries `wounded`/`locked` state would leak that state
+  through this exact path, with no test positioned to catch it.
+- Impacted code/cards: `src/vtesbot/engine/observation.py`
+  (`build_observation`/`vampire_view`). No card blocked yet.
+
 ## OQ-49 - Fiorenza Savona - no vote-cast bonus hook (status: resolved)
 
 - Situation: Fiorenza Savona (krcg id 201616): "Camarilla: If you burn the
@@ -754,3 +715,30 @@ up an OQ number or the highest one used so far.
   IMPLEMENTED`) gates on either flag plus "caster controls an in-play
   (not uncontrolled/burned/removed) Fiorenza" -- no "while ready" qualifier
   is printed, so no zone/locked gate beyond that.
+
+## OQ-53: Politics - Prisci Block has no engine mechanism   (status: open)
+
+- Situation: `rules-auditor` found `TITLE_VOTES` wrongly claimed Sabbat
+  titles were "out of pool scope" (now fixed: Bishop/Archbishop/Cardinal/
+  Regent added as flat per-ready-vampire vote values). Priscus does not
+  fit that same flat table: §6 Vampire Sects describes "the prisci as a
+  group have 3 votes," cast via its own 1-ballot-per-ready-priscus
+  sub-referendum (for/against/abstain on a tie), shifting as ballots are
+  cast during the main referendum's own polling step -- a group/
+  block-voting mechanism, not a per-vampire `VoteSource`.
+- Sources read (with URL/section): Rulebook §6 Vampire Sects, live
+  `https://www.vekn.net/rulebook` (re-fetch unavailable in this session --
+  no web-fetch tool; read from the local cache,
+  `data/sources/rulebook/2026-10-09/6-vampire-sects.md:70-80`, fetched
+  2026-10-09, `dateModified` 2025-11-16), verbatim, quoted in full in
+  `engine/politics.py::TITLE_VOTES`'s own docstring pointer.
+- Candidate readings: A) model the Prisci Block as a nested sub-referendum
+  (its own cast/tally loop, feeding a single for/against/abstain `VoteSource`
+  into the main referendum's own tally) vs. B) some other shape -- not
+  decided; building either without a worked example or ruling to check
+  against would be guessing at the engine's own nested-decision shape, not
+  at a rule.
+- Impacted code/cards: `src/vtesbot/engine/politics.py` (`TITLE_VOTES`,
+  `_collect_vote_sources`, `_cast_votes`). No card blocked yet (the active
+  2026-10-03 list has exactly one Priscus, krcg id 201760 Khin Aye; her own
+  printed text is independent of this mechanism).

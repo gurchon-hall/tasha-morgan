@@ -24,6 +24,7 @@ an entry.
 | OQ-13 | `001.md` | 47th Street Royals - recruit_ally_play omits acting vampire |
 | OQ-14 | `001.md` | 47th Street Royals - recruit makes contested-ally gap live |
 | OQ-15 | `001.md` | Ally contest resolution loop not wired |
+| OQ-16 | `001.md` | Contested Cards - "cannot contest yourself" unimplemented |
 | OQ-17 | `001.md` | Enchant Kindred - no action-card entry point |
 | OQ-18 | `001.md` | Dust Up - no sect, no dodge/extra strike |
 | OQ-19 | `001.md` | Cross-card "(limited)" additional-strike cap not pooled |
@@ -33,3 +34,6 @@ an entry.
 | OQ-23 | `001.md` | Oxford University - standalone master-card entity |
 | OQ-24 | `001.md` | Wider View - no influence hook, no removed zone |
 | OQ-25 | `001.md` | Fleetness - no pre-combat maneuver grant |
+| OQ-26 | `002.md` | Organized Resistance - no forced-block hook |
+| OQ-27 | `002.md` | Pursuit - maneuver/strike bundling question |
+| OQ-28 | `002.md` | Slam - maneuver committing a strike |
