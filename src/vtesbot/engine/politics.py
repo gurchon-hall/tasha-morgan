@@ -52,10 +52,19 @@ TITLE_VOTES: dict[str, int] = {
     "Baron": 2,
     "Justicar": 3,
     "Inner Circle": 4,
+    "Bishop": 1,
+    "Archbishop": 2,
+    "Cardinal": 3,
+    "Regent": 4,
 }
-"""Rulebook §4 Politics > Gaining Votes > Titled Vampires: votes per ready
-title. Keys match `CryptCard.title`; Sabbat titles absent (out of pool
-scope)."""
+"""Rulebook §4 Politics > Gaining Votes > Titled Vampires (Camarilla/Anarch
+titles) and §6 Vampire Sects (Sabbat titles), verbatim: "During the polling
+step of a referendum, a Methuselah gains: 1 vote for each ready bishop, 2
+votes for each ready archbishop, 3 votes for each ready cardinal, 4 votes
+for the ready regent." Keys match `CryptCard.title`. `Priscus` is
+deliberately absent: §6's own "Prisci Block" is a 3-vote group/
+sub-referendum mechanism, not a flat per-vampire vote value, and has no
+engine mechanism yet (OQ-53, `docs/OPEN_QUESTIONS.md`)."""
 
 
 @dataclass

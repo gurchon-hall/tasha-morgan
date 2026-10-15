@@ -186,6 +186,68 @@ def test_a_ready_opposing_prince_outvotes_the_lone_actor_and_the_referendum_fail
     defender.assert_exhausted()
 
 
+def test_sabbat_titles_grant_their_own_vote_value_per_ready_vampire():
+    """Rulebook §6 Vampire Sects, verbatim: "During the polling step of a
+    referendum, a Methuselah gains: 1 vote for each ready bishop[,] 2 votes
+    for each ready archbishop[,] 3 votes for each ready cardinal[,] 4 votes
+    for the ready regent." `TITLE_VOTES` previously only covered the
+    Camarilla/Anarch titles (Primogen/Prince/Baron/Justicar/Inner Circle);
+    this is the regression test for adding the four Sabbat values -- each
+    tier's titled vampire casts its vote "against" the lone actor's own
+    1-vote political-action-card source, so the logged cast's own vote
+    count directly exposes the title's own value."""
+    for title, votes in (("Bishop", 1), ("Archbishop", 2), ("Cardinal", 3), ("Regent", 4)):
+        builder = ScenarioBuilder(seed=1)
+        builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)
+        builder.player("P2", pool=30).ready_vampire(
+            "B1", capacity=3, blood=1, title=title, locked=True
+        )
+        game = builder.build()
+        actor = ScriptedAgent("P1")
+        actor.expect("polling_step_cast", "for:political_action_card:P1")
+        defender = ScriptedAgent("P2")
+        defender.expect("polling_step_cast", "against:title:B1")
+        game.state.agents["P1"] = actor
+        game.state.agents["P2"] = defender
+
+        _votes_for, _votes_against, casts = resolve_referendum(
+            game.state, "P1", "P2", game.vampire("V1")
+        )
+
+        assert any(
+            source_id == "title:B1" and cast_votes == votes and direction == "against"
+            for (_player, source_id, cast_votes, direction) in casts
+        ), (title, casts)
+        actor.assert_exhausted()
+        defender.assert_exhausted()
+
+
+def test_a_ready_opposing_cardinal_outvotes_the_lone_actor_and_the_referendum_fails():
+    """End-to-end sibling of the Prince test above, for a Sabbat title: a
+    ready cardinal is worth 3 votes (Rulebook §6 Vampire Sects, quoted in
+    full in `engine/politics.py::TITLE_VOTES`'s own docstring). 1 for
+    (actor's own political-action-card vote) vs 3 against (defender's
+    cardinal) fails outright."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)
+    builder.player("P2", pool=30).ready_vampire(
+        "B1", capacity=3, blood=1, title="Cardinal", locked=True
+    )
+    game = builder.build()
+    actor = ScriptedAgent("P1")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    defender = ScriptedAgent("P2")
+    defender.expect("polling_step_cast", "against:title:B1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    result = political_action(game.state, "P1", game.vampire("V1"))
+
+    assert result is False
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
 def test_the_edge_holder_burns_it_for_an_extra_vote_and_the_edge_is_returned_uncontrolled():
     """ "The Methuselah who has the Edge can burn it (return it, uncontrolled,
     to the central area) to gain 1 vote" (Rulebook §4 Politics > Gaining
