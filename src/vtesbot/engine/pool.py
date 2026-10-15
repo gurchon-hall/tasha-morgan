@@ -1,12 +1,5 @@
-"""Pool transfer helpers shared by multiple phases.
-
-Centralises "pool cannot go negative" and the oust check (Rulebook SS5) so
-every pool-loss site (bleed, influence refunds, contests, future cards)
-triggers ousting consistently -- and, for the same reason, is the single
-place a pool change is narrated into the replay log (`engine/log.py`'s
-`record_event`, observability only), so every one of this module's ~20
-call sites across `engine/`/`cards/` gets it for free.
-"""
+"""Pool transfer helpers shared by multiple phases. Centralises "pool cannot go
+negative" and the oust check (§5), plus replay-log narration, for every call site."""
 
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
@@ -44,19 +37,8 @@ def lose_pool(state: GameState, player: str, amount: int) -> int:
 
 @contextmanager
 def simultaneous_pool_losses(state: GameState) -> Iterator[None]:
-    """Defer ousting until every pool loss of one event has been applied.
-
-    OQ-44 (user ruling 2026-10-13, `docs/DECISIONS.md` D-9): Rulebook SS5
-    Ending the Game ("In the case of a tie there is no winner") with both
-    Methuselahs at 0 pool from the same event is a tie. Within the block
-    `check_oust` only queues; on the outermost normal exit the queue is
-    resolved once (`ousting.resolve_pending_ousts`). Nests. "Same event" is
-    narrow: one card effect / one simultaneous strike pair.
-
-    On an exception at the outermost level the queued ousts are discarded
-    and the exception re-raised, resolving nothing: exceptions are engine
-    errors that abort the game, never a legal outcome to decide an oust on.
-    """
+    """Defer ousting until every pool loss of one event is applied (OQ-44, D-9): both
+    at 0 pool from the same event is a tie. Nests; an exception discards queued ousts."""
     state.oust_deferral_depth += 1
     try:
         yield
@@ -84,9 +66,8 @@ def lose_pool_simultaneously(state: GameState, losses: Mapping[str, int]) -> dic
 
 
 MIN_POOL_AFTER_VOLUNTARY_SPEND = 1
-"""OQ-41/OQ-42 (user ruling 2026-10-13; project simplification for the 2P
-duel, `docs/DECISIONS.md` D-9 -- not a rulebook rule): a Methuselah may not
-bring their own pool to 0 through their own voluntary choices."""
+"""OQ-41/OQ-42, D-9 (project simplification, not a rulebook rule): a Methuselah may
+not bring their own pool to 0 via a voluntary choice."""
 
 
 def max_voluntary_spend(state: GameState, player: str) -> int:
@@ -95,10 +76,6 @@ def max_voluntary_spend(state: GameState, player: str) -> int:
 
 
 def can_afford_without_ousting(state: GameState, player: str, amount: int) -> bool:
-    """True if `player` may voluntarily pay/burn `amount` pool (OQ-42).
-
-    Every option generator offering a self-paid pool cost must gate on this
-    (or `max_voluntary_spend`). Mandatory losses (bleed, forced card
-    effects) bypass it and use `lose_pool` directly.
-    """
+    """True if `player` may voluntarily pay/burn `amount` pool (OQ-42). Every
+    self-paid-cost option generator must gate on this; mandatory losses bypass it."""
     return amount <= max_voluntary_spend(state, player)

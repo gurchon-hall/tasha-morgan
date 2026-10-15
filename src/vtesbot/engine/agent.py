@@ -1,12 +1,6 @@
-"""The only interface a player (bot or human-backed) implements.
-
-CLAUDE.md SS5: agents receive an `Observation`, never the raw `GameState`,
-and may only return a `Choice` drawn from `decision.choices`. Real agent
-implementations (random-legal, heuristic, search-based) are `bot-strategist`
-territory (CLAUDE.md SS7, milestone 4+); this module only defines the
-Protocol. The one concrete implementation introduced by this pass,
-`ScriptedAgent`, is a test helper (see `tests/helpers.py`), not a real agent.
-"""
+"""The only interface a player implements (CLAUDE.md §5): receives an
+`Observation`, never raw `GameState`, returns a `Choice` from
+`decision.choices`. Real agents are `bot-strategist` territory."""
 
 from typing import Protocol
 

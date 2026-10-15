@@ -1,23 +1,6 @@
-"""2P contested crypt cards.
-
-Source: 2P variant (per the `vtes-rules-reference` skill condensed mapping):
-"Rulebook: contested cards go face down, out of play. 2P: contested crypt
-cards stay in play and usable; 1 pool each unlock phase or yield (burn). You
-cannot contest with yourself." Titles on two copies of the same vampire are
-explicitly *not* contested in 2P -- that title-contest exception is
-politics-adjacent and deferred (CLAUDE.md task scope for this pass).
-
-Open question (docs/OPEN_QUESTIONS.md OQ-4): the 2P variant text (as mapped
-by the skill) gives the contest *resolution* cost but not the exact trigger
-moment. Because 2P duel decks are built independently (unlike the combined-
-crypt setup of 4-5 player VTES), the same unique vampire (by printed name,
-Rulebook SS1: vampire names are unique) can appear in both players' crypts.
-This module resolves the ambiguity conservatively: a contest is detected the
-moment a vampire is *revealed into play* (ready/torpor) and the opponent
-already controls a same-named vampire that is also in play -- not merely
-while both copies sit face down, uncontrolled. See OQ-4 for the citation gap
-and the alternative reading (contest on simultaneous uncontrolled presence).
-"""
+"""2P contested crypt cards: stay in play, 1 pool/unlock or yield (burn);
+same-named titles not contested. OQ-4 (open): trigger moment is ambiguous
+-- resolved here as detection on reveal into play."""
 
 from typing import TYPE_CHECKING
 
@@ -38,9 +21,8 @@ def detect_contest_on_reveal(state: GameState, revealed: VampireInPlay) -> None:
 
 
 def resolve_one_contest(state: GameState, player: str, vampire: VampireInPlay) -> None:
-    """Rulebook SS4 Unlock Phase + 2P variant: pay 1 pool to keep contesting
-    `vampire` this unlock phase, or yield (burn your copy, clearing the
-    opposing copy's contested status too since nothing contests it anymore)."""
+    """Rulebook §4 Unlock Phase + 2P variant: pay 1 pool to keep contesting
+    `vampire`, or yield (burn it, clearing the opposing copy's contest too)."""
     # OQ-42: paying must not leave the payer at 0 pool; yielding stays.
     pay = (Choice("pay", "Pay 1 pool to keep contesting"),)
     choices = (

@@ -1,9 +1,6 @@
-"""Pure rules engine: state, phases, impulse/sequencing, actions, blocks,
-combat, politics, torpor/diablerie (CLAUDE.md SS5).
-
-No I/O, no printing, no network; all randomness via `GameState.rng`
-(CLAUDE.md engine invariants).
-"""
+"""Pure rules engine: state, phases, impulse, actions, blocks, combat,
+politics, torpor/diablerie (CLAUDE.md §5). No I/O, no printing, no
+network; all randomness via `GameState.rng`."""
 
 from . import hooks
 from .agent import Agent

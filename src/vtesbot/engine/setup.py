@@ -1,14 +1,6 @@
-"""Game setup.
-
-Source: 2P variant SS3 Game Setup (per the `vtes-rules-reference` skill
-condensed mapping): "30 pool each; blood bank unlimited; the Edge starts
-uncontrolled. Shuffle crypt and library; predator cuts. Draw 7 library
-cards; deal 4 crypt cards face down to the uncontrolled region." Deck
-construction legality (crypt >= 12, one group or two consecutive groups,
-library 40-60) is checked by `scripts/validate_deck.py` / the
-`deck-validation` skill before a deck reaches this function; `setup_game`
-assumes it is handed an already-legal `DeckSpec`.
-"""
+"""Game setup (2P variant §3): 30 pool each, shuffle + predator cuts, draw
+7 library, deal 4 crypt face down. Deck legality checked earlier; assumes
+an already-legal `DeckSpec`."""
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -40,12 +32,9 @@ def setup_game(
     seed: int,
     format_config: FormatConfig | None = None,
 ) -> GameState:
-    """Build the initial `GameState` for a 2P duel (2P variant SS3).
-
-    `turn_order` lists the two player ids in play order; `turn_order[0]` is
-    the first player (relevant to the 2P influence-phase transfer ramp,
-    SS2.3, applied later in `influence_phase`).
-    """
+    """Build the initial `GameState` for a 2P duel (2P variant §3).
+    `turn_order[0]` is the first player (relevant to the influence-phase
+    transfer ramp, §2.3, applied later in `influence_phase`)."""
     if set(decks) != set(agents) or set(decks) != set(turn_order) or len(turn_order) != 2:
         raise ValueError(
             "setup_game requires exactly the same two player ids in decks/agents/turn_order"
@@ -68,8 +57,8 @@ def setup_game(
         state.library = library
         state.crypt_deck = crypt_deck
 
-    # 2P variant SS3: "predator cuts". With exactly two players each is the
-    # other's predator (Rulebook SS5 structural note), so the opponent cuts
+    # 2P variant §3: "predator cuts". With exactly two players each is the
+    # other's predator (Rulebook §5 structural note), so the opponent cuts
     # each shuffled deck before draws are taken.
     for player_id, state in players.items():
         predator = [p for p in turn_order if p != player_id][0]

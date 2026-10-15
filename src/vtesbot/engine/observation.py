@@ -1,10 +1,5 @@
-"""Builds the per-player `Observation`: what a Methuselah is allowed to see.
-
-CLAUDE.md SS5 "Information hiding: agents receive an `Observation` ... never
-the raw `GameState`. A bot must not read the opponent's hand, library order
-or face-down uncontrolled vampires." This module is the single place that
-converts the full `GameState` into the restricted view handed to an agent.
-"""
+"""Builds the per-player `Observation`: what a Methuselah is allowed to see (CLAUDE.md
+§5 information hiding). Single place that converts `GameState` into the agent's view."""
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -24,18 +19,9 @@ class VampireView:
     zone: str  # "uncontrolled" | "ready" | "torpor" | "burned" | "removed_from_game"
     locked: bool
     is_ready_unlocked: bool
-    """`VampireInPlay.is_ready_unlocked` (`engine/state.py`), not just a
-    restatement of `locked`: block/reaction eligibility is public information
-    in VTES (a block attempt and a reaction-card play are both visible
-    actions, not hidden-zone contents -- CLAUDE.md SS5 "information hiding"
-    only concerns hand/library/face-down contents), and since OQ-46 (`docs/
-    OPEN_QUESTIONS.md`, resolved) `locked` alone no longer fully determines
-    it: a `woken` vampire (On the Qui Vive, krcg id 101321) can be
-    `locked=True` and still `is_ready_unlocked=True` for "until the end of
-    the action." Exposed under the engine property's own name, mirroring it
-    exactly, rather than exposing raw `woken` -- so an agent reasoning about
-    "can this vampire block/react right now" never has to re-derive the
-    `locked`+`woken` combination itself."""
+    """Mirrors `VampireInPlay.is_ready_unlocked` (OQ-46): block/reaction eligibility is
+    public, and `locked` alone no longer determines it since a `woken` vampire can be
+    `locked=True` yet still eligible."""
     wounded: bool
     blood: int
     contested: bool
@@ -46,35 +32,8 @@ class VampireView:
 
 @dataclass(frozen=True)
 class AllyView:
-    """Public view of an ally in play (`engine/state.py::AllyInPlay`).
-
-    Rulebook SS4 Recruit Ally (per the `vtes-rules-reference` skill condensed
-    mapping): a recruited ally enters the ready region, played face-up, the
-    same as a ready vampire.
-
-    OQ-10 (`docs/OPEN_QUESTIONS.md`, resolved): a *unique* ally (e.g. 47th
-    Street Royals) can become contested against a same-named opposing ally
-    (`engine/allies.py::detect_contest_on_recruit`), and the unmodified
-    Rulebook SS4 Advanced Rules > Contested Cards rule then applies (not
-    overridden for allies by the 2P variant, whose own "Contested crypt
-    cards" section is scoped to crypt cards only): "turned face down and are
-    out of play" for the contest's duration -- reflected here by `zone`
-    becoming `"contested"` (`AllyInPlay.zone`'s third value, alongside
-    `"ready"`/`"burned"`) and the new `contested` flag.
-
-    Unlike `VampireView`'s `visible_identity` branch (which hides an
-    opponent's still-face-down, never-yet-revealed *uncontrolled* crypt
-    card), `name`/`life`/`strength`/`bleed` stay visible here even while
-    contested, deliberately: by construction, an ally contest can only ever
-    arise the moment a *second* same-named ally is recruited, and "Recruit
-    Ally" is itself played face up (`engine/allies.py::RecruitAllySpec`'s own
-    docstring, Rulebook SS4 "Announce the Action": "played (face up)") --
-    so both copies' identities are already mutually known to both players
-    the instant the contest is created. There is no actual secret to protect
-    here (unlike an uncontrolled vampire, genuinely unknown until revealed),
-    so "turned face down" is a zone/usability marker, not an information-
-    hiding mechanic -- no `visible_identity`-style anonymization branch is
-    sourced or needed for an ally."""
+    """Public view of an ally (`AllyInPlay`): recruited face-up (§4), so identity stays
+    visible even while contested (OQ-10) -- a usability marker only, no secret created."""
 
     instance_id: str
     controller: str
@@ -89,19 +48,9 @@ class AllyView:
 
 @dataclass(frozen=True)
 class MasterCardView:
-    """Public view of a standalone Master card in play
-    (`engine/state.py::MasterCardInPlay`; OQ-23, `docs/OPEN_QUESTIONS.md`).
-
-    Mirrors `AllyView`'s shape minus `life`/`strength`/`bleed` (this kind of
-    card is not a minion -- `MasterCardInPlay`'s own docstring). Same
-    reasoning as `AllyView` for why no `visible_identity`-style anonymization
-    branch is needed even for a contested copy: a Master card is played face
-    up (Rulebook SS2 Card Types), so by construction a contest (reachable
-    only for a card printed "Unique") can only ever arise the instant a
-    *second* same-named instance is brought into play, already face up,
-    against a first copy brought in face up earlier -- both identities are
-    mutually known to both players from the moment the contest is created.
-    """
+    """Public view of a standalone Master card (`MasterCardInPlay`; OQ-23). Mirrors
+    `AllyView` minus `life`/`strength`/`bleed`; played face up (§2), identity stays
+    visible even while contested."""
 
     instance_id: str
     controller: str
@@ -134,35 +83,9 @@ class Observation:
 
 
 def build_observation(state: GameState, viewer: str) -> Observation:
-    """CLAUDE.md SS5 information hiding.
-
-    Hidden from `viewer`: the opponent's hand contents (only a count is
-    shown), both players' library order (only counts are shown -- nobody,
-    not even a Methuselah about their own deck, knows the remaining shuffled
-    order), and the identity of the *opponent's* face-down uncontrolled crypt
-    cards (only a count is shown; the viewer's own uncontrolled crypt cards
-    are their private information and so are shown in full). Ready and
-    torpor vampires are public knowledge for both players (Rulebook: the
-    ready/torpor region is played face-up), so they are always shown in full.
-    Likewise a vampire removed from the game (OQ-24, `docs/
-    OPEN_QUESTIONS.md`; general ruling "Cards removed from the game are
-    public." [LSJ 20080314]) is always shown in full, for both players, by
-    the same `zone != "uncontrolled"` test as `"burned"`/`"torpor"` below --
-    no separate branch needed.
-
-    Allies (rules-auditor finding, `docs/OPEN_QUESTIONS.md` OQ-7): an ally
-    recruited via `engine/allies.py::recruit_ally` lives in the ready region
-    exactly like a ready vampire -- so both players' allies are always shown
-    in full, unconditionally, same as a ready/torpor vampire. A *contested*
-    ally (OQ-10, resolved) keeps its identity visible too, for a sourced
-    reason distinct from the vampire case -- see `AllyView`'s own docstring.
-
-    Standalone Master cards (OQ-23, `docs/OPEN_QUESTIONS.md`): one brought
-    into play via `engine/master_cards.py::bring_master_card_into_play` is a
-    Master card, played face up -- shown in full unconditionally, for both
-    players, same reasoning as `AllyView`'s own docstring (including while
-    contested).
-    """
+    """CLAUDE.md §5: hides opponent hand, library order, opponent's face-down
+    uncontrolled crypt (counts only). Else (ready/torpor, removed per OQ-24, allies,
+    Master cards) known face up."""
     other = [p for p in state.players if p != viewer][0]
 
     def vampire_view(v: VampireInPlay) -> VampireView:

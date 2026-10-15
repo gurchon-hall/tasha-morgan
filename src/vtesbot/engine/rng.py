@@ -1,10 +1,6 @@
-"""The game's single seeded source of randomness.
-
-CLAUDE.md engine invariant: "all randomness through a seeded RNG owned by
-the game state. Same seed + same decisions => same game." Nothing under
-`engine/` may call `random` directly; every shuffle/cut/draw goes through
-`GameRNG` so it is both deterministic and recorded in the replay log.
-"""
+"""The game's single seeded source of randomness (CLAUDE.md engine
+invariant). Nothing under `engine/` may call `random` directly; every
+shuffle/cut/draw goes through `GameRNG`, deterministic and logged."""
 
 import random
 
@@ -25,18 +21,9 @@ class GameRNG:
         self._log.record_random(description, [getattr(i, "name", repr(i)) for i in items])
 
     def cut[T](self, items: list[T], description: str) -> None:
-        """Cut `items` at a random point (move the bottom portion to the top).
-
-        2P variant SS3 Game Setup: "predator cuts" the shuffled deck. With a
-        trusted, seeded digital shuffle already providing a uniformly random
-        order, a cut of an already-random permutation carries no additional
-        strategic information (cutting a uniform random order yields another
-        uniform random order) -- the physical-table purpose of the cut
-        (preventing deck stacking) is already guaranteed by the RNG. The
-        engine therefore performs the cut as a procedural RNG draw rather
-        than as a player `Decision`, while still recording it in the replay
-        log so the step is not silently skipped.
-        """
+        """Cut `items` at a random point (2P variant §3 "predator cuts").
+        A cut of an already-random shuffle adds no strategic information,
+        so this is a procedural RNG draw, not a player `Decision`."""
         if len(items) < 2:
             return
         point = self._random.randint(1, len(items) - 1)
