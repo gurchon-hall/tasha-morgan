@@ -133,7 +133,10 @@ class CardRegistration:
     """Short provenance note: the module path, or (for a card not yet
     implemented) a one-line description of what blocks it."""
     blocked_reason: str | None = None
-    """An `OQ-<n>` id (`docs/OPEN_QUESTIONS.md`) when `status is Status.BLOCKED`."""
+    """An `OQ-<n>` id (`docs/OPEN_QUESTIONS.md`) when `status is Status.BLOCKED`
+    and a ruling/engine-mechanism ambiguity is the blocker; otherwise a short
+    descriptive string citing the missing engine data field or subsystem
+    (not a ruling ambiguity -- see e.g. Queen Anne/Alexa Draper)."""
 
 
 _REGISTRY: dict[int, CardRegistration] = {}

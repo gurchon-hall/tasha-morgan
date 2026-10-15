@@ -27,8 +27,7 @@
       "capacity": 8,
       "group": 6,
       "krcg_id": 201529,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "implementation_status": "implemented"
     },
     {
       "name": "Alice Chen",

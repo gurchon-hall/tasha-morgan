@@ -12,6 +12,7 @@ from vtesbot.engine import (
     Choice,
     CryptCard,
     Decision,
+    DisciplineRequirement,
     FormatConfig,
     GameRNG,
     GameState,
@@ -196,6 +197,26 @@ class _PlayerBuilder:
     def hand_cards(self, names: list[str], card_type: str = "master") -> _PlayerBuilder:
         for name in names:
             self.hand.append(LibraryCard(krcg_id=_next_lib_id(), name=name, card_type=card_type))
+        return self
+
+    def hand_card(
+        self,
+        name: str,
+        *,
+        card_type: str = "master",
+        discipline_requirement: DisciplineRequirement | None = None,
+    ) -> _PlayerBuilder:
+        """Single hand card with an explicit `discipline_requirement`
+        (`hand_cards` has no such parameter; added for cards, e.g. Alexa
+        Draper, that inspect an arbitrary hand card's printed requirement)."""
+        self.hand.append(
+            LibraryCard(
+                krcg_id=_next_lib_id(),
+                name=name,
+                card_type=card_type,
+                discipline_requirement=discipline_requirement or DisciplineRequirement(),
+            )
+        )
         return self
 
     def library_cards(self, names: list[str], card_type: str = "master") -> _PlayerBuilder:

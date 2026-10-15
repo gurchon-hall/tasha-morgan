@@ -50,6 +50,64 @@ class CryptCard:
     sect: Sect | None = None
 
 
+class DisciplineRequirementType(StrEnum):
+    """How a library card's printed discipline symbols combine (krcg's own
+    `krcg.models.DisciplineRequirement.Type`, mirrored verbatim, values
+    confirmed live via `krcg.load()`, 2026-10-15): Mono = a single
+    discipline, printed at basic and/or superior level (e.g. Slam's `[pot]`/
+    `[POT]`); Choice = any one of several, each basic-only on every 2P-pool
+    card checked (e.g. Line Brawl's `[cel]`/`[pot]`/`[pre]`); Combo =
+    several required together, each independently basic/superior (e.g.
+    Forced March's `[cel][for]`/`[CEL][FOR]`)."""
+
+    MONO = "Mono"
+    CHOICE = "Choice"
+    COMBO = "Combo"
+
+
+@dataclass(frozen=True)
+class DisciplineRequirement:
+    """A library card's printed discipline requirement (krcg's own
+    `Card.discipline_requirement`, `krcg.models.DisciplineRequirement`;
+    confirmed live via `krcg.load()`, 2026-10-15, across Mono/Choice/Combo
+    cards and no-discipline cards, e.g. Political Actions and most Masters:
+    every library card carries one, never `None` -- a card with no
+    discipline symbol at all gets `type=Mono, disciplines=()`).
+
+    `disciplines` is a tuple of lowercase trigrams (`"dom"`, not `"DOM"`):
+    krcg's own field is level-agnostic by design (its field docstring:
+    "library requirements are level-agnostic: lowercase trigrams"), because
+    which level (basic/bold-superior, Rulebook §3 "Discipline symbol within
+    a diamond ... may opt to use either the basic (plain text) or the
+    superior (bold) effect") a play uses is a property of *how the card is
+    played*, not of what it structurally requires while sitting in hand,
+    library or ash heap. That in-hand/library/ash-heap collapse is itself
+    an explicit ruling, not an engine assumption: "When played, a
+    multi-Disciplines card counts as requiring the Discipline(s) being
+    used. In the hand, library, or ash heap, the card is considered to
+    require any and/or all Disciplines listed on it." [LSJ 20011204-3]
+    [PIB 20130704]. No card in the active 2P pool was found printing a
+    superior-only clause with no matching basic clause (checked 2026-10-15
+    across the full krcg library-card set), so this has not been observed
+    to lose information for any card currently in scope; if such a card is
+    ever added, this field would still (correctly, per the ruling above)
+    list its trigram here regardless."""
+
+    type: DisciplineRequirementType = DisciplineRequirementType.MONO
+    disciplines: tuple[str, ...] = ()
+
+
+def requires_discipline(requirement: DisciplineRequirement, discipline: str) -> bool:
+    """Whether a library card's discipline requirement includes `discipline`
+    (a trigram, case-insensitive -- callers may pass a printed bracket
+    token like `"DOM"`). True regardless of `requirement.type` (Mono/
+    Choice/Combo): the in-hand/library/ash-heap collapsing ruling cited on
+    `DisciplineRequirement` above draws no type distinction -- a card is
+    considered to require any/all of its listed disciplines whenever it is
+    not the one actually being played."""
+    return discipline.lower() in requirement.disciplines
+
+
 @dataclass(frozen=True)
 class LibraryCard:
     """A library card printing (deck-construction identity only)."""
@@ -57,6 +115,7 @@ class LibraryCard:
     krcg_id: int
     name: str
     card_type: str
+    discipline_requirement: DisciplineRequirement = DisciplineRequirement()
 
 
 @dataclass

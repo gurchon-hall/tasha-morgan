@@ -13,7 +13,16 @@ from .attachments import (
     find_attachment_by_instance_id,
     iter_attachments,
 )
-from .cards import CardAttachment, CryptCard, LibraryCard, Sect, derive_sect
+from .cards import (
+    CardAttachment,
+    CryptCard,
+    DisciplineRequirement,
+    DisciplineRequirementType,
+    LibraryCard,
+    Sect,
+    derive_sect,
+    requires_discipline,
+)
 from .decision import Choice, Decision
 from .errors import IllegalChoiceError, UnresolvedRulingError
 from .format import FormatConfig
@@ -45,9 +54,12 @@ __all__ = [
     "MasterCardView",
     "CardAttachment",
     "CryptCard",
+    "DisciplineRequirement",
+    "DisciplineRequirementType",
     "LibraryCard",
     "Sect",
     "derive_sect",
+    "requires_discipline",
     "Choice",
     "Decision",
     "IllegalChoiceError",

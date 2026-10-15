@@ -2,11 +2,19 @@
 `formats.check_deck_legality` to a live krcg lookup for per-card identity
 data, yielding either a usable `DeckSpec` or a reported violation set."""
 
+from typing import cast
+
 import krcg
 from krcg import utils as krcg_utils
 
 from vtesbot.cards import registry
-from vtesbot.engine.cards import CryptCard, LibraryCard, derive_sect
+from vtesbot.engine.cards import (
+    CryptCard,
+    DisciplineRequirement,
+    DisciplineRequirementType,
+    LibraryCard,
+    derive_sect,
+)
 from vtesbot.engine.setup import DeckSpec
 from vtesbot.formats import (
     AllowedList,
@@ -71,7 +79,7 @@ def _not_yet_playable(krcg_id: int, name: str) -> NotYetPlayableCard | None:
 
 
 def _build_crypt_card(krcg_id: int, count: int, cards: krcg.CardDict) -> list[CryptCard]:
-    card = cards[krcg_id]
+    card: krcg.CryptCard = cast(krcg.CryptCard, cards[krcg_id])
     name = krcg_utils.vekn_name(card, ascii=False)
     if card.unicity_suffix:
         name = name.removesuffix(f" ({card.unicity_suffix})")
@@ -80,8 +88,8 @@ def _build_crypt_card(krcg_id: int, count: int, cards: krcg.CardDict) -> list[Cr
     built = CryptCard(
         krcg_id=krcg_id,
         name=name,
-        capacity=card.capacity,
-        group=int(card.group.lstrip("Gg")),
+        capacity=card.capacity or -1,
+        group=int((card.group or "G0").lstrip("Gg")),
         clan=card.clan,
         # krcg reports `title` as an enum member; `CryptCard.title` wants a
         # plain `str | None`, so unwrap `.value` here.
@@ -93,13 +101,25 @@ def _build_crypt_card(krcg_id: int, count: int, cards: krcg.CardDict) -> list[Cr
 
 
 def _build_library_card(krcg_id: int, count: int, cards: krcg.CardDict) -> list[LibraryCard]:
-    card = cards[krcg_id]
+    card: krcg.LibraryCard = cast(krcg.LibraryCard, cards[krcg_id])
     name = krcg_utils.vekn_name(card, ascii=False)
     # `LibraryCard.card_type` is a single string; every library card in the
     # active 2P pool prints exactly one krcg type (checked 2026-10-12), so
     # the first (only) one is used.
     card_type = card.types[0].value
-    built = LibraryCard(krcg_id=krcg_id, name=name, card_type=card_type)
+    # krcg's own field (`engine/cards.py::DisciplineRequirement` docstring
+    # cites the live shape); `.type` is krcg's own StrEnum member, a plain
+    # str subclass equal to our mirrored enum's matching value.
+    discipline_requirement = DisciplineRequirement(
+        type=DisciplineRequirementType(card.discipline_requirement.type),
+        disciplines=tuple(card.discipline_requirement.disciplines),
+    )
+    built = LibraryCard(
+        krcg_id=krcg_id,
+        name=name,
+        card_type=card_type,
+        discipline_requirement=discipline_requirement,
+    )
     return [built] * count
 
 

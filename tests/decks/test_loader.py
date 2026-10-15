@@ -14,7 +14,8 @@ import krcg
 import pytest
 
 from vtesbot.decks import check_and_build, load_resolved_fixture, parse_decklist, resolve_decklist
-from vtesbot.engine.cards import Sect
+from vtesbot.decks.resolver import ResolvedDecklist
+from vtesbot.engine.cards import DisciplineRequirement, DisciplineRequirementType, Sect
 from vtesbot.formats import (
     AllowedCard,
     AllowedList,
@@ -25,6 +26,9 @@ from vtesbot.formats import (
 
 ALEXA_DRAPER_ID = 201529
 BONDING_ID = 100236
+SLAM_ID = 101798
+LINE_BRAWL_ID = 102229
+PARITY_SHIFT_ID = 101353
 
 
 @pytest.fixture(scope="module")
@@ -66,6 +70,60 @@ def test_legal_deck_expands_to_a_deck_spec_with_sect(cards, tiny_allowed_list):
     library_card = result.deck_spec.library[0]
     assert library_card.krcg_id == BONDING_ID
     assert library_card.card_type == "Action Modifier"
+    # Bonding's own superior [DOM] clause (`cards/bonding.py`): krcg's
+    # `discipline_requirement` is level-agnostic (see `engine/cards.py`'s
+    # `DisciplineRequirement` docstring), so this is "dom" regardless of
+    # basic/superior, Mono (a single discipline).
+    assert library_card.discipline_requirement == DisciplineRequirement(
+        type=DisciplineRequirementType.MONO, disciplines=("dom",)
+    )
+
+
+def test_library_card_discipline_requirement_round_trips_from_krcg(cards):
+    """Mono (Slam, `[pot]`/`[POT]`), Choice (Line Brawl, `[cel]`/`[pot]`/
+    `[pre]`) and no-requirement (Parity Shift, a Political Action) shapes,
+    straight from the installed krcg package -- see `decks/loader.py::
+    _build_library_card` and `engine/cards.py::DisciplineRequirement`."""
+    allowed = AllowedList(
+        vekn_last_updated="test",
+        source="test",
+        by_krcg_id={
+            c.krcg_id: c
+            for c in (
+                AllowedCard(krcg_id=ALEXA_DRAPER_ID, name="Alexa Draper", type="Crypt"),
+                AllowedCard(krcg_id=BONDING_ID, name="Bonding", type="Library"),
+                AllowedCard(krcg_id=SLAM_ID, name="Slam", type="Library"),
+                AllowedCard(krcg_id=LINE_BRAWL_ID, name="Line Brawl", type="Library"),
+                AllowedCard(krcg_id=PARITY_SHIFT_ID, name="Parity Shift", type="Library"),
+            )
+        },
+    )
+    resolved = ResolvedDecklist(
+        crypt=[ResolvedCryptEntry(krcg_id=ALEXA_DRAPER_ID, name="Alexa Draper", count=12, group=6)],
+        library=[
+            ResolvedLibraryEntry(krcg_id=SLAM_ID, name="Slam", count=1),
+            ResolvedLibraryEntry(krcg_id=LINE_BRAWL_ID, name="Line Brawl", count=1),
+            ResolvedLibraryEntry(krcg_id=PARITY_SHIFT_ID, name="Parity Shift", count=1),
+            ResolvedLibraryEntry(krcg_id=BONDING_ID, name="Bonding", count=37),
+        ],
+        unresolved=[],
+    )
+
+    result = check_and_build(resolved, allowed, cards, name="discipline requirement shapes")
+
+    assert result.legal, result.violations
+    assert result.deck_spec is not None
+    by_id = {c.krcg_id: c for c in result.deck_spec.library}
+
+    assert by_id[SLAM_ID].discipline_requirement == DisciplineRequirement(
+        type=DisciplineRequirementType.MONO, disciplines=("pot",)
+    )
+    assert by_id[LINE_BRAWL_ID].discipline_requirement == DisciplineRequirement(
+        type=DisciplineRequirementType.CHOICE, disciplines=("cel", "pot", "pre")
+    )
+    assert by_id[PARITY_SHIFT_ID].discipline_requirement == DisciplineRequirement(
+        type=DisciplineRequirementType.MONO, disciplines=()
+    )
 
 
 def test_illegal_crypt_groups_blocks_deck_spec_construction(cards):

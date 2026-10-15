@@ -139,11 +139,11 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
     # OQ-35 are both resolved, so it is now `implemented` too
     # (`cards/disputed_territory.py`). Fiorenza Savona (201616) is likewise
     # checked separately below: OQ-6/OQ-49 are both resolved, so it is now
-    # `implemented` too (`cards/fiorenza_savona.py`).
-    for krcg_id in (
-        201529,  # Alexa Draper
-        201647,  # Queen Anne
-    ):
+    # `implemented` too (`cards/fiorenza_savona.py`). Alexa Draper (201529)
+    # is now `implemented` too (`cards/alexa_draper.py`), checked separately
+    # below: `engine/cards.py::LibraryCard.discipline_requirement`/
+    # `requires_discipline` resolved its own independent gap.
+    for krcg_id in (201647,):  # Queen Anne
         reg = registry.get(krcg_id)
         assert reg is not None, f"expected a registry entry for krcg_id {krcg_id}"
         assert reg.status is registry.Status.BLOCKED
@@ -159,6 +159,7 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
         102131,  # Voter Captivation
         100557,  # Disputed Territory
         201616,  # Fiorenza Savona
+        201529,  # Alexa Draper
     ):
         reg = registry.get(krcg_id)
         assert reg is not None, f"expected a registry entry for krcg_id {krcg_id}"
