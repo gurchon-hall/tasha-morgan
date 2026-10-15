@@ -1,114 +1,163 @@
 {
-  "_i18n": {
+  "id": 102230,
+  "printed_name": "Organized Resistance",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Organized Resistance"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Resistencia organizada"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Résistance organisée"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/organizedresistance.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 5,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PG",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/organizedresistance.jpg"
+    },
+    {
+      "set": {
+        "id": 300040,
+        "code": "V5C"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTz",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-companion/organizedresistance.jpg"
+    }
+  ],
+  "i18n": {
     "es": {
       "name": "Resistencia organizada",
-      "card_text": "Requiere a un barón. Utilizable por un barón girado.\nUn Anarquista que controles obtiene +1 de intercepción. También utilizable para enderezar a un Anarquista girado que controles; ese Anarquista intenta bloquear con +1 de intercepción, aunque la intercepción no sea necesaria.",
-      "url": "https://static.krcg.org/card/es/organizedresistance.jpg"
+      "text": "Requiere a un barón. Utilizable por un barón girado.\nUn Anarquista que controles obtiene +1 de intercepción. También utilizable para enderezar a un Anarquista girado que controles; ese Anarquista intenta bloquear con +1 de intercepción, aunque la intercepción no sea necesaria.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/organizedresistance.jpg",
+      "cards": []
     },
     "fr": {
       "name": "Résistance organisée",
-      "card_text": "Requiert un baron. Utilisable par un baron incliné.\nUn Anarch que vous contrôlez reçoit +1 en interception. Utilisable également pour redresser un Anarch incliné que vous contrôlez ; cet Anarch tente de bloquer avec +1 en interception, même si de l'interception n'est pas encore nécessaire.",
-      "url": "https://static.krcg.org/card/fr/organizedresistance.jpg"
+      "text": "Requiert un baron. Utilisable par un baron incliné.\nUn Anarch que vous contrôlez reçoit +1 en interception. Utilisable également pour redresser un Anarch incliné que vous contrôlez ; cet Anarch tente de bloquer avec +1 en interception, même si de l'interception n'est pas encore nécessaire.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/organizedresistance.jpg",
+      "cards": []
     }
   },
-  "id": 102230,
-  "_name": "Organized Resistance",
   "url": "https://static.krcg.org/card/organizedresistance.jpg",
   "types": [
     "Reaction"
   ],
-  "card_text": "Requires a baron. Usable by a locked baron.\nAn Anarch you control gets +1 intercept. Also usable to unlock a locked Anarch you control; that Anarch attempts to block with +1 intercept, even if intercept is not yet needed.",
-  "_set": "V5A:PB6, NB2:PB5/PG3, V5C:PTz3",
-  "sets": {
-    "Fifth Edition (Anarch)": [
-      {
-        "release_date": "2021-12-01",
-        "precon": "Brujah",
-        "copies": 6
-      }
-    ],
-    "New Blood II": [
-      {
-        "release_date": "2022-08-01",
-        "precon": "Brujah",
-        "copies": 5
-      },
-      {
-        "release_date": "2022-08-01",
-        "precon": "Gangrel",
-        "copies": 3
-      }
-    ],
-    "Fifth Edition (Companion)": [
-      {
-        "release_date": "2024-01-01",
-        "precon": "Tzimisce",
-        "copies": 3
-      }
-    ]
-  },
-  "scans": {
-    "Fifth Edition (Anarch)": "https://static.krcg.org/card/set/fifth-edition-anarch/organizedresistance.jpg",
-    "New Blood II": "https://static.krcg.org/card/set/new-blood-ii/organizedresistance.jpg",
-    "Fifth Edition (Companion)": "https://static.krcg.org/card/set/fifth-edition-companion/organizedresistance.jpg"
-  },
+  "formats": [],
   "artists": [
     "Martín de Diego Sábada"
   ],
-  "ordered_sets": [
-    "Fifth Edition (Anarch)",
-    "New Blood II",
-    "Fifth Edition (Companion)"
-  ],
-  "legality": "2021-12-01",
+  "variants": [],
   "rulings": [
     {
-      "text": "Counts as requiring an Anarch (for eg. {Powerbase: Los Angeles}). [LSJ 20080603] [LSJ 20050128]",
+      "text": "Counts as requiring an Anarch (for eg. {101435|Powerbase: Los Angeles}). [LSJ 20080603] [LSJ 20050128]",
+      "group": "Require a Baron",
+      "reminder": false,
       "references": [
         {
           "text": "[LSJ 20080603]",
           "label": "LSJ 20080603",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/9usl4idp-pY/m/LuT1iK1b4QIJ"
+          "url": "https://usenet.krcg.org/t/9usl4idp-pY/#m1"
         },
         {
           "text": "[LSJ 20050128]",
           "label": "LSJ 20050128",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/HVy8iPUxNbI/m/ZHGTnprQjGUJ"
+          "url": "https://usenet.krcg.org/t/HVy8iPUxNbI/#m48"
         }
       ],
       "cards": [
         {
-          "text": "{Powerbase: Los Angeles}",
           "id": 101435,
-          "name": "Powerbase: Los Angeles",
-          "usual_name": "Powerbase: Los Angeles",
-          "vekn_name": "Powerbase: Los Angeles"
+          "printed_name": "Powerbase: Los Angeles",
+          "unicity_suffix": "",
+          "suffix": ""
         }
       ],
-      "group": "Require a Baron"
+      "symbols": []
     },
     {
-      "text": "If the action lacks a suitable target because of the unlock (e.g. {Ambush}), the block attempt still happens, as does the resulting combat if the block is successful. [LSJ 20090514]",
+      "text": "If the action lacks a suitable target because of the unlock (e.g. {100046|Ambush}), the block attempt still happens, as does the resulting combat if the block is successful. [LSJ 20090514]",
+      "group": "Unlocks and attempts to block",
+      "reminder": false,
       "references": [
         {
           "text": "[LSJ 20090514]",
           "label": "LSJ 20090514",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/PKQ6lQUBUOI/m/Zra43F1WXGcJ"
+          "url": "https://usenet.krcg.org/t/PKQ6lQUBUOI/#m1"
         }
       ],
       "cards": [
         {
-          "text": "{Ambush}",
           "id": 100046,
-          "name": "Ambush",
-          "usual_name": "Ambush",
-          "vekn_name": "Ambush"
+          "printed_name": "Ambush",
+          "unicity_suffix": "",
+          "suffix": ""
         }
       ],
-      "group": "Unlocks and attempts to block"
+      "symbols": []
     },
     {
       "text": "Can be used by a vampire who is already attempting to block. [ANK 20181122-2]",
+      "group": "Forces Block attempt",
+      "reminder": false,
       "references": [
         {
           "text": "[ANK 20181122-2]",
@@ -116,30 +165,34 @@
           "url": "https://www.vekn.net/forum/rules-questions/77176-eagle-s-sight-and-guardian-vigil#91965"
         }
       ],
-      "group": "Forces Block attempt"
+      "cards": [],
+      "symbols": []
     },
     {
-      "text": "Cannot be used if the vampire cannot attempt to block the action (eg. {Daring the Dawn}). [LSJ 20010714-2]",
+      "text": "Cannot be used if the vampire cannot attempt to block the action (eg. {100492|Daring the Dawn}). [LSJ 20010714-2]",
+      "group": "Forces Block attempt",
+      "reminder": false,
       "references": [
         {
           "text": "[LSJ 20010714-2]",
           "label": "LSJ 20010714-2",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/9U-jt3p3R_Q/m/WxDJwkgc25kJ"
+          "url": "https://usenet.krcg.org/t/9U-jt3p3R_Q/#m1"
         }
       ],
       "cards": [
         {
-          "text": "{Daring the Dawn}",
           "id": 100492,
-          "name": "Daring the Dawn",
-          "usual_name": "Daring the Dawn",
-          "vekn_name": "Daring the Dawn"
+          "printed_name": "Daring the Dawn",
+          "unicity_suffix": "",
+          "suffix": ""
         }
       ],
-      "group": "Forces Block attempt"
+      "symbols": []
     },
     {
       "text": "Does not ignore the normal prey, predator or target restrictions. [ANK 20180623]",
+      "group": "Forces Block attempt",
+      "reminder": false,
       "references": [
         {
           "text": "[ANK 20180623]",
@@ -147,9 +200,23 @@
           "url": "https://www.vekn.net/forum/rules-questions/76748-black-sunrise#88361"
         }
       ],
-      "group": "Forces Block attempt"
+      "cards": [],
+      "symbols": []
     }
   ],
-  "name": "Organized Resistance",
-  "printed_name": "Organized Resistance"
+  "cards": [],
+  "text": "Requires a baron. Usable by a locked baron.\nAn Anarch you control gets +1 intercept. Also usable to unlock a locked Anarch you control; that Anarch attempts to block with +1 intercept, even if intercept is not yet needed.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2021-12-31",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
 }

@@ -1,331 +1,563 @@
 {
-  "_i18n": {
+  "id": 101321,
+  "printed_name": "On the Qui Vive",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "On the Qui Vive"
+    },
+    {
+      "type": "Vernacular",
+      "name": "En estado de alerta"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Sur le qui-vive"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "SKB",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "SKM",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "SKTr",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PT",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300024,
+        "code": "HttB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PKia",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSam",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/heirs-to-the-blood/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300030,
+        "code": "SP"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "DoF",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "LB",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PoS",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PwN",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-preconstructed/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300031,
+        "code": "25th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/twenty-fifth-anniversary/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300032,
+        "code": "FB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 5,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PN",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 5,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/first-blood/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 5,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PN",
+          "copies": 5,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBh",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PG",
+          "copies": 5,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PMin",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBH",
+          "copies": 1,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PMi",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300040,
+        "code": "V5C"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PR",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTz",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-companion/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PR",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/onthequivive.jpg"
+    },
+    {
+      "set": {
+        "id": 300043,
+        "code": "SV5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PCathari",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PPower",
+          "copies": 5,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-v5/onthequivive.jpg"
+    }
+  ],
+  "i18n": {
     "es": {
       "name": "En estado de alerta",
-      "card_text": "Sólo utilizable por un siervo girado. Un siervo puede jugar sólo un ejemplar de esta carta entre sus fases de enderezamiento.\nEste siervo se despierta (ignora el requisito de estar enderezado para jugar cartas de reacción e intentar bloquear hasta el final de la acción). Si este siervo es un aliado, no se endereza normalmente durante su siguiente fase de enderezamiento.",
-      "url": "https://static.krcg.org/card/es/onthequivive.jpg"
+      "text": "Sólo utilizable por un siervo girado. Un siervo puede jugar sólo un ejemplar de esta carta entre sus fases de enderezamiento.\nEste siervo se despierta (ignora el requisito de estar enderezado para jugar cartas de reacción e intentar bloquear hasta el final de la acción). Si este siervo es un aliado, no se endereza normalmente durante su siguiente fase de enderezamiento.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/onthequivive.jpg",
+      "cards": []
     },
     "fr": {
       "name": "Sur le qui-vive",
-      "card_text": "Seulement utilisable par un serviteur incliné. Un serviteur ne peut en jouer qu'un seul exemplaire entre chacune de ses phases de redressement.\nCe serviteur se réveille (il n'a pas besoin d'être redressé pour jouer des cartes de réaction et tenter de bloquer jusqu'à la fin de l'action). Si ce serviteur est un allié, il ne se redresse pas normalement durant sa prochaine phase de redressement.",
-      "url": "https://static.krcg.org/card/fr/onthequivive.jpg"
+      "text": "Seulement utilisable par un serviteur incliné. Un serviteur ne peut en jouer qu'un seul exemplaire entre chacune de ses phases de redressement.\nCe serviteur se réveille (il n'a pas besoin d'être redressé pour jouer des cartes de réaction et tenter de bloquer jusqu'à la fin de l'action). Si ce serviteur est un allié, il ne se redresse pas normalement durant sa prochaine phase de redressement.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/onthequivive.jpg",
+      "cards": []
     }
   },
-  "id": 101321,
-  "_name": "On the Qui Vive",
   "url": "https://static.krcg.org/card/onthequivive.jpg",
   "types": [
     "Reaction"
   ],
-  "card_text": "Only usable by a locked minion. A minion can play only one On the Qui Vive between their unlock phases.\nThis minion wakes (they ignore the requirement to be unlocked for playing reaction cards and attempting to block until the end of the action). If this minion is an ally, they do not unlock as normal during their next unlock phase.",
-  "_set": "Third:C/PB2/PM2/PTr2/SKB2/SKM2/SKTr2, KoT:C/PB3/PM3/PT2, HttB:PKia3/PSam4, SP:DoF4/LB4/PoS2/PwN6, 25th:3, FB:PM5/PN2/PTo5/PTr3/PV3, V5:PM5/PN5/PTr4, V5A:PB2/PBh4/PG5/PMin4, NB:PTo2, NB2:PBH1/PMi2, V5C:PR4/PSal2/PTz4, 30th:2, SV5:PCathari3/PPower5, NB3:PR3",
-  "sets": {
-    "Third Edition": [
-      {
-        "release_date": "2006-09-04",
-        "rarity": "Common"
-      },
-      {
-        "release_date": "2006-09-04",
-        "precon": "Brujah antitribu",
-        "copies": 2
-      },
-      {
-        "release_date": "2006-09-04",
-        "precon": "Malkavian antitribu",
-        "copies": 2
-      },
-      {
-        "release_date": "2006-09-04",
-        "precon": "Tremere antitribu",
-        "copies": 2
-      },
-      {
-        "release_date": "2006-09-04",
-        "precon": "Starter Kit Brujah antitribu",
-        "copies": 2
-      },
-      {
-        "release_date": "2006-09-04",
-        "precon": "Starter Kit Malkavian antitribu",
-        "copies": 2
-      },
-      {
-        "release_date": "2006-09-04",
-        "precon": "Starter Kit Tremere antitribu",
-        "copies": 2
-      }
-    ],
-    "Keepers of Tradition": [
-      {
-        "release_date": "2008-11-19",
-        "rarity": "Common"
-      },
-      {
-        "release_date": "2008-11-19",
-        "precon": "Brujah",
-        "copies": 3
-      },
-      {
-        "release_date": "2008-11-19",
-        "precon": "Malkavian",
-        "copies": 3
-      },
-      {
-        "release_date": "2008-11-19",
-        "precon": "Toreador",
-        "copies": 2
-      }
-    ],
-    "Heirs to the Blood": [
-      {
-        "release_date": "2010-02-03",
-        "precon": "Kiasyd",
-        "copies": 3
-      },
-      {
-        "release_date": "2010-02-03",
-        "precon": "Samedi",
-        "copies": 4
-      }
-    ],
-    "Sabbat Preconstructed": [
-      {
-        "release_date": "2019-02-16",
-        "precon": "Den of Fiends",
-        "copies": 4
-      },
-      {
-        "release_date": "2019-02-16",
-        "precon": "Libertine Ball",
-        "copies": 4
-      },
-      {
-        "release_date": "2019-02-16",
-        "precon": "Parliament of Shadows",
-        "copies": 2
-      },
-      {
-        "release_date": "2019-02-16",
-        "precon": "Pact with Nephandi",
-        "copies": 6
-      }
-    ],
-    "Twenty-Fifth Anniversary": [
-      {
-        "release_date": "2019-08-16",
-        "copies": 3
-      }
-    ],
-    "First Blood": [
-      {
-        "release_date": "2019-10-01",
-        "precon": "Malkavian",
-        "copies": 5
-      },
-      {
-        "release_date": "2019-10-01",
-        "precon": "Nosferatu",
-        "copies": 2
-      },
-      {
-        "release_date": "2019-10-01",
-        "precon": "Toreador",
-        "copies": 5
-      },
-      {
-        "release_date": "2019-10-01",
-        "precon": "Tremere",
-        "copies": 3
-      },
-      {
-        "release_date": "2019-10-01",
-        "precon": "Ventrue",
-        "copies": 3
-      }
-    ],
-    "Fifth Edition": [
-      {
-        "release_date": "2020-11-30",
-        "precon": "Malkavian",
-        "copies": 5
-      },
-      {
-        "release_date": "2020-11-30",
-        "precon": "Nosferatu",
-        "copies": 5
-      },
-      {
-        "release_date": "2020-11-30",
-        "precon": "Tremere",
-        "copies": 4
-      }
-    ],
-    "Fifth Edition (Anarch)": [
-      {
-        "release_date": "2021-12-01",
-        "precon": "Brujah",
-        "copies": 2
-      },
-      {
-        "release_date": "2021-12-01",
-        "precon": "Banu Haqim",
-        "copies": 4
-      },
-      {
-        "release_date": "2021-12-01",
-        "precon": "Gangrel",
-        "copies": 5
-      },
-      {
-        "release_date": "2021-12-01",
-        "precon": "Ministry",
-        "copies": 4
-      }
-    ],
-    "New Blood": [
-      {
-        "release_date": "2022-04-17",
-        "precon": "Toreador",
-        "copies": 2
-      }
-    ],
-    "New Blood II": [
-      {
-        "release_date": "2022-08-01",
-        "precon": "Banu Haqim",
-        "copies": 1
-      },
-      {
-        "release_date": "2022-08-01",
-        "precon": "Ministry",
-        "copies": 2
-      }
-    ],
-    "Fifth Edition (Companion)": [
-      {
-        "release_date": "2024-01-01",
-        "precon": "Ravnos",
-        "copies": 4
-      },
-      {
-        "release_date": "2024-01-01",
-        "precon": "Salubri",
-        "copies": 2
-      },
-      {
-        "release_date": "2024-01-01",
-        "precon": "Tzimisce",
-        "copies": 4
-      }
-    ],
-    "Thirtieth Anniversary": [
-      {
-        "release_date": "2024-07-20",
-        "copies": 2
-      }
-    ],
-    "Sabbat V5": [
-      {
-        "release_date": "2025-10-26",
-        "precon": "Path of Cathari",
-        "copies": 3
-      },
-      {
-        "release_date": "2025-10-26",
-        "precon": "Path of Power and the Inner Voice",
-        "copies": 5
-      }
-    ],
-    "New Blood III": [
-      {
-        "release_date": "2025-05-31",
-        "precon": "Ravnos",
-        "copies": 3
-      }
-    ]
-  },
-  "scans": {
-    "Third Edition": "https://static.krcg.org/card/set/third-edition/onthequivive.jpg",
-    "Keepers of Tradition": "https://static.krcg.org/card/set/keepers-of-tradition/onthequivive.jpg",
-    "Heirs to the Blood": "https://static.krcg.org/card/set/heirs-to-the-blood/onthequivive.jpg",
-    "Sabbat Preconstructed": "https://static.krcg.org/card/set/sabbat-preconstructed/onthequivive.jpg",
-    "Twenty-Fifth Anniversary": "https://static.krcg.org/card/set/twenty-fifth-anniversary/onthequivive.jpg",
-    "First Blood": "https://static.krcg.org/card/set/first-blood/onthequivive.jpg",
-    "Fifth Edition": "https://static.krcg.org/card/set/fifth-edition/onthequivive.jpg",
-    "Fifth Edition (Anarch)": "https://static.krcg.org/card/set/fifth-edition-anarch/onthequivive.jpg",
-    "New Blood": "https://static.krcg.org/card/set/new-blood/onthequivive.jpg",
-    "New Blood II": "https://static.krcg.org/card/set/new-blood-ii/onthequivive.jpg",
-    "Fifth Edition (Companion)": "https://static.krcg.org/card/set/fifth-edition-companion/onthequivive.jpg",
-    "Thirtieth Anniversary": "https://static.krcg.org/card/set/thirtieth-anniversary/onthequivive.jpg",
-    "Sabbat V5": "https://static.krcg.org/card/set/sabbat-v5/onthequivive.jpg",
-    "New Blood III": "https://static.krcg.org/card/set/new-blood-iii/onthequivive.jpg"
-  },
+  "formats": [],
   "artists": [
     "David Day",
     "Christian Byrne"
   ],
-  "ordered_sets": [
-    "Third Edition",
-    "Keepers of Tradition",
-    "Heirs to the Blood",
-    "Sabbat Preconstructed",
-    "Twenty-Fifth Anniversary",
-    "First Blood",
-    "Fifth Edition",
-    "Fifth Edition (Anarch)",
-    "New Blood",
-    "New Blood II",
-    "Fifth Edition (Companion)",
-    "Thirtieth Anniversary",
-    "New Blood III",
-    "Sabbat V5"
-  ],
-  "legality": "2006-09-04",
+  "variants": [],
   "rulings": [
     {
       "text": "The minion need not attempt to block nor play further reaction cards: that is merely an option. [TOM 19951129]",
+      "group": "Wake",
+      "reminder": false,
       "references": [
         {
           "text": "[TOM 19951129]",
           "label": "TOM 19951129",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/jjBzopH-yrQ/m/L51mbZ5KGLkJ"
+          "url": "https://usenet.krcg.org/t/jjBzopH-yrQ/#m3"
         }
       ],
-      "group": "Wake"
+      "cards": [],
+      "symbols": []
     },
     {
-      "text": "Can be played or used after action resolution (e.g. to use a reaction card like {Fast Reaction} after combat). [LSJ 20091123]",
+      "text": "Can be played or used after action resolution (e.g. to use a reaction card like {100705|Fast Reaction} after combat). [LSJ 20091123]",
+      "group": "Wake",
+      "reminder": false,
       "references": [
         {
           "text": "[LSJ 20091123]",
           "label": "LSJ 20091123",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/Yt7LsvWFwiM/m/op6oRS8SLiYJ"
+          "url": "https://usenet.krcg.org/t/Yt7LsvWFwiM/"
         }
       ],
       "cards": [
         {
-          "text": "{Fast Reaction}",
           "id": 100705,
-          "name": "Fast Reaction",
-          "usual_name": "Fast Reaction",
-          "vekn_name": "Fast Reaction"
+          "printed_name": "Fast Reaction",
+          "unicity_suffix": "",
+          "suffix": ""
         }
       ],
-      "group": "Wake"
+      "symbols": []
     },
     {
-      "text": "Can be played or used during the “as a card is played” window, except in combat, or when there is no action. [ANK 20210819]",
+      "text": "Can be played or used during the “as a card is played” window, except in combat, or when there is no action. [ANK 20210817]",
+      "group": "Wake",
+      "reminder": false,
       "references": [
         {
-          "text": "[ANK 20210819]",
-          "label": "ANK 20210819",
+          "text": "[ANK 20210817]",
+          "label": "ANK 20210817",
           "url": "https://www.vekn.net/forum/rules-questions/79275-wake-cards-during-the-as-play-window-and-other-exotic-cancelling-effects?start=0#102931"
         }
       ],
-      "group": "Wake"
+      "cards": [],
+      "symbols": []
     }
   ],
-  "name": "On the Qui Vive",
-  "printed_name": "On the Qui Vive"
+  "cards": [],
+  "text": "Only usable by a locked minion. A minion can play only one On the Qui Vive between their unlock phases.\nThis minion wakes (they ignore the requirement to be unlocked for playing reaction cards and attempting to block until the end of the action). If this minion is an ally, they do not unlock as normal during their next unlock phase.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2006-10-04",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
 }

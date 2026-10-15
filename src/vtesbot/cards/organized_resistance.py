@@ -1,19 +1,20 @@
 """Organized Resistance (Reaction). krcg id 102230.
 
-Card text (verbatim, via the installed `krcg` 5.14 package's own
-`krcg.vtes.VTES["Organized Resistance"].card_text`, 2026-10-12, matching the
-raw snapshot saved to `data/cards/102230.json`; independently re-verified by
+Card text (verbatim, via `krcg.load()` + `msgspec.json.encode()` in the
+project's `uv run` virtualenv (krcg 5.14), 2026-10-15, matching the raw
+snapshot saved to `data/cards/102230.json`; independently re-verified by
 `rules-auditor` against the live `api.krcg.org/card/102230` response, which
-agrees byte-for-byte. Note: `krcg.vtes` requires a plain `python -c "from
-krcg.vtes import VTES; VTES.load()"`; the project's `uv run` virtualenv has
-an older `krcg` without that submodule, the same pre-existing gap
-`tests/cards/test_octane.py`/`test_siarhei_levchenko.py` hit):
+agrees byte-for-byte. Note: the `krcg.vtes.VTES`/`.card_text` API this
+module originally cited only exists in plain `python`'s pip-installed
+krcg 4.18, not in this venv's newer 5.14 -- that snapshot was replaced
+2026-10-15 after it was found to have drifted from the current `api.krcg.org`
+data on several fields, `legal` among them):
     "Requires a baron. Usable by a locked baron.
     An Anarch you control gets +1 intercept. Also usable to unlock a locked
     Anarch you control; that Anarch attempts to block with +1 intercept,
     even if intercept is not yet needed."
 
-Rulings (verbatim, via krcg; `VTES["Organized Resistance"].rulings`):
+Rulings (verbatim, via krcg; `cards["Organized Resistance"].rulings`):
     - "Counts as requiring an Anarch (for eg. {Powerbase: Los Angeles})."
       [LSJ 20080603] [LSJ 20050128]
     - "If the action lacks a suitable target because of the unlock (e.g.
@@ -31,7 +32,7 @@ None`, `clans is None` -- no Discipline or clan requirement at all
 (confirmed by the installed package's own `disciplines == []`, `clans is
 None`); the only playability gate is the printed "Requires a baron"
 sentence plus the "Usable by a locked baron" relaxation. `cost is None`
-(free). Legal since 2021-12-01; confirmed on the active 2P allowed list
+(free). Legal since 2021-12-31; confirmed on the active 2P allowed list
 (`data/formats/2p/2026-10-03.json`).
 
 Status: implemented (OQ-26, `docs/OPEN_QUESTIONS.md`, resolved -- the

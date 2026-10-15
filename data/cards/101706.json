@@ -1,191 +1,360 @@
 {
-  "_i18n": {
+  "id": 101706,
+  "printed_name": "Second Tradition: Domain",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Historical",
+      "name": "The Second Tradition: Domain"
+    },
+    {
+      "type": "Historical",
+      "name": "Second Tradition: Domain, The"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Second Tradition: Domain"
+    },
+    {
+      "type": "Vernacular",
+      "name": "The Second Tradition"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Second Tradition, The"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Second Tradition"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Second Tradition"
+    },
+    {
+      "type": "Vernacular",
+      "name": "2nd Tradition"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Second Tradition: Domain"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Segunda tradición: El Dominio"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Deuxième Tradition : le Domaine"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300001,
+        "code": "Jyhad"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/jyhad/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300002,
+        "code": "VTES"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 1,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300014,
+        "code": "KMW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAl",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/kindred-most-wanted/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300031,
+        "code": "25th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/twenty-fifth-anniversary/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300032,
+        "code": "FB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/first-blood/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PL",
+          "copies": 6,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBh",
+          "copies": 8,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBH",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/secondtraditiondomain.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PL",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/secondtraditiondomain.jpg"
+    }
+  ],
+  "i18n": {
     "es": {
       "name": "Segunda tradición: El Dominio",
-      "card_text": "Requiere a un príncipe o justicar.\n+2 de intercepción. También utilizable por un príncipe o justicar girado, aunque aún no se necesite intercepción, para quemar 1 de sangre para enderezarse e intentar bloquear con +2 de intercepción.",
+      "text": "Requiere a un príncipe o justicar.\n+2 de intercepción. También utilizable por un príncipe o justicar girado, aunque aún no se necesite intercepción, para quemar 1 de sangre para enderezarse e intentar bloquear con +2 de intercepción.",
+      "flavor": "Nadie podrá desafiar tu juicio mientras se halle en tu dominio.",
+      "draft": "",
       "url": "https://static.krcg.org/card/es/secondtraditiondomain.jpg",
-      "flavor_text": "Nadie podrá desafiar tu juicio mientras se halle en tu dominio."
+      "cards": []
     },
     "fr": {
       "name": "Deuxième Tradition : le Domaine",
-      "card_text": "Requiert un prince ou justicar.\n+2 en interception. Utilisable également par un prince ou justicar incliné, même si de l'interception n'est pas encore nécessaire, pour brûler 1 point de sang pour se redresser et tenter de bloquer avec +2 en interception.",
+      "text": "Requiert un prince ou justicar.\n+2 en interception. Utilisable également par un prince ou justicar incliné, même si de l'interception n'est pas encore nécessaire, pour brûler 1 point de sang pour se redresser et tenter de bloquer avec +2 en interception.",
+      "flavor": "Nul ne peut mettre en doute ta parole en ton domaine.",
+      "draft": "",
       "url": "https://static.krcg.org/card/fr/secondtraditiondomain.jpg",
-      "flavor_text": "Nul ne peut mettre en doute ta parole en ton domaine."
+      "cards": []
     }
   },
-  "id": 101706,
-  "_name": "Second Tradition: Domain",
   "url": "https://static.krcg.org/card/secondtraditiondomain.jpg",
-  "aka": [
-    "Second Tradition: Domain, The"
-  ],
   "types": [
     "Reaction"
   ],
-  "card_text": "Requires a prince or justicar.\n[REACTION] +2 intercept.\n[REACTION] Only usable by a locked prince or justicar. This vampire burns 1 blood to unlock and attempt to block with +2 intercept, even if intercept is not yet needed.",
-  "_set": "Jyhad:U, VTES:U, CE:U/PTo/PV2, KMW:PAl3, KoT:U/PV3, 25th:3, FB:PV2, V5:PL6/PTo4/PV4, V5A:PBh8, NB:PTo3/PV2, NB2:PBH4, 30th:2, NB3:PL3",
-  "sets": {
-    "Jyhad": [
-      {
-        "release_date": "1994-08-16",
-        "rarity": "Uncommon"
-      }
-    ],
-    "Vampire: The Eternal Struggle": [
-      {
-        "release_date": "1995-09-15",
-        "rarity": "Uncommon"
-      }
-    ],
-    "Camarilla Edition": [
-      {
-        "release_date": "2002-08-19",
-        "rarity": "Uncommon"
-      },
-      {
-        "release_date": "2002-08-19",
-        "precon": "Toreador",
-        "copies": 1
-      },
-      {
-        "release_date": "2002-08-19",
-        "precon": "Ventrue",
-        "copies": 2
-      }
-    ],
-    "Kindred Most Wanted": [
-      {
-        "release_date": "2005-02-21",
-        "precon": "Alastors",
-        "copies": 3
-      }
-    ],
-    "Keepers of Tradition": [
-      {
-        "release_date": "2008-11-19",
-        "rarity": "Uncommon"
-      },
-      {
-        "release_date": "2008-11-19",
-        "precon": "Ventrue",
-        "copies": 3
-      }
-    ],
-    "Twenty-Fifth Anniversary": [
-      {
-        "release_date": "2019-08-16",
-        "copies": 3
-      }
-    ],
-    "First Blood": [
-      {
-        "release_date": "2019-10-01",
-        "precon": "Ventrue",
-        "copies": 2
-      }
-    ],
-    "Fifth Edition": [
-      {
-        "release_date": "2020-11-30",
-        "precon": "Lasombra",
-        "copies": 6
-      },
-      {
-        "release_date": "2020-11-30",
-        "precon": "Toreador",
-        "copies": 4
-      },
-      {
-        "release_date": "2020-11-30",
-        "precon": "Ventrue",
-        "copies": 4
-      }
-    ],
-    "Fifth Edition (Anarch)": [
-      {
-        "release_date": "2021-12-01",
-        "precon": "Banu Haqim",
-        "copies": 8
-      }
-    ],
-    "New Blood": [
-      {
-        "release_date": "2022-04-17",
-        "precon": "Toreador",
-        "copies": 3
-      },
-      {
-        "release_date": "2022-04-17",
-        "precon": "Ventrue",
-        "copies": 2
-      }
-    ],
-    "New Blood II": [
-      {
-        "release_date": "2022-08-01",
-        "precon": "Banu Haqim",
-        "copies": 4
-      }
-    ],
-    "Thirtieth Anniversary": [
-      {
-        "release_date": "2024-07-20",
-        "copies": 2
-      }
-    ],
-    "New Blood III": [
-      {
-        "release_date": "2025-05-31",
-        "precon": "Lasombra",
-        "copies": 3
-      }
-    ]
-  },
-  "scans": {
-    "Jyhad": "https://static.krcg.org/card/set/jyhad/secondtraditiondomain.jpg",
-    "Vampire: The Eternal Struggle": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/secondtraditiondomain.jpg",
-    "Camarilla Edition": "https://static.krcg.org/card/set/camarilla-edition/secondtraditiondomain.jpg",
-    "Kindred Most Wanted": "https://static.krcg.org/card/set/kindred-most-wanted/secondtraditiondomain.jpg",
-    "Keepers of Tradition": "https://static.krcg.org/card/set/keepers-of-tradition/secondtraditiondomain.jpg",
-    "Twenty-Fifth Anniversary": "https://static.krcg.org/card/set/twenty-fifth-anniversary/secondtraditiondomain.jpg",
-    "First Blood": "https://static.krcg.org/card/set/first-blood/secondtraditiondomain.jpg",
-    "Fifth Edition": "https://static.krcg.org/card/set/fifth-edition/secondtraditiondomain.jpg",
-    "Fifth Edition (Anarch)": "https://static.krcg.org/card/set/fifth-edition-anarch/secondtraditiondomain.jpg",
-    "New Blood": "https://static.krcg.org/card/set/new-blood/secondtraditiondomain.jpg",
-    "New Blood II": "https://static.krcg.org/card/set/new-blood-ii/secondtraditiondomain.jpg",
-    "Thirtieth Anniversary": "https://static.krcg.org/card/set/thirtieth-anniversary/secondtraditiondomain.jpg",
-    "New Blood III": "https://static.krcg.org/card/set/new-blood-iii/secondtraditiondomain.jpg"
-  },
+  "formats": [],
   "artists": [
     "L. A. Williams",
     "Durwin Talon",
     "Cos Koniotis"
   ],
-  "flavor_text": "None may challenge thy word while in thy domain.",
-  "ordered_sets": [
-    "Jyhad",
-    "Vampire: The Eternal Struggle",
-    "Camarilla Edition",
-    "Kindred Most Wanted",
-    "Keepers of Tradition",
-    "Twenty-Fifth Anniversary",
-    "First Blood",
-    "Fifth Edition",
-    "Fifth Edition (Anarch)",
-    "New Blood",
-    "New Blood II",
-    "Thirtieth Anniversary",
-    "New Blood III"
-  ],
-  "legality": "1994-08-16",
-  "name_variants": [
-    "The Second Tradition: Domain",
-    "Second Tradition: Domain, The",
-    "Second Tradition: Domain"
-  ],
+  "variants": [],
   "rulings": [
     {
-      "text": "The burn blood effect is not reduced by effects that reduce the cost of the card (eg. {Adana de Sforza}). [ANK 20210226]",
+      "text": "The burn blood effect is not reduced by effects that reduce the cost of the card (eg. {200011|Adana de Sforza}). [ANK 20210226]",
+      "group": "Burn blood for effect",
+      "reminder": false,
       "references": [
         {
           "text": "[ANK 20210226]",
@@ -195,17 +364,18 @@
       ],
       "cards": [
         {
-          "text": "{Adana de Sforza}",
           "id": 200011,
-          "name": "Adana de Sforza (G4)",
-          "usual_name": "Adana de Sforza",
-          "vekn_name": "Adana de Sforza"
+          "printed_name": "Adana de Sforza",
+          "unicity_suffix": "",
+          "suffix": "G4"
         }
       ],
-      "group": "Burn blood for effect"
+      "symbols": []
     },
     {
       "text": "The card cannot be played if the minion cannot afford to burn the blood. [ANK 20210226]",
+      "group": "Burn blood for effect (mandatory)",
+      "reminder": false,
       "references": [
         {
           "text": "[ANK 20210226]",
@@ -213,30 +383,34 @@
           "url": "https://www.vekn.net/forum/rules-questions/79045-paths-and-burn-blood-requrement?start=18#101726"
         }
       ],
-      "group": "Burn blood for effect (mandatory)"
+      "cards": [],
+      "symbols": []
     },
     {
-      "text": "If the action lacks a suitable target because of the unlock (e.g. {Ambush}), the block attempt still happens, as does the resulting combat if the block is successful. [LSJ 20090514]",
+      "text": "If the action lacks a suitable target because of the unlock (e.g. {100046|Ambush}), the block attempt still happens, as does the resulting combat if the block is successful. [LSJ 20090514]",
+      "group": "Unlocks and attempts to block",
+      "reminder": false,
       "references": [
         {
           "text": "[LSJ 20090514]",
           "label": "LSJ 20090514",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/PKQ6lQUBUOI/m/Zra43F1WXGcJ"
+          "url": "https://usenet.krcg.org/t/PKQ6lQUBUOI/#m1"
         }
       ],
       "cards": [
         {
-          "text": "{Ambush}",
           "id": 100046,
-          "name": "Ambush",
-          "usual_name": "Ambush",
-          "vekn_name": "Ambush"
+          "printed_name": "Ambush",
+          "unicity_suffix": "",
+          "suffix": ""
         }
       ],
-      "group": "Unlocks and attempts to block"
+      "symbols": []
     },
     {
       "text": "Can be used by a vampire who is already attempting to block. [ANK 20181122-2]",
+      "group": "Forces Block attempt",
+      "reminder": false,
       "references": [
         {
           "text": "[ANK 20181122-2]",
@@ -244,30 +418,34 @@
           "url": "https://www.vekn.net/forum/rules-questions/77176-eagle-s-sight-and-guardian-vigil#91965"
         }
       ],
-      "group": "Forces Block attempt"
+      "cards": [],
+      "symbols": []
     },
     {
-      "text": "Cannot be used if the vampire cannot attempt to block the action (eg. {Daring the Dawn}). [LSJ 20010714-2]",
+      "text": "Cannot be used if the vampire cannot attempt to block the action (eg. {100492|Daring the Dawn}). [LSJ 20010714-2]",
+      "group": "Forces Block attempt",
+      "reminder": false,
       "references": [
         {
           "text": "[LSJ 20010714-2]",
           "label": "LSJ 20010714-2",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/9U-jt3p3R_Q/m/WxDJwkgc25kJ"
+          "url": "https://usenet.krcg.org/t/9U-jt3p3R_Q/#m1"
         }
       ],
       "cards": [
         {
-          "text": "{Daring the Dawn}",
           "id": 100492,
-          "name": "Daring the Dawn",
-          "usual_name": "Daring the Dawn",
-          "vekn_name": "Daring the Dawn"
+          "printed_name": "Daring the Dawn",
+          "unicity_suffix": "",
+          "suffix": ""
         }
       ],
-      "group": "Forces Block attempt"
+      "symbols": []
     },
     {
       "text": "Does not ignore the normal prey, predator or target restrictions. [ANK 20180623]",
+      "group": "Forces Block attempt",
+      "reminder": false,
       "references": [
         {
           "text": "[ANK 20180623]",
@@ -275,9 +453,23 @@
           "url": "https://www.vekn.net/forum/rules-questions/76748-black-sunrise#88361"
         }
       ],
-      "group": "Forces Block attempt"
+      "cards": [],
+      "symbols": []
     }
   ],
-  "name": "Second Tradition: Domain",
-  "printed_name": "Second Tradition: Domain"
+  "cards": [],
+  "text": "Requires a prince or justicar.\n[REACTION] +2 intercept.\n[REACTION] Only usable by a locked prince or justicar. This vampire burns 1 blood to unlock and attempt to block with +2 intercept, even if intercept is not yet needed.",
+  "draft": "",
+  "flavor": "None may challenge thy word while in thy domain.",
+  "legal": "1994-09-15",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
 }

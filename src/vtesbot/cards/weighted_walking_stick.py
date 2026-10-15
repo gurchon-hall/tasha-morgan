@@ -1,10 +1,10 @@
 """Weighted Walking Stick (Combat). krcg id 102169.
 
-Card text (verbatim, via the installed `krcg` 4.18 `krcg.vtes.VTES` package
--- the project's `uv run` virtualenv has a newer `krcg` (5.14) whose own
-`krcg.load()` API has no `to_json()`/raw-schema equivalent, the same
-pre-existing gap `organized_resistance.py`'s own docstring notes --
-2026-10-14, matching the raw snapshot saved to `data/cards/102169.json`):
+Card text (verbatim, via `krcg.load()` + `msgspec.json.encode()` in the
+project's `uv run` virtualenv (krcg 5.14; `to_json()` is not available on
+this version, but `msgspec.json.encode()` on the loaded `Card` is the
+raw-schema equivalent), 2026-10-14, matching the raw snapshot saved to
+`data/cards/102169.json`):
     "Only usable before range is determined during the first round.
     Put this card with 5 counters on it on this minion; it becomes a
     melee weapon equipment that can strike: strength+1 damage. For each
@@ -12,7 +12,7 @@ pre-existing gap `organized_resistance.py`'s own docstring notes --
     from this card. Burn this card if it has no counters. A minion can
     have only one Weighted Walking Stick."
 
-Rulings (verbatim, via krcg; `VTES["Weighted Walking Stick"].rulings`):
+Rulings (verbatim, via krcg; `cards["Weighted Walking Stick"].rulings`):
     - "If the damage is reduced (eg. {Nephandus}) or not inflicted (eg.
       {Blood Fury}), the corresponding token is not burned (contrary to
       prevented damage)." [LSJ 20100519]

@@ -1,10 +1,10 @@
 """On the Qui Vive (Reaction). krcg id 101321.
 
-Card text (verbatim, via the installed `krcg` 4.18 `krcg.vtes.VTES` package
--- the project's `uv run` virtualenv has a newer `krcg` (5.14) whose own
-`krcg.load()` API has no `to_json()`/raw-schema equivalent, the same
-pre-existing gap `organized_resistance.py`'s own docstring notes --
-2026-10-14, matching the raw snapshot saved to `data/cards/101321.json`):
+Card text (verbatim, via `krcg.load()` + `msgspec.json.encode()` in the
+project's `uv run` virtualenv (krcg 5.14; `to_json()` is not available on
+this version, but `msgspec.json.encode()` on the loaded `Card` is the
+raw-schema equivalent), 2026-10-14, matching the raw snapshot saved to
+`data/cards/101321.json`):
     "Only usable by a locked minion. A minion can play only one On the Qui
     Vive between their unlock phases.
     This minion wakes (they ignore the requirement to be unlocked for
@@ -12,13 +12,13 @@ pre-existing gap `organized_resistance.py`'s own docstring notes --
     action). If this minion is an ally, they do not unlock as normal
     during their next unlock phase."
 
-Rulings (verbatim, via krcg; `VTES["On the Qui Vive"].rulings`):
+Rulings (verbatim, via krcg; `cards["On the Qui Vive"].rulings`):
     - "The minion need not attempt to block nor play further reaction
       cards: that is merely an option." [TOM 19951129]
     - "Can be played or used after action resolution (e.g. to use a
       reaction card like {Fast Reaction} after combat)." [LSJ 20091123]
     - "Can be played or used during the 'as a card is played' window,
-      except in combat, or when there is no action." [ANK 20210819]
+      except in combat, or when there is no action." [ANK 20210817]
 
 Card type: Reaction (`types == ["Reaction"]`). `clans == []`,
 `disciplines == []` -- no clan/Discipline requirement; the only

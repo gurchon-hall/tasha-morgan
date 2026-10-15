@@ -1,45 +1,75 @@
 {
   "id": 102273,
-  "_name": "Loup",
+  "printed_name": "Loup",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Loup"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/loup.jpg"
+    }
+  ],
+  "i18n": {},
   "url": "https://static.krcg.org/card/loup.jpg",
   "types": [
     "Action Modifier"
   ],
-  "clans": [
-    "Toreador"
-  ],
-  "card_text": "Only one Loup can be played each turn.\nPut this card in play. Toreador get +1 stealth. Burn this card at the end of the turn or after a Toreador performs a successful action.",
-  "_set": "30th:6",
-  "sets": {
-    "Thirtieth Anniversary": [
-      {
-        "release_date": "2024-07-20",
-        "copies": 6
-      }
-    ]
-  },
-  "scans": {
-    "Thirtieth Anniversary": "https://static.krcg.org/card/set/thirtieth-anniversary/loup.jpg"
-  },
+  "formats": [],
   "artists": [
     "Raquel Cornejo"
   ],
-  "ordered_sets": [
-    "Thirtieth Anniversary"
-  ],
-  "legality": "2024-07-20",
+  "variants": [],
   "rulings": [
     {
       "text": "Can be used even if the stealth is not currently needed. [LSJ 20011214-2]",
+      "group": "",
+      "reminder": false,
       "references": [
         {
           "text": "[LSJ 20011214-2]",
           "label": "LSJ 20011214-2",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/TinQ8ywzIHU/m/-zW_hcYbiD4J"
+          "url": "https://usenet.krcg.org/t/TinQ8ywzIHU/#m1"
         }
-      ]
+      ],
+      "cards": [],
+      "symbols": []
     }
   ],
-  "name": "Loup",
-  "printed_name": "Loup"
+  "cards": [],
+  "text": "Only one Loup can be played each turn.\nPut this card in play. Toreador get +1 stealth. Burn this card at the end of the turn or after a Toreador performs a successful action.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2024-08-19",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [
+    "Toreador"
+  ],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
 }

@@ -1,85 +1,142 @@
 {
-  "_i18n": {
+  "id": 101501,
+  "printed_name": "Protection Racket",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Protection Racket"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Chantaje a comerciantes"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Racket de protection"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300027,
+        "code": "AU"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anarch-unbound/protectionracket.jpg"
+    },
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PG",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/protectionracket.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/protectionracket.jpg"
+    },
+    {
+      "set": {
+        "id": 300040,
+        "code": "V5C"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PR",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-companion/protectionracket.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PR",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/protectionracket.jpg"
+    }
+  ],
+  "i18n": {
     "es": {
       "name": "Chantaje a comerciantes",
-      "card_text": "Requiere a un Anarquista.\n+1 de intercepción, con +1 de intercepción adicional si el vampiro activo tiene título.",
-      "url": "https://static.krcg.org/card/es/protectionracket.jpg"
+      "text": "Requiere a un Anarquista.\n+1 de intercepción, con +1 de intercepción adicional si el vampiro activo tiene título.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/protectionracket.jpg",
+      "cards": []
     },
     "fr": {
       "name": "Racket de protection",
-      "card_text": "Requiert un Anarch.\n+1 en interception, avec +1 en interception supplémentaire si le vampire qui agit est titré.",
-      "url": "https://static.krcg.org/card/fr/protectionracket.jpg"
+      "text": "Requiert un Anarch.\n+1 en interception, avec +1 en interception supplémentaire si le vampire qui agit est titré.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/protectionracket.jpg",
+      "cards": []
     }
   },
-  "id": 101501,
-  "_name": "Protection Racket",
   "url": "https://static.krcg.org/card/protectionracket.jpg",
   "types": [
     "Reaction"
   ],
-  "card_text": "Requires an Anarch.\n+1 intercept, with an additional +1 intercept if the acting minion is titled.",
-  "_set": "AU:C/2, V5A:PG4, NB2:PB2, V5C:PR4, NB3:PR2",
-  "sets": {
-    "Anarch Unbound": [
-      {
-        "release_date": "2016-01-17",
-        "rarity": "Common"
-      },
-      {
-        "release_date": "2016-01-17",
-        "copies": 2
-      }
-    ],
-    "Fifth Edition (Anarch)": [
-      {
-        "release_date": "2021-12-01",
-        "precon": "Gangrel",
-        "copies": 4
-      }
-    ],
-    "New Blood II": [
-      {
-        "release_date": "2022-08-01",
-        "precon": "Brujah",
-        "copies": 2
-      }
-    ],
-    "Fifth Edition (Companion)": [
-      {
-        "release_date": "2024-01-01",
-        "precon": "Ravnos",
-        "copies": 4
-      }
-    ],
-    "New Blood III": [
-      {
-        "release_date": "2025-05-31",
-        "precon": "Ravnos",
-        "copies": 2
-      }
-    ]
-  },
-  "scans": {
-    "Anarch Unbound": "https://static.krcg.org/card/set/anarch-unbound/protectionracket.jpg",
-    "Fifth Edition (Anarch)": "https://static.krcg.org/card/set/fifth-edition-anarch/protectionracket.jpg",
-    "New Blood II": "https://static.krcg.org/card/set/new-blood-ii/protectionracket.jpg",
-    "Fifth Edition (Companion)": "https://static.krcg.org/card/set/fifth-edition-companion/protectionracket.jpg",
-    "New Blood III": "https://static.krcg.org/card/set/new-blood-iii/protectionracket.jpg"
-  },
+  "formats": [],
   "artists": [
     "Ginés Quiñonero-Santiago"
   ],
-  "ordered_sets": [
-    "Anarch Unbound",
-    "Fifth Edition (Anarch)",
-    "New Blood II",
-    "Fifth Edition (Companion)",
-    "New Blood III"
-  ],
-  "legality": "2016-01-17",
+  "variants": [],
   "rulings": [
     {
-      "text": "The additional intercept is gained or lost if the acting vampire changes sect during the action (eg. with {The Red Question} or {Mask of a Thousand Faces}). [ANK 20190416]",
+      "text": "The additional intercept is gained or lost if the acting vampire changes sect during the action (eg. with {101575|The Red Question} or {101179|Mask of a Thousand Faces}). [ANK 20190416]",
+      "group": "",
+      "reminder": false,
       "references": [
         {
           "text": "[ANK 20190416]",
@@ -89,22 +146,34 @@
       ],
       "cards": [
         {
-          "text": "{The Red Question}",
           "id": 101575,
-          "name": "The Red Question",
-          "usual_name": "The Red Question",
-          "vekn_name": "Red Question, The"
+          "printed_name": "The Red Question",
+          "unicity_suffix": "",
+          "suffix": ""
         },
         {
-          "text": "{Mask of a Thousand Faces}",
           "id": 101179,
-          "name": "Mask of a Thousand Faces",
-          "usual_name": "Mask of a Thousand Faces",
-          "vekn_name": "Mask of a Thousand Faces"
+          "printed_name": "Mask of a Thousand Faces",
+          "unicity_suffix": "",
+          "suffix": ""
         }
-      ]
+      ],
+      "symbols": []
     }
   ],
-  "name": "Protection Racket",
-  "printed_name": "Protection Racket"
+  "cards": [],
+  "text": "Requires an Anarch.\n+1 intercept, with an additional +1 intercept if the acting minion is titled.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2016-02-16",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
 }

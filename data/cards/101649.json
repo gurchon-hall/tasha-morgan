@@ -1,123 +1,218 @@
 {
-  "_i18n": {
+  "id": 101649,
+  "printed_name": "Rolling with the Punches",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Rolling with the Punches"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Encajar los golpes"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Encaisser les coups"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300005,
+        "code": "Sabbat"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat/rollingwiththepunches.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/rollingwiththepunches.jpg"
+    },
+    {
+      "set": {
+        "id": 300007,
+        "code": "FN"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PR",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/final-nights/rollingwiththepunches.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/rollingwiththepunches.jpg"
+    },
+    {
+      "set": {
+        "id": 300015,
+        "code": "LoB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PA",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/legacies-of-blood/rollingwiththepunches.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/rollingwiththepunches.jpg"
+    },
+    {
+      "set": {
+        "id": 300032,
+        "code": "FB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/first-blood/rollingwiththepunches.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PH",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/rollingwiththepunches.jpg"
+    },
+    {
+      "set": {
+        "id": 300040,
+        "code": "V5C"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-companion/rollingwiththepunches.jpg"
+    }
+  ],
+  "i18n": {
     "es": {
       "name": "Encajar los golpes",
-      "card_text": "[for] Prevente de 1 de daño.\n[FOR] Quema 1 de sangre para prevenirte de todo el daño procedente de los ataques del siervo oponente este asalto.",
-      "url": "https://static.krcg.org/card/es/rollingwiththepunches.jpg"
+      "text": "[for] Prevente de 1 de daño.\n[FOR] Quema 1 de sangre para prevenirte de todo el daño procedente de los ataques del siervo oponente este asalto.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/rollingwiththepunches.jpg",
+      "cards": []
     },
     "fr": {
       "name": "Encaisser les coups",
-      "card_text": "[for] Prévenir 1 point de dégâts.\n[FOR] Brûler 1 point de sang pour prévenir tous les dégâts des frappes du serviteur opposé ce round-ci.",
-      "url": "https://static.krcg.org/card/fr/rollingwiththepunches.jpg"
+      "text": "[for] Prévenir 1 point de dégâts.\n[FOR] Brûler 1 point de sang pour prévenir tous les dégâts des frappes du serviteur opposé ce round-ci.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/rollingwiththepunches.jpg",
+      "cards": []
     }
   },
-  "id": 101649,
-  "_name": "Rolling with the Punches",
   "url": "https://static.krcg.org/card/rollingwiththepunches.jpg",
   "types": [
     "Combat"
   ],
-  "disciplines": [
-    "for"
-  ],
-  "card_text": "[for] Prevent 1 damage.\n[FOR] Burn 1 blood to prevent all damage from the opposing minion's strikes this round.",
-  "_set": "Sabbat:C, SW:C/PV, FN:PR, CE:PV3, LoB:PA3, Third:C, FB:PV2, V5C:PSal2, V5:PH4",
-  "sets": {
-    "Sabbat": [
-      {
-        "release_date": "1996-10-28",
-        "rarity": "Common"
-      }
-    ],
-    "Sabbat War": [
-      {
-        "release_date": "2000-10-31",
-        "rarity": "Common"
-      },
-      {
-        "release_date": "2000-10-31",
-        "precon": "Ventrue antitribu",
-        "copies": 1
-      }
-    ],
-    "Final Nights": [
-      {
-        "release_date": "2001-06-11",
-        "precon": "Ravnos",
-        "copies": 1
-      }
-    ],
-    "Camarilla Edition": [
-      {
-        "release_date": "2002-08-19",
-        "precon": "Ventrue",
-        "copies": 3
-      }
-    ],
-    "Legacies of Blood": [
-      {
-        "release_date": "2005-11-14",
-        "precon": "Akunanse",
-        "copies": 3
-      }
-    ],
-    "Third Edition": [
-      {
-        "release_date": "2006-09-04",
-        "rarity": "Common"
-      }
-    ],
-    "First Blood": [
-      {
-        "release_date": "2019-10-01",
-        "precon": "Ventrue",
-        "copies": 2
-      }
-    ],
-    "Fifth Edition (Companion)": [
-      {
-        "release_date": "2024-01-01",
-        "precon": "Salubri",
-        "copies": 2
-      }
-    ],
-    "Fifth Edition": [
-      {
-        "release_date": "2020-11-30",
-        "precon": "Hecata",
-        "copies": 4
-      }
-    ]
-  },
-  "scans": {
-    "Sabbat": "https://static.krcg.org/card/set/sabbat/rollingwiththepunches.jpg",
-    "Sabbat War": "https://static.krcg.org/card/set/sabbat-war/rollingwiththepunches.jpg",
-    "Final Nights": "https://static.krcg.org/card/set/final-nights/rollingwiththepunches.jpg",
-    "Camarilla Edition": "https://static.krcg.org/card/set/camarilla-edition/rollingwiththepunches.jpg",
-    "Legacies of Blood": "https://static.krcg.org/card/set/legacies-of-blood/rollingwiththepunches.jpg",
-    "Third Edition": "https://static.krcg.org/card/set/third-edition/rollingwiththepunches.jpg",
-    "First Blood": "https://static.krcg.org/card/set/first-blood/rollingwiththepunches.jpg",
-    "Fifth Edition (Companion)": "https://static.krcg.org/card/set/fifth-edition-companion/rollingwiththepunches.jpg",
-    "Fifth Edition": "https://static.krcg.org/card/set/fifth-edition/rollingwiththepunches.jpg"
-  },
+  "formats": [],
   "artists": [
     "Lee Carter"
   ],
-  "ordered_sets": [
-    "Sabbat",
-    "Sabbat War",
-    "Final Nights",
-    "Camarilla Edition",
-    "Legacies of Blood",
-    "Third Edition",
-    "First Blood",
-    "Fifth Edition",
-    "Fifth Edition (Companion)"
-  ],
-  "legality": "1996-10-28",
+  "variants": [],
   "rulings": [
     {
-      "text": "[FOR]The burn blood effect is not reduced by effects that reduce the cost of the card (eg. {Adana de Sforza}). [ANK 20210226]",
+      "text": "[FOR]The burn blood effect is not reduced by effects that reduce the cost of the card (eg. {200011|Adana de Sforza}). [ANK 20210226]",
+      "group": "Burn blood for effect",
+      "reminder": false,
       "references": [
         {
           "text": "[ANK 20210226]",
@@ -127,23 +222,24 @@
       ],
       "cards": [
         {
-          "text": "{Adana de Sforza}",
           "id": 200011,
-          "name": "Adana de Sforza (G4)",
-          "usual_name": "Adana de Sforza",
-          "vekn_name": "Adana de Sforza"
+          "printed_name": "Adana de Sforza",
+          "unicity_suffix": "",
+          "suffix": "G4"
         }
       ],
       "symbols": [
         {
           "text": "[FOR]",
-          "symbol": "F"
+          "symbol": "F",
+          "count": ""
         }
-      ],
-      "group": "Burn blood for effect"
+      ]
     },
     {
       "text": "[FOR]The card cannot be played if the minion cannot afford to burn the blood. [ANK 20210226]",
+      "group": "Burn blood for effect (mandatory)",
+      "reminder": false,
       "references": [
         {
           "text": "[ANK 20210226]",
@@ -151,26 +247,45 @@
           "url": "https://www.vekn.net/forum/rules-questions/79045-paths-and-burn-blood-requrement?start=18#101726"
         }
       ],
+      "cards": [],
       "symbols": [
         {
           "text": "[FOR]",
-          "symbol": "F"
+          "symbol": "F",
+          "count": ""
         }
-      ],
-      "group": "Burn blood for effect (mandatory)"
+      ]
     },
     {
       "text": "Cannot be used if there is no damage to prevent. [LSJ 20001114]",
+      "group": "Immideate damage prevention",
+      "reminder": false,
       "references": [
         {
           "text": "[LSJ 20001114]",
           "label": "LSJ 20001114",
-          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/qXSlM7Grq1c/m/cSDoQ9mw0z4J"
+          "url": "https://usenet.krcg.org/t/qXSlM7Grq1c/#m1"
         }
       ],
-      "group": "Immideate damage prevention"
+      "cards": [],
+      "symbols": []
     }
   ],
-  "name": "Rolling with the Punches",
-  "printed_name": "Rolling with the Punches"
+  "cards": [],
+  "text": "[for] Prevent 1 damage.\n[FOR] Burn 1 blood to prevent all damage from the opposing minion's strikes this round.",
+  "draft": "",
+  "flavor": "",
+  "legal": "1996-11-27",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "for"
+    ]
+  }
 }

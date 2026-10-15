@@ -1,17 +1,17 @@
 """Second Tradition: Domain (Reaction). krcg id 101706.
 
-Card text (verbatim, via the installed `krcg` 4.18 `krcg.vtes.VTES` package
--- the project's `uv run` virtualenv has a newer `krcg` (5.14) whose own
-`krcg.load()` API has no `to_json()`/raw-schema equivalent, the same
-pre-existing gap `organized_resistance.py`'s own docstring notes --
-2026-10-14, matching the raw snapshot saved to `data/cards/101706.json`):
+Card text (verbatim, via `krcg.load()` + `msgspec.json.encode()` in the
+project's `uv run` virtualenv (krcg 5.14; `to_json()` is not available on
+this version, but `msgspec.json.encode()` on the loaded `Card` is the
+raw-schema equivalent), 2026-10-14, matching the raw snapshot saved to
+`data/cards/101706.json`):
     "Requires a prince or justicar.
     [REACTION] +2 intercept.
     [REACTION] Only usable by a locked prince or justicar. This vampire
     burns 1 blood to unlock and attempt to block with +2 intercept, even
     if intercept is not yet needed."
 
-Rulings (verbatim, via krcg; `VTES["Second Tradition: Domain"].rulings`):
+Rulings (verbatim, via krcg; `cards["Second Tradition: Domain"].rulings`):
     - "The burn blood effect is not reduced by effects that reduce the
       cost of the card (eg. {Adana de Sforza})." [ANK 20210226]
     - "The card cannot be played if the minion cannot afford to burn the
@@ -30,11 +30,9 @@ Card type: Reaction (`types == ["Reaction"]`). `clans == []`,
 `disciplines == []` -- no clan/Discipline requirement at all; the only
 playability gate is the printed "Requires a prince or justicar" sentence.
 `blood_cost`/`pool_cost` are both `None` (clause 2's "burns 1 blood" is a
-card-text in-play cost, not a printed play cost). Legal since 1994-09-15
-(live `api.krcg.org` -- the installed krcg 4.18 package's bundled
-snapshot this module's text/rulings were otherwise fetched from has this
-one field stale); confirmed on the active 2P allowed list
-(`data/formats/2p/2026-10-03.json`) and in `data/decks/vekn-2p/toreador.json`.
+card-text in-play cost, not a printed play cost). Legal since 1994-09-15;
+confirmed on the active 2P allowed list (`data/formats/2p/2026-10-03.json`)
+and in `data/decks/vekn-2p/toreador.json`.
 
 Status: implemented. Structurally identical to Organized Resistance
 (krcg id 102230, `cards/organized_resistance.py`, OQ-26) -- "Requires a
