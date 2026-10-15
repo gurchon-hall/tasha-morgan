@@ -4,6 +4,7 @@ the 2P pool has no module here yet -- normal, not an error."""
 
 from . import (
     alexa_draper,
+    alice_chen,
     atiena,
     bonding,
     carmelita_neillson,
@@ -57,6 +58,7 @@ __all__: list[str] = []  # import-for-side-effect only; nothing is re-exported.
 
 _LOADED_MODULES = (
     alexa_draper,
+    alice_chen,
     atiena,
     bonding,
     carmelita_neillson,
