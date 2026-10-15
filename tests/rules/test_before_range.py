@@ -70,10 +70,12 @@ def test_before_range_offered_exactly_once_per_combat_even_across_two_rounds():
     actor = ScriptedAgent("P1")
     actor.expect("strike_choice", "hand_strike")
     actor.expect("mend_damage", "1")
-    actor.expect("press", "press")  # round 1: actor presses
+    actor.expect("press", "press")  # round 1, actor's turn: press
+    actor.expect("press", "end_combat")  # round 1, actor's turn: decline, closes the window
     actor.expect("strike_choice", "hand_strike")  # round 2
     defender = ScriptedAgent("P2")
     defender.expect("strike_choice", "hand_strike")
+    defender.expect("press", "end_combat")  # round 1, blocking's turn: decline
     defender.expect("strike_choice", "no_strike")  # round 2
     game.state.agents["P1"] = actor
     game.state.agents["P2"] = defender

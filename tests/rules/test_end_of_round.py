@@ -110,10 +110,12 @@ def test_end_of_round_fires_each_round_when_someone_presses():
     actor = ScriptedAgent("P1")
     actor.expect("strike_choice", "hand_strike")
     actor.expect("mend_damage", "1")
-    actor.expect("press", "press")  # round 1: actor presses
+    actor.expect("press", "press")  # round 1, actor's turn: press
+    actor.expect("press", "end_combat")  # round 1, actor's turn: decline, closes the window
     actor.expect("strike_choice", "hand_strike")  # round 2
     defender = ScriptedAgent("P2")
     defender.expect("strike_choice", "hand_strike")
+    defender.expect("press", "end_combat")  # round 1, blocking's turn: decline
     defender.expect("strike_choice", "no_strike")  # round 2
     game.state.agents["P1"] = actor
     game.state.agents["P2"] = defender
@@ -378,10 +380,12 @@ def test_blood_lost_to_damage_resets_fresh_every_round_of_real_combat():
     actor = ScriptedAgent("P1")
     actor.expect("strike_choice", "hand_strike")
     actor.expect("mend_damage", "1")  # round 1: V1 mends 1 of the 1 point taken
-    actor.expect("press", "press")
+    actor.expect("press", "press")  # round 1, actor's turn: press
+    actor.expect("press", "end_combat")  # round 1, actor's turn: decline, closes the window
     actor.expect("strike_choice", "hand_strike")  # round 2
     defender = ScriptedAgent("P2")
     defender.expect("strike_choice", "hand_strike")  # round 1
+    defender.expect("press", "end_combat")  # round 1, blocking's turn: decline
     defender.expect("strike_choice", "no_strike")  # round 2: B1 already wounded -> torpor ends it
     game.state.agents["P1"] = actor
     game.state.agents["P2"] = defender

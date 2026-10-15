@@ -187,12 +187,14 @@ def test_maneuver_grant_is_scoped_to_the_whole_combat_not_reset_each_round():
     # Round 1: use the once-per-combat grant.
     actor.expect("maneuver_choice", "saku_maneuver")
     actor.expect("strike_choice", "hand_strike")
-    actor.expect("press", "press")
+    actor.expect("press", "press")  # round 1, actor's turn: press
+    actor.expect("press", "end_combat")  # round 1, actor's turn: decline, closes the window
     # Round 2: the grant was already used this combat -- no maneuver_choice
     # decision at all, even though round_state-scoped mechanisms would reset.
     actor.expect("strike_choice", "hand_strike")
     defender = ScriptedAgent("P2")
     defender.expect("strike_choice", "no_strike")  # round 1
+    defender.expect("press", "end_combat")  # round 1, blocking's turn: decline
     defender.expect("strike_choice", "no_strike")  # round 2
     game.state.agents["P1"] = actor
     game.state.agents["P2"] = defender

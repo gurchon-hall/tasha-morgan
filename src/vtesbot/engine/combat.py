@@ -418,6 +418,9 @@ def _determine_range(
 
 
 def _ask_press(state: GameState, player: str, vampire: VampireInPlay) -> str:
+    """Offer one combatant's controller a single press/decline choice
+    (Rulebook §4 step 6). Returns `"press"`/`"end_combat"`; see
+    `_resolve_press` for how repeated asks combine."""
     choices = (
         Choice("press", "Press: continue combat to another round"),
         Choice("end_combat", "Do not press"),
@@ -426,6 +429,35 @@ def _ask_press(state: GameState, player: str, vampire: VampireInPlay) -> str:
         player=player, kind="press", choices=choices, context={"vampire": vampire.instance_id}
     )
     return state.ask(decision).value
+
+
+def _resolve_press(
+    state: GameState,
+    acting_player: str,
+    acting_vampire: VampireInPlay,
+    blocking_player: str,
+    blocking_vampire: VampireInPlay,
+) -> bool:
+    """Rulebook §4 step 6 (Press): alternates acting-first (OQ-3),
+    like `_determine_range`. A press toggles (not sets), making
+    two-in-a-row structurally impossible. Returns whether a press
+    remains."""
+    turns = (
+        (acting_player, acting_vampire),
+        (blocking_player, blocking_vampire),
+    )
+    turn_index = 0
+    consecutive_declines = 0
+    pressed = False
+    while consecutive_declines < 2 and not state.game_over:
+        player, vampire = turns[turn_index]
+        if _ask_press(state, player, vampire) == "press":
+            pressed = not pressed
+            consecutive_declines = 0
+        else:
+            consecutive_declines += 1
+        turn_index = 1 - turn_index
+    return pressed
 
 
 def _ask_end_of_round(
@@ -567,15 +599,14 @@ def run_combat(
                     break
             still_ready = _is_ready(acting_vampire) and _is_ready(blocking_vampire)
 
-        # --- Press step: acting minion's controller goes first (OQ-3).
-        # Skipped if the round already ended prematurely. ---
+        # --- Press step (Rulebook §4 step 6): alternating press/decline
+        # turns, acting minion's controller first (OQ-3). Skipped if the
+        # round already ended prematurely. ---
         pressed = False
         if still_ready and not state.game_over:
-            order = [(acting_player, acting_vampire), (blocking_player, blocking_vampire)]
-            for player, vampire in order:
-                if _ask_press(state, player, vampire) == "press":
-                    pressed = True
-                    break
+            pressed = _resolve_press(
+                state, acting_player, acting_vampire, blocking_player, blocking_vampire
+            )
 
         # --- End of Round step (Rulebook §4 step 7, OQ-29): fires exactly
         # once per round, on every exit path. ---

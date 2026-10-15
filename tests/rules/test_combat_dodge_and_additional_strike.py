@@ -262,7 +262,8 @@ def test_additional_strike_limit_resets_every_round_of_the_same_combat():
     actor.expect("strike_choice", "no_strike")
     actor.expect("additional_strike_choice", "use_extra")
     actor.expect("strike_choice", "no_strike")  # the additional strike itself
-    actor.expect("press", "press")
+    actor.expect("press", "press")  # round 1, actor's turn: press
+    actor.expect("press", "end_combat")  # round 1, actor's turn: decline, closes the window
     # Round 2: round_state was recreated fresh -- the same grant is offered
     # and usable again, proving it is round-scoped, not combat-scoped.
     actor.expect("strike_choice", "no_strike")
@@ -271,6 +272,7 @@ def test_additional_strike_limit_resets_every_round_of_the_same_combat():
     actor.expect("press", "end_combat")
     defender = ScriptedAgent("P2")
     defender.expect("strike_choice", "no_strike")  # round 1 normal pair
+    defender.expect("press", "end_combat")  # round 1, blocking's turn: decline
     defender.expect("strike_choice", "no_strike")  # round 2 normal pair
     defender.expect("press", "end_combat")  # only asked because P1 declined to press in round 2
     game.state.agents["P1"] = actor

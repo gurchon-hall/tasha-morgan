@@ -64,7 +64,11 @@ def test_combat_ends_immediately_when_a_combatant_enters_torpor():
 
 
 def test_pressing_continues_combat_to_another_round():
-    """If either combatant presses, combat continues to another round."""
+    """If either combatant presses and the press stands uncancelled,
+    combat continues to another round (Rulebook §4 step 6). The blocking
+    player must also get a press/decline turn in round 1 after the actor
+    presses -- the bug this test now guards against is the blocking player
+    never being asked at all once the actor pressed."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=2)
     builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=0)
@@ -73,10 +77,12 @@ def test_pressing_continues_combat_to_another_round():
     actor = ScriptedAgent("P1")
     actor.expect("strike_choice", "hand_strike")
     actor.expect("mend_damage", "1")
-    actor.expect("press", "press")  # round 1: actor presses
+    actor.expect("press", "press")  # round 1, actor's turn: press
+    actor.expect("press", "end_combat")  # round 1, actor's turn: decline, closes the window
     actor.expect("strike_choice", "hand_strike")  # round 2
     defender = ScriptedAgent("P2")
     defender.expect("strike_choice", "hand_strike")
+    defender.expect("press", "end_combat")  # round 1, blocking's turn: decline
     defender.expect("strike_choice", "no_strike")  # round 2
     game.state.agents["P1"] = actor
     game.state.agents["P2"] = defender
@@ -86,5 +92,41 @@ def test_pressing_continues_combat_to_another_round():
     # Round 2: B1 (already wounded from round 1, 0 blood) takes V1's strike
     # and is sent to torpor; combat ends there (no round-2 press decision).
     assert game.zone_of("B1") == "torpor"
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
+def test_double_press_cancels_and_ends_combat_after_the_round():
+    """Two offsetting presses (one each side) cancel out, matching
+    Rulebook §4 step 6's "to keep offsetting the effects of their
+    opponent's last press" -- the net uncancelled-press state is False, so
+    no further round begins. Also exercises "a minion cannot play two
+    presses in a row": the strict acting-then-blocking alternation means
+    neither side is ever asked for a second press without the other's turn
+    in between."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=2)
+    builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=2)
+    game = builder.build()
+
+    actor = ScriptedAgent("P1")
+    actor.expect("strike_choice", "no_strike")
+    actor.expect("press", "press")  # round 1, actor's turn: press
+    actor.expect("press", "end_combat")  # round 1, actor's turn: decline
+    defender = ScriptedAgent("P2")
+    defender.expect("strike_choice", "no_strike")
+    defender.expect("press", "press")  # round 1, blocking's turn: offsetting press
+    defender.expect("press", "end_combat")  # round 1, blocking's turn: decline, closes the window
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    run_combat(game.state, "P1", game.vampire("V1"), "P2", game.vampire("B1"))
+
+    # No round 2 was played: both vampires are untouched and still ready,
+    # and both scripted agents consumed every expectation above -- if
+    # combat had wrongly continued, the agents would have no scripted
+    # answer left for a round-2 strike_choice and would raise.
+    assert game.zone_of("V1") == "ready"
+    assert game.zone_of("B1") == "ready"
     actor.assert_exhausted()
     defender.assert_exhausted()

@@ -135,7 +135,8 @@ def test_saku_is_not_offered_the_maneuver_again_later_in_the_same_combat_after_u
     # Round 1: use the once-per-combat grant.
     actor.expect("maneuver_choice", "saku_pihlajamaki_maneuver")
     actor.expect("strike_choice", "hand_strike")
-    actor.expect("press", "press")
+    actor.expect("press", "press")  # round 1, actor's turn: press
+    actor.expect("press", "end_combat")  # round 1, actor's turn: decline, closes the window
     # Round 2: no maneuver_choice decision at all -- the grant is already used.
     # B1 (0 blood) is wounded in round 1 and sent to torpor by round 2's
     # strike, ending combat at once -- no round-2 press decision for either
@@ -144,6 +145,7 @@ def test_saku_is_not_offered_the_maneuver_again_later_in_the_same_combat_after_u
     actor.expect("strike_choice", "hand_strike")
     defender = ScriptedAgent("P2")
     defender.expect("strike_choice", "no_strike")  # round 1
+    defender.expect("press", "end_combat")  # round 1, blocking's turn: decline
     defender.expect("strike_choice", "no_strike")  # round 2
     game.state.agents["P1"] = actor
     game.state.agents["P2"] = defender
@@ -169,12 +171,14 @@ def test_saku_maneuver_grant_persists_across_rounds_but_resets_for_a_fresh_comba
     actor = ScriptedAgent("P1")
     actor.expect("maneuver_choice", "saku_pihlajamaki_maneuver")
     actor.expect("strike_choice", "hand_strike")
-    actor.expect("press", "press")
+    actor.expect("press", "press")  # round 1, actor's turn: press
+    actor.expect("press", "end_combat")  # round 1, actor's turn: decline, closes the window
     actor.expect("strike_choice", "hand_strike")  # round 2: no maneuver offered
     actor.expect("press", "end_combat")
     defender = ScriptedAgent("P2")
     defender.expect("strike_choice", "no_strike")
     defender.expect("mend_damage", "1")
+    defender.expect("press", "end_combat")  # round 1, blocking's turn: decline
     defender.expect("strike_choice", "no_strike")
     defender.expect("mend_damage", "1")
     defender.expect("press", "end_combat")
