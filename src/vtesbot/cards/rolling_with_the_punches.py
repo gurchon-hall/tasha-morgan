@@ -104,7 +104,7 @@ def _prevent_one_point(damage_box: dict[str, int]) -> None:
 
 
 def _prevent_all(damage_box: dict[str, int]) -> None:
-    """"[FOR] ... prevent all damage from the opposing minion's strikes
+    """ "[FOR] ... prevent all damage from the opposing minion's strikes
     this round" -- zeroes the *current* strike's damage; the rest of the
     round is covered separately by `mark_mandatory_full_prevention_active`
     (see module docstring)."""
@@ -113,7 +113,7 @@ def _prevent_all(damage_box: dict[str, int]) -> None:
 
 
 def _provide_prevent(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
-    """"[for] Prevent 1 damage." and "[FOR] Burn 1 blood to prevent all
+    """ "[for] Prevent 1 damage." and "[FOR] Burn 1 blood to prevent all
     damage from the opposing minion's strikes this round." -- see module
     docstring for each clause's own gates."""
     player = context["player"]
