@@ -12,33 +12,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-30 - Perfect Paragon - no intercept-decrease hook (status: resolved)
-
-- Situation: Perfect Paragon's (101387) superior clause ("Allies and
-  younger vampires get -1 intercept") is played by the *acting*
-  vampire to weaken a potential blocker's intercept, proactively and
-  persisting for the whole action ([LSJ 20020612]: usable any time
-  before resolution, no block attempt required) — but
-  `INTERCEPT_MODIFIER_HOOK` is only ever offered to the *defender*,
-  once a specific candidate is already fixed, as a one-shot delta. A
-  sweep found 16 other unimplemented cards sharing this exact shape.
-- Rules/interactions: the Rulebook glossary's Action Modifier
-  definition and the quoted ruling settle who plays it and when; the
-  rulebook's own stealth/intercept duration sentence means the effect
-  should persist and re-apply to every later-chosen qualifying
-  candidate, not just one fixed at activation time.
-- Solution: added `INTERCEPT_DECREASE_HOOK`, offered to the actor at
-  the top of `attempt_block`'s retry loop (before any candidate
-  exists, giving OQ-11's "re-offered on retry" for free); a provider's
-  `apply` appends an `ActiveInterceptDecrease(delta, qualifies)`
-  predicate (never itself exposed to an agent) to `pending`;
-  `_duel_stealth_intercept`'s intercept baseline is now the sum of
-  every recorded modifier whose predicate matches the currently-fixed
-  candidate, recomputed fresh each call (never floored at 0, per the
-  rulebook). Perfect Paragon itself and the rest of the family stay
-  unimplemented; the mechanism is complete. See OQ-31 for a scoping
-  question this entry's own first landing left open.
-
 ## OQ-31 - Perfect Paragon family - proactive-only or also reactive (status: resolved)
 
 - Situation: OQ-30's mechanism only offers `INTERCEPT_DECREASE_HOOK`
@@ -773,3 +746,86 @@ up an OQ number or the highest one used so far.
   resolve_referendum`). No card currently depends on this order;
   revisit before implementing a future card whose text is sensitive to
   who polls first in this specific referendum.
+
+## OQ-55: Soak - no round_state in damage-prevention hook (status: resolved)
+
+- Situation: Soak (krcg id 101817, Combat): "A vampire can play only
+  one Soak each round." Its basic/superior clauses ("[for] Prevent 2
+  non-aggravated damage." / "[FOR] Prevent 4 non-aggravated damage.")
+  are each fully implementable against the already-wired
+  `DAMAGE_PREVENTION_HOOK` (`engine/damage.py::apply_damage`'s
+  "Prevent step") -- gating on `damage_box["normal"] > 0`, capping
+  prevention at whatever is left [RTR 20041202], never touching
+  `damage_box["aggravated"]` [LSJ 20040812-2] [PIB 20130327], no
+  option offered once there is nothing left to prevent [LSJ 20001114].
+  Only the printed "once per round" limit has no mechanism:
+  `apply_damage` receives `round_state` as a parameter (the same
+  round-scoped scratch dict `engine/combat.py::run_combat` creates
+  fresh each round for every other per-round cap, e.g.
+  `ADDITIONAL_STRIKE_LIMIT_KEY`) but never threads it into the
+  `context` dict it builds for `hooks.offer_until_pass(state,
+  DAMAGE_PREVENTION_HOOK, player, context={"vampire": ...,
+  "damage": damage_box})` -- no card-side provider can see or write a
+  round-scoped flag at this hook. The restriction is reachable within
+  one round: `_resolve_strike_pair` is called again for each
+  additional-strike pair with the *same* `round_state`, so the same
+  vampire can take damage, hence be offered `DAMAGE_PREVENTION_HOOK`,
+  more than once in one round (e.g. an additional-strike grant landing
+  a second hit).
+- Sources read: krcg (`data/cards/101817.json`, installed krcg 4.18
+  `krcg.vtes.VTES`), card text and all 4 on-file rulings quoted above;
+  `src/vtesbot/engine/damage.py::apply_damage`,
+  `src/vtesbot/engine/combat.py` (`ROUND_STATE_CONTEXT_KEY`,
+  `_resolve_strike_pair`, `_ask_additional_strike`,
+  `additional_strike_limit_used`/`mark_additional_strike_limit_used` as
+  the existing round-scoped-cap convention).
+- Candidate readings: N/A -- a missing engine primitive, not a ruling
+  ambiguity. Only the data-plumbing approach (how `round_state` reaches
+  `DAMAGE_PREVENTION_HOOK`'s context) is undecided.
+- Impacted code/cards: `src/vtesbot/engine/damage.py::apply_damage`
+  needed `round_state` threaded into the `DAMAGE_PREVENTION_HOOK`
+  context, mirroring `ROUND_STATE_CONTEXT_KEY`'s existing convention.
+  Blocked Soak (101817). Also blocked Rolling with the Punches's own
+  (101649, `src/vtesbot/cards/rolling_with_the_punches.py`) superior
+  "[FOR] Burn 1 blood to prevent all damage from the opposing minion's
+  strikes this round." clause -- its basic "[for] Prevent 1 damage."
+  clause had no gap and was already implemented. `round_state` being
+  round-(hence combat-)scoped already identifies "the opposing minion"
+  implicitly (one `run_combat` call is always exactly one 1-on-1
+  combat, so no separate opponent identifier is actually needed once
+  `round_state` reaches the hook), but a second, distinct gap remained
+  even after that fix landed: this clause, once chosen, makes
+  prevention automatic and mandatory for every further strike that
+  round -- not a fresh optional choice re-offered each time.
+  `DAMAGE_PREVENTION_HOOK`'s own dispatch (`hooks.offer_until_pass`)
+  had no primitive for "this option, once taken, applies
+  unconditionally from now on this round" -- only "offered now, freely
+  declinable" (a provider mutating `damage_box` directly from inside
+  its own `offer`-time code, bypassing `apply` entirely, would have
+  dodged that contract rather than use it, and was rejected as exactly
+  the kind of card-module workaround CLAUDE.md §2 rules out). Both
+  gaps are now closed; see Solution.
+- Solution: `rules-engineer` threaded `ROUND_STATE_CONTEXT_KEY:
+  round_state` into `apply_damage`'s `DAMAGE_PREVENTION_HOOK` context
+  dict (`engine/damage.py`, which now also owns the canonical
+  `ROUND_STATE_CONTEXT_KEY` definition itself -- `engine/combat.py`
+  re-exports the same object, to avoid a circular import), exactly
+  mirroring `ADDITIONAL_STRIKE_LIMIT_KEY`'s existing read/write
+  convention; a provider missing `round_state` degrades to "cap
+  unused," same as every other round-scoped cap in this codebase.
+  Soak (101817) is now implemented against it (`cards/soak.py`,
+  `Status.IMPLEMENTED`), including a test reproducing the
+  two-separate-hits-in-one-round case that motivated this entry. For
+  the second gap, `rules-engineer` added `MANDATORY_FULL_PREVENTION_KEY`
+  / `mandatory_full_prevention_active` /
+  `mark_mandatory_full_prevention_active` (`engine/damage.py`): a
+  per-vampire-id, round-scoped flag that `apply_damage` itself checks
+  and, once set, unconditionally zeroes all further damage against
+  that vampire for the rest of the round before
+  `DAMAGE_PREVENTION_HOOK` is even dispatched -- distinct from the hook
+  itself, which still only ever offers a freely-declinable choice.
+  Rolling with the Punches (101649) is now fully implemented against
+  both primitives (`cards/rolling_with_the_punches.py`,
+  `Status.IMPLEMENTED`): its superior clause's `apply` burns 1 blood,
+  zeroes the triggering strike's own `damage_box`, and marks the flag
+  so every later strike this round is automatically covered.

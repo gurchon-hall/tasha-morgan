@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from . import hooks
-from .damage import apply_damage
+from .damage import ROUND_STATE_CONTEXT_KEY, apply_damage
 from .decision import Choice, Decision
 from .pool import simultaneous_pool_losses
 
@@ -35,11 +35,6 @@ CLOSE_RANGE = "close"
 LONG_RANGE = "long"
 """The two legal values of `GameState.combat_range` (Rulebook §4 Determine
 Range)."""
-
-ROUND_STATE_CONTEXT_KEY = "round_state"
-"""Context key for the shared, round-scoped scratch dict `run_combat`
-creates fresh each round (OQ-18/28); degrades to no entry when a hook is
-offered directly."""
 
 COMBAT_STATE_CONTEXT_KEY = "combat_state"
 """Context key for the shared, combat-scoped (not round-scoped) scratch

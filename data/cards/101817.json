@@ -1,0 +1,181 @@
+{
+  "_i18n": {
+    "es": {
+      "name": "Absorber",
+      "card_text": "Un vampiro puede jugar sólo un ejemplar de esta carta por asalto.\n[for] Prevente de 2 de daño no agravado.\n[FOR] Prevente de 4 de daño no agravado.",
+      "url": "https://static.krcg.org/card/es/soak.jpg",
+      "flavor_text": "Las heridas que ha sufrido habrían matado a un mortal y habrían destruído a muchos Vástagos. Jan sólo podía dar gracias a la sangre de Hardestadt y de los antiguos del clan Ventrue por haber sobrevivido tanto tiempo."
+    },
+    "fr": {
+      "name": "Absorber",
+      "card_text": "Un vampire ne peut en jouer qu'un seul exemplaire par round.\n[for] Prévenir 2 points de dégâts non aggravés.\n[FOR] Prévenir 4 points de dégâts non aggravés.",
+      "url": "https://static.krcg.org/card/fr/soak.jpg",
+      "flavor_text": "Les blessures qu'il avait subies auraient à coup sûr tué un mortel et auraient été fatales à de nombreux vampires. Jan ne pouvait que remercier le sang de Hardestadt et des anciens du clan Ventrue pour avoir survécu tout ce temps."
+    }
+  },
+  "id": 101817,
+  "_name": "Soak",
+  "url": "https://static.krcg.org/card/soak.jpg",
+  "types": [
+    "Combat"
+  ],
+  "disciplines": [
+    "for"
+  ],
+  "card_text": "A vampire can play only one Soak each round.\n[for] Prevent 2 non-aggravated damage.\n[FOR] Prevent 4 non-aggravated damage.",
+  "_set": "Gehenna:C, KMW:PAn2/PG2, LotN:PR3, KoT:C/PV6, HttB:PGar4/PSam2, FB:PV1, NB:PV2",
+  "sets": {
+    "Gehenna": [
+      {
+        "release_date": "2004-05-17",
+        "rarity": "Common"
+      }
+    ],
+    "Kindred Most Wanted": [
+      {
+        "release_date": "2005-02-21",
+        "precon": "Anathema",
+        "copies": 2
+      },
+      {
+        "release_date": "2005-02-21",
+        "precon": "Gangrel antitribu",
+        "copies": 2
+      }
+    ],
+    "Lords of the Night": [
+      {
+        "release_date": "2007-09-26",
+        "precon": "Ravnos",
+        "copies": 3
+      }
+    ],
+    "Keepers of Tradition": [
+      {
+        "release_date": "2008-11-19",
+        "rarity": "Common"
+      },
+      {
+        "release_date": "2008-11-19",
+        "precon": "Ventrue",
+        "copies": 6
+      }
+    ],
+    "Heirs to the Blood": [
+      {
+        "release_date": "2010-02-03",
+        "precon": "Gargoyles",
+        "copies": 4
+      },
+      {
+        "release_date": "2010-02-03",
+        "precon": "Samedi",
+        "copies": 2
+      }
+    ],
+    "First Blood": [
+      {
+        "release_date": "2019-10-01",
+        "precon": "Ventrue",
+        "copies": 1
+      }
+    ],
+    "New Blood": [
+      {
+        "release_date": "2022-04-17",
+        "precon": "Ventrue",
+        "copies": 2
+      }
+    ]
+  },
+  "scans": {
+    "Gehenna": "https://static.krcg.org/card/set/gehenna/soak.jpg",
+    "Kindred Most Wanted": "https://static.krcg.org/card/set/kindred-most-wanted/soak.jpg",
+    "Lords of the Night": "https://static.krcg.org/card/set/lords-of-the-night/soak.jpg",
+    "Keepers of Tradition": "https://static.krcg.org/card/set/keepers-of-tradition/soak.jpg",
+    "Heirs to the Blood": "https://static.krcg.org/card/set/heirs-to-the-blood/soak.jpg",
+    "First Blood": "https://static.krcg.org/card/set/first-blood/soak.jpg",
+    "New Blood": "https://static.krcg.org/card/set/new-blood/soak.jpg"
+  },
+  "artists": [
+    "Andrew Trabbold"
+  ],
+  "flavor_text": "The wounds he'd suffered would definitely have killed a mortal and would have destroyed many a Kindred. Jan had only the blood of Hardestadt and the elders of Clan Ventrue to thank that he'd survived this long.",
+  "ordered_sets": [
+    "Gehenna",
+    "Kindred Most Wanted",
+    "Lords of the Night",
+    "Keepers of Tradition",
+    "Heirs to the Blood",
+    "First Blood",
+    "New Blood"
+  ],
+  "legality": "2004-05-17",
+  "rulings": [
+    {
+      "text": "Cannot be used to prevent aggravated damage, even if the minion treats them as normal damage (eg. {Skin of Night}). [LSJ 20040812-2] [PIB 20130327]",
+      "references": [
+        {
+          "text": "[LSJ 20040812-2]",
+          "label": "LSJ 20040812-2",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/E7D1cVmAdqQ/m/MvPApbrT14gJ"
+        },
+        {
+          "text": "[PIB 20130327]",
+          "label": "PIB 20130327",
+          "url": "https://www.vekn.net/forum/rules-questions/46279-soak-vs-treat-agg-damage-as-normal-damage#46285"
+        }
+      ],
+      "cards": [
+        {
+          "text": "{Skin of Night}",
+          "id": 101790,
+          "name": "Skin of Night",
+          "usual_name": "Skin of Night",
+          "vekn_name": "Skin of Night"
+        }
+      ],
+      "group": "Prevent non-aggravated"
+    },
+    {
+      "text": "If fewer points of (preventable) damage are being resolved, then the effect prevents all of those points. [RTR 20041202]",
+      "references": [
+        {
+          "text": "[RTR 20041202]",
+          "label": "RTR 20041202",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/WUWh7AdooDU/m/vojisZMCSnsJ"
+        }
+      ],
+      "group": "Prevents more than 1 damage"
+    },
+    {
+      "text": "Unused prevention points can't be carried over unless optional ('can/may prevent'). [ANK 20200318] [LSJ 20001114]",
+      "references": [
+        {
+          "text": "[ANK 20200318]",
+          "label": "ANK 20200318",
+          "url": "https://www.vekn.net/forum/rules-questions/78525-apparition#99356"
+        },
+        {
+          "text": "[LSJ 20001114]",
+          "label": "LSJ 20001114",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/qXSlM7Grq1c/m/cSDoQ9mw0z4J"
+        }
+      ],
+      "group": "Prevents more than 1 damage"
+    },
+    {
+      "text": "Cannot be used if there is no damage to prevent. [LSJ 20001114]",
+      "references": [
+        {
+          "text": "[LSJ 20001114]",
+          "label": "LSJ 20001114",
+          "url": "https://groups.google.com/g/rec.games.trading-cards.jyhad/c/qXSlM7Grq1c/m/cSDoQ9mw0z4J"
+        }
+      ],
+      "group": "Immideate damage prevention"
+    }
+  ],
+  "name": "Soak",
+  "printed_name": "Soak"
+}

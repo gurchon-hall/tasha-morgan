@@ -38,3 +38,4 @@ an entry.
 | OQ-27 | `002.md` | Pursuit - maneuver/strike bundling question |
 | OQ-28 | `002.md` | Slam - maneuver committing a strike |
 | OQ-29 | `002.md` | Taste of Vitae - no end-of-round window |
+| OQ-30 | `002.md` | Perfect Paragon - no intercept-decrease hook |

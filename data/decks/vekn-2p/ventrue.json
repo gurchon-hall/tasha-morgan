@@ -194,14 +194,14 @@
       "type": "Combat",
       "count": 3,
       "krcg_id": 101649,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Soak",
       "type": "Combat",
       "count": 2,
       "krcg_id": 101817,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Weighted Walking Stick",
