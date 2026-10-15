@@ -1,11 +1,6 @@
-"""Resolves parsed decklist lines to krcg ids.
-
-Produces one `formats.ResolvedCryptEntry`/`ResolvedLibraryEntry` per
-distinct name (count carries the copy count), consumed directly by
-`formats.check_deck_legality` and `loader.check_and_build`. Unresolved/
-ambiguous names are collected, never guessed (CLAUDE.md no-guessing rule),
-mirroring `scripts/krcg_match.py`'s own "unmatched" output shape.
-"""
+"""Resolves parsed decklist lines to krcg ids, feeding
+`formats.check_deck_legality`/`loader.check_and_build`. Unresolved/
+ambiguous names are collected, never guessed (CLAUDE.md no-guessing rule)."""
 
 import krcg
 from krcg import utils as krcg_utils
@@ -18,9 +13,7 @@ from .parser import ParsedDecklist, Section
 
 def _base_name(card) -> str:
     """The vampire's unique name with krcg's disambiguating group suffix
-    stripped (mirrors `loader.py::_build_crypt_card`), so a name that took
-    several candidates to disambiguate (e.g. "Lucinde, Alastor (G7)") still
-    reports as its plain unique name."""
+    stripped (mirrors `loader.py::_build_crypt_card`)."""
     name = krcg_utils.vekn_name(card, ascii=False)
     if card.unicity_suffix:
         name = name.removesuffix(f" ({card.unicity_suffix})")

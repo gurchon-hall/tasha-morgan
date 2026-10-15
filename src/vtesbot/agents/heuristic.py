@@ -1,11 +1,6 @@
-"""Minimal rule-based agent (CLAUDE.md milestone 5, first pass).
-
-Every rule is a design choice, not a VtES fact: see `docs/DECISIONS.md`
-(D-8). Picks only from `decision.choices` and reads only the
-`Observation`; any decision kind or choice shape it does not recognise
-falls back to a seeded random pick, so it can never raise
-`IllegalChoiceError`.
-"""
+"""Minimal rule-based agent (milestone 5). Every rule is a design choice,
+not a VtES fact (D-8). Unrecognized decision kinds fall back to a seeded
+random pick, so it can never raise `IllegalChoiceError`."""
 
 import random
 

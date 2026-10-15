@@ -1,10 +1,6 @@
-"""Bot-vs-bot match runner (CLAUDE.md §5 `sim/`).
-
-Wraps `engine.setup.setup_game` + `engine.phases.turn.run_until_game_over`
-with reproducible agent construction: one top-level `seed` deterministically
-derives the setup seed and one seed per agent, so a whole match replays
-identically from that single integer.
-"""
+"""Bot-vs-bot match runner (CLAUDE.md §5 `sim/`). Wraps `setup_game` +
+`run_until_game_over`: one top-level `seed` deterministically derives the
+setup seed and each agent's seed."""
 
 import random
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -57,11 +53,8 @@ def run_match(
     max_turns: int = 1000,
     report_dir: Path | None = None,
 ) -> MatchResult:
-    """Runs one seeded match. `report_dir` is opt-in (default `None`): pass a
-    directory to also persist a readable summary + decision-log transcript
-    (`report.py::write_match_report`) -- for implementation-phase
-    verification, not something a day-to-day evaluation run needs to pay
-    for."""
+    """Runs one seeded match. `report_dir` (default `None`) opts in to a
+    persisted summary + decision-log transcript (`write_match_report`)."""
     seed_source = random.Random(seed)
     setup_seed = seed_source.randrange(2**31)
     agents = {p: agent_factory(p, seed_source.randrange(2**31)) for p in turn_order}
@@ -110,14 +103,9 @@ def run_many(
     report_dir: Path | None = None,
     report_sample_count: int = 3,
 ) -> BatchResult:
-    """Runs `run_match` once per seed, catching any exception per-seed so one
-    bad seed doesn't hide the rest of the batch (milestone 4's "1,000 seeded
-    games" bar is about finding and counting failures, not stopping at the
-    first one).
-
-    `report_dir` is opt-in: pass a directory to also persist
-    `batch_results.csv` + `crashes.log` + a few sample decision logs
-    (`report.py::write_batch_report`)."""
+    """Runs `run_match` per seed, catching exceptions so one bad seed
+    doesn't hide the rest (milestone 4). `report_dir` opts in to
+    `write_batch_report`'s CSV/crash-log/sample output."""
     batch = BatchResult()
     for seed in seeds:
         try:

@@ -1,10 +1,5 @@
-"""Loads one versioned VEKN 2-player allowed-card-list file.
-
-CLAUDE.md §4: the active dated file is selected by config, never implicit,
-so `load_allowed_list` always takes an explicit path -- the same contract
-`scripts/validate_deck.py --format <path>` enforces for the dev tooling
-this module's checks were ported from.
-"""
+"""Loads one versioned VEKN 2-player allowed-card-list file. The active
+dated file is selected by config, never implicit (CLAUDE.md §4)."""
 
 import json
 from collections.abc import Mapping

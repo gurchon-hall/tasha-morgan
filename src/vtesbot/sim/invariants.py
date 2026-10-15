@@ -11,9 +11,8 @@ class InvariantViolation(AssertionError):
 
 
 def check_no_activity_after_oust(log: ReplayLog) -> None:
-    """Rulebook §5 Ending the Game: once a Methuselah is ousted in a duel the
-    game is over, so no `"decision"`, `"forced"` or `"random"` entry may follow the
-    `"... is OUSTED"` event."""
+    """Rulebook §5: once ousted in a duel the game is over, so no
+    `"decision"`/`"forced"`/`"random"` entry may follow `"... is OUSTED"`."""
     oust_at: int | None = None
     for i, entry in enumerate(log.entries):
         if oust_at is None:
@@ -75,10 +74,9 @@ forced loss (Fame, OQ-43) is not attributable to them."""
 
 
 def is_self_oust(log: ReplayLog) -> bool:
-    """True if the ousted player's last pool loss was caused by their own
-    voluntary-pool decision (the nearest preceding decision or `"forced"`
-    lone-choice entry, one that spends pool; OQ-41/OQ-42). Forced own-pool
-    ousts are legal (OQ-43), not flagged."""
+    """True if the ousted player's last pool loss traces to their own
+    voluntary, pool-spending decision (OQ-41/42). Forced own-pool ousts
+    are legal (OQ-43), not flagged."""
     entries = log.entries
     for i, e in enumerate(entries):
         if e.kind != "event" or not (m := _OUST.match(e.data["description"])):

@@ -1,19 +1,6 @@
-"""Card effect modules and the implementation registry (CLAUDE.md SS5/SS6).
-
-Importing this package runs every known card module's top-level
-`register(CardRegistration(...))` call (`src/vtesbot/cards/registry.py`),
-populating the registry and (for any card whose module wires one)
-`engine/hooks.py` before anything queries either. CLAUDE.md SS6: "A card is
-implemented only when: effect code + test(s) ... + registry entry + listed
-in the active 2P list" -- modules imported here may be `status=blocked`
-(an unresolved ruling or a missing engine mechanism is documented in the
-module itself and in `docs/OPEN_QUESTIONS.md`) as well as `implemented`.
-
-Most of the active 2P pool (`data/decks/vekn-2p/*.json`) has *no* module
-listed here yet -- that is the normal, unremarkable state for a card nobody
-has implemented or found a reason to block yet (see the rules-engineer
-milestone-3 scaffolding report for the full classification), not an error.
-"""
+"""Card effect modules + implementation registry (CLAUDE.md §5/§6).
+Importing runs every module's `register(CardRegistration(...))`. Most of
+the 2P pool has no module here yet -- normal, not an error."""
 
 from . import (
     alexa_draper,

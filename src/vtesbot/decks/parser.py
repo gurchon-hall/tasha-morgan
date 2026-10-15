@@ -1,12 +1,6 @@
-"""Parses a plain-text VtES decklist into crypt/library name+count lines.
-
-Per the `deck-validation` skill: "Accept plain-text decklists with a crypt
-section and a library section, lines like `2x Card Name` or `2 Card Name`.
-Do not assume one site's export format; if a line cannot be parsed, report
-it with its line number instead of skipping it." Name resolution (krcg
-lookup) is a separate step (`decks/resolver.py`) -- this module only
-recognizes section headers and `<count> <name>` lines.
-"""
+"""Parses a plain-text decklist into crypt/library name+count lines
+(`deck-validation` skill). Unparseable lines are reported, not skipped.
+Name resolution is a separate step (`resolver.py`)."""
 
 import re
 from dataclasses import dataclass, field

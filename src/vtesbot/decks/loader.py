@@ -1,12 +1,6 @@
-"""Deck-construction legality verdict + expansion to an `engine.setup.DeckSpec`.
-
-Ties `formats.check_deck_legality` to a live krcg lookup for the per-card
-identity data `engine.cards.CryptCard`/`LibraryCard` need, so a resolved
-decklist becomes either a usable `DeckSpec` (legal) or a reported set of
-violations (illegal) -- mirrors the `deck-validation` skill's required
-report shape (LEGAL/ILLEGAL + violations with source; "not yet playable"
-kept separate, never affecting the verdict).
-"""
+"""Deck legality verdict + expansion to a `DeckSpec`. Ties
+`formats.check_deck_legality` to a live krcg lookup for per-card identity
+data, yielding either a usable `DeckSpec` or a reported violation set."""
 
 import krcg
 from krcg import utils as krcg_utils
@@ -151,10 +145,9 @@ def check_and_build(
 
 
 def load_resolved_fixture(fixture: dict) -> ResolvedDecklist:
-    """Adapts the curated `data/decks/vekn-2p/*.json` fixture shape (already
-    krcg-id-resolved by `scripts/krcg_match.py`) into a `ResolvedDecklist`,
-    so those fixtures can drive `check_and_build` directly as regression
-    tests without going through the plain-text parser/resolver."""
+    """Adapts a curated, krcg-id-resolved `data/decks/vekn-2p/*.json` fixture
+    into a `ResolvedDecklist`, so it can drive `check_and_build` directly
+    without the plain-text parser/resolver."""
     crypt = [
         ResolvedCryptEntry(krcg_id=c["krcg_id"], name=c["name"], count=c["count"], group=c["group"])
         for c in fixture["crypt"]

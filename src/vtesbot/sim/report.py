@@ -1,17 +1,6 @@
-"""Human-readable rendering of a match's outcome and full decision trail.
-
-`engine/log.py::ReplayLog` already records every decision, every random
-draw, and a few narrated `"event"` entries (pool changes, damage, torpor/
-burn, ousting). This module only adds presentation: a short summary and a
-full line-by-line transcript, each as an independently-testable formatting
-function. The `write_*` functions are the only I/O here (`sim/`, unlike
-`engine/`/`cards/`, is allowed to do I/O) and are opt-in via `report_dir`
-(`run_match`/`run_many`, `runner.py`), so a mature evaluation run isn't
-forced to pay for file I/O it no longer needs.
-
-Only type-hint imports from `.runner` (under `TYPE_CHECKING`) so `runner.py`
-can import this module at the top level without a circular import.
-"""
+"""Human-readable rendering of a match's outcome/decision trail from
+`ReplayLog`. `write_*` are the only I/O here (`sim/` is allowed to do I/O)
+and are opt-in via `report_dir`."""
 
 import csv
 import traceback
@@ -72,13 +61,8 @@ def write_match_report(result: MatchResult, directory: Path) -> tuple[Path, Path
 
 
 def write_batch_report(batch: BatchResult, directory: Path, *, sample_count: int = 3) -> Path:
-    """Writes `batch`'s outcome to `directory`: `batch_results.csv` (one row
-    per completed game), `crashes.log` (a full traceback per crashed seed),
-    and a `samples/` subfolder with `write_match_report`'s full output for
-    the first `sample_count` games -- enough to spot-check decision-level
-    detail without writing a file pair per game in a large batch. Returns
-    `directory`.
-    """
+    """Writes `batch_results.csv`, `crashes.log`, and a `samples/` subfolder
+    with `write_match_report`'s output for the first `sample_count` games."""
     directory.mkdir(parents=True, exist_ok=True)
 
     csv_path = directory / "batch_results.csv"

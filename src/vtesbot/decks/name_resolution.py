@@ -1,25 +1,6 @@
-"""Match a VEKN-style card name to a krcg card id.
-
-Shared by `decks/loader.py` and `scripts/krcg_match.py` so the production
-deck-import pipeline and that dev script don't maintain the matching logic
-twice.
-
-No-guessing rule (CLAUDE.md): `match_library`/`match_crypt` only ever
-auto-resolve an *exact* match (folding case/whitespace/accents and the
-"Name, The" <-> "The Name" VEKN convention). Anything else comes back
-unmatched with krcg's own fuzzy suggestion attached for a human to confirm.
-
-Crypt ambiguity: VEKN writes a vampire's name with no group suffix, but
-krcg keeps several printings (one per group) under that same base name.
-Confirmed with the user 2026-10-08: every vampire on the VEKN 2-player
-allowed list is printed at group >= 5, so when a crypt name has more than
-one krcg printing, the group >= `min_group` one is selected; if zero or
-more than one printing qualifies, the name is left unmatched with every
-candidate listed -- never guessed.
-
-Built against krcg >= 5.14 (see pyproject.toml): uses `krcg.load()` ->
-`CardDict`, not the old krcg 4.x `krcg.vtes.VTES` singleton.
-"""
+"""Match a VEKN card name to a krcg id, shared by `loader.py` and
+`krcg_match.py`. No-guessing rule: only an exact fold/alias match
+auto-resolves; >1 qualifying crypt printing is left unmatched, listed."""
 
 import unicodedata
 
@@ -35,11 +16,9 @@ def _fold(name: str) -> str:
 def build_indexes(
     cards: krcg.CardDict,
 ) -> tuple[dict[str, object], dict[str, list]]:
-    """Library cards keyed by both the VEKN "X, The" convention and krcg's
-    "The X" printed_name, so either spelling resolves. Crypt cards grouped
-    by base name (suffix stripped) so a bare VEKN name can be disambiguated
-    by group instead of grabbing whichever printing happens to own the
-    un-suffixed name."""
+    """Library cards keyed by both "X, The" and "The X". Crypt cards
+    grouped by base name (suffix stripped) so a bare name can be
+    disambiguated by group rather than grabbed by one printing."""
     library_index: dict[str, object] = {}
     crypt_by_base: dict[str, list] = {}
     for card in cards.cards():
