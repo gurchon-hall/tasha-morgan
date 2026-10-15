@@ -7,8 +7,12 @@ pool per contested card ...)." 2P variant: "contested crypt cards stay in
 play and usable; contest costs 1 pool each unlock phase or yield (burn)."
 """
 
+import pytest
+
 from helpers import ScenarioBuilder, ScriptedAgent
-from vtesbot.engine.phases.unlock import unlock_phase
+from vtesbot.engine import hooks
+from vtesbot.engine.decision import Choice
+from vtesbot.engine.phases.unlock import UNLOCK_PHASE_MANDATORY_EFFECT_HOOK, unlock_phase
 
 
 def test_unlock_phase_unlocks_ready_vampires():
@@ -120,3 +124,47 @@ def test_multiple_pending_unlock_effects_let_the_player_choose_order():
 
     assert game.pool_of("P1") == 10  # +1 from edge, -1 from contest
     agent.assert_exhausted()
+
+
+# --- `rules-auditor` finding: colliding mandatory-effect choice values -----
+
+
+def test_colliding_mandatory_effect_choice_values_raise_instead_of_dropping_one():
+    """MAJOR audit finding: `_mandatory_effect_options`'s dict comprehension
+    keys each `HookOption` by `f"mandatory:{option.choice.value}"` with no
+    collision guard -- two providers offering the same raw `Choice.value`
+    would silently collapse to one dict entry, permanently discarding the
+    first provider's `HookOption` (including its own `apply`) with no error,
+    no log, no `Decision` (mirrors `test_influence.py`'s own OQ-24 addendum
+    repro for the influence-phase equivalent). Repro: two toy providers both
+    choosing `Choice("burn_1_pool", ...)`. Before the fix: the second
+    provider's option would silently win the dict and the first's `apply`
+    would never run. After the fix: `unlock_phase` raises `ValueError`
+    before ever building the `unlock_phase_order` `Decision`."""
+
+    def _provider_a(state, context):
+        return [
+            hooks.HookOption(
+                choice=Choice("burn_1_pool", "Provider A burns 1 pool"),
+                apply=lambda s: None,
+            )
+        ]
+
+    def _provider_b(state, context):
+        return [
+            hooks.HookOption(
+                choice=Choice("burn_1_pool", "Provider B burns 1 pool"),
+                apply=lambda s: None,
+            )
+        ]
+
+    hooks.register(UNLOCK_PHASE_MANDATORY_EFFECT_HOOK, _provider_a)
+    hooks.register(UNLOCK_PHASE_MANDATORY_EFFECT_HOOK, _provider_b)
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=10)
+    builder.player("P2", pool=10)
+    game = builder.build()
+    game.state.agents["P1"] = ScriptedAgent("P1")  # never reached: raises first
+
+    with pytest.raises(ValueError, match="duplicate choice value"):
+        unlock_phase(game.state, "P1")

@@ -7,7 +7,7 @@ unlock phase, if this vampire is in torpor, that Methuselah burns 1 pool."
 One ruling on file: "Paying a pool during the unlock phase can be ordered
 with other unlock effects by the acting Methuselah, but must be handled
 before another Methuselah has the opportunity to use an unlock effect."
-[LSJ 20010121] -- exercised below by proving the mandatory unlock-phase
+[LSJ 20110121] -- exercised below by proving the mandatory unlock-phase
 pool burn resolves correctly alongside another, genuinely optional,
 unlock-phase effect (the Edge gain) in the very same `unlock_phase` call.
 
@@ -334,9 +334,10 @@ def test_mandatory_pool_burn_coexists_with_another_optional_unlock_effect_in_the
     """The ruling on file: pool payments during the unlock phase can be
     ordered with the acting Methuselah's other unlock effects, but must
     resolve before the impulse passes. Fame's own burn has no legal
-    alternative, so it cannot itself be reordered away -- proven here by
-    showing it still resolves correctly alongside a genuinely optional
-    effect (the Edge gain) in the same `unlock_phase` call."""
+    alternative once chosen, but the *order* in which the Methuselah
+    chooses it, relative to another, genuinely optional effect (the Edge
+    gain), is the player's own call -- both orders reach the same pool
+    total, proven here by resolving the Edge gain first."""
     builder = ScenarioBuilder(seed=1).edge_holder("P1")
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=0)
     builder.player("P2", pool=30)
@@ -344,6 +345,7 @@ def test_mandatory_pool_burn_coexists_with_another_optional_unlock_effect_in_the
     attach_card(game.state, game.vampire("V1"), controller="P1", krcg_id=KRCG_ID, name="Fame")
     game.apply_damage("V1", aggravated=1)
     agent = ScriptedAgent("P1")
+    agent.expect("unlock_phase_order", "edge_gain")
     agent.expect("edge_pool_gain", "gain_pool")
     game.state.agents["P1"] = agent
 
@@ -351,6 +353,43 @@ def test_mandatory_pool_burn_coexists_with_another_optional_unlock_effect_in_the
 
     # 30 - 3 (torpor-entry burn) - 1 (mandatory unlock-phase burn) + 1 (Edge gain) = 27.
     assert game.pool_of("P1") == 27
+    agent.assert_exhausted()
+
+
+def test_mandatory_pool_burn_is_orderable_after_a_contested_cards_own_pay_decision():
+    """Regression for a `rules-auditor`-confirmed MAJOR bug: the engine used
+    to run Fame's clause-4 burn unconditionally before any other
+    unlock-phase effect. At pool 2, with a separate contested vampire whose
+    own pay-or-yield decision costs 1 pool, running the mandatory burn
+    first dropped pool to 1 before that contest's own affordability gate
+    (`can_afford_without_ousting`, OQ-42) was ever checked, silently
+    removing "pay" from its offered choices even though the ruling
+    entitles the acting Methuselah to resolve the contest's own pay first
+    and the mandatory burn after. Proven here by scripting exactly that
+    order and asserting "pay" is actually offered."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=2).torpid_vampire("V1", capacity=3, blood=0)
+    p1.ready_vampire("P1-Contested", capacity=3, blood=1)
+    builder.player("P2", pool=30).ready_vampire("P2-Contested", capacity=3, blood=1)
+    game = builder.build()
+    # Attached after `V1` is already in torpor, by direct construction (not via
+    # `send_to_torpor`): isolates clause 4 (unlock-phase burn) from clause 3's
+    # own torpor-entry burn, which is not this test's own concern.
+    attach_card(game.state, game.vampire("V1"), controller="P1", krcg_id=KRCG_ID, name="Fame")
+    assert game.pool_of("P1") == 2
+    game.vampire("P1-Contested").contested_with = "P2-Contested"
+    game.vampire("P2-Contested").contested_with = "P1-Contested"
+
+    agent = ScriptedAgent("P1")
+    agent.expect("unlock_phase_order", "contest:P1-Contested")
+    agent.expect("contest_resolution", "pay")
+    game.state.agents["P1"] = agent
+
+    unlock_phase(game.state, "P1")
+
+    # 2 - 1 (contest pay, legal only while pool is still 2) - 1 (mandatory Fame burn) = 0.
+    assert game.pool_of("P1") == 0
+    assert game.vampire("P1-Contested").zone == "ready"  # paid, not yielded
     agent.assert_exhausted()
 
 

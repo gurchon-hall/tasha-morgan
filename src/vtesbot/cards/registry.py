@@ -70,9 +70,12 @@ class Hook(StrEnum):
     flips to torpor (`send_to_torpor`). Added for Fame's torpor pool-burn
     clause (OQ-22)."""
     UNLOCK_PHASE_MANDATORY_EFFECT = "unlock_phase_mandatory_effect"
-    """Mandatory per-provider reaction fired once per `unlock_phase` call,
-    distinct from the optional pay-or-yield loop in the same phase. Added
-    for Fame's unlock-phase pool-burn clause (OQ-22)."""
+    """Mandatory-but-orderable `hooks.offer`-style reaction, queried once
+    per iteration of `unlock_phase`'s own pay-or-yield/Edge-gain ordering
+    loop and folded into that same player-chosen order (not run first,
+    unconditionally) -- added for Fame's unlock-phase pool-burn clause
+    (OQ-22), per its own on-file ruling that such a payment "can be
+    ordered with other unlock effects"."""
     MANEUVER = "maneuver"
     """A card/ability-granted maneuver, offered during Determine Range,
     acting side first, alternating, closing on two declines (OQ-27/OQ-28).

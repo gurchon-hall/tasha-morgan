@@ -1,6 +1,12 @@
-"""Unlock phase: unlock all cards, then pay-or-yield/Edge-gain effects,
-player-chosen order (Rulebook §4). Contested ally/attachment/master mirror
-the crypt pattern; Fame pool-burn runs first (OQ-22).
+"""Unlock phase: unlock all cards, then pay-or-yield/Edge-gain/mandatory
+card effects, player-chosen order (Rulebook §4). Contested ally/
+attachment/master mirror the crypt pattern. A `UNLOCK_PHASE_MANDATORY_
+EFFECT_HOOK` effect (e.g. Fame's clause-4 burn) is folded into that same
+ordering choice rather than forced first: Fame's own on-file ruling [LSJ
+20110121] says such a payment "can be ordered with other unlock effects
+by the acting Methuselah, but must be handled before another Methuselah
+has the opportunity to use an unlock effect" -- orderable, not
+front-loaded (see `cards/fame.py` for the full citation).
 """
 
 from typing import TYPE_CHECKING
@@ -14,6 +20,7 @@ from ..attachments import (
 )
 from ..contests import resolve_one_contest
 from ..decision import Choice, Decision
+from ..hooks import HookOption
 from ..master_cards import resolve_one_master_card_contest
 from ..pool import gain_pool
 
@@ -22,9 +29,14 @@ if TYPE_CHECKING:
 
 EDGE_GAIN_EFFECT = "edge_gain"
 UNLOCK_PHASE_MANDATORY_EFFECT_HOOK = "unlock_phase_mandatory_effect"
-"""Mandatory per-provider hook (`hooks.run_effects`), run once per
-`unlock_phase`, distinct from the optional pay-or-yield loop. Added for
-Fame's OQ-22 pool-burn (no alternative); runs before that loop."""
+"""`hooks.offer`-style hook (one `HookOption` per currently-applicable
+mandatory effect, e.g. Fame's clause-4 burn), queried once per iteration
+of `_resolve_optional_effects_in_chosen_order`'s own loop and folded into
+its ordering choice. Mandatory because an unresolved option keeps
+reappearing every iteration (dedup by the option's own `Choice.value`,
+namespaced `"mandatory:"` by this module, not by the provider) -- the
+loop cannot end, and `unlock_phase` cannot return, while one remains
+(Fame's own ruling, quoted on this module's own docstring above)."""
 
 
 def unlock_phase(state: GameState, player: str) -> None:
@@ -32,9 +44,6 @@ def unlock_phase(state: GameState, player: str) -> None:
     _unlock_own_allies(state, player)
     _unlock_own_attachments(state, player)
     _unlock_own_master_cards(state, player)
-    hooks.run_effects(UNLOCK_PHASE_MANDATORY_EFFECT_HOOK, state, player=player)
-    if state.game_over:
-        return
     _resolve_optional_effects_in_chosen_order(state, player)
 
 
@@ -123,20 +132,47 @@ def _pending_effect_ids(state: GameState, player: str, resolved: set[str]) -> li
     return effects
 
 
+def _mandatory_effect_options(state: GameState, player: str) -> dict[str, HookOption]:
+    """Wraps each `UNLOCK_PHASE_MANDATORY_EFFECT_HOOK` option's own
+    `Choice.value` under an engine-owned `"mandatory:"` namespace, so the
+    ordering loop below can recognize it without any card-specific
+    knowledge (CLAUDE.md rule 6). Only one provider (Fame) registers this
+    hook today, but `ensure_unique_choice_values` guards the dict
+    comprehension below regardless: two future providers picking the same
+    raw `Choice.value` would otherwise silently collapse into one entry,
+    permanently dropping the first provider's `HookOption` with no error
+    (rules-auditor review) -- same convention as `action.py`'s
+    `STEALTH_MODIFIER_HOOK`/`block_attempt` and `politics.py`'s
+    `polling_step_cast` call sites."""
+    options = hooks.offer(UNLOCK_PHASE_MANDATORY_EFFECT_HOOK, state, player=player)
+    hooks.ensure_unique_choice_values(
+        tuple(option.choice for option in options),
+        decision_kind=UNLOCK_PHASE_MANDATORY_EFFECT_HOOK,
+    )
+    return {f"mandatory:{option.choice.value}": option for option in options}
+
+
 def _resolve_optional_effects_in_chosen_order(state: GameState, player: str) -> None:
     resolved: set[str] = set()
     while not state.game_over:
+        mandatory_options = _mandatory_effect_options(state, player)
         pending = _pending_effect_ids(state, player, resolved)
+        pending += [effect_id for effect_id in mandatory_options if effect_id not in resolved]
         if not pending:
             return
         if len(pending) == 1:
             effect_id = pending[0]
         else:
-            choices = tuple(Choice(e, e) for e in pending)
+            choices = tuple(
+                Choice(e, mandatory_options[e].choice.label if e in mandatory_options else e)
+                for e in pending
+            )
             decision = Decision(player=player, kind="unlock_phase_order", choices=choices)
             effect_id = state.ask(decision).value
         resolved.add(effect_id)
-        if effect_id == EDGE_GAIN_EFFECT:
+        if effect_id in mandatory_options:
+            mandatory_options[effect_id].apply(state)
+        elif effect_id == EDGE_GAIN_EFFECT:
             _resolve_edge_gain(state, player)
         elif effect_id.startswith("contest_ally:"):
             instance_id = effect_id.split(":", 1)[1]

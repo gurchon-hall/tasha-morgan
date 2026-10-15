@@ -18,22 +18,29 @@ play, one ordinary master-phase action (not a trifle).
 Rulings (one on file): "Paying a pool during the unlock phase can be
 ordered with other unlock effects by the acting Methuselah, but must be
 handled before another Methuselah has the opportunity to use an unlock
-effect." [LSJ 20010121] (reference URL
-<https://boardgamegeek.com/thread/609699/article/6142361#6142361>). The
-installed krcg package's date is cited here; the raw API snapshot
-`data/cards/100698.json` attributes the same ruling text to "[LSJ
-20110121]" with a different URL for the same BGG thread 609699 --
-substance identical in both, so the discrepancy is cosmetic (CLAUDE.md
-"never invent... a ruling" concerns substance, not which of two matching
-dates is used), with the installed package's date preferred going forward.
+effect." [LSJ 20110121] (reference URL
+<https://usenet.krcg.org/t/bgg-609699/#m1>). Confirmed verbatim and in
+date against the live `https://api.krcg.org/card/100698` endpoint, the
+raw snapshot `data/cards/100698.json`, and the project's own installed
+`krcg==5.14` (`uv run python -c "import krcg; krcg.load()['Fame']
+.rulings"`) -- an earlier revision of this citation read "20010121", a
+transcription error traced to a stray system-wide `krcg==4.18`
+install outside this project's `.venv`, not a second valid date.
 
 This confirms the unlock-phase pool burn is an *orderable* mandatory
 effect: the acting Methuselah may interleave it with their other
 unlock-phase effects, but must finish before passing the impulse. Fame's
-own clause 4 has no legal alternative (a flat, unconditional "burn 1
-pool"), so ordering has no effect on its own outcome either way (see
+own clause 4 has no legal alternative once chosen (a flat, unconditional
+"burn 1 pool"), but the *order* in which it is chosen, relative to the
+player's other unlock-phase effects (e.g. a contested card's own
+pay-or-yield), is not fixed -- an earlier revision of this module wired
+clause 4 to run unconditionally before any other unlock-phase effect,
+which a `rules-auditor` review found could silently remove "pay" from an
+unrelated contest's own choices by force-spending pool first. Fixed by
+returning a `HookOption` here instead of burning directly, so
 `engine/phases/unlock.py::UNLOCK_PHASE_MANDATORY_EFFECT_HOOK`'s own
-docstring for dispatch).
+ordering loop can fold it in alongside the player's other pending
+effects (see that module's own docstring for dispatch).
 
 Clauses:
 1. "Unique." -- governs contest, not initial legality to play (resolved by
@@ -63,13 +70,17 @@ Clauses:
    (OQ-22's addendum note (c): a future numeric/effect-granting attachment
    must gate its own contribution on `zone == "attached"`).
 4. "During each Methuselah's unlock phase, if this vampire is in torpor,
-   that Methuselah burns 1 pool." -- a second mandatory, no-choice
-   reaction, checked during *every* Methuselah's own unlock phase ("that
-   Methuselah" refers to "each Methuselah": both players, independently,
-   for as long as the host vampire stays in torpor), gated on the host's
-   current zone and Fame's own `zone == "attached"` (same contest-aware
-   gating as clause 3). Dispatched by `engine/phases/unlock.py::unlock_phase`
-   via the new `UNLOCK_PHASE_MANDATORY_EFFECT_HOOK`.
+   that Methuselah burns 1 pool." -- a second mandatory reaction, checked
+   during *every* Methuselah's own unlock phase ("that Methuselah" refers
+   to "each Methuselah": both players, independently, for as long as the
+   host vampire stays in torpor), gated on the host's current zone and
+   Fame's own `zone == "attached"` (same contest-aware gating as clause
+   3). Mandatory in outcome (no legal alternative once chosen) but
+   *orderable* relative to the player's other pending unlock-phase
+   effects, per the on-file ruling above -- dispatched as a `HookOption`
+   via `engine/phases/unlock.py::unlock_phase`'s
+   `UNLOCK_PHASE_MANDATORY_EFFECT_HOOK`, folded into that module's own
+   ordering loop rather than run unconditionally first.
 
 Status: IMPLEMENTED. OQ-22 built the Contested Cards machinery for a
 `CardAttachment` (`engine/attachments.py::attach_card`/
@@ -181,21 +192,44 @@ def _provide_vampire_enters_torpor(state: GameState, context: Mapping[str, Any])
     lose_pool(state, vampire.controller, 3)
 
 
-def _provide_unlock_phase_pool_burn(state: GameState, context: Mapping[str, Any]) -> None:
+def _provide_unlock_phase_pool_burn(
+    state: GameState, context: Mapping[str, Any]
+) -> list[HookOption]:
     """Clause 4: "During each Methuselah's unlock phase, if this vampire is
     in torpor, that Methuselah burns 1 pool." "That Methuselah" is whoever's
     unlock phase is currently running (`context["player"]`), independent of
     both Fame's own controller and the host vampire's own controller -- both
     Methuselahs burn 1 pool on their own respective unlock phases for as
-    long as the host vampire remains in torpor."""
+    long as the host vampire remains in torpor.
+
+    Returns a `HookOption` (no alternative -- picking it is the only way to
+    discharge it) rather than burning directly, per the on-file ruling [LSJ
+    20110121]: the payment "can be ordered with other unlock effects by the
+    acting Methuselah" -- `engine/phases/unlock.py`'s own ordering loop
+    folds this hook in alongside the player's other unlock-phase effects
+    instead of forcing it first (see that module's own docstring)."""
     player = context["player"]
+    options: list[HookOption] = []
     for vampire, attachment in iter_attachments(state):
         if (
             attachment.krcg_id == KRCG_ID
             and attachment.zone == "attached"
             and vampire.zone == "torpor"
         ):
-            lose_pool(state, player, 1)
+
+            def _apply(s: GameState, player: str = player) -> None:
+                lose_pool(s, player, 1)
+
+            options.append(
+                HookOption(
+                    choice=Choice(
+                        f"fame_unlock_burn:{attachment.instance_id}",
+                        f"Fame: burn 1 pool ({vampire.card.name} in torpor)",
+                    ),
+                    apply=_apply,
+                )
+            )
+    return options
 
 
 hooks.register(MASTER_PHASE_PLAY_HOOK, _provide_fame_master_phase_play)
