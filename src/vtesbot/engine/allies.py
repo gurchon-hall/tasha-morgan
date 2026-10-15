@@ -58,8 +58,17 @@ def recruit_ally(
 
 
 def detect_contest_on_recruit(state: GameState, recruited: AllyInPlay) -> None:
-    """Flag `recruited` and a same-named opposing ally as contested (§4, OQ-10; not
-    2P-overridden). Matched by `name`; self-contest unimplemented everywhere."""
+    """Flags `recruited` + a same-named opposing ally as contested
+    (§4, OQ-10; not 2P-overridden), matched by `name`. OQ-16: a
+    same-controller collision burns the incoming copy instead."""
+    own = state.players[recruited.controller]
+    for mine in own.allies.values():
+        if mine is recruited:
+            continue
+        if mine.zone == "ready" and mine.name == recruited.name:
+            recruited.zone = "burned"
+            recruited.locked = False
+            return
     opponent = state.other_player(recruited.controller)
     for other in state.players[opponent].allies.values():
         if other.zone == "ready" and other.name == recruited.name:

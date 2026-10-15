@@ -93,10 +93,22 @@ def attach_card(
 
 def detect_contest_on_attach(state: GameState, attachment: CardAttachment) -> None:
     """Flag `attachment` and a same-named opposing attachment as contested (§4, OQ-22;
-    not 2P-overridden). Matched by `name` vs. its controller's opponent
-    (OQ-16: self-contest unimplemented everywhere)."""
+    not 2P-overridden). Matched by `name` vs. its controller's opponent. Checked first
+    (OQ-16, quoted verbatim in `engine/contests.py::detect_contest_on_reveal`):
+    `attachment`'s own controller's other live same-named attachment burns the incoming
+    copy immediately instead of contesting."""
     if attachment.controller is None:
         return
+    for _vampire, mine in iter_attachments(state):
+        if mine is attachment:
+            continue
+        if (
+            mine.controller == attachment.controller
+            and mine.zone == "attached"
+            and mine.name == attachment.name
+        ):
+            attachment.zone = "burned"
+            return
     opponent = state.other_player(attachment.controller)
     for _vampire, other in iter_attachments(state):
         if other is attachment:

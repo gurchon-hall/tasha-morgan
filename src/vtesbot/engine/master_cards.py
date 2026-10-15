@@ -35,8 +35,18 @@ def bring_master_card_into_play(
 
 def detect_contest_on_bring_into_play(state: GameState, brought_in: MasterCardInPlay) -> None:
     """Flag `brought_in` and a same-named opposing instance as contested (§4, OQ-10/
-    OQ-23; not 2P-overridden). Only for a "Unique" card; matched by `name`; self-contest
-    unimplemented everywhere (OQ-16)."""
+    OQ-23; not 2P-overridden). Only for a "Unique" card; matched by `name`. Checked first
+    (OQ-16, quoted verbatim in `engine/contests.py::detect_contest_on_reveal`):
+    `brought_in`'s own controller's other live same-named instance burns the incoming
+    copy immediately instead of contesting."""
+    own = state.players[brought_in.controller]
+    for mine in own.master_cards.values():
+        if mine is brought_in:
+            continue
+        if mine.zone == "in_play" and mine.name == brought_in.name:
+            brought_in.zone = "burned"
+            brought_in.locked = False
+            return
     opponent = state.other_player(brought_in.controller)
     for other in state.players[opponent].master_cards.values():
         if other.zone == "in_play" and other.name == brought_in.name:

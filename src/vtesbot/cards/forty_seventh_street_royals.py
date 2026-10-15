@@ -20,9 +20,11 @@ Status: implemented. Depends on OQ-12 ("recruit ally" minion action), OQ-13
 "contested"`, `engine/allies.py::detect_contest_on_recruit`), and OQ-15
 (contest *resolution*: `engine/allies.py::resolve_one_ally_contest` plus
 `engine/phases/unlock.py::_unlock_own_allies`'s pay-1-pool-or-yield
-unlock-phase loop) -- all resolved. OQ-16 ("cannot contest yourself") stays
-open but is confirmed unreachable here: no deck-legality check yet lets one
-player hold two copies of the same unique card.
+unlock-phase loop) -- all resolved. OQ-16 ("cannot contest yourself",
+resolved) now burns a same-controller second copy of a unique card
+immediately on recruit rather than contesting it; still unreachable here, as
+no deck-legality check yet lets one player hold two copies of the same
+unique card.
 
 Two independent clauses, matching the registry's established "wire what the
 text says, nothing more" pattern (e.g. `threats.py`):
@@ -51,8 +53,8 @@ text says, nothing more" pattern (e.g. `threats.py`):
    the ally itself (`engine/allies.py::burn_ally`), not a card played from
    hand. `_provide_bleed_reduction` offers its option only to this ally's own
    controller, and only while this specific ally (matched by `krcg_id`; at
-   most one live copy per controller since it is Unique, OQ-16
-   notwithstanding) is `zone == "ready"`: a contested ally is "turned face
+   most one live copy per controller since it is Unique, enforced by OQ-16's
+   resolved fix) is `zone == "ready"`: a contested ally is "turned face
    down and out of play" (Rulebook §4 Advanced Rules > Contested Cards) for
    the whole contest and cannot react; a burned one is simply gone.
    `AllyInPlay.is_ready_unlocked` is deliberately not used: the card names no

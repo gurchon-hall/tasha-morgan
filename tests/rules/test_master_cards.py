@@ -173,10 +173,15 @@ def test_differently_named_cards_are_not_contested():
     assert other.zone == "in_play"
 
 
-def test_a_players_own_two_cards_of_the_same_name_do_not_contest_each_other():
-    """`detect_contest_on_bring_into_play` only ever checks the opponent
-    (mirrors `detect_contest_on_recruit`/`detect_contest_on_reveal`'s own
-    scope -- OQ-16, still open, unchanged by this entry)."""
+def test_a_players_own_two_cards_of_the_same_name_burn_the_incoming_copy_instead_of_contesting():
+    """OQ-16 (resolved), rulebook caution box quoted verbatim in
+    `engine/contests.py::detect_contest_on_reveal`: "you cannot voluntarily
+    contest cards with yourself (if some effect would force you to contest a
+    card with yourself, then you simply burn the incoming copy of the unique
+    card)." `detect_contest_on_bring_into_play` checks the controller's own
+    other live same-named instance first: the incoming (second) copy is
+    burned immediately, the first stays untouched, and no contest is
+    created."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30)
     builder.player("P2", pool=30)
@@ -191,9 +196,9 @@ def test_a_players_own_two_cards_of_the_same_name_do_not_contest_each_other():
     detect_contest_on_bring_into_play(game.state, second)
 
     assert first.contested_with is None
-    assert second.contested_with is None
     assert first.zone == "in_play"
-    assert second.zone == "in_play"
+    assert second.contested_with is None
+    assert second.zone == "burned"
 
 
 # --- Observation --------------------------------------------------------------

@@ -1,6 +1,6 @@
 """2P contested crypt cards: stay in play, 1 pool/unlock or yield (burn);
-same-named titles not contested. OQ-4 (open): trigger moment is ambiguous
--- resolved here as detection on reveal into play."""
+same-named titles not contested. OQ-4 (resolved, `docs/
+open_questions_archive/001.md`): contest triggers on reveal into play."""
 
 from typing import TYPE_CHECKING
 
@@ -12,6 +12,22 @@ if TYPE_CHECKING:
 
 
 def detect_contest_on_reveal(state: GameState, revealed: VampireInPlay) -> None:
+    """Rulebook §4 Advanced Rules > Contested Cards, plus the caution box's own "cannot
+    contest yourself" clause (OQ-16), quoted verbatim: "You cannot control more than one
+    of the same unique card at a time, and you cannot voluntarily contest cards with
+    yourself (if some effect would force you to contest a card with yourself, then you
+    simply burn the incoming copy of the unique card)." Checked first, against
+    `revealed`'s own controller's other live same-named copies -- a same-controller
+    collision burns `revealed` immediately and never reaches the opponent-side contest
+    check below."""
+    own = state.players[revealed.controller]
+    for mine in own.vampires.values():
+        if mine is revealed:
+            continue
+        if mine.zone in ("ready", "torpor") and mine.card.name == revealed.card.name:
+            revealed.zone = "burned"
+            revealed.locked = False
+            return
     opponent = state.other_player(revealed.controller)
     for other in state.players[opponent].vampires.values():
         if other.zone in ("ready", "torpor") and other.card.name == revealed.card.name:

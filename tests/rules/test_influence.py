@@ -196,6 +196,35 @@ def test_revealing_a_duplicate_name_flags_a_2p_contest():
     agent.assert_exhausted()
 
 
+def test_revealing_a_second_copy_of_ones_own_vampire_burns_it_instead_of_contesting():
+    """OQ-16 (resolved), Rulebook §4 Advanced Rules > Contested Cards caution
+    box, quoted verbatim in `engine/contests.py::detect_contest_on_reveal`:
+    "You cannot control more than one of the same unique card at a time, and
+    you cannot voluntarily contest cards with yourself (if some effect would
+    force you to contest a card with yourself, then you simply burn the
+    incoming copy of the unique card)." Revealing a second same-named vampire
+    while the controller's own first copy is already live burns the incoming
+    (revealed) copy immediately; the first copy is untouched and no contest
+    is created, even though no opponent copy exists at all here."""
+    builder = ScenarioBuilder(seed=1, first_influence_phase_used=True)
+    p1 = builder.player("P1", pool=30)
+    p1.ready_vampire("V1", capacity=1, blood=1, name="Shared Name")
+    p1.uncontrolled_vampire("V2", capacity=1, blood=1, name="Shared Name")
+    builder.player("P2", pool=30)
+    game = builder.build()
+    agent = ScriptedAgent("P1")
+    agent.expect("influence_action", "reveal:V2")
+    game.state.agents["P1"] = agent
+
+    influence_phase(game.state, "P1")
+
+    assert game.vampire("V1").zone == "ready"
+    assert game.vampire("V1").contested_with is None
+    assert game.vampire("V2").zone == "burned"
+    assert game.vampire("V2").contested_with is None
+    agent.assert_exhausted()
+
+
 # --- OQ-24: INFLUENCE_PHASE_ACTION_HOOK (Wider View's own fake stand-ins) ----
 
 

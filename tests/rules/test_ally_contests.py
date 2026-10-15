@@ -88,12 +88,14 @@ def test_differently_named_allies_are_not_contested():
     assert other.zone == "ready"
 
 
-def test_a_players_own_two_allies_of_the_same_name_do_not_contest_each_other():
-    """`detect_contest_on_recruit` only ever checks the opponent (mirrors
-    `detect_contest_on_reveal`'s own scope, `engine/contests.py`) -- normal
-    deck construction cannot reach this in the first place (CLAUDE.md "no
-    guessing ahead of a sourced need": the rulebook's own "contest yourself"
-    edge case is equally unimplemented on the vampire side today)."""
+def test_a_players_own_two_allies_of_the_same_name_burn_the_incoming_copy_instead_of_contesting():
+    """OQ-16 (resolved), rulebook caution box quoted verbatim in
+    `engine/contests.py::detect_contest_on_reveal`: "you cannot voluntarily
+    contest cards with yourself (if some effect would force you to contest a
+    card with yourself, then you simply burn the incoming copy of the unique
+    card)." `detect_contest_on_recruit` checks the controller's own other
+    live same-named ally first: the incoming (second) copy is burned
+    immediately, the first stays untouched, and no contest is created."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30)
     builder.player("P2", pool=30)
@@ -108,9 +110,9 @@ def test_a_players_own_two_allies_of_the_same_name_do_not_contest_each_other():
     detect_contest_on_recruit(game.state, second)
 
     assert first.contested_with is None
-    assert second.contested_with is None
     assert first.zone == "ready"
-    assert second.zone == "ready"
+    assert second.contested_with is None
+    assert second.zone == "burned"
 
 
 def test_contested_allies_still_show_their_full_identity_to_both_players():

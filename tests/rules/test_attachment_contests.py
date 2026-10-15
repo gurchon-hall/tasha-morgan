@@ -103,13 +103,15 @@ def test_differently_named_attachments_are_not_contested():
     assert other.zone == "attached"
 
 
-def test_a_players_own_two_attachments_of_the_same_name_do_not_contest_each_other():
-    """`detect_contest_on_attach` only ever checks the opponent of the
-    attachment's own `controller` (mirrors `detect_contest_on_reveal`'s/
-    `detect_contest_on_recruit`'s identical scope boundary) -- normal deck
-    construction cannot reach this in the first place (CLAUDE.md "no
-    guessing ahead of a sourced need": the rulebook's own "contest yourself"
-    edge case, OQ-16, is equally unimplemented on the other two paths)."""
+def test_a_players_own_two_attachments_of_the_same_name_burn_the_incoming_copy():
+    """OQ-16 (resolved), rulebook caution box quoted verbatim in
+    `engine/contests.py::detect_contest_on_reveal`: "you cannot voluntarily
+    contest cards with yourself (if some effect would force you to contest a
+    card with yourself, then you simply burn the incoming copy of the unique
+    card)." `detect_contest_on_attach` checks the attachment's own
+    controller's other live same-named attachment first: the incoming
+    (second) copy is burned immediately, the first stays untouched, and no
+    contest is created."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3).ready_vampire("V1b", capacity=3)
     builder.player("P2", pool=30)
@@ -132,9 +134,9 @@ def test_a_players_own_two_attachments_of_the_same_name_do_not_contest_each_othe
     detect_contest_on_attach(game.state, second)
 
     assert first.contested_with is None
-    assert second.contested_with is None
     assert first.zone == "attached"
-    assert second.zone == "attached"
+    assert second.contested_with is None
+    assert second.zone == "burned"
 
 
 def test_an_attachments_controller_may_differ_from_the_vampires_own_controller():
