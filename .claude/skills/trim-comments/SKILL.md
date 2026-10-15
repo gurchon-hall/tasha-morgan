@@ -67,15 +67,55 @@ sources (§2) and cover ruling-driven edge cases a reader couldn't
 infer from the code."*
 
 "Minimal" does not mean "short." The established house style for a
-rule-implementing module (see any file in `src/vtesbot/cards/` or
-the module docstrings in `src/vtesbot/engine/action.py`,
-`hooks.py`, `turn_cards.py`) is a *long* docstring: verbatim card
-text, verbatim rulings with their citation codes, the OQ(s) that
-settled an ambiguity, and the engine-wiring rationale. That density
-is the point -- every sentence in it answers a "why would the code
-do it this way" question a reader would otherwise have to go dig up
-from KRCG, the rulebook or `docs/OPEN_QUESTIONS.md` themselves. Do
-not shorten these just to shorten them.
+rule-implementing module (see any file in `src/vtesbot/cards/`) is a
+*long* docstring: verbatim card text, verbatim rulings with their
+citation codes, the OQ(s) that settled an ambiguity, and the
+engine-wiring rationale. That density is the point -- every sentence
+in it answers a "why would the code do it this way" question a
+reader would otherwise have to go dig up from KRCG, the rulebook or
+`docs/OPEN_QUESTIONS.md` themselves. Do not shorten these just to
+shorten them.
+
+**Exception: every file under `src/vtesbot/` except individual card
+modules in `cards/`** (`engine/` including `phases/`, `agents/`,
+`decks/`, `formats/`, `sim/`, top-level modules, and within `cards/`
+itself: `registry.py`, `_shared.py`, `__init__.py` -- anything that
+isn't one card's own implementation file). These are
+plumbing/infrastructure, not card-text implementations, and every
+comment or docstring in them must be at most 200 characters
+(whitespace-collapsed, i.e. the content length, not the wrapped
+line count). A card's own module (e.g. `cards/diana_iadanza.py`)
+keeps the normal long-docstring house style above. Compact a
+citation to a short pointer (`OQ-32`, `D-5`, `Rulebook §5`) instead
+of quoting the ruling or rationale verbatim --
+the full text already lives in `docs/OPEN_QUESTIONS.md` /
+`docs/DECISIONS.md`, so the docstring only needs to point there, not
+repeat it. `src/vtesbot/engine/hooks.py` is the worked example: every
+docstring in it was trimmed to this cap. Verify with:
+
+```bash
+python3 -c "
+import re, glob
+
+def is_card_module(path):
+    # one card's own implementation file, e.g. cards/diana_iadanza.py
+    return (
+        path.startswith('src/vtesbot/cards/')
+        and path not in ('src/vtesbot/cards/__init__.py', 'src/vtesbot/cards/_shared.py', 'src/vtesbot/cards/registry.py')
+    )
+
+files = [
+    f for f in glob.glob('src/vtesbot/**/*.py', recursive=True)
+    if not is_card_module(f)
+]
+for f in files:
+    text = open(f, encoding='utf-8').read()
+    for m in re.finditer(r'\"\"\"(.*?)\"\"\"', text, re.S):
+        s = re.sub(r'\s+', ' ', m.group(1).strip())
+        if len(s) > 200:
+            print(f, len(s), s[:60])
+"
+```
 
 What actually gets trimmed:
 
