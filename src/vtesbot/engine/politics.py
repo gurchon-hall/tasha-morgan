@@ -166,10 +166,21 @@ def resolve_referendum(
     action_pending: dict[str, Any] | None = None,
     *,
     pool_reserve: Mapping[str, int] | None = None,
+    include_caller_card_vote: bool = True,
 ) -> tuple[int, int, list[tuple[str, str, int, str]]]:
     """Run an unblocked referendum's polling and tally (Rulebook §4 steps
     2-3, OQ-6). `action_pending` (OQ-36) receives the result;
-    `pool_reserve` (OQ-42/43/45) protects a mandatory post-tally cost."""
+    `pool_reserve` (OQ-42/43/45) protects a mandatory post-tally cost.
+    `include_caller_card_vote` (default True, matching every existing call
+    site) gates the "+1 vote for casting a political action card" source
+    (Rulebook §4 Politics > Gaining Votes > Political Action Cards clause
+    1): true for every ordinary referendum, which by construction (this
+    engine only ever reaches `resolve_referendum` via a political action
+    actually cast) always has a caller who cast one. `False` only for the
+    automatic Blood Hunt referendum (`engine/diablerie.py::resolve_diablerie`
+    -- see that module's own docstring): nobody cast a political action
+    card to trigger it, so granting that vote regardless would be a free,
+    unearned vote for whichever side is passed as `caller_player`."""
     pending: dict[str, Any] = {
         "extra_sources": [],
         "forced_abstain": set(),
@@ -178,7 +189,13 @@ def resolve_referendum(
     _run_pre_cast_hook_window(state, caller_player, other_player, caller_vampire, pending)
     if state.game_over:
         return 0, 0, []
-    sources = _collect_vote_sources(state, caller_player, other_player, pending)
+    sources = _collect_vote_sources(
+        state,
+        caller_player,
+        other_player,
+        pending,
+        include_caller_card_vote=include_caller_card_vote,
+    )
     votes_for, votes_against, casts = _cast_votes(
         state,
         caller_player,
@@ -255,14 +272,29 @@ def _collect_vote_sources(
     caller_player: str,
     other_player: str,
     pending: dict[str, Any],
+    *,
+    include_caller_card_vote: bool = True,
 ) -> list[VoteSource]:
     """Enumerate every vote source either Methuselah may cast this polling
     step (Rulebook §4), minus any `pending["forced_abstain"]` source
-    ids."""
+    ids.
+
+    The "burn a political action card from hand" source (clause 2 of
+    Gaining Votes > Political Action Cards) is normally offered only to
+    `other_player`: `caller_player` already claimed their one-per-
+    Methuselah political-action-card vote via the "cast" source (clause
+    1) below, and "[e]ach Methuselah can gain no more than 1 vote from
+    political action cards" forbids a second. When
+    `include_caller_card_vote` is False (the automatic Blood Hunt
+    referendum, `engine/diablerie.py`: nobody cast anything, so neither
+    side has claimed that one-per-Methuselah allotment yet), `caller_player`
+    becomes eligible for the from-hand source too -- the two players are
+    then fully symmetric vote sources, and which one is passed as
+    `caller_player` makes no difference to actual voting rights."""
     forced_abstain: set[str] = pending.get("forced_abstain", set())
     sources: list[VoteSource] = []
     pac_source_id = f"political_action_card:{caller_player}"
-    if pac_source_id not in forced_abstain:
+    if include_caller_card_vote and pac_source_id not in forced_abstain:
         sources.append(
             VoteSource(
                 source_id=pac_source_id,
@@ -271,19 +303,23 @@ def _collect_vote_sources(
                 label="Political action card",
             )
         )
-    pac_hand_source_id = f"political_action_card_hand:{other_player}"
-    if pac_hand_source_id not in forced_abstain and _has_political_action_card_in_hand(
-        state, other_player
-    ):
-        sources.append(
-            VoteSource(
-                source_id=pac_hand_source_id,
-                player=other_player,
-                votes=1,
-                label="Burn a political action card from hand",
-                burns_pac_from_hand=True,
+    pac_hand_eligible_players = (
+        (other_player,) if include_caller_card_vote else (caller_player, other_player)
+    )
+    for hand_player in pac_hand_eligible_players:
+        pac_hand_source_id = f"political_action_card_hand:{hand_player}"
+        if pac_hand_source_id not in forced_abstain and _has_political_action_card_in_hand(
+            state, hand_player
+        ):
+            sources.append(
+                VoteSource(
+                    source_id=pac_hand_source_id,
+                    player=hand_player,
+                    votes=1,
+                    label="Burn a political action card from hand",
+                    burns_pac_from_hand=True,
+                )
             )
-        )
     for player in (caller_player, other_player):
         for vampire in state.players[player].vampires.values():
             if vampire.zone != "ready":

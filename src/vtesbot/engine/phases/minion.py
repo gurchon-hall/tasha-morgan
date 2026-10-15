@@ -22,6 +22,7 @@ from .. import hooks
 from ..action import (
     ACTION_ACTION_CARD,
     ACTION_BLEED,
+    ACTION_DIABLERIE,
     ACTION_HUNT,
     ACTION_RECRUIT_ALLY,
     perform_minion_action,
@@ -30,6 +31,7 @@ from ..allies import detect_contest_on_recruit, recruit_ally
 from ..combat import run_combat
 from ..damage import add_blood
 from ..decision import Choice, Decision
+from ..diablerie import resolve_diablerie
 from ..pool import lose_pool
 from ..state import EnterCombatGrant
 
@@ -42,6 +44,12 @@ BLEED_STEALTH = 0
 BLEED_AMOUNT = 1
 HUNT_STEALTH = 1
 HUNT_BLOOD_GAIN = 1
+DIABLERIE_STEALTH_SAME_CONTROLLER = 1
+"""Rulebook §4 default action list, "Diablerise a Vampire in Torpor":
+"+1 stealth, if the acting vampire and the vampire in torpor have the
+same controller." """
+DIABLERIE_STEALTH_OTHER_CONTROLLER = 0
+"""Same source: "0 stealth, if ... different controllers." """
 RECRUIT_ALLY_STEALTH = 1
 """Rulebook §4 Recruit Ally: "Default stealth: +1 stealth." """
 RECRUIT_ALLY_PLAY_HOOK = "recruit_ally_play"
@@ -178,12 +186,29 @@ def minion_phase(state: GameState, player: str) -> None:
         _choose_and_perform_action(state, player, other, vampire)
 
 
+def _eligible_diablerie_targets(state: GameState, player: str, other: str) -> list[VampireInPlay]:
+    """Rulebook §4 default action list, "Diablerise a Vampire in Torpor":
+    "Default target: A vampire in torpor." -- both the acting player's own
+    torpid vampires (undirected) and the opponent's (directed) are
+    eligible by default; CLAUDE.md §3's 2P structural fact (the sole
+    opponent is both prey and predator) means there is no third pool to
+    consider."""
+    return [
+        v
+        for v in (*state.players[player].vampires.values(), *state.players[other].vampires.values())
+        if v.zone == "torpor"
+    ]
+
+
 def _choose_and_perform_action(
     state: GameState, player: str, other: str, vampire: VampireInPlay
 ) -> None:
     """Rulebook §4: offers default actions plus one choice per
     `recruit_ally_play` (OQ-12)/`action_card_play` (OQ-17) option; degrades
-    to bleed/hunt alone when none offered (OQ-13 context)."""
+    to bleed/hunt alone when none offered (OQ-13 context). "Diablerise a
+    Vampire in Torpor" is only offered while at least one legal target
+    exists (never offer a play that cannot resolve -- `cards/line_brawl.py`'s
+    `_eligible_combat_targets` precedent)."""
     recruit_options = hooks.offer(
         RECRUIT_ALLY_PLAY_HOOK, state, player=player, vampire=vampire.instance_id
     )
@@ -192,8 +217,14 @@ def _choose_and_perform_action(
     )
     recruit_by_value: dict[str, HookOption] = {o.choice.value: o for o in recruit_options}
     action_card_by_value: dict[str, HookOption] = {o.choice.value: o for o in action_card_options}
+    diablerie_choice = (
+        (Choice(ACTION_DIABLERIE, "Diablerise a vampire in torpor"),)
+        if _eligible_diablerie_targets(state, player, other)
+        else ()
+    )
     choices = (
         (Choice(ACTION_BLEED, "Bleed"), Choice(ACTION_HUNT, "Hunt"))
+        + diablerie_choice
         + tuple(o.choice for o in recruit_options)
         + tuple(o.choice for o in action_card_options)
     )
@@ -208,6 +239,8 @@ def _choose_and_perform_action(
         _perform_bleed(state, player, other, vampire)
     elif action == ACTION_HUNT:
         _perform_hunt(state, player, other, vampire)
+    elif action == ACTION_DIABLERIE:
+        _perform_diablerise(state, player, other, vampire)
     elif action in recruit_by_value:
         _perform_recruit_ally(state, player, other, vampire, recruit_by_value[action])
     else:
@@ -258,6 +291,54 @@ def _perform_hunt(state: GameState, player: str, other: str, vampire: VampireInP
 
     perform_minion_action(
         state, player, other, vampire, HUNT_STEALTH, resolve, action=ACTION_HUNT, directed=False
+    )
+
+
+def _perform_diablerise(state: GameState, player: str, other: str, vampire: VampireInPlay) -> None:
+    """Rulebook §4 default "Diablerise a Vampire in Torpor" (lines 380-404,
+    `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`):
+    undirected +1 stealth against the acting player's own torpid vampire,
+    directed 0 stealth against the opponent's. The target is bound now, at
+    announce time -- same "all terms fixed now" convention OQ-21 settled
+    for `cards/line_brawl.py`'s `[pot]` clause -- so `resolve` below
+    fizzles if the bound target has somehow left torpor by resolve time
+    (no path to do so exists in this project yet, but the check is free
+    and matches the project's own established convention for a bound
+    target). Unblocked resolution calls `engine/diablerie.py::
+    resolve_diablerie`; the blocked branch needs no special handling
+    here -- `perform_minion_action`'s own internal `run_combat` call
+    already is "the acting vampire and the blocking minion enter combat
+    as normal" for free."""
+    targets = _eligible_diablerie_targets(state, player, other)
+    if len(targets) == 1:
+        target = targets[0]
+    else:
+        choices = tuple(
+            Choice(f"diablerise_target:{v.instance_id}", f"Diablerise {v.card.name}")
+            for v in targets
+        )
+        decision = Decision(player=player, kind="diablerise_target", choices=choices)
+        chosen_value = state.ask(decision).value
+        chosen_id = chosen_value.split(":", 1)[1]
+        target = next(v for v in targets if v.instance_id == chosen_id)
+
+    target_player = target.controller
+    target_id = target.instance_id
+    same_controller = target_player == player
+    stealth = (
+        DIABLERIE_STEALTH_SAME_CONTROLLER if same_controller else DIABLERIE_STEALTH_OTHER_CONTROLLER
+    )
+    directed = not same_controller
+
+    def resolve(pending: dict[str, Any]) -> None:
+        del pending  # no later hook window of its own to feed.
+        victim = state.players[target_player].vampires.get(target_id)
+        if victim is None or victim.zone != "torpor":
+            return  # fizzles (OQ-21 convention): target left torpor since binding.
+        resolve_diablerie(state, player, vampire, target_player, victim)
+
+    perform_minion_action(
+        state, player, other, vampire, stealth, resolve, action=ACTION_DIABLERIE, directed=directed
     )
 
 

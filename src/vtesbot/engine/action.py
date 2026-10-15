@@ -77,6 +77,7 @@ ACTION_HUNT = "hunt"
 ACTION_RECRUIT_ALLY = "recruit_ally"
 ACTION_POLITICAL = "political_action"
 ACTION_ACTION_CARD = "action_card"
+ACTION_DIABLERIE = "diablerise"
 """Action discriminator constants (OQ-9) for `action=` passed to
 `attempt_block`/`perform_minion_action`."""
 

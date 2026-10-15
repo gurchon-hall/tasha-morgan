@@ -131,3 +131,13 @@ class CardAttachment:
     instance_id: str | None = None
     zone: str = "attached"
     contested_with: str | None = None
+    is_equipment: bool = False
+    """Printed Equipment card type (§2 Card Types: "Equipment cards: ...
+    put into play on the acting minion"), set by the attaching card module
+    itself at construction time (e.g. `cards/weighted_walking_stick.py`),
+    never inferred by the engine. Gates `engine/diablerie.py::
+    resolve_diablerie` step 2 ("the diablerist may take any equipment on
+    the victim") -- a discipline/archetype master-card attachment (e.g.
+    Celerity) or a Unique master card attached to a vampire (e.g. Fame)
+    is not equipment and defaults to `False`, correctly excluded from
+    that offer."""

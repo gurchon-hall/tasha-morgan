@@ -34,7 +34,11 @@ playing controller's own combatant in the fight (the general equipment
 convention -- a player attaches to a minion they control, never the
 opponent's). "A minion can have only one Weighted Walking Stick": the
 attach option is simply not offered once `vampire.attachments` already
-carries a `krcg_id == KRCG_ID` entry.
+carries a `krcg_id == KRCG_ID` entry. "it becomes a melee weapon
+equipment": `attach_card`'s own `is_equipment=True` (Rulebook §2 Card
+Types "Equipment cards"), the printed-card-type fact `engine/diablerie.py
+::resolve_diablerie` step 2 ("the diablerist may take any equipment on
+the victim") gates on.
 
 Strike clause rides `COMBAT_STRIKE_OPTION_HOOK` with no change to its
 existing provider contract (pre-prevention, post-reduction damage, per
@@ -135,6 +139,7 @@ def _provide_attach(state: GameState, context: Mapping[str, Any]) -> list[HookOp
             krcg_id=KRCG_ID,
             name=NAME,
             counters=INITIAL_COUNTERS,
+            is_equipment=True,
         )
 
     return [

@@ -142,12 +142,12 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
     # `implemented` too (`cards/fiorenza_savona.py`). Alexa Draper (201529)
     # is now `implemented` too (`cards/alexa_draper.py`), checked separately
     # below: `engine/cards.py::LibraryCard.discipline_requirement`/
-    # `requires_discipline` resolved its own independent gap.
-    for krcg_id in (201647,):  # Queen Anne
-        reg = registry.get(krcg_id)
-        assert reg is not None, f"expected a registry entry for krcg_id {krcg_id}"
-        assert reg.status is registry.Status.BLOCKED
-        assert reg.blocked_reason == "OQ-6"
+    # `requires_discipline` resolved its own independent gap. Queen Anne
+    # (201647) is now `implemented` too (`cards/queen_anne.py`): both its
+    # earlier blockers (OQ-6's own `pending["forced_abstain"]` mechanism and
+    # `engine/diablerie.py::DIABLERIE_HOOK`) are resolved, and the earlier
+    # stub's belief that a `CryptCard.generation` field was needed for
+    # "younger" was simply wrong (see that module's own docstring).
 
     for krcg_id in (
         101056,  # Kine Resources Contested
@@ -160,6 +160,7 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
         100557,  # Disputed Territory
         201616,  # Fiorenza Savona
         201529,  # Alexa Draper
+        201647,  # Queen Anne
     ):
         reg = registry.get(krcg_id)
         assert reg is not None, f"expected a registry entry for krcg_id {krcg_id}"

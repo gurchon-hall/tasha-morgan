@@ -18,8 +18,7 @@
       "capacity": 10,
       "group": 6,
       "krcg_id": 201647,
-      "implementation_status": "blocked",
-      "blocked_reason": "OQ-6"
+      "implementation_status": "implemented"
     },
     {
       "name": "Alexa Draper",
