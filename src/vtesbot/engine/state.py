@@ -118,6 +118,32 @@ class TurnCardInPlay:
         return self.zone == "in_play"
 
 
+@dataclass(frozen=True)
+class EnterCombatGrant:
+    """One player-scoped grant letting some vampire the receiving player
+    controls, with no card played, enter combat with `target_vampire_id`
+    (controlled by `target_player`) as a Ⓓ action, for the rest of the turn
+    it was granted on (e.g. a crypt card's own printed master-phase
+    ability, such as Lucinde, Alastor: "Camarilla vampires you control can
+    enter combat with the chosen vampire as a Ⓓ action"). Which of the
+    receiving player's vampires may actually use a given grant (a clan/sect
+    gate, say) is left to the card-specific `ACTION_CARD_PLAY_HOOK`
+    provider that reads it (mirrors `cards/line_brawl.py`'s own "Requires
+    an Anarch" gate) -- this dataclass only records *who the fixed target
+    is* and *when the grant was made*.
+
+    `granted_turn` is compared against `GameState.turn_number` by a reader
+    (`engine/phases/minion.py::active_enter_combat_grants`), the same
+    "store the turn, let the reader filter" shape `PlayerState.
+    card_played_turn` already uses -- no explicit end-of-turn clearing is
+    needed, unlike `TurnCardInPlay`'s zone-based self-destruct (OQ-34),
+    since this is plain data, not a card occupying a zone."""
+
+    target_player: str
+    target_vampire_id: str
+    granted_turn: int
+
+
 @dataclass
 class PlayerState:
     player_id: str
@@ -136,6 +162,12 @@ class PlayerState:
     """Generic "only one X per turn" scratch keyed by `krcg_id`, storing
     the turn last played (e.g. Loup's "Only one Loup can be played each
     turn"); scoped to the controller, not one vampire."""
+    enter_combat_grants: list[EnterCombatGrant] = field(default_factory=list)
+    """Every `EnterCombatGrant` ever made to this player, across the whole
+    game; a reader filters by `granted_turn == GameState.turn_number`
+    rather than this list being cleared each turn -- see `EnterCombatGrant`'s
+    own docstring. Bounded by the number of activations in a game (at most
+    a handful per turn), not by turn count."""
     _next_instance_seq: int = 0
     _next_ally_instance_seq: int = 0
     _next_attachment_instance_seq: int = 0

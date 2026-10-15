@@ -91,10 +91,13 @@ initiating combat, with no pool/blood payload of its own.
   bound directly with no decision raised; with none, the hook itself is not
   offered (see the `_eligible_combat_targets` guard below); with more than
   one, a `Decision` offers one choice per target (no decline -- the card is
-  already being played, only *which* target remains open). `resolve()`
-  looks up the chosen target by instance id, treating a target that left
-  `"ready"` between announce and resolve as "nothing to do" per OQ-21's
-  fizzle convention (not reachable today, but correct either way).
+  already being played, only *which* target remains open). Once the target
+  is bound, `vtesbot.engine.phases.minion.build_enter_combat_action_spec`
+  builds the resulting `ActionCardSpec` -- the "look up the target, fizzle
+  per OQ-21 if it's left `zone == 'ready'`, else `run_combat`" shape this
+  docstring describes is now that shared helper's own, factored out so a
+  non-card source (a crypt text's own master-phase ability grant; see that
+  module's own docstring) can produce an equivalent option.
 
 "[pre] Ⓓ Bleed with +1 bleed.": identical clause text and `resolve()` shape
 to `enchant_kindred.py`'s basic `[pre]` clause (same
@@ -116,7 +119,6 @@ from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED
 from vtesbot.engine.cards import Sect
-from vtesbot.engine.combat import run_combat
 from vtesbot.engine.decision import Choice, Decision
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.phases.minion import (
@@ -125,6 +127,7 @@ from vtesbot.engine.phases.minion import (
     BLEED_AMOUNT_MODIFIER_HOOK,
     PENDING_BLEED_AMOUNT_KEY,
     ActionCardSpec,
+    build_enter_combat_action_spec,
 )
 from vtesbot.engine.pool import gain_pool, lose_pool
 from vtesbot.engine.state import GameState, VampireInPlay
@@ -239,15 +242,9 @@ def _provide_line_brawl_pot(state: GameState, context: Mapping[str, Any]) -> lis
             chosen_value = s.ask(decision).value
             target_id = chosen_value.split(":", 1)[1]
 
-        def resolve(pending: dict[str, Any]) -> None:
-            del pending  # no later hook window of its own to feed.
-            opponent = s.other_player(player)
-            target = s.players[opponent].vampires.get(target_id)
-            if target is None or target.zone != "ready":
-                return  # fizzles (OQ-21); not reachable today, but correct either way.
-            run_combat(s, player, acting_vampire, opponent, target)
-
-        return ActionCardSpec(base_stealth=0, directed=True, resolve=resolve)
+        return build_enter_combat_action_spec(
+            s, player, acting_vampire, s.other_player(player), target_id
+        )
 
     return [
         HookOption(

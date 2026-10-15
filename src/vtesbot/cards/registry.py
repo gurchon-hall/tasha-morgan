@@ -19,6 +19,11 @@ class Hook(StrEnum):
 
     # Wired this pass (engine/hooks.py has a real call site):
     MASTER_PHASE_PLAY = "master_phase_play"
+    MASTER_PHASE_ABILITY = "master_phase_ability"
+    """A crypt card's own printed "during your master phase" ability
+    (`engine/phases/master.py::MASTER_PHASE_ABILITY_HOOK`): offered
+    alongside `MASTER_PHASE_PLAY` every iteration, but drawn from neither
+    `actions_remaining` nor the trifle bonus (e.g. Lucinde, Alastor)."""
     INFLUENCE_PHASE_ACTION = "influence_phase_action"
     """A card-sourced, transfer-costed option offered during the Influence
     phase alongside the three hardcoded transfer types (OQ-24).

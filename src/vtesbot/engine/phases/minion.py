@@ -1,6 +1,17 @@
 """Minion phase: default actions (bleed, hunt, recruit ally, action cards),
 Rulebook §4. Mandatory hunt first; lock enforces one action per vampire
-per turn. See OQ-9/11/12/17/25 below.
+per turn. See OQ-9/11/12/17/21/25 below.
+
+`build_enter_combat_action_spec`/`EnterCombatGrant`/
+`grant_enter_combat_this_turn`/`active_enter_combat_grants` generalize
+`cards/line_brawl.py`'s own `[pot]` "Enter combat with a minion" clause
+into a reusable primitive: an `ACTION_CARD_PLAY_HOOK` option offering to
+enter combat with an already-bound target, whether the option comes from
+playing a card or from a crypt text's own printed ability grant (e.g. a
+future Lucinde, Alastor module). Proven generically by this module's own
+docstrings plus `tests/rules/test_enter_combat_grant.py`, mirroring how
+`engine/combat.py::commit_strike_for_round` was proven before `cards/
+slam.py` became its first production user.
 """
 
 from collections.abc import Callable
@@ -16,9 +27,11 @@ from ..action import (
     perform_minion_action,
 )
 from ..allies import detect_contest_on_recruit, recruit_ally
+from ..combat import run_combat
 from ..damage import add_blood
 from ..decision import Choice, Decision
 from ..pool import lose_pool
+from ..state import EnterCombatGrant
 
 if TYPE_CHECKING:
     from ..allies import RecruitAllySpec
@@ -62,6 +75,78 @@ class ActionCardSpec:
     on_blocked: Callable[[dict[str, Any]], None] | None = None
     action: str = ACTION_ACTION_CARD
     maneuver_grant: str | None = None
+
+
+def build_enter_combat_action_spec(
+    state: GameState,
+    player: str,
+    acting_vampire: VampireInPlay,
+    opponent: str,
+    target_vampire_id: str,
+) -> ActionCardSpec:
+    """Shared "Ⓓ Enter combat with a minion" resolution shape: the target is
+    bound now (at `apply()` time, not deferred to `resolve()`), and
+    `run_combat` runs against it only if the action goes unblocked -- see
+    `cards/line_brawl.py`'s own `[pot]` clause docstring (OQ-21, resolved)
+    for the full reasoning, worked out there first. `resolve()` treats a
+    target that has left `zone == "ready"` between binding and resolve as
+    "nothing to do" (fizzles), the same convention OQ-21 settled.
+
+    Reused by any `ACTION_CARD_PLAY_HOOK` provider offering an equivalent
+    "enter combat with this specific, already-bound target" option,
+    regardless of what makes the option available: playing a card
+    (`cards/line_brawl.py`'s `[pot]` clause, its first consumer, refactored
+    onto this shared helper) or a crypt text's own ability grant
+    (`EnterCombatGrant`/`active_enter_combat_grants` below, e.g. a future
+    Lucinde, Alastor module). Callers remain responsible for their own
+    eligibility gate on which vampire may use the option at all (mirrors
+    `line_brawl.py`'s "Requires an Anarch" gate) -- this helper only builds
+    the `ActionCardSpec` for a target already decided to be legal."""
+
+    def resolve(pending: dict[str, Any]) -> None:
+        del pending  # no later hook window of its own to feed.
+        target = state.players[opponent].vampires.get(target_vampire_id)
+        if target is None or target.zone != "ready":
+            return  # fizzles (OQ-21); the target left "ready" since binding.
+        run_combat(state, player, acting_vampire, opponent, target)
+
+    return ActionCardSpec(base_stealth=0, directed=True, resolve=resolve)
+
+
+def grant_enter_combat_this_turn(
+    state: GameState, player: str, *, target_player: str, target_vampire_id: str
+) -> EnterCombatGrant:
+    """Record a new `EnterCombatGrant` for `player`, naming
+    `target_vampire_id` (controlled by `target_player`) as the fixed
+    target, timestamped with the current turn (Rulebook §4 Master Phase: a
+    crypt card's own printed master-phase ability is additional to, not
+    drawn from, the action economy -- CLAUDE.md task framing; not itself a
+    card play, so no `played_card_type`/cost bookkeeping is owned here,
+    only by the caller). Does not itself check who may use the grant."""
+    grant = EnterCombatGrant(
+        target_player=target_player,
+        target_vampire_id=target_vampire_id,
+        granted_turn=state.turn_number,
+    )
+    state.players[player].enter_combat_grants.append(grant)
+    return grant
+
+
+def active_enter_combat_grants(state: GameState, player: str) -> list[EnterCombatGrant]:
+    """Every `EnterCombatGrant` made to `player` on the current turn
+    (`GameState.turn_number`) -- see `EnterCombatGrant`'s own docstring for
+    why no explicit end-of-turn clearing is needed. A provider consuming
+    this must itself check, at offer time, whether `target_vampire_id` is
+    still `zone == "ready"` before building an option for it (mirrors
+    `cards/line_brawl.py`'s own `_eligible_combat_targets` guard: never
+    offer a play that cannot resolve); `build_enter_combat_action_spec`'s
+    own `resolve()` fizzle check is a safety net for the gap between offer
+    and resolve, not a substitute for that gate."""
+    return [
+        grant
+        for grant in state.players[player].enter_combat_grants
+        if grant.granted_turn == state.turn_number
+    ]
 
 
 def minion_phase(state: GameState, player: str) -> None:
