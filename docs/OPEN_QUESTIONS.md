@@ -12,31 +12,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-29 - Taste of Vitae - no end-of-round window (status: resolved)
-
-- Situation: Taste of Vitae (101945, "only usable at the end of a
-  round of combat... gains blood equal to the amount of blood lost by
-  the opposing vampire to damage this round") needed two missing
-  mechanisms: an End of Round hook/window (Rulebook §4 step 7), and a
-  round-scoped "blood lost specifically to damage this round"
-  accumulator (distinct from a vampire's raw blood deficit, which
-  could reflect unrelated effects).
-- Rules/interactions: rulings on file confirm it's playable after a
-  round ends prematurely, before/after other end-of-round effects, and
-  even if the opponent was burned (so the accumulator must stay
-  readable after a burn).
-- Solution: added `Hook.END_OF_ROUND`/`END_OF_ROUND_HOOK`, dispatched
-  exactly once per round on every exit path via a restructured round
-  loop (`still_ready`/`pressed` booleans replacing scattered
-  `break`s), offered as a real two-sided repeatable impulse window
-  (not a single binary ask like press). Added `BLOOD_LOST_TO_DAMAGE_
-  KEY` inside `round_state`, written by `apply_damage`'s mend and
-  aggravated-burn branches via `record_blood_lost_to_damage`, queried
-  via `blood_lost_to_damage_this_round`. Taste of Vitae itself was
-  then implemented against both (per-round per-vampire play cap,
-  zone/hand gates, reading the opponent's own blood-loss record fresh
-  at apply time). `Status.IMPLEMENTED`.
-
 ## OQ-30 - Perfect Paragon - no intercept-decrease hook (status: resolved)
 
 - Situation: Perfect Paragon's (101387) superior clause ("Allies and
@@ -760,3 +735,41 @@ up an OQ number or the highest one used so far.
   `_collect_vote_sources`, `_cast_votes`). No card blocked yet (the active
   2026-10-03 list has exactly one Priscus, krcg id 201760 Khin Aye; her own
   printed text is independent of this mechanism).
+
+## OQ-54: Politics - Blood Hunt referendum polling order (status: open)
+
+- Situation: `rules-auditor`, reviewing the new diablerie-resolution
+  subsystem (`engine/diablerie.py::resolve_diablerie`), flagged that
+  the mandatory, automatic Blood Hunt referendum (Rulebook §4
+  "Diablerie" > "The Blood Hunt") has no card cast to establish a
+  natural "caller" with impulse first (Rulebook §2 Sequencing). Every
+  other referendum this engine resolves is reached only via an
+  actually-cast political action card. `resolve_diablerie` picks the
+  diablerist's own controller as `resolve_referendum`'s `caller_player`
+  (so she polls first), reasoning that impulse "returns to the acting
+  Methuselah" of the triggering minion action (the diablerie attempt
+  itself). Does not affect vote-source correctness (OQ-6's resolved
+  mechanism, and this call's own `include_caller_card_vote=False` fix,
+  are both symmetric regardless of who is nominally "caller") -- only
+  who polls first.
+- Sources read: Rulebook §4 "Diablerie"/"The Blood Hunt" (live-fetched
+  2026-10-15, matching cached `data/sources/rulebook/2026-10-09/
+  4-detailed-turn-sequence.md:1076-1118` verbatim): "a referendum is
+  automatically and immediately conducted... Otherwise, this
+  referendum is handled just like any other" -- settles that normal
+  polling/tally happens, but states no explicit polling-order rule for
+  a referendum with no calling card. Rulebook §2 Sequencing (impulse
+  returns to the acting Methuselah) checked but not card/mechanism-
+  specific enough to close this without inference.
+- Candidate readings: (A) diablerist's controller polls first, as
+  currently implemented (impulse-returns-to-acting-Methuselah
+  reading). (B) some other fixed order (e.g. victim's controller
+  first, as the one "responding" to being diablerized). No source
+  found contradicting (A) or mandating (B); flagged as non-blocking by
+  `rules-auditor` since no implemented card's text currently depends
+  on Blood Hunt polling order.
+- Impacted code/cards: `src/vtesbot/engine/diablerie.py`
+  (`resolve_diablerie`'s call into `engine/politics.py::
+  resolve_referendum`). No card currently depends on this order;
+  revisit before implementing a future card whose text is sensitive to
+  who polls first in this specific referendum.
