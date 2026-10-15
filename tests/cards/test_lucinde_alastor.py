@@ -75,24 +75,22 @@ def test_registered_as_implemented():
 
 
 def test_krcg_confirms_card_text_and_the_torpor_ruling():
-    """Uses the same `krcg.vtes.VTES` API confirmed live for this card
-    (module docstring); `krcg.load()` is a different, unrelated API that
-    is not available in this environment (pre-existing, unrelated gap also
-    hit by `test_alice_chen.py::
-    test_krcg_confirms_the_title_and_no_other_clause`)."""
-    from krcg import vtes
+    """Uses `krcg.load()`, the installed package's own API (CLAUDE.md §4:
+    "verify the API against the installed version before relying on
+    it") -- same pattern as `test_alice_chen.py::
+    test_krcg_confirms_the_title_and_no_other_clause`."""
+    import krcg
 
-    vtes.VTES.load()
-    card = vtes.VTES[KRCG_ID]
-    assert card.card_text == (
+    card = krcg.load()[KRCG_ID]
+    assert card.text == (
         "Camarilla Ventrue Justicar: During your master phase, Lucinde can "
         "burn 1 blood to choose a vampire; this turn, Camarilla vampires "
         "you control can enter combat with the chosen vampire as a Ⓓ "
         "action. +1 bleed."
     )
     assert card.capacity == 10
-    assert card.group == "7"  # krcg's own `Card.group` is a string
-    assert any("used when in torpor" in r["text"] for r in card.rulings)
+    assert card.group.value == "G7"  # krcg's own `Group` enum, group 7
+    assert any("used when in torpor" in r.text for r in card.rulings)
 
 
 def test_is_on_the_active_2p_allowed_list():

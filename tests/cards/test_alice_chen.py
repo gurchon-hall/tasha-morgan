@@ -43,15 +43,13 @@ def test_registered_as_implemented_with_no_hooks():
 
 
 def test_krcg_confirms_the_title_and_no_other_clause():
-    """Uses `krcg.vtes.VTES`, not `krcg.load()` -- the latter is a
-    different, unrelated API not available in this environment
-    (pre-existing, unrelated gap also hit by several other pre-existing
-    test files, e.g. `test_octane.py`/`test_siarhei_levchenko.py`)."""
-    from krcg import vtes
+    """Uses `krcg.load()`, the installed package's own API (CLAUDE.md §4:
+    "verify the API against the installed version before relying on
+    it") -- same pattern as `test_octane.py`/`test_siarhei_levchenko.py`."""
+    import krcg
 
-    vtes.VTES.load()
-    card = vtes.VTES[KRCG_ID]
-    assert card.card_text.strip() == "Camarilla Prince of Nairobi."
+    card = krcg.load()[KRCG_ID]
+    assert card.text.strip() == "Camarilla Prince of Nairobi."
     assert card.title == "Prince"
     assert card.rulings == []
 
