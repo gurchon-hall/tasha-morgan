@@ -86,6 +86,7 @@ def test_a_registered_provider_can_read_and_write_round_state():
     flag it wrote on an earlier call, within the same `round_state` dict --
     exactly the shape Soak needs for its own "only one Soak each round" cap.
     """
+
     def once_per_round_prevention(state, context):
         round_state = context.get(ROUND_STATE_CONTEXT_KEY)
         assert round_state is not None
