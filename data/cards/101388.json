@@ -1,0 +1,222 @@
+{
+  "id": 101388,
+  "printed_name": "Perfectionist",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Perfectionist"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Perfeccionista"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Perfectionniste"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300012,
+        "code": "Gehenna"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/gehenna/perfectionist.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/perfectionist.jpg"
+    },
+    {
+      "set": {
+        "id": 300030,
+        "code": "SP"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "LB",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-preconstructed/perfectionist.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PH",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/perfectionist.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PT",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/perfectionist.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Perfeccionista",
+      "text": "Arquetipo.\nPonle esta carta a un vampiro que controles. Una vez por turno, este vampiro puede ganar 1 de sangre tras realizar una acción exitosa durante la cual no se hayan jugado cartas de reacción.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/perfectionist.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Perfectionniste",
+      "text": "Archétype.\nMettez cette carte sur un vampire que vous contrôlez. Une fois par tour, ce vampire peut gagner 1 point de sang après avoir effectué une action réussie durant laquelle aucune carte de réaction n'a été jouée. Un vampire ne peut avoir qu'un seul archétype.",
+      "flavor": "La perfection est la loi du ciel ; y aspirer, la loi de l'homme.\nJohann Wolfgang von Goethe",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/perfectionist.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/perfectionist.jpg",
+  "types": [
+    "Master"
+  ],
+  "formats": [],
+  "artists": [
+    "Ken Meyer, Jr."
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "No blood can be gained if a reaction card is played and canceled as it is played: it has still been played. [LSJ 20070330]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20070330]",
+          "label": "LSJ 20070330",
+          "url": "https://usenet.krcg.org/t/gsI3SYz2g3o/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "Cards and effects that can be played \"after resolution\" can be played after the gain blood effect. [ANK 20190113]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20190113]",
+          "label": "ANK 20190113",
+          "url": "https://www.vekn.net/forum/rules-questions/77290-freak-drive-capitalist?start=12#92827"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "The blood can be gained if the action is unblocked even if it has no effect (due to lack of a suitable target, for example). [LSJ 20070411]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20070411]",
+          "label": "LSJ 20070411",
+          "url": "https://usenet.krcg.org/t/umdINigMKqs/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "\"Once each turn\" means once during each player's turn. [ANK 20180719-4]",
+      "group": "Once each turn",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20180719-4]",
+          "label": "ANK 20180719-4",
+          "url": "https://www.vekn.net/forum/rules-questions/76833-once-each-turn#89014"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "The vampire's controller chooses to use the effect of the card or not. [ANK 20210309-3]",
+      "group": "Master on vampire who can use it",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20210309-3]",
+          "label": "ANK 20210309-3",
+          "url": "https://www.vekn.net/forum/rules-questions/79065-master-cards-attached-to-a-stolen-minion#101806"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Archetype.\nPut this card on a vampire you control. Once each turn, this vampire can gain 1 blood after performing a successful action during which no reaction cards were played. A vampire can have only one archetype.",
+  "draft": "",
+  "flavor": "Tegyrius did not raise his hands to fight against the inevitable. He did not scream.",
+  "legal": "2004-06-16",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}

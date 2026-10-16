@@ -125,6 +125,11 @@ class Hook(StrEnum):
     shapes. Implemented against the master-card primitive only."""
     DIABLERIE = "diablerie"
     BLOCK_CANDIDATE_INJECTION = "block_candidate_injection"
+    BLOCK_CANDIDATE_EXCLUSION = "block_candidate_exclusion"
+    """Subtractive sibling of `BLOCK_CANDIDATE_INJECTION`: offered to the
+    actor proactively in `attempt_block`'s retry loop, before the
+    defender's own candidate list is computed (`cards/seduction.py`,
+    `cards/sleeping_mind.py`)."""
     EQUIPMENT_ATTACHMENT = "equipment_attachment"
 
 

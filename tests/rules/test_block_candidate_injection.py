@@ -30,7 +30,8 @@ def _fake_forced_block_provider(state, context):
     attempts to block, even if intercept is not yet needed" shape: offers
     every one of the defender's own currently-locked, ready vampires as a
     forced-block candidate. `apply` unlocks the chosen one and returns it,
-    exactly the contract `BLOCK_CANDIDATE_INJECTION_HOOK` documents."""
+    and `block_candidate_instance_id` names that same vampire, exactly the
+    contract `BLOCK_CANDIDATE_INJECTION_HOOK` documents."""
     defender = context["defender"]
     locked = [
         v for v in state.players[defender].vampires.values() if v.zone == "ready" and v.locked
@@ -50,6 +51,7 @@ def _fake_forced_block_provider(state, context):
                     f"Unlock and force-block with {vampire.card.name}",
                 ),
                 apply=_apply,
+                block_candidate_instance_id=vampire.instance_id,
             )
         )
     return options

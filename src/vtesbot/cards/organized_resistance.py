@@ -82,7 +82,10 @@ chosen Anarch, and returns that `VampireInPlay`, per
 `BLOCK_CANDIDATE_INJECTION_HOOK`'s own contract -- `attempt_block` then
 returns it as an immediate, unconditional successful block, matching the
 ruling "the block attempt still happens, as does the resulting combat if
-the block is successful" [LSJ 20090514].
+the block is successful" [LSJ 20090514]. `HookOption.block_candidate_
+instance_id` is set to that same Anarch's own `instance_id` (the hook's
+own docstring requires it) so a `BLOCK_CANDIDATE_EXCLUSION_HOOK`-named
+exclusion still vetoes this Anarch even via this injected path.
 
 "Can be used by a vampire who is already attempting to block." [ANK
 20181122-2]: needs no special-case code -- `attempt_block` does not lock a
@@ -261,6 +264,7 @@ def _provide_organized_resistance_block_candidate(
             ),
             apply=_make_apply(baron, anarch),
             played_card_type=CARD_TYPE,
+            block_candidate_instance_id=anarch.instance_id,
         )
         for baron in barons
         for anarch in anarchs

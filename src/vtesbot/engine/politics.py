@@ -216,6 +216,13 @@ def resolve_referendum(
             "votes_against": votes_against,
             "passed": votes_for > votes_against,
         }
+        if pending.get(hooks.PENDING_REACTION_PLAYED_KEY):
+            # Bridges out of this call's own local `pending` (rules-auditor
+            # finding): a Reaction/Action-Modifier card played during
+            # polling (e.g. `cards/scalpel_tongue.py`'s non-caller use) must
+            # still be visible to `ACTION_SUCCEEDED_HOOK`'s forwarded
+            # `pending`, same as `REFERENDUM_RESULT_KEY` above.
+            action_pending[hooks.PENDING_REACTION_PLAYED_KEY] = True
     return votes_for, votes_against, casts
 
 
@@ -470,7 +477,9 @@ def _cast_votes(
                 consecutive_passes += 1
             elif answer in cancel_by_value:
                 consecutive_passes = 0
-                canceled_source_id = cancel_by_value[answer].apply(state)
+                cancel_option = cancel_by_value[answer]
+                hooks.mark_reaction_played(pending, cancel_option)
+                canceled_source_id = cancel_option.apply(state)
                 votes_for, votes_against = _apply_retroactive_vote_cancellation(
                     canceled_source_id, remaining, casts, votes_for, votes_against
                 )

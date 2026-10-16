@@ -16,7 +16,13 @@ STEALTH_MODIFIER_HOOK = "stealth_modifier"
 INTERCEPT_MODIFIER_HOOK = "intercept_modifier"
 BLOCK_CANDIDATE_INJECTION_HOOK = "block_candidate_injection"
 """OQ-26: mirrors `Hook.BLOCK_CANDIDATE_INJECTION`. `apply()` must unlock
-the vampire and return it as an unconditional successful block."""
+the vampire and return it as an unconditional successful block. Every
+option must also set `HookOption.block_candidate_instance_id` to that same
+vampire's own `instance_id` -- `attempt_block` filters injected options
+against `BLOCK_CANDIDATE_EXCLUSION_HOOK`'s own exclusion set by this id,
+same as it already does for the hardcoded `ready_unlocked_vampires` list,
+so a named-and-excluded vampire (e.g. `cards/sleeping_mind.py`) cannot be
+forced back in as an injected candidate (rules-auditor finding)."""
 
 INTERCEPT_DECREASE_HOOK = "intercept_decrease"
 """OQ-30/31: mirrors `Hook.INTERCEPT_DECREASE`. Offered to `actor`
@@ -42,6 +48,41 @@ WAKE_LOCKED_MINION_HOOK = "wake_locked_minion"
 """OQ-48: defender-side sibling of `INTERCEPT_DECREASE_HOOK`/
 `STEALTH_INCREASE_HOOK`. `apply()` sets `woken = True` on a locked
 vampire; block stays fully contestable."""
+
+BLOCK_CANDIDATE_EXCLUSION_HOOK = "block_candidate_exclusion"
+"""Subtractive sibling of `BLOCK_CANDIDATE_INJECTION_HOOK`: offered to
+`actor` in the same proactive slot as `INTERCEPT_DECREASE_HOOK`/
+`STEALTH_INCREASE_HOOK` (Rulebook §4: "as the action is announced",
+before the defender's block-candidate list is computed at all).
+`apply()` adds the chosen vampire's `instance_id` to
+`pending[PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY]` -- it does not touch
+stealth/intercept, since the named vampire must not be a block candidate
+in the first place, not merely fail an attempt. Needed by
+`cards/seduction.py` (krcg 101712) and `cards/sleeping_mind.py` (krcg
+101805); generic plumbing, not a rule of its own -- see those modules for
+the citations."""
+
+PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY = "block_candidate_exclusions"
+"""`pending[...]` key: holds a `set[str]` of excluded `instance_id`s,
+added to (never replaced) by each activated `BLOCK_CANDIDATE_EXCLUSION_
+HOOK` option's own `apply` closure. Consulted by `attempt_block`'s
+candidate-list filter on every pass through its retry loop, so the
+exclusion survives a later `WAKE_LOCKED_MINION_HOOK` making the same
+vampire eligible again (`cards/sleeping_mind.py`'s own docstring). Also
+consulted against `BLOCK_CANDIDATE_INJECTION_HOOK`'s own offered options,
+by each one's `HookOption.block_candidate_instance_id` -- without this
+second filter, a defender holding e.g. Second Tradition: Domain or
+Organized Resistance could unlock-and-force-block with a vampire the actor
+had just named excluded, defeating the exclusion entirely (rules-auditor
+finding)."""
+
+
+def _excluded_block_candidates(pending: dict[str, Any] | None) -> set[str]:
+    """Read-only view of `PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY`; mirrors
+    `_active_intercept_decrease`'s own `pending`-is-optional contract."""
+    if not pending:
+        return set()
+    return pending.get(PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY, set())
 
 
 @dataclass(frozen=True)
@@ -84,7 +125,10 @@ ACTION_DIABLERIE = "diablerise"
 ACTION_SUCCEEDED_HOOK = "action_succeeded"
 """OQ-34: mirrors `Hook.ACTION_SUCCEEDED`. Rulebook §4: success means not
 blocked. Dispatched via `run_effects` after `resolve(pending)`; never on
-the blocked branch."""
+the blocked branch. Forwards this action's own `pending` dict in context
+so a provider can read anything recorded during the action (e.g.
+`hooks.PENDING_REACTION_PLAYED_KEY`, for `cards/perfectionist.py`'s krcg
+101388 "no reaction cards were played" gate)."""
 
 PENDING_REFERENDUM_RESULT_KEY = "referendum_result"
 """Mirrors `politics.py::REFERENDUM_RESULT_KEY` (duplicated, not imported,
@@ -229,7 +273,9 @@ def _ask_modifier(
     answer = state.ask(decision)
     if answer.value == "decline":
         return None
-    return by_value[answer.value].apply(state)
+    option = by_value[answer.value]
+    hooks.mark_reaction_played(context.get(hooks.PENDING_CONTEXT_KEY), option)
+    return option.apply(state)
 
 
 def _ask_stealth_or_modifier(
@@ -265,6 +311,7 @@ def _ask_stealth_or_modifier(
     if answer.value == "decline":
         return None
     option = by_value[answer.value]
+    hooks.mark_reaction_played(context.get(hooks.PENDING_CONTEXT_KEY), option)
     if answer.value in decrease_values:
         return option, "intercept_decrease"
     if answer.value in increase_values:
@@ -303,10 +350,16 @@ def attempt_block(
         hooks.offer_until_pass(state, STEALTH_INCREASE_HOOK, actor, proactive_context)
         if state.game_over:
             return None
+        hooks.offer_until_pass(state, BLOCK_CANDIDATE_EXCLUSION_HOOK, actor, proactive_context)
+        if state.game_over:
+            return None
         hooks.offer_until_pass(state, WAKE_LOCKED_MINION_HOOK, defender, proactive_context)
         if state.game_over:
             return None
-        candidates = state.ready_unlocked_vampires(defender)
+        excluded = _excluded_block_candidates(pending)
+        candidates = [
+            v for v in state.ready_unlocked_vampires(defender) if v.instance_id not in excluded
+        ]
         candidate_choices = tuple(
             Choice(f"block_with:{v.instance_id}", f"Block with {v.card.name}") for v in candidates
         )
@@ -323,6 +376,20 @@ def attempt_block(
             base_stealth=base_stealth,
             pending=pending,
         )
+        for injected in injected_options:
+            if injected.block_candidate_instance_id is None:
+                raise AssertionError(
+                    f"{BLOCK_CANDIDATE_INJECTION_HOOK!r} option "
+                    f"{injected.choice.value!r} did not set "
+                    "block_candidate_instance_id -- required so "
+                    "BLOCK_CANDIDATE_EXCLUSION_HOOK can veto it (engine "
+                    "invariant, see HookOption's own docstring)"
+                )
+        injected_options = [
+            injected
+            for injected in injected_options
+            if injected.block_candidate_instance_id not in excluded
+        ]
         by_injected_value = {o.choice.value: o for o in injected_options}
 
         offered_choices = candidate_choices + tuple(o.choice for o in injected_options)
@@ -349,7 +416,9 @@ def attempt_block(
         if choice.value in by_injected_value:
             # OQ-26: an immediate, unconditional successful block -- never
             # runs the stealth/intercept ping-pong for this candidate.
-            injected_blocker = by_injected_value[choice.value].apply(state)
+            injected_option = by_injected_value[choice.value]
+            hooks.mark_reaction_played(pending, injected_option)
+            injected_blocker = injected_option.apply(state)
             return None if state.game_over else injected_blocker
 
         instance_id = choice.value.split(":", 1)[1]
@@ -424,6 +493,7 @@ def perform_minion_action(
         actor_player=actor_player,
         vampire=vampire,
         action=action,
+        pending=pending,
     )
     if action == ACTION_POLITICAL:
         result = pending.get(PENDING_REFERENDUM_RESULT_KEY)

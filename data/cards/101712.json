@@ -1,0 +1,291 @@
+{
+  "id": 101712,
+  "printed_name": "Seduction",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Seduction"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Seducción"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Séduction"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300001,
+        "code": "Jyhad"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/jyhad/seduction.jpg"
+    },
+    {
+      "set": {
+        "id": 300002,
+        "code": "VTES"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/seduction.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/seduction.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/seduction.jpg"
+    },
+    {
+      "set": {
+        "id": 300011,
+        "code": "BH"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/black-hand/seduction.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/seduction.jpg"
+    },
+    {
+      "set": {
+        "id": 300030,
+        "code": "SP"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PoS",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-preconstructed/seduction.jpg"
+    },
+    {
+      "set": {
+        "id": 300032,
+        "code": "FB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/first-blood/seduction.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/seduction.jpg"
+    },
+    {
+      "set": {
+        "id": 300040,
+        "code": "V5C"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-companion/seduction.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Seducción",
+      "text": "Sólo utilizable al anunciar la acción.\n[dom] Elige a un vampiro menor. El vampiro elegido no puede bloquear esta acción.\n[DOM] Como antes, pero elige a cualquier vampiro.",
+      "flavor": "Dejarse llevar es el secreto; renunciar a mí es el mayor placer de todos...\nRobbi Sommers, \"Lilit\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/seduction.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Séduction",
+      "text": "Seulement utilisable lors de l'annonce de l'action.\n[dom] Choisissez un vampire plus jeune. Le vampire choisi ne peut pas bloquer cette action.\n[DOM] Comme ci-dessus, mais choisissez n'importe quel vampire.",
+      "flavor": "Se relâcher est le secret ; s'abandonner à moi est le plus grand plaisir de tous...\nRobbi Sommers, \"Lilit\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/seduction.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/seduction.jpg",
+  "types": [
+    "Action Modifier"
+  ],
+  "formats": [],
+  "artists": [
+    "Harold Arthur McNeill",
+    "Jim Di Bartolo"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "Must be played (as well as other \"as the action is announced\" action modifiers) before action modifiers that are not explicitly played \"as the action is announced\" (e.g., {100401|Conditioning}). [ANK 20190425]",
+      "group": "Modifier as announced",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20190425]",
+          "label": "ANK 20190425",
+          "url": "https://www.vekn.net/forum/rules-questions/77581-action-modifiers-played-at-beginning-and-end-of-an-action#94652"
+        }
+      ],
+      "cards": [
+        {
+          "id": 100401,
+          "printed_name": "Conditioning",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": []
+    },
+    {
+      "text": "Replace the action card (if any) before playing it. [ANK 20181208]",
+      "group": "Modifier as announced",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20181208]",
+          "label": "ANK 20181208",
+          "url": "https://www.vekn.net/forum/rules-questions/77210-touch-of-clarity-and-fast-reaction-is-posible-to-play-with-locked-minion?start=6#92308"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Only usable as the action is announced.\n[dom] Choose a younger vampire. The chosen vampire cannot block this action.\n[DOM] As above, but choose any vampire.",
+  "draft": "",
+  "flavor": "Letting go is the secret; giving up to me is the greatest pleasure of all...\nRobbi Sommers, Lilith",
+  "legal": "1994-09-15",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "dom"
+    ]
+  }
+}

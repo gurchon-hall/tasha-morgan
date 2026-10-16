@@ -23,21 +23,20 @@ established gating helper to reuse; the two checks below (`_controls_basic_
 vampire`/`_controls_superior_vampire`) are this card's own. `clans == []`
 (no clan requirement).
 
-`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`) is set to
-`"Action Modifier"`, not the full dual-type text: `decks/loader.py::
-_build_library_card` derives `LibraryCard.card_type` as `card.types[0].value`
-(krcg's own type order), and that module's own docstring asserts every 2P
-library card prints exactly one krcg type -- found false for this card while
-implementing it (two types, `combo`-gated multi-Discipline), a pre-existing
-loader simplification this module does not fix (out of `card-implementer`
-scope; flagged for whoever revisits `decks/loader.py`). Matching that same
-derivation keeps `played_card_type` consistent with however a deck-imported
-copy of this card would actually compare, even though it under-describes the
-real printed type; not load-bearing today regardless, since the dispatch
-path below (`engine/politics.py::_cast_votes`) never routes a `"mid_cast"`
-choice through `apply_chosen_option`/`CANCEL_AS_PLAYED_HOOK` at all (see
-that function's own docstring) -- only `offer_until_pass`/
-`resolve_impulse_window` do.
+`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): this card
+prints two types, `["Action Modifier", "Reaction"]` with `combo == True`
+(module docstring above), and which half is actually in play depends on
+*who* plays it (module docstring's own "Who may play it" section, OQ-38):
+the caller plays it as their acting vampire's Action Modifier (the
+Rulebook §2 Card Types default for the acting minion), the non-caller
+plays it under the ordinary Reaction rule instead. `played_card_type` is
+therefore set per-use, not hardcoded: `"Action Modifier"` for the caller's
+own use, `"Reaction"` for the non-caller's -- load-bearing for
+`hooks.mark_reaction_played`'s `PENDING_REACTION_PLAYED_KEY` tracking
+(`cards/perfectionist.py` (krcg 101388)'s "no reaction cards were played"
+gate, rules-auditor finding: an earlier draft of this module hardcoded
+`"Action Modifier"` for every use, which would have silently hidden the
+non-caller's use from that gate).
 
 Status: implemented (OQ-37, `docs/OPEN_QUESTIONS.md`, resolved --
 `engine/politics.py::_cast_votes` now also offers `POLLING_STEP_HOOK` under
@@ -145,9 +144,18 @@ PRE_BASIC = "pre"
 PRE_SUPERIOR = "PRE"
 BURN_AMOUNT = 1
 """Printed "[CEL][PRE] ... the chosen vampire burns 1 blood."."""
-CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): see
-module docstring for why this is the first (not the only) printed type."""
+CALLER_CARD_TYPE = "Action Modifier"
+NON_CALLER_CARD_TYPE = "Reaction"
+"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): which of
+this card's two printed types (module docstring) applies depends on who
+plays it -- see `_played_card_type` below."""
+
+
+def _played_card_type(player: str, context: Mapping[str, Any]) -> str:
+    """The caller plays this card as their acting vampire's Action
+    Modifier; the non-caller plays it under the ordinary Reaction rule
+    (module docstring's "Who may play it", OQ-38)."""
+    return CALLER_CARD_TYPE if player == context["caller"] else NON_CALLER_CARD_TYPE
 
 
 def _has_card_in_hand(state: GameState, player: str) -> bool:
@@ -227,6 +235,7 @@ def _provide_scalpel_tongue_basic(state: GameState, context: Mapping[str, Any]) 
     if not _has_card_in_hand(state, player):
         return []
 
+    played_card_type = _played_card_type(player, context)
     options: list[HookOption] = []
     for cast_player, source_id, _votes, _direction in _target_title_casts(context):
         instance_id = source_id.split(":", 1)[1]
@@ -252,7 +261,7 @@ def _provide_scalpel_tongue_basic(state: GameState, context: Mapping[str, Any]) 
                     f"Scalpel Tongue [cel][pre]: lock {target.card.name} and cancel their vote",
                 ),
                 apply=_apply,
-                played_card_type=CARD_TYPE,
+                played_card_type=played_card_type,
             )
         )
     return options
@@ -274,6 +283,7 @@ def _provide_scalpel_tongue_superior(
     if not _has_card_in_hand(state, player):
         return []
 
+    played_card_type = _played_card_type(player, context)
     options: list[HookOption] = []
     for cast_player, source_id, _votes, _direction in _target_title_casts(context):
         instance_id = source_id.split(":", 1)[1]
@@ -301,7 +311,7 @@ def _provide_scalpel_tongue_superior(
                     "and burn 1 blood",
                 ),
                 apply=_apply,
-                played_card_type=CARD_TYPE,
+                played_card_type=played_card_type,
             )
         )
     return options

@@ -19,12 +19,23 @@ PASS_VALUE = "pass"
 class HookOption:
     """One legal, card-sourced option at a hook point. `apply` runs if chosen.
     `cost` (OQ-32) pays unconditionally, even if later canceled.
-    `played_card_type` (OQ-33) names what is played, for cancel checks."""
+    `played_card_type` (OQ-33) names what is played, for cancel checks.
+    `block_candidate_instance_id`: required on every option offered under
+    `engine/action.py::BLOCK_CANDIDATE_INJECTION_HOOK` -- the instance id of
+    the specific vampire that option would unlock and return as a block
+    candidate. `attempt_block` filters injected options against its own
+    exclusion set (`BLOCK_CANDIDATE_EXCLUSION_HOOK`) by this id before
+    offering them, so a named-and-excluded vampire (e.g.
+    `cards/sleeping_mind.py`) cannot be forced back in as an injected
+    candidate (rules-auditor finding: this filter previously only covered
+    the hardcoded `ready_unlocked_vampires` candidate list, not injected
+    ones)."""
 
     choice: Choice
     apply: Callable[[GameState], Any]
     cost: Callable[[GameState], Any] | None = None
     played_card_type: str | None = None
+    block_candidate_instance_id: str | None = None
 
 
 Provider = Callable[["GameState", Mapping[str, Any]], list[HookOption]]
@@ -109,6 +120,35 @@ CANCEL_AS_PLAYED_HOOK = "cancel_as_played"
 """Mirrors `cards/registry.py::Hook.CANCEL_AS_PLAYED`'s own string value --
 see `apply_chosen_option` below for the dispatch this now drives (OQ-32)."""
 
+PENDING_REACTION_PLAYED_KEY = "reaction_played"
+"""`pending[...]` key: set `True` the moment a Reaction-type `HookOption`
+is chosen, even if it is later canceled as played ([LSJ 20070330] --
+cancellation still counts as having been played). Needed by
+`cards/perfectionist.py` (krcg 101388)'s "no reaction cards were played"
+gate, read via `engine/action.py::perform_minion_action`'s own
+`ACTION_SUCCEEDED_HOOK` dispatch forwarding `pending`."""
+
+
+def mark_reaction_played(pending: dict[str, Any] | None, option: HookOption) -> None:
+    """Records a chosen Reaction-type `option` into `pending`
+    (`PENDING_REACTION_PLAYED_KEY`), if an action-scoped `pending` dict is
+    being tracked at all. A no-op for any other `played_card_type`. Every
+    `option.apply` call site that resolves a choice made during an
+    action's own action-scoped `pending` tracking must call this (directly,
+    or via `apply_chosen_option` below) before applying -- as of this
+    writing that is: `apply_chosen_option` itself (the choke point for
+    `offer_until_pass`/`resolve_impulse_window`), `engine/action.py::
+    _ask_modifier`, `engine/action.py::_ask_stealth_or_modifier`,
+    `engine/action.py::attempt_block`'s `BLOCK_CANDIDATE_INJECTION_HOOK`
+    branch, and `engine/politics.py::_cast_votes`'s mid-cast cancel-choice
+    branch -- five call sites, not a single one; `.apply(` call sites
+    outside this action-scoped `pending` tracking mechanism (master phase,
+    influence phase, unlock phase, combat's own strike/dodge/maneuver
+    choices) are a different mechanism and out of scope here (rules-auditor
+    review)."""
+    if pending is not None and option.played_card_type == "Reaction":
+        pending[PENDING_REACTION_PLAYED_KEY] = True
+
 
 def apply_chosen_option(
     state: GameState,
@@ -119,7 +159,11 @@ def apply_chosen_option(
 ) -> Any:
     """Interception point for cancel-as-played (OQ-32). Runs `option.cost`
     unconditionally, then offers `may_cancel` `CANCEL_AS_PLAYED_HOOK`; if
-    used, `option.apply` is suppressed, else it runs normally."""
+    used, `option.apply` is suppressed, else it runs normally. Records a
+    Reaction-type `option` as played (`mark_reaction_played`) before any of
+    that, since the card has been played the moment it is chosen,
+    regardless of cost/cancel outcome."""
+    mark_reaction_played(context.get(PENDING_CONTEXT_KEY), option)
     if option.cost is not None:
         option.cost(state)
         if state.game_over:

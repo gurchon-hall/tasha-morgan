@@ -71,8 +71,13 @@ blocker, per that hook's own contract and the cited rulings ("the block
 attempt still happens ... if the block is successful"; "even if intercept
 is not yet needed" already matches the hook's own offer point, which runs
 every time around `attempt_block`'s retry loop, before any candidate is
-otherwise needed). "The card cannot be played if the minion cannot afford
-to burn the blood" [ANK 20210226]: gated on `vampire.blood >= BLOOD_COST`.
+otherwise needed). `HookOption.block_candidate_instance_id` is set to the
+unlocked vampire's own `instance_id` (`BLOCK_CANDIDATE_INJECTION_HOOK`'s
+own docstring requires it) so a `BLOCK_CANDIDATE_EXCLUSION_HOOK`-named
+exclusion (e.g. `cards/sleeping_mind.py`) still vetoes this vampire even
+via this injected path. "The card cannot be played if the minion cannot
+afford to burn the blood" [ANK 20210226]: gated on `vampire.blood >=
+BLOOD_COST`.
 The cost-reduction ruling [ANK 20210226] has no reachable case (no
 cost-reduction effect is implemented in this project yet).
 
@@ -219,6 +224,7 @@ def _provide_second_tradition_domain_block_candidate(
             ),
             apply=_make_apply(vampire),
             played_card_type=CARD_TYPE,
+            block_candidate_instance_id=vampire.instance_id,
         )
         for vampire in eligible
     ]

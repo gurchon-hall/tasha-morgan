@@ -89,7 +89,7 @@
       "type": "Master",
       "count": 1,
       "krcg_id": 101388,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Wider View",
@@ -152,14 +152,14 @@
       "type": "Action Modifier",
       "count": 2,
       "krcg_id": 101712,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Sleeping Mind, The",
       "type": "Action Modifier",
       "count": 2,
       "krcg_id": 101805,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Threats",
