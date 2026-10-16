@@ -12,40 +12,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-34 - Loup - no action-succeeded signal or turn card (status: resolved)
-
-- Situation: Loup (krcg id 102273, Action Modifier, Toreador): "Only one
-  Loup can be played each turn. Put this card in play. Toreador get +1
-  stealth. Burn this card at the end of the turn or after a Toreador
-  performs a successful action." Needed two missing primitives: a generic
-  "this action just succeeded" signal (independent of whether the
-  action's own effect did anything), and a "stays in play for the rest of
-  the turn, until burned" entity distinct from both `CardAttachment` and
-  the cross-turn `MasterCardInPlay`.
-- Rules/interactions: Rulebook §4 "Resolve the Action" (re-fetched live),
-  verbatim: "An action is successful only if it is not blocked" / "If the
-  action is successful (all block attempts were unsuccessful), then the
-  cost of the action is paid and the effects of the successful action
-  take place" — success is purely "not blocked." "The turn" in Loup's own
-  burn clause is unambiguous: VTES turns are strictly sequential (never
-  two in progress at once), and this card can only ever be played by its
-  own controller's own acting Toreador vampire, so "the turn" and "the
-  controller's own turn" coincide by construction — no further question
-  needed on that sub-point.
-- Solution: added `engine/action.py::ACTION_SUCCEEDED_HOOK`
-  (`cards/registry.py::Hook.ACTION_SUCCEEDED`), dispatched via
-  `hooks.run_effects` immediately after `perform_minion_action`'s own
-  `resolve(pending)` call returns (never on the blocked branch), carrying
-  `actor_player`/`vampire`/`action`. Added `engine/state.py::
-  TurnCardInPlay`/`PlayerState.turn_cards` and `engine/turn_cards.py`
-  (`bring_turn_card_into_play`/`burn_turn_card`/`active_turn_cards`/
-  `clear_turn_cards_at_end_of_turn`, the last wired into `engine/phases/
-  turn.py::play_turn` right before the turn flips). Loup's own card module
-  (`cards/loup.py`, `Status.IMPLEMENTED`) was written in a later pass; see
-  its own docstring for the "only one Loup per turn" cap and a
-  self-documented timing gap against the "can be used even if the stealth
-  is not currently needed" ruling.
-
 ## OQ-35 - Disputed Territory - no location control-transfer (status: resolved)
 
 - Situation: Disputed Territory (krcg id 100557, Political Action):
@@ -827,3 +793,43 @@ up an OQ number or the highest one used so far.
   attachment), but confirmed harmless under `ash_heap`'s own
   name-only, display-only shape -- worth revisiting only if `ash_heap`
   ever gains instance-level fidelity.
+
+## OQ-59: Allies - no bleed/combat action path (status: open)
+
+- Situation: OQ-46/OQ-48 already recorded "ally bleed/block/combat
+  participation stays out of engine scope" as a deliberate design
+  choice, and built only the unlock-side primitives for a future
+  ally-acting path (`engine/phases/unlock.py::_unlock_own_allies`,
+  `AllyInPlay.skip_next_unlock`) -- neither `engine/action.py` nor
+  `engine/combat.py` has any path for an ally to initiate a bleed, be
+  blocked, block, or strike. Checked against the active 2026-10-03 2P
+  allowed list's 9 Ally cards: 6 of 9 need this capability to be
+  implemented correctly -- Bone Shambler (102293, bleed 1), Political
+  Ally (101411, bleed 3), Double Deuce (102220, bleed 1, strength 1),
+  Heartrender (102327, bleed 1, strength 1 -- its own Ⓓ ability also
+  needs it to be a legal actor), City Star Taxi (102234, explicit
+  "can strike"/maneuver/combat text despite 0/0 stats), The Vozhd of
+  Juiz de Fora (102364, strength 4, "can enter combat with a vampire
+  as a Ⓓ action"), The Vozhd of Sofia (102267, strength 3, strike +
+  "can enter combat with a minion as a Ⓓ action"). Only 47th Street
+  Royals (102217, implemented, passive-only) and Vagabond Mystic
+  (102087, unimplemented, passive lock-only ability) avoid the gap.
+- Sources read: Rulebook §4 Detailed Turn Sequence (live-fetched
+  2026-10-16, matches cached `data/sources/rulebook/2026-10-09/
+  4-detailed-turn-sequence.md:163-166`), verbatim: "a ready vampire
+  may generally perform one of two basic actions ... bleed or hunt,
+  whereas a ready ally may perform only one basic action ... bleed";
+  same section's Combat text has no ally-specific carve-out ("only
+  ready minions can participate in combat"), and `:1021-1029`'s
+  worked example has an ally striking in combat normally. krcg card
+  text for all 9 Ally entries in `data/formats/2p/2026-10-03.json`,
+  cross-checked.
+- Candidate readings: N/A -- not a ruling ambiguity, a missing/
+  deferred engine capability (same category as OQ-46/48's own
+  classification).
+- Impacted code/cards: `engine/action.py` (no ally action-initiation
+  path), `engine/combat.py` (no ally-as-combatant path); the
+  OQ-46/48 unlock-side primitives are built but unused by either.
+  Blocks Bone Shambler, Political Ally, Double Deuce, Heartrender,
+  City Star Taxi, The Vozhd of Juiz de Fora, The Vozhd of Sofia
+  (none written yet).

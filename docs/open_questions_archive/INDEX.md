@@ -42,3 +42,4 @@ an entry.
 | OQ-31 | `002.md` | Perfect Paragon family - proactive-only or also reactive |
 | OQ-32 | `002.md` | Diana Iadanza - no "cancel as played" hook |
 | OQ-33 | `002.md` | Diana Iadanza - no cancel-type marker |
+| OQ-34 | `002.md` | Loup - no action-succeeded signal or turn card |
