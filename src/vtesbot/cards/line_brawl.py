@@ -109,12 +109,20 @@ generic default) so an existing bleed-gated provider sharing the same hook
 windows (e.g. `bonding.py`'s superior clause, gated on
 `context.get("action") == ACTION_BLEED`) isn't silently suppressed when
 both cards are in the same hand (OQ-17 follow-up).
+
+OQ-57 (`docs/OPEN_QUESTIONS.md`): all three clauses call `remove_from_hand`
+(not `play_from_hand`) and set `ActionCardSpec.name=NAME`, so `_perform_
+action_card` can interleave a future Reflex card's own cancel-as-played
+window before drawing the replacement (Finding 1), and so a second
+physical copy is not offered once any one clause has already been played
+this turn (Finding 2, keyed by `NAME` -- all three clauses are the same
+physical card).
 """
 
 from collections.abc import Mapping
 from typing import Any
 
-from vtesbot.cards._shared import play_from_hand
+from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED
@@ -127,12 +135,18 @@ from vtesbot.engine.phases.minion import (
     BLEED_AMOUNT_MODIFIER_HOOK,
     PENDING_BLEED_AMOUNT_KEY,
     ActionCardSpec,
+    action_card_already_played_this_turn,
     build_enter_combat_action_spec,
 )
 from vtesbot.engine.pool import gain_pool, lose_pool
 from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 102229
+NAME = "Line Brawl"
+"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
+OPEN_QUESTIONS.md`): the generic "same named action card at most once per
+turn" cap is keyed by this exact string across all three clauses -- they
+are the same physical card."""
 CEL = "cel"
 POT = "pot"
 PRE = "pre"
@@ -184,9 +198,11 @@ def _provide_line_brawl_cel(state: GameState, context: Mapping[str, Any]) -> lis
         return []
     if not _has_card_in_hand(state, player):
         return []
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
 
         def resolve(pending: dict[str, Any]) -> None:
             del pending  # no later hook window of its own to feed.
@@ -194,7 +210,7 @@ def _provide_line_brawl_cel(state: GameState, context: Mapping[str, Any]) -> lis
             stolen = lose_pool(s, other, STEAL_AMOUNT)
             gain_pool(s, player, stolen)
 
-        return ActionCardSpec(base_stealth=0, directed=True, resolve=resolve)
+        return ActionCardSpec(base_stealth=0, directed=True, resolve=resolve, name=NAME)
 
     return [
         HookOption(
@@ -221,9 +237,11 @@ def _provide_line_brawl_pot(state: GameState, context: Mapping[str, Any]) -> lis
         return []
     if not _eligible_combat_targets(state, player):
         return []  # no legal target at all: never offer a play that cannot resolve.
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
 
         # Target fixed at announce time, not deferred to resolve() -- OQ-21,
         # see module docstring.
@@ -243,7 +261,7 @@ def _provide_line_brawl_pot(state: GameState, context: Mapping[str, Any]) -> lis
             target_id = chosen_value.split(":", 1)[1]
 
         return build_enter_combat_action_spec(
-            s, player, acting_vampire, s.other_player(player), target_id
+            s, player, acting_vampire, s.other_player(player), target_id, name=NAME
         )
 
     return [
@@ -267,9 +285,11 @@ def _provide_line_brawl_pre(state: GameState, context: Mapping[str, Any]) -> lis
         return []
     if not _has_card_in_hand(state, player):
         return []
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
 
         def resolve(pending: dict[str, Any]) -> None:
             other = s.other_player(player)
@@ -305,6 +325,7 @@ def _provide_line_brawl_pre(state: GameState, context: Mapping[str, Any]) -> lis
             directed=True,
             resolve=resolve,
             action=ACTION_BLEED,
+            name=NAME,
         )
 
     return [
@@ -323,7 +344,7 @@ hooks.register(ACTION_CARD_PLAY_HOOK, _provide_line_brawl_pre)
 register(
     CardRegistration(
         krcg_id=KRCG_ID,
-        name="Line Brawl",
+        name=NAME,
         status=Status.IMPLEMENTED,
         hooks=(Hook.ACTION_CARD_PLAY,),
         source=__name__,

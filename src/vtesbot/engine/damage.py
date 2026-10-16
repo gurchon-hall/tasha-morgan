@@ -57,6 +57,47 @@ def blood_lost_to_damage_this_round(round_state: Mapping[str, Any] | None, vampi
     return round_state.get(BLOOD_LOST_TO_DAMAGE_KEY, {}).get(vampire_id, 0)
 
 
+DAMAGE_SUCCESSFULLY_INFLICTED_KEY = "damage_successfully_inflicted"
+"""Key in the round-scoped scratch dict: per *inflicting* vampire id, the post-prevention,
+pre-mend normal+aggravated total it landed this round -- "damage successfully inflicted" is
+the rulebook's own combat-resolution term (step 4, damage resolution, before the mend
+sub-step), confirmed card-rulings-side by "Counts up damage successfully inflicted during
+the round ... retainers and environmental damage do not count." [TOM 19950304]
+[LSJ 20010812]. Deliberately distinct from `BLOOD_LOST_TO_DAMAGE_KEY`, which is keyed by the
+*damaged* vampire and only ever totals blood actually spent to mend/burn -- a vampire with 1
+blood taking 3 normal damage loses only 1 blood to mending, but still "successfully
+inflicted"/received 3. Needed by Pulled Fangs (krcg 101515)'s own playability trigger
+("during a round during which this minion successfully inflicted more damage than the
+opposing vampire"). `dict[str, int]`, same per-vampire-id-dict shape as
+`BLOOD_LOST_TO_DAMAGE_KEY`."""
+
+
+def record_damage_successfully_inflicted(
+    round_state: dict[str, Any] | None, inflicted_by: str | None, amount: int
+) -> None:
+    """Add `amount` to `inflicted_by`'s running total this round
+    (`DAMAGE_SUCCESSFULLY_INFLICTED_KEY`). `round_state is None`, `inflicted_by is None`
+    (damage with no attributable attacker, e.g. a retainer/environmental source -- see this
+    key's own docstring), or non-positive `amount` is a no-op -- mirrors
+    `record_blood_lost_to_damage`'s own degrade-to-no-op contract."""
+    if round_state is None or inflicted_by is None or amount <= 0:
+        return
+    totals = round_state.setdefault(DAMAGE_SUCCESSFULLY_INFLICTED_KEY, {})
+    totals[inflicted_by] = totals.get(inflicted_by, 0) + amount
+
+
+def damage_successfully_inflicted_this_round(
+    round_state: Mapping[str, Any] | None, vampire_id: str
+) -> int:
+    """Damage `vampire_id` successfully inflicted (as the attacker) this round -- the query
+    side of `DAMAGE_SUCCESSFULLY_INFLICTED_KEY`, e.g. Pulled Fangs comparing the two
+    combatants' own totals at end of round. `round_state` is caller-supplied to avoid a
+    circular import; `None` -> 0."""
+    if round_state is None:
+        return 0
+    return round_state.get(DAMAGE_SUCCESSFULLY_INFLICTED_KEY, {}).get(vampire_id, 0)
+
+
 MANDATORY_FULL_PREVENTION_KEY = "mandatory_full_prevention"
 """Key in the round-scoped scratch dict (OQ-55): per vampire id, whether a mandatory,
 automatic "prevent all damage (normal and aggravated) this round" effect is active for the
@@ -139,12 +180,16 @@ def apply_damage(
     normal: int = 0,
     aggravated: int = 0,
     round_state: dict[str, Any] | None = None,
+    inflicted_by: str | None = None,
 ) -> None:
     """Resolve `normal` + `aggravated` damage (§4). Order: prevent, mend (normal only),
     normal before aggravated. `round_state` (OQ-29) records blood spent when given;
     `None` is a no-op. A vampire with an active `MANDATORY_FULL_PREVENTION_KEY` effect
     (OQ-55) has all damage zeroed unconditionally before `DAMAGE_PREVENTION_HOOK` is even
-    dispatched."""
+    dispatched. `inflicted_by` (the attacking vampire's own instance id, when known) records
+    the post-prevention total under `DAMAGE_SUCCESSFULLY_INFLICTED_KEY`, distinct from and
+    in addition to `round_state`'s existing `BLOOD_LOST_TO_DAMAGE_KEY` bookkeeping -- see
+    that key's own docstring."""
     if normal < 0 or aggravated < 0:
         raise ValueError("damage amounts must be non-negative")
     if normal == 0 and aggravated == 0:
@@ -178,6 +223,7 @@ def apply_damage(
     )
     normal = max(0, damage_box["normal"])
     aggravated = max(0, damage_box["aggravated"])
+    record_damage_successfully_inflicted(round_state, inflicted_by, normal + aggravated)
     if state.game_over or (normal == 0 and aggravated == 0):
         return
 

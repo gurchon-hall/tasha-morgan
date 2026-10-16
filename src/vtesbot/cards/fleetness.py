@@ -69,7 +69,13 @@ ActionCardSpec` gained a `maneuver_grant` field, threaded by `engine/
 action.py::perform_minion_action`'s own `maneuver_grant` parameter into its
 internal `run_combat` call on the blocked branch -- see those modules' own
 docstrings for the mechanism, proven generically by `tests/rules/
-test_pre_combat_maneuver_grant.py`.
+test_pre_combat_maneuver_grant.py`. OQ-57 (`docs/OPEN_QUESTIONS.md`): both
+clauses call `remove_from_hand` (not `play_from_hand`) and set `ActionCard
+Spec.name=NAME`, so `engine/phases/minion.py::_perform_action_card` can
+interleave a future Reflex card's own cancel-as-played window before
+drawing the replacement (Finding 1), and so a second physical copy is not
+offered once either clause has already been played this turn (Finding 2,
+keyed by `NAME` -- both clauses are the same physical card).
 
 "+1 stealth action." / "[cel] Ⓓ Bleed.": printed before either bracketed
 clause (unlike Enchant Kindred's own superior-only "+1 stealth action"), so
@@ -125,7 +131,7 @@ either effect, Rulebook §3); the superior `[CEL]` clause only with `"CEL"`.
 from collections.abc import Mapping
 from typing import Any
 
-from vtesbot.cards._shared import play_from_hand
+from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED
@@ -145,11 +151,17 @@ from vtesbot.engine.phases.minion import (
     BLEED_AMOUNT_MODIFIER_HOOK,
     PENDING_BLEED_AMOUNT_KEY,
     ActionCardSpec,
+    action_card_already_played_this_turn,
 )
 from vtesbot.engine.pool import lose_pool
 from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 100747
+NAME = "Fleetness"
+"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
+OPEN_QUESTIONS.md`): the generic "same named action card at most once per
+turn" cap is keyed by this exact string for both clauses -- they are the
+same physical card."""
 BASIC = "cel"
 SUPERIOR = "CEL"
 STEALTH = 1
@@ -202,9 +214,11 @@ def _provide_fleetness_basic(state: GameState, context: Mapping[str, Any]) -> li
         return []
     if acting_vampire.blood < BLOOD_COST:
         return []  # printed blood cost: must have enough blood to play at all.
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
 
         def resolve(pending: dict[str, Any]) -> None:
             other = s.other_player(player)
@@ -241,6 +255,7 @@ def _provide_fleetness_basic(state: GameState, context: Mapping[str, Any]) -> li
             directed=True,
             resolve=resolve,
             action=ACTION_BLEED,
+            name=NAME,
         )
 
     return [
@@ -269,9 +284,11 @@ def _provide_fleetness_superior(state: GameState, context: Mapping[str, Any]) ->
         return []  # printed blood cost: must have enough blood to play at all.
     if not _eligible_locked_targets(state, player):
         return []  # no legal target: do not offer a card play that cannot resolve.
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
         opponent = s.other_player(player)
 
         # Target fixed at announce time, not deferred to resolve() -- OQ-21,
@@ -314,6 +331,7 @@ def _provide_fleetness_superior(state: GameState, context: Mapping[str, Any]) ->
             directed=True,
             resolve=resolve,
             maneuver_grant=acting_vampire.instance_id,
+            name=NAME,
         )
 
     return [
@@ -356,7 +374,7 @@ hooks.register(MANEUVER_HOOK, _provide_fleetness_maneuver)
 register(
     CardRegistration(
         krcg_id=KRCG_ID,
-        name="Fleetness",
+        name=NAME,
         status=Status.IMPLEMENTED,
         hooks=(Hook.ACTION_CARD_PLAY, Hook.MANEUVER),
         source=__name__,

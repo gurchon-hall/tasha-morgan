@@ -1,13 +1,37 @@
 """Builds the per-player `Observation`: what a Methuselah is allowed to see (CLAUDE.md
 §5 information hiding). Single place that converts `GameState` into the agent's view."""
 
+from collections import Counter
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .attachments import effective_capacity
+from .attachments import effective_capacity, iter_attachments
 
 if TYPE_CHECKING:
+    from .cards import CardAttachment
     from .state import AllyInPlay, GameState, MasterCardInPlay, VampireInPlay
+
+
+@dataclass(frozen=True)
+class AttachmentView:
+    """Public view of one live (`zone == "attached"`) `CardAttachment` on a vampire
+    (OQ-58, `docs/OPEN_QUESTIONS.md`): attachments are always shown face up once played
+    (Rulebook §3 "Playing a Card": "showing the card"), so this view carries no
+    hidden-identity gate of its own -- `VampireView.attachments` below still inherits the
+    host's own `visible_identity` gate, defensively: no attach mechanism in this project
+    ever targets a face-down uncontrolled vampire. A burned or contested copy is left out:
+    `CardAttachment.zone` lifecycle bookkeeping is engine-internal (several call sites
+    never remove a burned entry from `VampireInPlay.attachments`, by design -- e.g.
+    `engine/phases/minion.py::build_attachment_removal_action_spec`), not itself
+    agent-relevant history, and a contested attachment provides no effect while contested
+    (Rulebook §4 "Contested Cards": "turned face down and are out of play")."""
+
+    instance_id: str
+    krcg_id: int
+    name: str
+    controller: str | None
+    counters: int | None
+    is_equipment: bool
 
 
 @dataclass(frozen=True)
@@ -28,6 +52,10 @@ class VampireView:
     # None for an opponent's face-down (uncontrolled) vampire: identity is hidden.
     name: str | None
     capacity: int | None
+    attachments: tuple[AttachmentView, ...]
+    """OQ-58 (`docs/OPEN_QUESTIONS.md`): every live `CardAttachment` currently on this
+    vampire (`AttachmentView`'s own docstring). Empty, not merely absent, for a face-down
+    uncontrolled vampire -- see `visible_identity`'s own gate below."""
 
 
 @dataclass(frozen=True)
@@ -82,11 +110,59 @@ class Observation:
     master_cards: tuple[MasterCardView, ...]
 
 
+def _attachment_view(a: CardAttachment) -> AttachmentView:
+    return AttachmentView(
+        instance_id=a.instance_id,
+        krcg_id=a.krcg_id,
+        name=a.name,
+        controller=a.controller,
+        counters=a.counters,
+        is_equipment=a.is_equipment,
+    )
+
+
+def _live_attachment_counts_by_controller(state: GameState) -> dict[str, Counter[int]]:
+    """How many live (`zone == "attached"`) copies of each `krcg_id` each controller
+    currently has in play, across every vampire -- feeds `_visible_ash_heap` below
+    (OQ-58): a played attachment card's physical copy already sits in its player's own
+    `ash_heap` (`cards/_shared.py::play_from_hand`), unconditionally, the instant it is
+    played; nothing removes that entry once the same card also becomes a live
+    `CardAttachment` (a separate object, built by `engine/attachments.py::attach_card`,
+    with no back-reference to the `LibraryCard` `play_from_hand` moved)."""
+    counts: dict[str, Counter[int]] = {}
+    for _host, attachment in iter_attachments(state):
+        if attachment.zone != "attached" or attachment.controller is None:
+            continue
+        counts.setdefault(attachment.controller, Counter())[attachment.krcg_id] += 1
+    return counts
+
+
+def _visible_ash_heap(
+    state: GameState, player: str, live_attachment_counts: dict[str, Counter[int]]
+) -> tuple[str, ...]:
+    """`player`'s own ash heap, names only, minus up to one entry per currently-live
+    attachment of the same `krcg_id` (OQ-58, `_live_attachment_counts_by_controller`'s
+    own docstring) -- least-invasive fix: `ash_heap` is display-only (never read for
+    rules logic, `build_observation`'s own module docstring), so filtering it here, by
+    count rather than by identity (no instance-level link exists between a `LibraryCard`
+    in `ash_heap` and the `CardAttachment` it became), needs no change to any card
+    module's own `play_from_hand`/`attach_card` call sites."""
+    remaining = Counter(live_attachment_counts.get(player, {}))
+    names: list[str] = []
+    for card in state.players[player].ash_heap:
+        if remaining.get(card.krcg_id, 0) > 0:
+            remaining[card.krcg_id] -= 1
+            continue
+        names.append(card.name)
+    return tuple(names)
+
+
 def build_observation(state: GameState, viewer: str) -> Observation:
     """CLAUDE.md §5: hides opponent hand, library order, opponent's face-down
     uncontrolled crypt (counts only). Else (ready/torpor, removed per OQ-24, allies,
     Master cards) known face up."""
     other = [p for p in state.players if p != viewer][0]
+    live_attachment_counts = _live_attachment_counts_by_controller(state)
 
     def vampire_view(v: VampireInPlay) -> VampireView:
         visible_identity = v.zone != "uncontrolled" or v.controller == viewer
@@ -104,6 +180,11 @@ def build_observation(state: GameState, viewer: str) -> Observation:
             # capacity as modified by any attached card's own bonus -- see
             # `engine/attachments.py::effective_capacity`.
             capacity=effective_capacity(state, v) if visible_identity else None,
+            attachments=(
+                tuple(_attachment_view(a) for a in v.attachments if a.zone == "attached")
+                if visible_identity
+                else ()
+            ),
         )
 
     def ally_view(a: AllyInPlay) -> AllyView:
@@ -155,7 +236,7 @@ def build_observation(state: GameState, viewer: str) -> Observation:
         opponent_library_count=len(other_state.library),
         own_crypt_deck_count=len(viewer_state.crypt_deck),
         opponent_crypt_deck_count=len(other_state.crypt_deck),
-        ash_heap={p: tuple(c.name for c in s.ash_heap) for p, s in state.players.items()},
+        ash_heap={p: _visible_ash_heap(state, p, live_attachment_counts) for p in state.players},
         vampires=vampires,
         allies=allies,
         master_cards=master_cards,

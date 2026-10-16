@@ -29,7 +29,14 @@ superior, two different hooks/providers for one physical card" shape already
 used elsewhere (e.g. `bonding.py`)
 (`disciplines` gating: a vampire with only basic `"pre"` unlocks only the
 basic clause; a vampire with superior `"PRE"` is eligible for either, per
-Rulebook §3 "may opt to use either effect").
+Rulebook §3 "may opt to use either effect"). OQ-57 (`docs/
+OPEN_QUESTIONS.md`): both clauses call `remove_from_hand` (not
+`play_from_hand`) and set `ActionCardSpec.name=NAME`, so `_perform_
+action_card` can interleave a future Reflex card's own cancel-as-played
+window before drawing the replacement (Finding 1), and so a second
+physical copy is not offered once either clause has already been played
+this turn (Finding 2, keyed by `NAME` -- both clauses are the same
+physical card).
 
 "Ⓓ" (basic clause): the rulebook glossary's own "Directed Action" entry
 (`data/sources/rulebook/2026-10-09/8-glossaries.md:59`) -- a *directed*
@@ -103,7 +110,7 @@ do" rather than crashing.
 from collections.abc import Mapping
 from typing import Any
 
-from vtesbot.cards._shared import play_from_hand
+from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import effective_capacity, hooks
 from vtesbot.engine.action import ACTION_BLEED
@@ -116,11 +123,17 @@ from vtesbot.engine.phases.minion import (
     BLEED_AMOUNT_MODIFIER_HOOK,
     PENDING_BLEED_AMOUNT_KEY,
     ActionCardSpec,
+    action_card_already_played_this_turn,
 )
 from vtesbot.engine.pool import lose_pool
 from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 100640
+NAME = "Enchant Kindred"
+"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
+OPEN_QUESTIONS.md`): the generic "same named action card at most once per
+turn" cap is keyed by this exact string for both clauses -- they are the
+same physical card."""
 BASIC = "pre"
 SUPERIOR = "PRE"
 BASIC_BLEED_BASE_AMOUNT = 2
@@ -165,9 +178,11 @@ def _provide_enchant_kindred_basic(
         return []
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
         return []
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
 
         def resolve(pending: dict[str, Any]) -> None:
             other = s.other_player(player)
@@ -203,6 +218,7 @@ def _provide_enchant_kindred_basic(
             directed=True,
             resolve=resolve,
             action=ACTION_BLEED,
+            name=NAME,
         )
 
     return [
@@ -231,9 +247,11 @@ def _provide_enchant_kindred_superior(
         return []
     if not _eligible_targets(state, player, acting_vampire):
         return []  # no legal target: do not offer a card play that cannot resolve.
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
 
         # Target fixed at announce time, not deferred to resolve() -- OQ-21,
         # see module docstring.
@@ -263,6 +281,7 @@ def _provide_enchant_kindred_superior(
             base_stealth=SUPERIOR_STEALTH,
             directed=False,
             resolve=resolve,
+            name=NAME,
         )
 
     return [
@@ -284,7 +303,7 @@ hooks.register(ACTION_CARD_PLAY_HOOK, _provide_enchant_kindred_superior)
 register(
     CardRegistration(
         krcg_id=KRCG_ID,
-        name="Enchant Kindred",
+        name=NAME,
         status=Status.IMPLEMENTED,
         hooks=(Hook.ACTION_CARD_PLAY,),
         source=__name__,

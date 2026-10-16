@@ -76,7 +76,13 @@ time on the grant's target still being `zone == "ready"` (mirrors
 has since left `torpor` and *entered* `ready` is fine (no printed
 restriction says otherwise), one who is now `torpor`/gone is simply not
 offered. No card is played by this option (`played_card_type` stays at
-its default `None`).
+its default `None`) -- so it is also out of scope for both of OQ-57's
+(`docs/OPEN_QUESTIONS.md`) fixes: it calls neither `remove_from_hand` nor
+`play_from_hand`, and leaves `ActionCardSpec.name` at its default `None`
+(`build_enter_combat_action_spec`'s own contract), so `_perform_action_
+card` neither draws it a replacement card nor counts it against the
+generic "same named action card" cap -- correctly, since no card is ever
+played from hand here.
 
 "+1 bleed": flat, unconditional `BLEED_AMOUNT_FIXED_MODIFIER_HOOK`
 contribution, gated only on this vampire being the one bleeding -- mirrors

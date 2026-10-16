@@ -57,7 +57,13 @@ play their own fresh copy from hand, for two separately-tracked grants):
     controller, since this cap is a plain card-play restriction, not a
     specific minion's ability) -- this stays bound to the acting player's
     own hand regardless of OQ-40, since nothing lets a Methuselah play a
-    card from someone else's hand.
+    card from someone else's hand. Deliberately kept on `card_played_turn`,
+    not folded into OQ-57's (`docs/OPEN_QUESTIONS.md`) generic `PlayerState.
+    action_card_played_turn` "same named action card" cap: Loup is itself
+    Action Modifier, not Action, so the generic rule's own text ("the same
+    named action card") never reaches it in the first place -- this is a
+    card-specific cap, not an instance of that general one, and the two
+    mechanisms are unrelated by construction, not merely by choice.
 
 Each granted option records a persistent `ActiveStealthIncrease(delta=1)`
 into `pending[PENDING_STEALTH_INCREASE_KEY]` rather than returning a

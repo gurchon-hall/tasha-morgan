@@ -51,6 +51,27 @@ class VampireInPlay:
     unlock phases (the card's own text); cleared by `_unlock_own_vampires`
     each unlock, unlike `woken`'s per-action scope."""
 
+    action_card_played_turn: dict[str, int] = field(default_factory=dict)
+    """Generic "same named action card at most once per turn" cap (OQ-57,
+    `docs/OPEN_QUESTIONS.md`). Rulebook §4 Detailed Turn Sequence (`data/
+    sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:188-191`,
+    verbatim): "A minion cannot play (unless cancelled) the same named
+    action card more than once each turn, even if they unlock." --
+    "a minion" (this vampire specifically, not every vampire its
+    controller owns) is the scope: a different vampire of the same
+    controller, with its own physical copy, may still play it this same
+    turn. Keyed by the card's own printed `name` (not `krcg_id`: the
+    rule's own wording is name-scoped, and `LibraryCard.name` is this
+    project's canonical identity field for it -- `krcg` assigns one id
+    per unique card name in this project's data, so the two keyings
+    coincide today, but `name` is the one the rule text actually names),
+    storing the turn last played; mirrors `ability_used_turn`'s own
+    "store the turn, let the reader filter" shape -- no explicit
+    end-of-turn clearing needed, and "even if they unlock" needs no
+    special handling, since nothing here is keyed off `locked` at all.
+    See `engine/phases/minion.py::action_card_already_played_this_turn`/
+    `mark_action_card_played_this_turn`."""
+
     @property
     def is_ready_unlocked(self) -> bool:
         return self.zone == "ready" and (not self.locked or self.woken)
@@ -161,7 +182,14 @@ class PlayerState:
     card_played_turn: dict[int, int] = field(default_factory=dict)
     """Generic "only one X per turn" scratch keyed by `krcg_id`, storing
     the turn last played (e.g. Loup's "Only one Loup can be played each
-    turn"); scoped to the controller, not one vampire."""
+    turn"); scoped to the controller, not one vampire. Distinct from
+    `VampireInPlay.action_card_played_turn` (OQ-57, `docs/
+    OPEN_QUESTIONS.md`): this field backs a *specific card's own printed*
+    per-turn cap (an Action Modifier, not subject to the generic
+    per-minion Action-card rule, which is scoped to one minion, not the
+    whole controller -- see that field's own docstring), keyed by
+    `krcg_id` since that card's own text never needs the "same named"
+    reach the generic rule does."""
     enter_combat_grants: list[EnterCombatGrant] = field(default_factory=list)
     """Every `EnterCombatGrant` ever made to this player, across the whole
     game; a reader filters by `granted_turn == GameState.turn_number`

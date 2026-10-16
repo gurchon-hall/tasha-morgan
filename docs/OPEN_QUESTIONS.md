@@ -12,93 +12,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-31 - Perfect Paragon family - proactive-only or also reactive (status: resolved)
-
-- Situation: OQ-30's mechanism only offers `INTERCEPT_DECREASE_HOOK`
-  proactively (before a candidate is fixed, or on a retry) — never
-  reactively, at the exact impulse-return moment inside the ping-pong
-  where a specific candidate is already fixed and about to succeed.
-  The rulebook's general "any time before resolution" Action Modifier
-  timing rule doesn't itself settle whether that entitles a reactive
-  offer too.
-- Rules/interactions: no source draws the proactive/reactive
-  distinction explicitly; two readings were open (A: proactive-only is
-  sufficient; B: a reactive offer is also required).
-- Solution (user ruling, same precedent as OQ-20): Reading B — both
-  opportunities coexist. `_duel_stealth_intercept`'s reactive branch
-  now offers `INTERCEPT_DECREASE_HOOK`'s options merged into the same
-  `Decision` as `STEALTH_MODIFIER_HOOK` (mirroring how `_ask_strike`
-  already merges strike/dodge options for one offer point), under the
-  pre-existing `"stealth_modifier"` decision kind so every pre-OQ-31
-  test is unaffected when no decrease provider is registered. A
-  reactively-activated modifier is recorded into the same persistent
-  `pending` list as a proactive one, so it composes identically with
-  OQ-11's retry case.
-
-## OQ-32 - Diana Iadanza - no "cancel as played" hook (status: resolved)
-
-- Situation: Diana Iadanza (201694): "During a referendum she calls,
-  Diana can burn 1 blood to cancel a reaction card as it is played
-  (cost is still paid). +1 bleed." Found implementing this card (the
-  "+1 bleed" clause needed no new engine work and is implemented
-  separately): `Hook.CANCEL_AS_PLAYED` was named for classification
-  only, with no dispatch call site anywhere — every Reaction card
-  implemented so far resolves its entire effect atomically inside one
-  `HookOption.apply()`, with no "announced, not yet resolved" moment
-  for a third party to inject a cancellation.
-- Rules/interactions: generic rulings on file for "cancel a card as it
-  is played" ([LSJ 20061207]/[RBK playing-a-card]/[LSJ 20061013],
-  [LSJ 20080630]/[LSJ 20011023], [ANK 20190104]/[RBK cancel-a-card]/
-  [LSJ 19980212], [LSJ 20030224], [LSJ 20060106]) already fully
-  specify the mechanic: played immediately, no other effects
-  interleave; cost still paid; a "do not replace until" clause is also
-  canceled; the card still counts as played (same-reaction-once-per-
-  action still applies); a canceled limited effect does not trigger
-  its own limit.
-- Solution: a missing engine primitive, not an unsettled ruling. Added
-  `engine/hooks.py::apply_chosen_option(state, option, played_by,
-  may_cancel, context)`, sitting between "a `HookOption` is chosen"
-  and "its effect runs," for both generic decision-loop helpers
-  (`offer_until_pass`, `resolve_impulse_window`). `HookOption` gained
-  an optional `cost` callable (runs unconditionally before any
-  cancellation offer, keeping "cost is still paid" true even when the
-  effect itself is suppressed); after `cost` runs, the *other* side is
-  offered `CANCEL_AS_PLAYED_HOOK` once; choosing a cancellation runs
-  its own `apply` and suppresses the original entirely.
-  Zero-behaviour-change with no provider registered. A `rules-auditor`
-  follow-up found and fixed a live landmine: Telepathic Counter's own
-  `apply` atomically combined its cost (play-from-hand, §8 "used"
-  bookkeeping) with its actual effect — split into `cost`/`apply` so a
-  future cancellation can't also undo the card having been played.
-  Organized Resistance/Protection Racket have the same atomic pattern
-  but aren't yet exposed to `apply_chosen_option` — flagged for
-  whoever wires their dispatch sites through it next. Diana Iadanza's
-  own card module is not written for clause 1 — stays
-  `blocked`/`OQ-32`; her "+1 bleed" clause is implemented separately.
-
-## OQ-33 - Diana Iadanza - no cancel-type marker (status: resolved)
-
-- Situation: OQ-32 (resolved) built `engine/hooks.py::apply_chosen_option`
-  but left `cancel_context` carrying no structured marker of the canceled
-  option's own card type -- Diana's clause 1 ("Diana can burn 1 blood to
-  cancel a *reaction card* as it is played") needs exactly that marker, to
-  tell a genuine Reaction-card play apart from the same referendum-phase
-  window's other, non-Reaction providers (Modius's discard-a-master-card
-  ability, Oxford University, England's polling-step burn).
-- Rules/interactions: a missing engine primitive, not a ruling question.
-  The 5 on-file rulings for the generic "cancel as played" mechanic say
-  nothing about a referendum-level cap on Diana's own ability; that cap
-  comes separately from Rulebook §3 "Wording templates" > "During X, do
-  Y": "only one Y can be done per X with this card."
-- Solution: `HookOption` gained `played_card_type` (`engine/hooks.py`),
-  set by every card-playing provider to its printed card type and left at
-  `None` for a printed-ability activation; `apply_chosen_option` threads it
-  into `CANCEL_AS_PLAYED_HOOK`'s context as `canceled_card_type`. Diana
-  Iadanza (`src/vtesbot/cards/diana_iadanza.py`) then implemented clause 1
-  against it, gated to Reaction-type options, to a referendum Diana herself
-  called, and capped once per referendum via `pending["diana_iadanza_
-  canceled"]`. `Status.IMPLEMENTED`.
-
 ## OQ-34 - Loup - no action-succeeded signal or turn card (status: resolved)
 
 - Situation: Loup (krcg id 102273, Action Modifier, Toreador): "Only one
@@ -559,6 +472,35 @@ up an OQ number or the highest one used so far.
   `attempt_block` itself. On the Qui Vive's own card module is not written;
   the primitive is complete.
 
+## OQ-49 - Fiorenza Savona - no vote-cast bonus hook (status: resolved)
+
+- Situation: Fiorenza Savona (krcg id 201616): "Camarilla: If you burn the
+  Edge for a vote, you get +1 vote. If you burn a political action card for
+  a vote, you get +1 vote." OQ-6's general referendum mechanism gives
+  `_collect_vote_sources` a fixed set of `VoteSource`s with `votes` baked in
+  before casting, and neither `POLLING_STEP_HOOK` phase nor
+  `REFERENDUM_TALLIED_HOOK` can add a bonus to one *specific other* source's
+  own vote count at the moment it is actually cast -- a missing engine
+  primitive, not a ruling ambiguity.
+- Rules/interactions: plain printed text; no ruling on file. User ruling
+  2026-10-14 settled the one open scope question: "burning a political
+  action card for a vote" is specifically the non-caller's
+  `political_action_card_hand:{other_player}` burn-from-hand source (the
+  only one actually burned for a vote), never the caller's own
+  `political_action_card:{caller_player}` source (played/shown, not
+  burned).
+- Solution: added `VOTE_SOURCE_CAST_BONUS_HOOK` (`cards/registry.py::
+  Hook.VOTE_SOURCE_CAST_BONUS`), dispatched by `engine/politics.py::
+  _cast_votes` the instant a source is cast -- after its own cast-time side
+  effects, before its votes are added to the tally *and* logged into
+  `casts` (so an OQ-37 mid-cast cancellation of that same source
+  retroactively subtracts the bonus back out too, no special case). Context:
+  `caster`, `burns_edge`, `burns_pac_from_hand`, `direction`. Fiorenza
+  Savona's own card module (`cards/fiorenza_savona.py`, `Status.
+  IMPLEMENTED`) gates on either flag plus "caster controls an in-play
+  (not uncontrolled/burned/removed) Fiorenza" -- no "while ready" qualifier
+  is printed, so no zone/locked gate beyond that.
+
 ## OQ-50: Combat Sequence - Steal Blood strike effect unbuilt (status: open)
 
 - Situation: `rules-auditor`, auditing `engine/combat.py` generally (not
@@ -644,35 +586,6 @@ up an OQ number or the highest one used so far.
   through this exact path, with no test positioned to catch it.
 - Impacted code/cards: `src/vtesbot/engine/observation.py`
   (`build_observation`/`vampire_view`). No card blocked yet.
-
-## OQ-49 - Fiorenza Savona - no vote-cast bonus hook (status: resolved)
-
-- Situation: Fiorenza Savona (krcg id 201616): "Camarilla: If you burn the
-  Edge for a vote, you get +1 vote. If you burn a political action card for
-  a vote, you get +1 vote." OQ-6's general referendum mechanism gives
-  `_collect_vote_sources` a fixed set of `VoteSource`s with `votes` baked in
-  before casting, and neither `POLLING_STEP_HOOK` phase nor
-  `REFERENDUM_TALLIED_HOOK` can add a bonus to one *specific other* source's
-  own vote count at the moment it is actually cast -- a missing engine
-  primitive, not a ruling ambiguity.
-- Rules/interactions: plain printed text; no ruling on file. User ruling
-  2026-10-14 settled the one open scope question: "burning a political
-  action card for a vote" is specifically the non-caller's
-  `political_action_card_hand:{other_player}` burn-from-hand source (the
-  only one actually burned for a vote), never the caller's own
-  `political_action_card:{caller_player}` source (played/shown, not
-  burned).
-- Solution: added `VOTE_SOURCE_CAST_BONUS_HOOK` (`cards/registry.py::
-  Hook.VOTE_SOURCE_CAST_BONUS`), dispatched by `engine/politics.py::
-  _cast_votes` the instant a source is cast -- after its own cast-time side
-  effects, before its votes are added to the tally *and* logged into
-  `casts` (so an OQ-37 mid-cast cancellation of that same source
-  retroactively subtracts the bonus back out too, no special case). Context:
-  `caster`, `burns_edge`, `burns_pac_from_hand`, `direction`. Fiorenza
-  Savona's own card module (`cards/fiorenza_savona.py`, `Status.
-  IMPLEMENTED`) gates on either flag plus "caster controls an in-play
-  (not uncontrolled/burned/removed) Fiorenza" -- no "while ready" qualifier
-  is printed, so no zone/locked gate beyond that.
 
 ## OQ-53: Politics - Prisci Block has no engine mechanism   (status: open)
 
@@ -829,3 +742,88 @@ up an OQ number or the highest one used so far.
   `Status.IMPLEMENTED`): its superior clause's `apply` burns 1 blood,
   zeroes the triggering strike's own `damage_box`, and marks the flag
   so every later strike this round is automatically covered.
+
+## OQ-56: Propaganda - who chooses which vampire to lock (status: resolved)
+
+- Situation: Propaganda's (krcg 101495) superior clause reads "...the
+  target Methuselah locks a ready unlocked minion they control." No
+  on-file ruling (for Propaganda, or for the structurally similar
+  Brujah Debate/Sowing Dissension) settles whether the affected
+  (target) Methuselah or the acting Methuselah chooses which qualifying
+  vampire is locked, when there is no tie to break.
+- Rules/interactions: live krcg text confirms the grammatical pattern
+  ("[that Methuselah] locks a [vampire] they control") but Brujah
+  Debate's own on-file ruling ([LSJ 19980224]) only resolves a
+  tie-break among several vampires all "the oldest Brujah" -- not a
+  general "sentence subject chooses" default. No general VEKN default
+  for an unnamed decision-maker was found live.
+- Solution (user ruling): Reading A -- the target (affected) Methuselah
+  chooses, matching `engine/action.py::force_lock_ready_unlocked_
+  minion`'s existing default. No code change needed.
+  `cards/propaganda.py`'s superior clause may be wired to it as-is.
+
+## OQ-57: Action cards - no cancel-as-played path (status: resolved)
+
+- Situation: `rules-auditor`, reviewing Propaganda/Dominate Kine,
+  found `engine/phases/minion.py::_perform_action_card` called
+  `option.apply(state)` directly, never through `engine/hooks.py::
+  apply_chosen_option` -- so no Reflex-type card could ever cancel an
+  Action card "as played." A first fix pass introduced two further
+  problems a follow-up audit caught: (1) the replacement-card draw ran
+  *before* the cancel window instead of after; (2) no generic "same
+  named action card at most once per turn" cap existed anywhere,
+  already live-violated by every implemented Action card (Dominate
+  Kine, Propaganda, Fleetness, Enchant Kindred, Disputed Territory,
+  Kine Resources Contested, Line Brawl, Parity Shift).
+- Rules/interactions: Rulebook §2 Card Types, "Library Cards" Advanced
+  Rules (`data/sources/rulebook/2026-10-09/2-card-types.md:124-126`):
+  "Some effects can cancel a card 'as it is played.' ... Even drawing
+  to replace cards, comes after this time period." §3 "Cancel a card"
+  (`3-playing-the-game.md:103-108`): a cancelled card is still
+  considered played; an action card's own minion does not lock and
+  "they can play the same action card again." §4 Detailed Turn
+  Sequence (`4-detailed-turn-sequence.md:188-191`): "A minion cannot
+  play (unless cancelled) the same named action card more than once
+  each turn, even if they unlock" -- scoped per-minion, not
+  per-controller.
+- Solution: `engine/hand.py::remove_from_hand`/`draw_replacement_card`
+  split the physical-card-removal and replacement-draw steps;
+  `_perform_action_card` now sequences `option.apply` -> cancel offer
+  (`hooks.offer_cancel_as_played`) -> unconditional replacement draw
+  -> (only if not canceled) mark the per-turn cap and run
+  `perform_minion_action`. `VampireInPlay.action_card_played_turn`
+  (name-keyed, per-minion, storing the turn last played) backs
+  `action_card_already_played_this_turn`/
+  `mark_action_card_played_this_turn`, checked by all 8 real
+  `ACTION_CARD_PLAY_HOOK` providers. Loup (Action Modifier, not
+  Action) and `lucinde_alastor.py` (never plays a card from hand) are
+  both correctly out of scope, confirmed rather than assumed.
+
+## OQ-58: Observation - no attachment visibility (status: resolved)
+
+- Situation: `rules-auditor`, reviewing Pulled Fangs, found
+  `engine/observation.py::VampireView` has no `attachments` field at
+  all, while a played attachment card (Pulled Fangs, Perfectionist,
+  Weighted Walking Stick) is also left sitting in `Observation.
+  ash_heap` (`play_from_hand` appends there unconditionally; nothing
+  removes it once the same physical card becomes a live
+  `CardAttachment`).
+- Rules/interactions: CLAUDE.md §5 (information-hiding invariant);
+  Rulebook §3 "Playing a Card" ("showing the card") confirms an
+  attachment is always public once played -- not a ruling question,
+  a project observation-fidelity gap.
+- Solution: added `engine/observation.py::AttachmentView`
+  (`instance_id`/`krcg_id`/`name`/`controller`/`counters`/
+  `is_equipment`, `zone == "attached"` only) and
+  `VampireView.attachments`, gated behind the existing
+  `visible_identity` check (defensive -- no attach path in this
+  engine ever targets a face-down uncontrolled vampire today).
+  `ash_heap` double-listing fixed by a count-based filter
+  (`_live_attachment_counts_by_controller`/`_visible_ash_heap`): hides
+  at most as many same-`krcg_id` `ash_heap` entries as there are
+  currently-live attachments of that id. `rules-auditor` noted this is
+  index-based, not identity-based (could in principle hide a different
+  same-named copy's entry than the one that actually became the
+  attachment), but confirmed harmless under `ash_heap`'s own
+  name-only, display-only shape -- worth revisiting only if `ash_heap`
+  ever gains instance-level fidelity.

@@ -1,14 +1,27 @@
 """Private helpers shared by real card modules (not itself a card). Not
 imported by `cards/__init__.py`'s module list -- exists so a few cards
-don't reimplement the same bookkeeping."""
+don't reimplement the same bookkeeping. `remove_from_hand`/
+`draw_replacement_card` are re-exported, not redefined, from `engine/
+hand.py` (OQ-57, `docs/OPEN_QUESTIONS.md`): the actual mechanism lives in
+the engine layer so `engine/phases/minion.py` can call it directly without
+importing from `cards/` (CLAUDE.md §6)."""
 
 from typing import TYPE_CHECKING, Any
 
 from vtesbot.engine.cards import LibraryCard
-from vtesbot.engine.hand import reconcile_hand_size
+from vtesbot.engine.hand import draw_replacement_card, reconcile_hand_size
+from vtesbot.engine.hand import remove_from_hand as remove_from_hand
 
 if TYPE_CHECKING:
     from vtesbot.engine.state import GameState
+
+__all__ = [
+    "bleed_bookkeeping",
+    "draw_replacement_card",
+    "play_from_hand",
+    "play_from_hand_pending",
+    "remove_from_hand",
+]
 
 
 def play_from_hand_pending(state: GameState, player: str, krcg_id: int) -> LibraryCard:
@@ -27,11 +40,17 @@ def play_from_hand_pending(state: GameState, player: str, krcg_id: int) -> Libra
 
 
 def play_from_hand(state: GameState, player: str, krcg_id: int) -> LibraryCard:
-    """Play the first `krcg_id` card in hand, straight to the ash heap
-    (Rulebook §2). Only for a play with no block window; a blockable
-    action must use `play_from_hand_pending` instead (OQ-12)."""
-    played = play_from_hand_pending(state, player, krcg_id)
-    state.players[player].ash_heap.append(played)
+    """Play the first `krcg_id` card in hand, straight to the ash heap,
+    drawing its replacement immediately (Rulebook §2) -- a thin wrapper of
+    `remove_from_hand` + `draw_replacement_card` (`engine/hand.py`) for a
+    play with no block window and no "as played" cancel window of its own
+    to interleave between the two (every caller except the Action-card
+    `ACTION_CARD_PLAY_HOOK` providers fixed by OQ-57 Finding 1, which call
+    `remove_from_hand` directly from their own `apply()` instead). A
+    blockable action with a later, undetermined destination must use
+    `play_from_hand_pending` instead (OQ-12)."""
+    played = remove_from_hand(state, player, krcg_id)
+    draw_replacement_card(state, player)
     return played
 
 

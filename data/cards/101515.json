@@ -1,0 +1,289 @@
+{
+  "id": 101515,
+  "printed_name": "Pulled Fangs",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Pulled Fangs"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300001,
+        "code": "Jyhad"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "R",
+          "multiplier": 2.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/jyhad/pulledfangs.jpg"
+    },
+    {
+      "set": {
+        "id": 300002,
+        "code": "VTES"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "R",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/pulledfangs.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PB",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/pulledfangs.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "R",
+          "multiplier": 2.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/pulledfangs.jpg"
+    },
+    {
+      "set": {
+        "id": 300010,
+        "code": "Anarchs"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAG",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anarchs/pulledfangs.jpg"
+    },
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/pulledfangs.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/pulledfangs.jpg",
+  "types": [
+    "Combat"
+  ],
+  "formats": [],
+  "artists": [
+    "Edward Beard, Jr."
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "Counts up damage successfully inflicted during the round by the minions, retainers and environmental damage do not count. [TOM 19950304] [LSJ 20010812]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[TOM 19950304]",
+          "label": "TOM 19950304",
+          "url": "https://usenet.krcg.org/t/DYxpGPWoSaE/#m5"
+        },
+        {
+          "text": "[LSJ 20010812]",
+          "label": "LSJ 20010812",
+          "url": "https://usenet.krcg.org/t/uXGLWUAuByc/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "Must be played after the presses are handled and can be played if the round ends prematurely. [RTR 20030519]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[RTR 20030519]",
+          "label": "RTR 20030519",
+          "url": "https://usenet.krcg.org/t/NOBWXWrd-vA/#m0"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "Can be played before or after effects that are played at the end of the round or \"when the combat would end\" (eg. [AUS] {101950|Telepathic Tracking}). Can be played before or after [CEL] {101507|Psyche!} [LSJ 20021113] [ANK 20191219] [ANK 20180910-1]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20021113]",
+          "label": "LSJ 20021113",
+          "url": "https://usenet.krcg.org/t/df2P8YHZex8/#m11"
+        },
+        {
+          "text": "[ANK 20191219]",
+          "label": "ANK 20191219",
+          "url": "https://www.vekn.net/forum/rules-questions/78241-relentless-reaper-vs-blissful-agony-and-scheduled-combat-rulings-ambiguity#98308"
+        },
+        {
+          "text": "[ANK 20180910-1]",
+          "label": "ANK 20180910-1",
+          "url": "https://www.vekn.net/forum/rules-questions/76990-correct-order-impulse-for-combat-cards-after-combat#90517"
+        }
+      ],
+      "cards": [
+        {
+          "id": 101950,
+          "printed_name": "Telepathic Tracking",
+          "unicity_suffix": "",
+          "suffix": ""
+        },
+        {
+          "id": 101507,
+          "printed_name": "Psyche!",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": [
+        {
+          "text": "[AUS]",
+          "symbol": "A",
+          "count": ""
+        },
+        {
+          "text": "[CEL]",
+          "symbol": "C",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "A total of two actions must be performed (by whomever) to remove it. Vampires A and B can both take the action, then it is removed. [ANK 20170202-2] ",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20170202-2]",
+          "label": "ANK 20170202-2",
+          "url": "https://www.vekn.net/forum/rules-questions/75571-question-regarding-quincy-the-trapper?start=6#80479"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "If the round ends before range is determined (e.g. {100040|Alpha Glint}) Range is assumed to be at default (usually close, unless e.g. [dai]{100711|Fear of the Void Below} was played), unless range was set by another effect (e.g. {101816|Sniper Rifle}, [obe]{101276|Neutral Guard}) [LSJ 20100709]",
+      "group": "End of round effects that care about the range",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20100709]",
+          "label": "LSJ 20100709",
+          "url": "https://usenet.krcg.org/t/j98aqFIFjnE/#m23"
+        }
+      ],
+      "cards": [
+        {
+          "id": 100040,
+          "printed_name": "Alpha Glint",
+          "unicity_suffix": "",
+          "suffix": ""
+        },
+        {
+          "id": 100711,
+          "printed_name": "Fear of the Void Below",
+          "unicity_suffix": "",
+          "suffix": ""
+        },
+        {
+          "id": 101816,
+          "printed_name": "Sniper Rifle",
+          "unicity_suffix": "",
+          "suffix": ""
+        },
+        {
+          "id": 101276,
+          "printed_name": "Neutral Guard",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": [
+        {
+          "text": "[dai]",
+          "symbol": "y",
+          "count": ""
+        },
+        {
+          "text": "[obe]",
+          "symbol": "b",
+          "count": ""
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "text": "Only usable at close range at the end of a round during which this minion successfully inflicted more damage than the opposing vampire. Not usable by a minion being burned or going to torpor.\nPut this card on the opposing vampire; this minion inflicts 1 damage on them. The attached vampire cannot hunt; if they must hunt, they go to torpor instead. Any vampire(s) can burn this card with two +1 stealth actions. A vampire can have only one Pulled Fangs.",
+  "draft": "",
+  "flavor": "",
+  "legal": "1994-09-15",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": []
+  }
+}

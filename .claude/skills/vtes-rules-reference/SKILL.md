@@ -109,6 +109,20 @@ acting Methuselah. The window ends when everyone passes.
 3. If unblocked → pay cost, resolve. If blocked → action card
    burned, cost not paid, blocker locks, combat.
 
+"Cost not paid when blocked" scopes to the **action card's own**
+printed cost (Action, Political Action, Equipment, Retainer, Ally,
+...) — the card played to perform the action itself. It does NOT
+apply to an Action Modifier played during that same action: an Action
+Modifier resolves immediately when played (not deferred to the
+action's own resolve step), so its own cost (card discarded + any
+printed blood/pool/etc.) is paid in full the instant it is played,
+regardless of whether the action later turns out blocked or
+unblocked. Model this as: an action card's `HookOption`/equivalent
+pays its cost only inside the unblocked `resolve()` branch; an Action
+Modifier's `HookOption.cost` pays unconditionally at the moment it is
+chosen (same mechanism `apply_chosen_option` already uses for
+cancel-as-played, OQ-32).
+
 Three states to model: no current block attempt / ongoing block
 attempt / blocks declined by all.
 

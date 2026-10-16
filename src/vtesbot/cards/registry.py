@@ -66,6 +66,16 @@ class Hook(StrEnum):
     """A library card of type Action (not Action Modifier) that is itself
     the acting minion's whole action, distinct from `RECRUIT_ALLY_PLAY`.
     Generalizes that pattern beyond Allies (OQ-17)."""
+    ATTACHMENT_REMOVAL_ACTION_PLAY = "attachment_removal_action_play"
+    """Generic cumulative "+1 stealth action, by either side's vampires,
+    removes a named attachment once N total contributions are made" minion
+    action (`engine/phases/minion.py::build_attachment_removal_action_spec`),
+    offered alongside `ACTION_CARD_PLAY`/`RECRUIT_ALLY_PLAY` (Pulled Fangs,
+    krcg 101515)."""
+    CANNOT_HUNT = "cannot_hunt"
+    """Passive boolean hook (`hooks.any_true`): an attachment's mandatory
+    "cannot hunt" clause, checked by `minion_phase`'s own mandatory-hunt
+    loop before `_perform_hunt` (Pulled Fangs, krcg 101515)."""
     REFERENDUM_TALLIED = "referendum_tallied"
     """Mandatory per-provider reaction fired once a referendum's votes are
     tallied, before pass/fail effects. Hook site for Marcos Belegrad's

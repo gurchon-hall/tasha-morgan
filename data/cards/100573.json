@@ -1,0 +1,255 @@
+{
+  "id": 100573,
+  "printed_name": "Dominate Kine",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Historical",
+      "name": "Kine Dominance"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Dominate Kine"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Dominar al ganado"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Dominer le bétail"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300001,
+        "code": "Jyhad"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "R",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/jyhad/dominatekine.jpg"
+    },
+    {
+      "set": {
+        "id": 300002,
+        "code": "VTES"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "R",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/vampire-the-eternal-struggle/dominatekine.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "R",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/dominatekine.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/dominatekine.jpg"
+    },
+    {
+      "set": {
+        "id": 300019,
+        "code": "LotN"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PG",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/lords-of-the-night/dominatekine.jpg"
+    },
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/dominatekine.jpg"
+    },
+    {
+      "set": {
+        "id": 300032,
+        "code": "FB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/first-blood/dominatekine.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/dominatekine.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Dominar al ganado",
+      "text": "[dom] Acción con +1 de sigilo. Ⓓ Sangra con +1 de sangrado.\n[DOM] Ⓓ Roba un lugar controlado por otro Matusalén.",
+      "flavor": "Quien no hurta en el mundo, no vive.\nFrancisco de Quevedo, \"El Buscón\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/dominatekine.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Dominer le bétail",
+      "text": "[dom] Action à +1 en discrétion. Ⓓ Mordre à +1 en morsure.\n[DOM] Ⓓ Voler un lieu.",
+      "flavor": "Qui ne vole pas dans le monde, n'y vit pas.\nFrancisco de Quevedo, \"El Buscón\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/dominatekine.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/dominatekine.jpg",
+  "types": [
+    "Action"
+  ],
+  "formats": [],
+  "artists": [
+    "Mark Poole",
+    "Brian LeBlanc"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "[DOM] If used to steal an equipment representing a location, it can be placed on any minion controlled by the new controller. [RTR 19960112]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[RTR 19960112]",
+          "label": "RTR 19960112",
+          "url": "https://usenet.krcg.org/t/d3n3StNS7no/#m0"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[DOM]",
+          "symbol": "D",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "Changing the controller of a location has no other effect, unless specified by card text. Exception: A location \"on\" another controlled card is moved onto an appropriate card controlled by the new controller of the location. [RTR 19980623]",
+      "group": "Changes controller of location",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[RTR 19980623]",
+          "label": "RTR 19980623",
+          "url": "https://usenet.krcg.org/t/tSpd9dtTElc/#m0"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "[dom] +1 stealth action. Ⓓ Bleed with +1 bleed.\n[DOM] Ⓓ Steal a location.",
+  "draft": "",
+  "flavor": "There is no living in this world without stealing.\nFrancisco de Quevedo, \"El Buscón\"",
+  "legal": "1994-09-15",
+  "banned": null,
+  "cost": {
+    "type": "Blood",
+    "value": 2
+  },
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "dom"
+    ]
+  }
+}

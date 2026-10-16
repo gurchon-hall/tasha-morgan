@@ -39,3 +39,6 @@ an entry.
 | OQ-28 | `002.md` | Slam - maneuver committing a strike |
 | OQ-29 | `002.md` | Taste of Vitae - no end-of-round window |
 | OQ-30 | `002.md` | Perfect Paragon - no intercept-decrease hook |
+| OQ-31 | `002.md` | Perfect Paragon family - proactive-only or also reactive |
+| OQ-32 | `002.md` | Diana Iadanza - no "cancel as played" hook |
+| OQ-33 | `002.md` | Diana Iadanza - no cancel-type marker |

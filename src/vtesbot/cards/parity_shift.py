@@ -92,23 +92,38 @@ dispatch `REFERENDUM_RESOLVED_HOOK` (Voter Captivation's own trigger
 moment) once this whole `resolve()` closure, including the transfer
 above, returns. No provider is registered against that hook by this
 module (Voter Captivation's own card module is a separate pass).
+
+OQ-57 (`docs/OPEN_QUESTIONS.md`): calls `remove_from_hand` (not
+`play_from_hand`) and sets `ActionCardSpec.name=NAME`, so `_perform_
+action_card` can interleave a future Reflex card's own cancel-as-played
+window before drawing the replacement (Finding 1), and so a second
+physical copy is not offered once this card has already been played this
+turn (Finding 2).
 """
 
 from collections.abc import Mapping
 from typing import Any
 
-from vtesbot.cards._shared import play_from_hand
+from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_POLITICAL
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
-from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, ActionCardSpec
+from vtesbot.engine.phases.minion import (
+    ACTION_CARD_PLAY_HOOK,
+    ActionCardSpec,
+    action_card_already_played_this_turn,
+)
 from vtesbot.engine.politics import POLITICAL_ACTION_STEALTH, resolve_referendum
 from vtesbot.engine.pool import gain_pool, lose_pool
 from vtesbot.engine.state import GameState
 
 KRCG_ID = 101353
+NAME = "Parity Shift"
+"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
+OPEN_QUESTIONS.md`): backs the generic "same named action card at most
+once per turn" cap."""
 REQUIRED_TITLES = frozenset({"Prince", "Justicar"})
 """Verbatim "Requires a prince or justicar."."""
 MAX_ALLOCATION = 3
@@ -133,9 +148,11 @@ def _provide_parity_shift(state: GameState, context: Mapping[str, Any]) -> list[
     if state.players[other].pool <= state.players[player].pool:
         # No legal target: "cannot be used or played if the conditions ... cannot be met".
         return []
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
 
         def resolve(pending: dict[str, Any]) -> None:
             votes_for, votes_against, _casts = resolve_referendum(
@@ -157,6 +174,7 @@ def _provide_parity_shift(state: GameState, context: Mapping[str, Any]) -> list[
             directed=True,
             action=ACTION_POLITICAL,
             resolve=resolve,
+            name=NAME,
         )
 
     return [
@@ -173,7 +191,7 @@ hooks.register(ACTION_CARD_PLAY_HOOK, _provide_parity_shift)
 register(
     CardRegistration(
         krcg_id=KRCG_ID,
-        name="Parity Shift",
+        name=NAME,
         status=Status.IMPLEMENTED,
         hooks=(Hook.ACTION_CARD_PLAY,),
         source=__name__,

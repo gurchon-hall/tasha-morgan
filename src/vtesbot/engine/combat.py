@@ -297,6 +297,7 @@ def _resolve_strike_pair(
                 blocking_vampire,
                 normal=damage_to_blocking,
                 round_state=round_state,
+                inflicted_by=acting_vampire.instance_id,
             )
         if damage_to_acting:
             apply_damage(
@@ -305,6 +306,7 @@ def _resolve_strike_pair(
                 acting_vampire,
                 normal=damage_to_acting,
                 round_state=round_state,
+                inflicted_by=blocking_vampire.instance_id,
             )
 
 

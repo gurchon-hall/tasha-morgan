@@ -1,0 +1,148 @@
+{
+  "id": 101495,
+  "printed_name": "Propaganda",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Propaganda"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300005,
+        "code": "Sabbat"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat/propaganda.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/propaganda.jpg"
+    },
+    {
+      "set": {
+        "id": 300011,
+        "code": "BH"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/black-hand/propaganda.jpg"
+    },
+    {
+      "set": {
+        "id": 300015,
+        "code": "LoB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PI",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/legacies-of-blood/propaganda.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "U",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/propaganda.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PMi",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/propaganda.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/propaganda.jpg",
+  "types": [
+    "Action"
+  ],
+  "formats": [],
+  "artists": [
+    "Ken Meyer, Jr."
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "[pre] Ⓓ Bleed with +1 bleed. Titled vampires cannot block this action.\n[PRE] As above, and the target Methuselah locks a ready unlocked minion they control.",
+  "draft": "",
+  "flavor": "If the facts say otherwise then the facts must be altered.\nGeorge Orwell, \"1984\"",
+  "legal": "1996-11-27",
+  "banned": null,
+  "cost": {
+    "type": "Blood",
+    "value": 2
+  },
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "pre"
+    ]
+  }
+}

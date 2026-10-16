@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any
 from .. import hooks
 from ..action import (
     ACTION_ACTION_CARD,
+    ACTION_ATTACHMENT_REMOVAL,
     ACTION_BLEED,
     ACTION_DIABLERIE,
     ACTION_HUNT,
@@ -29,14 +30,16 @@ from ..action import (
 )
 from ..allies import detect_contest_on_recruit, recruit_ally
 from ..combat import run_combat
-from ..damage import add_blood
+from ..damage import add_blood, send_to_torpor
 from ..decision import Choice, Decision
 from ..diablerie import resolve_diablerie
+from ..hand import draw_replacement_card
 from ..pool import lose_pool
 from ..state import EnterCombatGrant
 
 if TYPE_CHECKING:
     from ..allies import RecruitAllySpec
+    from ..cards import CardAttachment
     from ..hooks import HookOption
     from ..state import GameState, VampireInPlay
 
@@ -75,7 +78,8 @@ folds it into `base_amount`."""
 class ActionCardSpec:
     """What an `action_card_play` hook option's `apply(state)` returns
     (OQ-17): base_stealth/directed, `resolve`/`on_blocked` callbacks,
-    `action` discriminator (OQ-9), `maneuver_grant` (OQ-25)."""
+    `action` discriminator (OQ-9), `maneuver_grant` (OQ-25),
+    `block_candidate_predicate` (see below)."""
 
     base_stealth: int
     directed: bool
@@ -83,6 +87,30 @@ class ActionCardSpec:
     on_blocked: Callable[[dict[str, Any]], None] | None = None
     action: str = ACTION_ACTION_CARD
     maneuver_grant: str | None = None
+    block_candidate_predicate: Callable[[VampireInPlay], bool] | None = None
+    """Forwarded unchanged to `engine/action.py::perform_minion_action`/
+    `attempt_block` -- an unconditional, property-based block-candidate
+    filter tied to *this action card's own printed text* (e.g.
+    `cards/propaganda.py` krcg 101495, "Titled vampires cannot block this
+    action"), seeded here because this is the one point an `ACTION_CARD_
+    PLAY_HOOK` provider's `apply()` can hand a predicate to `perform_
+    minion_action` before its own per-action `pending` dict even exists.
+    Distinct from, and composes with, `BLOCK_CANDIDATE_EXCLUSION_HOOK`
+    (an actor-chosen, per-vampire exclusion seeded reactively from inside
+    `attempt_block`'s own retry loop) -- see `attempt_block`'s own
+    docstring for how both are applied together."""
+    name: str | None = None
+    """The printed name of the library card this spec plays from hand, or
+    `None` when nothing was actually played from hand (e.g. `build_
+    enter_combat_action_spec`'s own default, used both by `cards/
+    line_brawl.py`'s `[pot]` clause -- itself a real card play, which sets
+    this explicitly -- and by `cards/lucinde_alastor.py`'s crypt-text grant
+    consumer, which never plays a card at all and leaves it `None`).
+    `_perform_action_card` uses this to drive two OQ-57 (`docs/
+    OPEN_QUESTIONS.md`) mechanisms, both gated on `name is not None`: the
+    replacement-card draw (Finding 1) and the generic "same named action
+    card at most once per turn" cap (Finding 2, `action_card_already_
+    played_this_turn`/`mark_action_card_played_this_turn` below)."""
 
 
 def build_enter_combat_action_spec(
@@ -91,6 +119,8 @@ def build_enter_combat_action_spec(
     acting_vampire: VampireInPlay,
     opponent: str,
     target_vampire_id: str,
+    *,
+    name: str | None = None,
 ) -> ActionCardSpec:
     """Shared "Ⓓ Enter combat with a minion" resolution shape: the target is
     bound now (at `apply()` time, not deferred to `resolve()`), and
@@ -104,12 +134,15 @@ def build_enter_combat_action_spec(
     "enter combat with this specific, already-bound target" option,
     regardless of what makes the option available: playing a card
     (`cards/line_brawl.py`'s `[pot]` clause, its first consumer, refactored
-    onto this shared helper) or a crypt text's own ability grant
-    (`EnterCombatGrant`/`active_enter_combat_grants` below, e.g. a future
-    Lucinde, Alastor module). Callers remain responsible for their own
-    eligibility gate on which vampire may use the option at all (mirrors
-    `line_brawl.py`'s "Requires an Anarch" gate) -- this helper only builds
-    the `ActionCardSpec` for a target already decided to be legal."""
+    onto this shared helper -- passes its own card's printed `name`) or a
+    crypt text's own ability grant (`EnterCombatGrant`/`active_enter_combat_
+    grants` below, e.g. `cards/lucinde_alastor.py`'s own consumer, which
+    plays no card and leaves `name` at its default `None` -- OQ-57's
+    `ActionCardSpec.name` contract, `docs/OPEN_QUESTIONS.md`). Callers
+    remain responsible for their own eligibility gate on which vampire may
+    use the option at all (mirrors `line_brawl.py`'s "Requires an Anarch"
+    gate) -- this helper only builds the `ActionCardSpec` for a target
+    already decided to be legal."""
 
     def resolve(pending: dict[str, Any]) -> None:
         del pending  # no later hook window of its own to feed.
@@ -118,7 +151,73 @@ def build_enter_combat_action_spec(
             return  # fizzles (OQ-21); the target left "ready" since binding.
         run_combat(state, player, acting_vampire, opponent, target)
 
-    return ActionCardSpec(base_stealth=0, directed=True, resolve=resolve)
+    return ActionCardSpec(base_stealth=0, directed=True, resolve=resolve, name=name)
+
+
+ATTACHMENT_REMOVAL_ACTION_HOOK = "attachment_removal_action_play"
+"""`HookOption` hook (name mirrors `ACTION_CARD_PLAY_HOOK`/`RECRUIT_ALLY_
+PLAY_HOOK`'s own "_play" suffix convention; deliberately distinct from the
+`ACTION_ATTACHMENT_REMOVAL` discriminator string below, a different
+namespace), offered alongside `ACTION_CARD_PLAY_HOOK`/`RECRUIT_
+ALLY_PLAY_HOOK` in `_choose_and_perform_action` (same "default action list,
+gated on at least one eligible target existing" shape as the hardcoded
+"Diablerise a Vampire in Torpor" choice): one option per attachment a card
+module wants removable this way, offered for the acting vampire;
+`apply(state)` returns an `ActionCardSpec` built via `build_attachment_
+removal_action_spec` below. Generalizes Pulled Fangs' (krcg 101515) own
+"Any vampire(s) can burn this card with two +1 stealth actions" clause --
+not itself playing a card from hand, so kept off `ACTION_CARD_PLAY_HOOK`
+(see `ACTION_ATTACHMENT_REMOVAL`'s own docstring)."""
+
+ATTACHMENT_REMOVAL_STEALTH = 1
+""""+1 stealth action" bare (no "Ⓓ" marker): undirected, baseline 0 (same
+reading `RECRUIT_ALLY_STEALTH`'s own docstring gives for the Rulebook's
+default-action-list "+1 stealth" bare phrasing, e.g. Recruit Ally/Employ
+Retainer)."""
+
+
+def build_attachment_removal_action_spec(
+    attachment: CardAttachment, *, contributions_required: int
+) -> ActionCardSpec:
+    """Shared "+1 stealth action, cumulative across either side's vampires,
+    removes a named attachment once `contributions_required` total
+    contributions have been made" resolution shape. Sourced from Pulled
+    Fangs (krcg 101515): "Any vampire(s) can burn this card with two +1
+    stealth actions."; ruling "A total of two actions must be performed
+    (by whomever) to remove it. Vampires A and B can both take the action,
+    then it is removed." [ANK 20170202-2] -- confirming a contribution only
+    counts once the action actually resolves unblocked (an action blocked
+    this action-card-playing step never reaches `resolve()` at all, so it
+    never contributes), and that either side's vampire may contribute, not
+    only the attachment's own controller's.
+
+    Reuses `CardAttachment.counters` (already a generic running-count field,
+    e.g. Revelation of Ecstasy's corruption counters) as the contribution
+    tally instead of inventing a second one -- callers must not otherwise
+    mutate `counters` on an attachment built against this helper.
+    `contributions_required` is caller-supplied (Pulled Fangs' own text
+    names exactly two; this helper does not hardcode that number, since it
+    is the calling card's own fact, not a rule of this mechanism).
+
+    `resolve()` fizzles (no-op) if `attachment.zone != "attached"` by
+    resolve time (OQ-21 convention: the attachment may have already been
+    removed by a different, earlier-resolving contribution this same
+    action-choice round)."""
+
+    def resolve(pending: dict[str, Any]) -> None:
+        del pending  # no later hook window of its own to feed.
+        if attachment.zone != "attached":
+            return  # fizzles (OQ-21 convention): already removed since binding.
+        attachment.counters = (attachment.counters or 0) + 1
+        if attachment.counters >= contributions_required:
+            attachment.zone = "burned"
+
+    return ActionCardSpec(
+        base_stealth=ATTACHMENT_REMOVAL_STEALTH,
+        directed=False,
+        resolve=resolve,
+        action=ACTION_ATTACHMENT_REMOVAL,
+    )
 
 
 def grant_enter_combat_this_turn(
@@ -157,15 +256,29 @@ def active_enter_combat_grants(state: GameState, player: str) -> list[EnterComba
     ]
 
 
+CANNOT_HUNT_HOOK = "cannot_hunt"
+"""Passive boolean hook (`hooks.any_true`, CLAUDE.md rule 3 exception, mirrors
+`attachments.py::CAPACITY_MODIFIER_HOOK`): an attachment's printed "cannot hunt" clause is
+mandatory and always-on while attached, so no `Decision` is raised for it. Needed by Pulled
+Fangs (krcg 101515): "The attached vampire cannot hunt; if they must hunt, they go to torpor
+instead." Checked by `minion_phase`'s own mandatory-hunt loop before calling `_perform_hunt`
+-- a vampire for which any provider returns True is sent straight to `send_to_torpor`
+instead, never attempting the hunt action at all (not blockable, not an action)."""
+
+
 def minion_phase(state: GameState, player: str) -> None:
     other = state.other_player(player)
 
-    # Mandatory actions first: a ready, unlocked vampire with no blood must hunt.
+    # Mandatory actions first: a ready, unlocked vampire with no blood must hunt,
+    # unless an attachment substitutes a forced torpor instead (CANNOT_HUNT_HOOK).
     for vampire in list(state.ready_unlocked_vampires(player)):
         if state.game_over:
             return
         if vampire.blood == 0 and vampire.is_ready_unlocked:
-            _perform_hunt(state, player, other, vampire)
+            if hooks.any_true(CANNOT_HUNT_HOOK, state, player=player, vampire=vampire.instance_id):
+                send_to_torpor(state, player, vampire)
+            else:
+                _perform_hunt(state, player, other, vampire)
 
     # Optional actions, in whatever order the acting player chooses (impulse).
     while True:
@@ -215,8 +328,14 @@ def _choose_and_perform_action(
     action_card_options = hooks.offer(
         ACTION_CARD_PLAY_HOOK, state, player=player, vampire=vampire.instance_id
     )
+    attachment_removal_options = hooks.offer(
+        ATTACHMENT_REMOVAL_ACTION_HOOK, state, player=player, vampire=vampire.instance_id
+    )
     recruit_by_value: dict[str, HookOption] = {o.choice.value: o for o in recruit_options}
     action_card_by_value: dict[str, HookOption] = {o.choice.value: o for o in action_card_options}
+    attachment_removal_by_value: dict[str, HookOption] = {
+        o.choice.value: o for o in attachment_removal_options
+    }
     diablerie_choice = (
         (Choice(ACTION_DIABLERIE, "Diablerise a vampire in torpor"),)
         if _eligible_diablerie_targets(state, player, other)
@@ -227,6 +346,7 @@ def _choose_and_perform_action(
         + diablerie_choice
         + tuple(o.choice for o in recruit_options)
         + tuple(o.choice for o in action_card_options)
+        + tuple(o.choice for o in attachment_removal_options)
     )
     decision = Decision(
         player=player,
@@ -243,6 +363,10 @@ def _choose_and_perform_action(
         _perform_diablerise(state, player, other, vampire)
     elif action in recruit_by_value:
         _perform_recruit_ally(state, player, other, vampire, recruit_by_value[action])
+    elif action in attachment_removal_by_value:
+        _perform_attachment_removal_action(
+            state, player, other, vampire, attachment_removal_by_value[action]
+        )
     else:
         _perform_action_card(state, player, other, vampire, action_card_by_value[action])
 
@@ -391,6 +515,33 @@ def _perform_recruit_ally(
     )
 
 
+def action_card_already_played_this_turn(
+    state: GameState, vampire: VampireInPlay, name: str
+) -> bool:
+    """OQ-57 Finding 2 (`docs/OPEN_QUESTIONS.md`): Rulebook §4 Detailed Turn
+    Sequence (`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:
+    188-191`), "A minion cannot play (unless cancelled) the same named
+    action card more than once each turn, even if they unlock." -- scoped
+    to this one `vampire` ("a minion"), not every vampire its controller
+    owns (a different vampire with its own physical copy may still play it
+    this same turn). Called by an `ACTION_CARD_PLAY_HOOK` provider as a
+    guard, alongside its own other eligibility checks (hand possession,
+    blood cost, legal target, ...), so a second physical copy of an
+    already-played-this-turn card is never even offered to the same
+    vampire. See `VampireInPlay.action_card_played_turn`'s own docstring
+    for the "why `name`, not `krcg_id`" reasoning."""
+    return vampire.action_card_played_turn.get(name) == state.turn_number
+
+
+def mark_action_card_played_this_turn(state: GameState, vampire: VampireInPlay, name: str) -> None:
+    """Records `name` as played this turn for `vampire` -- call only once a
+    play is confirmed *not* canceled (OQ-57 Finding 2: "unless cancelled",
+    a canceled attempt must not count against the cap). The sole caller is
+    `_perform_action_card`, after its own cancel-as-played window closes
+    with no cancellation."""
+    vampire.action_card_played_turn[name] = state.turn_number
+
+
 def _perform_action_card(
     state: GameState,
     player: str,
@@ -399,8 +550,96 @@ def _perform_action_card(
     option: HookOption,
 ) -> None:
     """Rulebook §2+§4 (OQ-17): a printed Action-type card is itself the
-    vampire's whole minion action. `option`'s `ActionCardSpec` is forwarded
-    to `perform_minion_action` unchanged."""
+    vampire's whole minion action. `option.apply(state)` removes the
+    physical card from hand to the ash heap (`engine/hand.py::
+    remove_from_hand`, re-exported from `cards/_shared.py` for card-module
+    callers -- every real `ACTION_CARD_PLAY_HOOK` provider's own
+    convention, OQ-57 Finding 1 below) and returns the `ActionCardSpec`
+    forwarded to `perform_minion_action` unchanged, unless canceled first.
+
+    OQ-57 Finding 1 (`docs/OPEN_QUESTIONS.md`): between `option.apply`
+    returning and `perform_minion_action` running -- i.e. strictly before
+    `vampire.locked` is ever set for this action, the only "announce"
+    commitment this action makes -- `other` is offered `hooks.CANCEL_
+    AS_PLAYED_HOOK` via `hooks.offer_cancel_as_played` (Rulebook Advanced
+    Rules "Reflex cards", `data/sources/rulebook/2026-10-09/
+    2-card-types.md:323-326`). Only *after* that window closes --
+    regardless of whether it resulted in a cancellation -- is the
+    replacement card drawn (`engine/hand.py::draw_replacement_card`),
+    per Rulebook §2 Card Types, "Library Cards" Advanced Rules
+    (`2-card-types.md:124-126`):
+    "Even drawing to replace cards, comes after this time period"; and per
+    "Cancel a Card" (`3-playing-the-game.md:103`): "A cancelled card has no
+    effect, but it is still considered played" -- being played, not
+    succeeding, is what triggers the replacement draw, so it always runs
+    for a real card play (`spec.name is not None`; `None` means nothing
+    was played from hand at all, e.g. `cards/lucinde_alastor.py`'s own
+    grant-consumption option, which must not draw a card it never removed).
+
+    If canceled, `perform_minion_action` is skipped entirely:
+    `3-playing-the-game.md:103-108`, "If an action card is cancelled, the
+    minion does not lock (they do not pay for the action card), and they
+    can play the same action card again." -- `vampire.locked` is never
+    set (the only call site that sets it for this action is skipped), and
+    the action card's own printed cost, which every `ActionCardSpec`-
+    producing module pays only inside its own `resolve()` on the unblocked
+    branch, is simply never reached.
+
+    OQ-57 Finding 2: the per-turn-per-named-action-card cap above
+    (`mark_action_card_played_this_turn`) is marked here, centrally, only
+    once the cancel window has closed *without* a cancellation -- "unless
+    cancelled" means a canceled attempt must not count against it, matching
+    the rule's own carve-out and this function's own "they can play the
+    same action card again" branch just above.
+
+    This is a distinct mechanism from `hooks.apply_chosen_option` (OQ-32,
+    built for a Reaction/Action-Modifier/political-referendum `HookOption`,
+    whose own `cost` is paid unconditionally even if canceled): an Action
+    card's `HookOption` has no `cost` field in play at all (`option.cost` is
+    never set by any `ACTION_CARD_PLAY_HOOK` provider in this pool), so
+    force-fitting that model here would have nothing to pay unconditionally
+    and would instead have had to invent a meaning for "cost" this
+    mechanism does not need."""
+    spec: ActionCardSpec = option.apply(state)
+    if state.game_over:
+        return
+    canceled = hooks.offer_cancel_as_played(state, option, player, other)
+    if state.game_over:
+        return
+    if spec.name is not None:
+        draw_replacement_card(state, player)
+    if canceled:
+        return
+    if spec.name is not None:
+        mark_action_card_played_this_turn(state, vampire, spec.name)
+    perform_minion_action(
+        state,
+        player,
+        other,
+        vampire,
+        spec.base_stealth,
+        spec.resolve,
+        action=spec.action,
+        directed=spec.directed,
+        on_blocked=spec.on_blocked,
+        maneuver_grant=spec.maneuver_grant,
+        block_candidate_predicate=spec.block_candidate_predicate,
+    )
+
+
+def _perform_attachment_removal_action(
+    state: GameState,
+    player: str,
+    other: str,
+    vampire: VampireInPlay,
+    option: HookOption,
+) -> None:
+    """`ATTACHMENT_REMOVAL_ACTION_HOOK`'s own `ActionCardSpec` (built via
+    `build_attachment_removal_action_spec`) is forwarded to `perform_
+    minion_action` unchanged -- kept as its own function, not reusing
+    `_perform_action_card`, so a future reader is never misled into
+    thinking this mechanism plays a card from hand (see
+    `ACTION_ATTACHMENT_REMOVAL`'s own docstring)."""
     spec: ActionCardSpec = option.apply(state)
     perform_minion_action(
         state,
@@ -413,4 +652,5 @@ def _perform_action_card(
         directed=spec.directed,
         on_blocked=spec.on_blocked,
         maneuver_grant=spec.maneuver_grant,
+        block_candidate_predicate=spec.block_candidate_predicate,
     )

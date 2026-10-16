@@ -41,6 +41,13 @@ both choices are the referendum's own terms, picked by the caller only once
 `Decision` raised inside `resolve()` (mirrors Kine Resources Contested's
 allocation decision, not Parity Shift's announce-time target).
 
+OQ-57 (`docs/OPEN_QUESTIONS.md`): calls `remove_from_hand` (not
+`play_from_hand`) and sets `ActionCardSpec.name=NAME`, so `_perform_
+action_card` can interleave a future Reflex card's own cancel-as-played
+window before drawing the replacement (Finding 1), and so a second
+physical copy is not offered once this card has already been played this
+turn (Finding 2).
+
 "A location": OQ-23 already found this is free text on a card, not a krcg
 type. A krcg sweep (re-verified live 2026-10-14, every active-2P-list id
 whose `card_text` starts with "Unique location.") found the shape splits
@@ -84,14 +91,18 @@ Shift's "no legal target" gate.
 from collections.abc import Mapping
 from typing import Any
 
-from vtesbot.cards._shared import play_from_hand
+from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_POLITICAL
 from vtesbot.engine.decision import Choice, Decision
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.master_cards import transfer_master_card_control
-from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, ActionCardSpec
+from vtesbot.engine.phases.minion import (
+    ACTION_CARD_PLAY_HOOK,
+    ActionCardSpec,
+    action_card_already_played_this_turn,
+)
 from vtesbot.engine.politics import POLITICAL_ACTION_STEALTH, resolve_referendum
 from vtesbot.engine.state import GameState, MasterCardInPlay
 
@@ -149,11 +160,13 @@ def _provide_disputed_territory(state: GameState, context: Mapping[str, Any]) ->
         # "Cannot be used or played if ... no legal selection" -- no location
         # at all is currently in play, on either side.
         return []
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
 
     other = state.other_player(player)
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
 
         def resolve(pending: dict[str, Any]) -> None:
             votes_for, votes_against, _casts = resolve_referendum(
@@ -190,6 +203,7 @@ def _provide_disputed_territory(state: GameState, context: Mapping[str, Any]) ->
             directed=False,
             action=ACTION_POLITICAL,
             resolve=resolve,
+            name=NAME,
         )
 
     return [

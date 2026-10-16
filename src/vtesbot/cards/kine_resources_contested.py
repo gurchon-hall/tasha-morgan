@@ -104,24 +104,39 @@ dispatch `REFERENDUM_RESOLVED_HOOK` (Voter Captivation's own trigger
 moment) once this whole `resolve()` closure, including the allocation
 above, returns. No provider is registered against that hook by this
 module (Voter Captivation's own card module is a separate pass).
+
+OQ-57 (`docs/OPEN_QUESTIONS.md`): calls `remove_from_hand` (not
+`play_from_hand`) and sets `ActionCardSpec.name=NAME`, so `_perform_
+action_card` can interleave a future Reflex card's own cancel-as-played
+window before drawing the replacement (Finding 1), and so a second
+physical copy is not offered once this card has already been played this
+turn (Finding 2).
 """
 
 from collections.abc import Mapping
 from typing import Any
 
-from vtesbot.cards._shared import play_from_hand
+from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_POLITICAL
 from vtesbot.engine.decision import Choice, Decision
 from vtesbot.engine.errors import UnresolvedRulingError
 from vtesbot.engine.hooks import HookOption
-from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, ActionCardSpec
+from vtesbot.engine.phases.minion import (
+    ACTION_CARD_PLAY_HOOK,
+    ActionCardSpec,
+    action_card_already_played_this_turn,
+)
 from vtesbot.engine.politics import POLITICAL_ACTION_STEALTH, resolve_referendum
 from vtesbot.engine.pool import lose_pool_simultaneously, max_voluntary_spend
 from vtesbot.engine.state import GameState
 
 KRCG_ID = 101056
+NAME = "Kine Resources Contested"
+"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
+OPEN_QUESTIONS.md`): backs the generic "same named action card at most
+once per turn" cap."""
 TOTAL_POINTS = 4
 """Printed "Allocate 4 points ..."."""
 CARD_TYPE = "Political Action"
@@ -149,10 +164,12 @@ def _provide_kine_resources_contested(
 
     if not _legal_self_points(state, player):
         return []
+    if action_card_already_played_this_turn(state, acting_vampire, NAME):
+        return []  # OQ-57 Finding 2: same named action card, once per turn.
     other = state.other_player(player)
 
     def _apply(s: GameState) -> ActionCardSpec:
-        play_from_hand(s, player, KRCG_ID)
+        remove_from_hand(s, player, KRCG_ID)
 
         def resolve(pending: dict[str, Any]) -> None:
             choices = tuple(
@@ -197,6 +214,7 @@ def _provide_kine_resources_contested(
             directed=False,
             action=ACTION_POLITICAL,
             resolve=resolve,
+            name=NAME,
         )
 
     return [
@@ -213,7 +231,7 @@ hooks.register(ACTION_CARD_PLAY_HOOK, _provide_kine_resources_contested)
 register(
     CardRegistration(
         krcg_id=KRCG_ID,
-        name="Kine Resources Contested",
+        name=NAME,
         status=Status.IMPLEMENTED,
         hooks=(Hook.ACTION_CARD_PLAY,),
         source=__name__,

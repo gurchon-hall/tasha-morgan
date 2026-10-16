@@ -19,6 +19,7 @@ def _vamp(iid: str, zone: str, blood: int, capacity: int = 5, controller: str = 
         contested=False,
         name=iid,
         capacity=capacity,
+        attachments=(),
     )
 
 

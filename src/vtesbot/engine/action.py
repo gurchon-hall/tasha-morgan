@@ -119,8 +119,18 @@ ACTION_RECRUIT_ALLY = "recruit_ally"
 ACTION_POLITICAL = "political_action"
 ACTION_ACTION_CARD = "action_card"
 ACTION_DIABLERIE = "diablerise"
+ACTION_ATTACHMENT_REMOVAL = "attachment_removal_action"
 """Action discriminator constants (OQ-9) for `action=` passed to
-`attempt_block`/`perform_minion_action`."""
+`attempt_block`/`perform_minion_action`. `ACTION_ATTACHMENT_REMOVAL`
+(`engine/phases/minion.py::build_attachment_removal_action_spec`) is kept
+distinct from `ACTION_ACTION_CARD` even though both resolve through the
+same `ActionCardSpec` shape: this mechanism never plays a card from hand
+(it burns an in-play attachment via accumulated contributions), so a
+future hook keyed on "an Action-type library card was played" (no such
+consumer exists yet -- `Perfectionist` itself gates on `ACTION_SUCCEEDED_
+HOOK` plus `hooks.PENDING_REACTION_PLAYED_KEY`, not on this discriminator
+or `played_card_type`, per its own card text's unqualified "a successful
+action") must not mistake this for one if it is ever added."""
 
 ACTION_SUCCEEDED_HOOK = "action_succeeded"
 """OQ-34: mirrors `Hook.ACTION_SUCCEEDED`. Rulebook §4: success means not
@@ -319,6 +329,29 @@ def _ask_stealth_or_modifier(
     return option, "stealth_delta"
 
 
+def _candidate_allowed_by_predicate(
+    state: GameState,
+    defender: str,
+    predicate: Callable[[VampireInPlay], bool] | None,
+    instance_id: str | None,
+) -> bool:
+    """Whether `instance_id` (one of `defender`'s own vampires) satisfies
+    `predicate`, or vacuously true when there is no predicate at all.
+    Shared by the hardcoded `ready_unlocked_vampires` candidate list and
+    `BLOCK_CANDIDATE_INJECTION_HOOK`'s own offered options -- mirrors
+    `BLOCK_CANDIDATE_EXCLUSION_HOOK`'s own dual-filter precedent (an
+    action-card-level predicate must veto an injected candidate too, or a
+    defender holding e.g. Second Tradition: Domain could force-block with a
+    vampire this action's own printed text already forbids from blocking
+    at all)."""
+    if predicate is None:
+        return True
+    if instance_id is None:
+        return False
+    vampire = state.players[defender].vampires.get(instance_id)
+    return vampire is not None and predicate(vampire)
+
+
 def attempt_block(
     state: GameState,
     actor: str,
@@ -328,10 +361,26 @@ def attempt_block(
     action: str | None = None,
     directed: bool | None = None,
     pending: dict[str, Any] | None = None,
+    block_candidate_predicate: Callable[[VampireInPlay], bool] | None = None,
 ) -> VampireInPlay | None:
     """Offer `defender` a block with a ready unlocked vampire. Returns the
     blocker on success, None on decline; loops on failed attempts
-    (Rulebook §4)."""
+    (Rulebook §4).
+
+    `block_candidate_predicate` (generic plumbing, not a rule of its own --
+    see the calling action card's own module for the citation, e.g.
+    `cards/propaganda.py` krcg 101495, "Titled vampires cannot block this
+    action"): an unconditional, property-based filter tied to *this
+    action's own printed text*, distinct from `BLOCK_CANDIDATE_EXCLUSION_
+    HOOK`'s actor-chosen, per-vampire `instance_id` set -- both apply
+    together (a vampire excluded by either mechanism cannot block). Unlike
+    that hook, this is not offered as a `Decision`: it is supplied once by
+    the action's own `ActionCardSpec` (`engine/phases/minion.py`) and
+    re-evaluated live on every pass through this function's own retry
+    loop, since `candidates`/`injected_options` are rebuilt fresh each
+    iteration -- a vampire that only becomes a candidate later in the same
+    loop (e.g. via `WAKE_LOCKED_MINION_HOOK`) is still checked against it
+    then, not against a stale snapshot taken before the loop started."""
     if pending is None:
         pending = {}
     while not state.game_over:
@@ -358,7 +407,12 @@ def attempt_block(
             return None
         excluded = _excluded_block_candidates(pending)
         candidates = [
-            v for v in state.ready_unlocked_vampires(defender) if v.instance_id not in excluded
+            v
+            for v in state.ready_unlocked_vampires(defender)
+            if v.instance_id not in excluded
+            and _candidate_allowed_by_predicate(
+                state, defender, block_candidate_predicate, v.instance_id
+            )
         ]
         candidate_choices = tuple(
             Choice(f"block_with:{v.instance_id}", f"Block with {v.card.name}") for v in candidates
@@ -389,6 +443,9 @@ def attempt_block(
             injected
             for injected in injected_options
             if injected.block_candidate_instance_id not in excluded
+            and _candidate_allowed_by_predicate(
+                state, defender, block_candidate_predicate, injected.block_candidate_instance_id
+            )
         ]
         by_injected_value = {o.choice.value: o for o in injected_options}
 
@@ -454,10 +511,12 @@ def perform_minion_action(
     directed: bool | None = None,
     on_blocked: Callable[[dict[str, Any]], None] | None = None,
     maneuver_grant: str | None = None,
+    block_candidate_predicate: Callable[[VampireInPlay], bool] | None = None,
 ) -> None:
     """Announce, block attempt, resolve or combat (Rulebook §4). Dispatches
     `ACTION_SUCCEEDED_HOOK` (OQ-34) then `REFERENDUM_RESOLVED_HOOK`
-    (OQ-36)."""
+    (OQ-36). `block_candidate_predicate` is forwarded unchanged to
+    `attempt_block` -- see that function's own docstring."""
     vampire.locked = True
     pending: dict[str, Any] = {}
     blocker = attempt_block(
@@ -469,6 +528,7 @@ def perform_minion_action(
         action=action,
         directed=directed,
         pending=pending,
+        block_candidate_predicate=block_candidate_predicate,
     )
     if state.game_over:
         clear_woken_vampires(state)
@@ -512,3 +572,55 @@ def perform_minion_action(
                 },
             )
     clear_woken_vampires(state)
+
+
+def force_lock_ready_unlocked_minion(
+    state: GameState, player: str, *, reason: str | None = None
+) -> VampireInPlay | None:
+    """Force `player` to lock one of their own ready unlocked vampires,
+    their own choice among ties, never the caller's.
+
+    Sourced from the closest on-file precedent for this exact "[that
+    Methuselah] locks a [vampire] they control" construction (no
+    "of their choice"/"you choose" qualifier naming a different decision
+    maker): Brujah Debate (krcg 100260) reads "that Methuselah locks one of
+    the oldest Brujah they control", and its own ruling settles who
+    chooses -- "If more than one Brujah shares the highest capacity amount,
+    the controller chooses which of them to lock during her master phase."
+    [LSJ 19980224]. Sowing Dissension (krcg 101838, "Each other Methuselah
+    locks an unlocked ready younger vampire he or she controls") and
+    Propaganda's own superior clause (krcg 101495, "the target Methuselah
+    locks a ready unlocked minion they control") use the identical
+    grammatical pattern -- the affected Methuselah is the subject
+    performing the lock, so the affected Methuselah is who chooses, per the
+    Brujah Debate ruling.
+
+    Scoped to vampires only, matching `GameState.ready_unlocked_vampires`/
+    `engine/phases/minion.py::minion_phase`'s own vampire-only action
+    economy -- no card implemented in this project grants an ally or
+    retainer its own minion action, so "minion" here has nothing to
+    generalize to beyond vampires yet.
+
+    Mandatory once at least one eligible vampire exists (no decline
+    option -- the cited cards all read "locks", never "may lock"); returns
+    `None` with no `Decision` raised at all when `player` has no ready
+    unlocked vampire (nothing to comply with, mirroring `_perform_
+    diablerise`'s bound-target fizzle convention for "cannot do the
+    impossible"). `reason` is an optional caller-supplied string surfaced
+    in the `Decision.context` only, for an agent that wants to distinguish
+    which card forced this (not consulted by the engine itself)."""
+    candidates = state.ready_unlocked_vampires(player)
+    if not candidates:
+        return None
+    choices = tuple(Choice(f"lock:{v.instance_id}", f"Lock {v.card.name}") for v in candidates)
+    decision = Decision(
+        player=player,
+        kind="forced_lock_own_minion",
+        choices=choices,
+        context={"reason": reason} if reason is not None else {},
+    )
+    choice = state.ask_unless_forced(decision)
+    instance_id = choice.value.split(":", 1)[1]
+    vampire = state.players[player].vampires[instance_id]
+    vampire.locked = True
+    return vampire

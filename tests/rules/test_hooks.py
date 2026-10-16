@@ -453,6 +453,76 @@ def test_apply_chosen_option_is_offered_to_the_non_acting_side_in_an_impulse_win
     p2.assert_exhausted()
 
 
+def test_offer_cancel_as_played_returns_false_with_no_provider_registered():
+    """OQ-57 (`docs/OPEN_QUESTIONS.md`): the raw primitive underneath
+    `apply_chosen_option`, usable with no `option.cost` at all (`engine/
+    phases/minion.py::_perform_action_card`'s own call site, which has no
+    `cost` field in play for an Action card's `HookOption`)."""
+    from vtesbot.engine.decision import Choice
+
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    option = hooks.HookOption(choice=Choice("tick", "Tick"), apply=lambda s: None)
+
+    canceled = hooks.offer_cancel_as_played(game.state, option, "P1", "P2")
+
+    assert canceled is False
+
+
+def test_offer_cancel_as_played_runs_the_cancelers_own_apply_and_returns_true():
+    from vtesbot.engine.decision import Choice
+
+    canceler_ran = []
+
+    def cancel_provider(state, context):
+        assert context["canceled_choice"] == "tick"
+        assert context["canceled_by"] == "P1"
+        assert context["canceled_card_type"] == "Action"
+        return [
+            hooks.HookOption(
+                choice=Choice("cancel_it", "Cancel as played"),
+                apply=lambda s: canceler_ran.append(True),
+            )
+        ]
+
+    hooks.register(hooks.CANCEL_AS_PLAYED_HOOK, cancel_provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    p2 = ScriptedAgent("P2").expect(hooks.CANCEL_AS_PLAYED_HOOK, "cancel_it")
+    game.state.agents["P2"] = p2
+    option = hooks.HookOption(
+        choice=Choice("tick", "Tick"), apply=lambda s: None, played_card_type="Action"
+    )
+
+    canceled = hooks.offer_cancel_as_played(game.state, option, "P1", "P2")
+
+    assert canceled is True
+    assert canceler_ran == [True]
+    p2.assert_exhausted()
+
+
+def test_offer_cancel_as_played_passing_returns_false_and_the_caller_may_still_apply():
+    from vtesbot.engine.decision import Choice
+
+    def cancel_provider(state, context):
+        del state, context
+        return [
+            hooks.HookOption(choice=Choice("cancel_it", "Cancel as played"), apply=lambda s: None)
+        ]
+
+    hooks.register(hooks.CANCEL_AS_PLAYED_HOOK, cancel_provider)
+    builder = ScenarioBuilder(seed=1)
+    game = builder.player("P1", pool=30).player("P2", pool=30).build()
+    p2 = ScriptedAgent("P2").expect(hooks.CANCEL_AS_PLAYED_HOOK, "pass")
+    game.state.agents["P2"] = p2
+    option = hooks.HookOption(choice=Choice("tick", "Tick"), apply=lambda s: None)
+
+    canceled = hooks.offer_cancel_as_played(game.state, option, "P1", "P2")
+
+    assert canceled is False
+    p2.assert_exhausted()
+
+
 def test_cancel_context_carries_the_canceled_options_played_card_type():
     """`docs/OPEN_QUESTIONS.md` OQ-33, resolved: a `CANCEL_AS_PLAYED_HOOK`
     provider that only cancels a specific card type (Diana Iadanza's own

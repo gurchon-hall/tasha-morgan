@@ -150,6 +150,55 @@ def mark_reaction_played(pending: dict[str, Any] | None, option: HookOption) -> 
         pending[PENDING_REACTION_PLAYED_KEY] = True
 
 
+def offer_cancel_as_played(
+    state: GameState,
+    option: HookOption,
+    played_by: str,
+    may_cancel: str,
+    context: Mapping[str, Any] | None = None,
+) -> bool:
+    """Offer `may_cancel` a chance to cancel `option` -- already chosen by
+    `played_by` -- "as it is played" (Rulebook Advanced Rules "Reflex
+    cards", `data/sources/rulebook/2026-10-09/2-card-types.md:323-326`:
+    "A minion can play a reflex card to cancel a specified kind of card
+    played against them as it is played."). Returns True once a canceling
+    option is chosen (its own `apply` has already run); False if
+    `may_cancel` passes or no `CANCEL_AS_PLAYED_HOOK` provider offers
+    anything. Caller decides what "canceled" means for `option` itself --
+    this only runs the canceling side's own effect.
+
+    Shared by `apply_chosen_option` below (OQ-32: a `HookOption` whose own
+    `cost` is paid unconditionally first, matching "If a non-action card is
+    cancelled, its cost should be paid as normal", `3-playing-the-game.md:
+    103-108`) and `engine/phases/minion.py::_perform_action_card` (OQ-57: an
+    Action card has no such `cost` field to pay at all -- its own printed
+    cost lives inside `ActionCardSpec.resolve`, paid only on the unblocked
+    branch, so skipping `option.apply`'s caller entirely already matches
+    "they do not pay for the action card")."""
+    cancel_context = {
+        **(context or {}),
+        "canceled_by": played_by,
+        "canceled_choice": option.choice.value,
+        "canceled_card_type": option.played_card_type,
+    }
+    cancel_options = offer(CANCEL_AS_PLAYED_HOOK, state, player=may_cancel, **cancel_context)
+    if not cancel_options:
+        return False
+    by_value = {o.choice.value: o for o in cancel_options}
+    choices = tuple(o.choice for o in cancel_options) + (Choice(PASS_VALUE, "Pass"),)
+    decision = Decision(
+        player=may_cancel,
+        kind=CANCEL_AS_PLAYED_HOOK,
+        choices=choices,
+        context=sanitize_decision_context(cancel_context),
+    )
+    answer = state.ask(decision)
+    if answer.value == PASS_VALUE:
+        return False
+    by_value[answer.value].apply(state)
+    return True
+
+
 def apply_chosen_option(
     state: GameState,
     option: HookOption,
@@ -158,36 +207,18 @@ def apply_chosen_option(
     context: Mapping[str, Any],
 ) -> Any:
     """Interception point for cancel-as-played (OQ-32). Runs `option.cost`
-    unconditionally, then offers `may_cancel` `CANCEL_AS_PLAYED_HOOK`; if
-    used, `option.apply` is suppressed, else it runs normally. Records a
-    Reaction-type `option` as played (`mark_reaction_played`) before any of
-    that, since the card has been played the moment it is chosen,
-    regardless of cost/cancel outcome."""
+    unconditionally, then offers `may_cancel` `CANCEL_AS_PLAYED_HOOK` via
+    `offer_cancel_as_played`; if used, `option.apply` is suppressed, else it
+    runs normally. Records a Reaction-type `option` as played
+    (`mark_reaction_played`) before any of that, since the card has been
+    played the moment it is chosen, regardless of cost/cancel outcome."""
     mark_reaction_played(context.get(PENDING_CONTEXT_KEY), option)
     if option.cost is not None:
         option.cost(state)
         if state.game_over:
             return None
-    cancel_context = {
-        **context,
-        "canceled_by": played_by,
-        "canceled_choice": option.choice.value,
-        "canceled_card_type": option.played_card_type,
-    }
-    cancel_options = offer(CANCEL_AS_PLAYED_HOOK, state, player=may_cancel, **cancel_context)
-    if cancel_options:
-        by_value = {o.choice.value: o for o in cancel_options}
-        choices = tuple(o.choice for o in cancel_options) + (Choice(PASS_VALUE, "Pass"),)
-        decision = Decision(
-            player=may_cancel,
-            kind=CANCEL_AS_PLAYED_HOOK,
-            choices=choices,
-            context=sanitize_decision_context(cancel_context),
-        )
-        answer = state.ask(decision)
-        if answer.value != PASS_VALUE:
-            by_value[answer.value].apply(state)
-            return None
+    if offer_cancel_as_played(state, option, played_by, may_cancel, context):
+        return None
     return option.apply(state)
 
 
@@ -278,6 +309,17 @@ def run_effects(hook: str, state: GameState, **context: Any) -> None:
         if state.game_over:
             return
         provider(state, context)  # type: ignore[arg-type]
+
+
+def any_true(hook: str, state: GameState, **context: Any) -> bool:
+    """Passive boolean hook (mirrors `sum_modifiers`/`union_modifiers`): True the moment any
+    provider's contribution for a mandatory, non-chosen fact is truthy (CLAUDE.md rule 3
+    exception, same as `attachments.py::CAPACITY_MODIFIER_HOOK`). Providers are plain
+    callables returning a falsy value when they don't apply; short-circuits like `any()`."""
+    for provider in _PROVIDERS.get(hook, ()):
+        if provider(state, context):  # type: ignore[arg-type]
+            return True
+    return False
 
 
 def union_modifiers(hook: str, state: GameState, **context: Any) -> tuple[Any, ...]:
