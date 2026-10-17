@@ -10,6 +10,22 @@ from vtesbot.engine.observation import Observation, VampireView
 
 CRITICAL_POOL = 2
 LOW_BLOOD = 1
+BLEED_AMOUNT_FLOOR = 1
+"""The engine's own unmodified base bleed amount (`engine/phases/minion.py`'s
+`BLEED_AMOUNT`), used here as a conservative lower bound on what a bleed is
+worth: card-sourced bleed bonuses aren't visible generically to the agent
+(D-14), so this floor can only undercount a bleed's true lethality, never
+overcount it."""
+ADD_BLOOD_BASE_SCORE = 10.0
+"""Flat preference for spending a transfer on blood over ending the phase
+(D-14), matching the pre-Phase-B unconditional choice; `_score_add_blood`'s
+capacity-distance and critical-pool penalty terms are kept small relative to
+this so they only perturb the ranking among `add_blood` targets and against
+the critical-pool penalty, never flip add_blood-vs-end_phase on their own."""
+ADD_BLOOD_CRITICAL_POOL_PENALTY = 1000.0
+"""Large enough to push a self-critical `add_blood` (one that would itself
+drop pool to/under `CRITICAL_POOL`) below `end_phase`'s baseline score of 0,
+without making it a hard gate (D-14)."""
 
 
 class HeuristicAgent(Agent):
@@ -28,32 +44,12 @@ class HeuristicAgent(Agent):
         return {v.instance_id: v for v in observation.vampires if v.controller == self.player_id}
 
     def _influence(self, observation: Observation, decision: Decision) -> Choice | None:
-        by_kind: dict[str, list[tuple[str, Choice]]] = {}
-        for c in decision.choices:
-            kind, _, arg = c.value.partition(":")
-            by_kind.setdefault(kind, []).append((arg, c))
+        reveal = next((c for c in decision.choices if c.value.startswith("reveal:")), None)
+        if reveal is not None:
+            return reveal
         own = self._own_vampires(observation)
         pool = observation.pool.get(self.player_id, 0)
-
-        def fill(arg: str) -> tuple[int, int]:
-            v = own.get(arg)
-            if v is None or v.capacity is None:
-                return (1 << 30, 0)
-            return (v.capacity - v.blood, -v.blood)
-
-        if "reveal" in by_kind:
-            return by_kind["reveal"][0][1]
-        if pool > CRITICAL_POOL:
-            has_uncontrolled = any(v.zone == "uncontrolled" for v in own.values())
-            if not has_uncontrolled and "bring_crypt" in by_kind:
-                return by_kind["bring_crypt"][0][1]
-            if "add_blood" in by_kind:
-                return min(by_kind["add_blood"], key=lambda t: fill(t[0]))[1]
-        elif "remove_blood" in by_kind:
-            return max(
-                by_kind["remove_blood"], key=lambda t: own[t[0]].blood if t[0] in own else 0
-            )[1]
-        return _by_value(decision, "end_phase")
+        return max(decision.choices, key=lambda c: _score_influence(c, own, pool))
 
     def _minion_phase(self, observation: Observation, decision: Decision) -> Choice | None:
         own = self._own_vampires(observation)
@@ -71,9 +67,28 @@ class HeuristicAgent(Agent):
         v = self._own_vampires(observation).get(str(decision.context.get("vampire")))
         if v is None:
             return None
-        return _by_value(decision, "hunt" if v.blood <= LOW_BLOOD else "bleed")
+        bleed = _by_value(decision, "bleed")
+        hunt = _by_value(decision, "hunt")
+        if bleed is None or hunt is None:
+            return bleed or hunt
+        return max((bleed, hunt), key=lambda c: self._score_action(c, observation, v))
+
+    def _score_action(
+        self, choice: Choice, observation: Observation, vampire: VampireView
+    ) -> float:
+        if choice.value == "bleed":
+            opponent = next(p for p in observation.pool if p != self.player_id)
+            if observation.pool[opponent] <= BLEED_AMOUNT_FLOOR:
+                return float("inf")
+            return 1.0 if vampire.blood > LOW_BLOOD else 0.0
+        return 1.0 if vampire.blood <= LOW_BLOOD else 0.0
 
     def _master(self, observation: Observation, decision: Decision) -> Choice | None:
+        # Left as "play the first offered card" (D-8/D-14): `decision.choices`
+        # is already legality-filtered by the engine's hook providers, and
+        # `Observation` carries no effect-preview field, so "skip a useless
+        # play" isn't cheaply derivable without card-specific knowledge --
+        # deferred to milestone 6/7 (audit report P3), not an oversight.
         del observation
         plays = [c for c in decision.choices if c.value != "pass"]
         return plays[0] if plays else None
@@ -89,6 +104,47 @@ class HeuristicAgent(Agent):
 
 def _by_value(decision: Decision, value: str) -> Choice | None:
     return next((c for c in decision.choices if c.value == value), None)
+
+
+def _score_influence(choice: Choice, own: dict[str, VampireView], pool: int) -> float:
+    kind, _, arg = choice.value.partition(":")
+    if kind == "add_blood":
+        return _score_add_blood(arg, own, pool)
+    if kind == "bring_crypt":
+        return _score_bring_crypt(own, pool)
+    if kind == "remove_blood":
+        return _score_remove_blood(arg, own, pool)
+    return 0.0  # end_phase and any unrecognized kind: neutral baseline.
+
+
+def _score_add_blood(arg: str, own: dict[str, VampireView], pool: int) -> float:
+    v = own.get(arg)
+    if v is None or v.capacity is None:
+        remaining, blood = float("inf"), 0
+    else:
+        remaining, blood = v.capacity - v.blood, v.blood
+    score = ADD_BLOOD_BASE_SCORE - remaining * 0.01 + blood * 0.0001
+    if pool - 1 <= CRITICAL_POOL:
+        score -= ADD_BLOOD_CRITICAL_POOL_PENALTY
+    return score
+
+
+def _score_bring_crypt(own: dict[str, VampireView], pool: int) -> float:
+    has_uncontrolled = any(v.zone == "uncontrolled" for v in own.values())
+    if has_uncontrolled:
+        return float("-inf")
+    # `bring_crypt` is a flat 1-pool cost in this engine (`engine/phases/
+    # influence.py::_apply`) -- there is no variable per-crypt-card cost to
+    # account for here.
+    pool_after_cost = pool - 1
+    return pool_after_cost - CRITICAL_POOL
+
+
+def _score_remove_blood(arg: str, own: dict[str, VampireView], pool: int) -> float:
+    if pool > CRITICAL_POOL:
+        return float("-inf")
+    v = own.get(arg)
+    return float(v.blood) if v is not None else 0.0
 
 
 _HANDLERS = {

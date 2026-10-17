@@ -23,14 +23,14 @@ def _vamp(iid: str, zone: str, blood: int, capacity: int = 5, controller: str = 
     )
 
 
-def _obs(vampires=(), pool: int = 20) -> Observation:
+def _obs(vampires=(), pool: int = 20, opponent_pool: int = 20) -> Observation:
     return Observation(
         viewer="P1",
         phase="influence",
         active_player="P1",
         turn_number=1,
         edge_holder=None,
-        pool={"P1": pool, "P2": 20},
+        pool={"P1": pool, "P2": opponent_pool},
         hand=(),
         opponent_hand_count=0,
         own_library_count=30,
@@ -111,6 +111,33 @@ def test_bleeds_with_blood_and_hunts_when_low():
     d = _decision("action_choice", "bleed", "hunt", vampire="V1")
     assert _pick(_obs([_vamp("V1", "ready", 3)]), d) == "bleed"
     assert _pick(_obs([_vamp("V1", "ready", 1)]), d) == "hunt"
+
+
+def test_bleeds_when_lethal_even_at_low_blood():
+    obs = _obs([_vamp("V1", "ready", 1)], opponent_pool=1)
+    d = _decision("action_choice", "bleed", "hunt", vampire="V1")
+    assert _pick(obs, d) == "bleed"
+
+
+def test_add_blood_declined_when_it_would_cross_critical_pool():
+    obs = _obs([_vamp("V1", "uncontrolled", 1)], pool=3)
+    d = _decision("influence_action", "add_blood:V1", "end_phase")
+    assert _pick(obs, d) == "end_phase"
+
+
+def test_bring_crypt_loses_to_add_blood_when_both_are_legal():
+    # Both choices can be legally offered together in real play: an
+    # uncontrolled vampire not yet at capacity, with enough transfers/pool/
+    # crypt cards left, makes `bring_crypt` legal too
+    # (engine/phases/influence.py:69-99 gates `bring_crypt` on transfers/
+    # pool/crypt-deck only, not on whether an uncontrolled vampire exists).
+    # `_score_bring_crypt`'s own `has_uncontrolled` gate (D-8/D-14) is what
+    # makes it lose here, not an engine-level exclusion between the two --
+    # a looser, "compete on the same scale" version of this gate was tried
+    # and reverted (D-14 addendum) after it regressed the benchmark.
+    obs = _obs([_vamp("V1", "uncontrolled", 4, capacity=5)], pool=6)
+    d = _decision("influence_action", "bring_crypt", "add_blood:V1", "end_phase")
+    assert _pick(obs, d) == "add_blood:V1"
 
 
 def test_master_plays_when_offered_else_nothing_to_play():
