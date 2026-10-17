@@ -20,6 +20,9 @@ krcg_cards_*.pkl
 # not source; kept for implementation-phase verification, not committed.
 logs/
 
+# scratch/working notes, not source
+tmp/
+
 # Editor / OS
 .vscode/
 .idea/
