@@ -26,6 +26,24 @@ ADD_BLOOD_CRITICAL_POOL_PENALTY = 1000.0
 """Large enough to push a self-critical `add_blood` (one that would itself
 drop pool to/under `CRITICAL_POOL`) below `end_phase`'s baseline score of 0,
 without making it a hard gate (D-14)."""
+OTHER_ACTION_LOSES_TO_BLEED_SCORE = 0.5
+OTHER_ACTION_BEATS_HUNT_SCORE = 1.5
+"""D-15: scores for any `action_choice` option that is neither `bleed` nor
+`hunt` (recruit/diablerise/action-card/attachment-removal options --
+whatever the engine's hook providers legally offer alongside them, per
+`engine/phases/minion.py::_choose_and_perform_action`). A flat score above
+`_score_action`'s own `1.0` ceiling (so it always wins, even over a bleed
+with blood to spare) was tried first and reverted: see this module's test
+suite note and D-15's benchmark addendum -- it collapsed aggression
+(repeatedly spending the minion action on a card play instead of bleeding)
+and produced stuck (max-turns) games. These two scores instead keep
+bleeding-with-blood as the dominant choice (`0.5 < 1.0`) and only let an
+`action_choice` option outrank *hunting* (`1.5 > 1.0`) -- hunting is itself
+just a no-damage fallback for a dry vampire, so taking a concrete
+card-granted option instead is a narrower, cheaper bet than preferring it
+over an available bleed. The agent still has no generic, card-blind way to
+judge whether a specific option is actually worth taking (D-13 P3, deferred
+past milestone 6); `inf` (a lethal bleed) always overrides both."""
 
 
 class HeuristicAgent(Agent):
@@ -67,11 +85,7 @@ class HeuristicAgent(Agent):
         v = self._own_vampires(observation).get(str(decision.context.get("vampire")))
         if v is None:
             return None
-        bleed = _by_value(decision, "bleed")
-        hunt = _by_value(decision, "hunt")
-        if bleed is None or hunt is None:
-            return bleed or hunt
-        return max((bleed, hunt), key=lambda c: self._score_action(c, observation, v))
+        return max(decision.choices, key=lambda c: self._score_action(c, observation, v))
 
     def _score_action(
         self, choice: Choice, observation: Observation, vampire: VampireView
@@ -81,7 +95,13 @@ class HeuristicAgent(Agent):
             if observation.pool[opponent] <= BLEED_AMOUNT_FLOOR:
                 return float("inf")
             return 1.0 if vampire.blood > LOW_BLOOD else 0.0
-        return 1.0 if vampire.blood <= LOW_BLOOD else 0.0
+        if choice.value == "hunt":
+            return 1.0 if vampire.blood <= LOW_BLOOD else 0.0
+        return (
+            OTHER_ACTION_BEATS_HUNT_SCORE
+            if vampire.blood <= LOW_BLOOD
+            else OTHER_ACTION_LOSES_TO_BLEED_SCORE
+        )
 
     def _master(self, observation: Observation, decision: Decision) -> Choice | None:
         # Left as "play the first offered card" (D-8/D-14): `decision.choices`

@@ -119,6 +119,29 @@ def test_bleeds_when_lethal_even_at_low_blood():
     assert _pick(obs, d) == "bleed"
 
 
+def test_other_action_choice_preferred_over_hunt_when_blood_is_low():
+    # e.g. `recruit_47th_street_royals` (`cards/forty_seventh_street_royals.py`)
+    # offered alongside bleed/hunt in the same `action_choice` decision
+    # (`engine/phases/minion.py::_choose_and_perform_action`); D-15: a
+    # card-granted option outranks hunting (a no-damage fallback) but not a
+    # bleed with blood to spare.
+    obs = _obs([_vamp("V1", "ready", 1)])
+    d = _decision("action_choice", "bleed", "hunt", "recruit_47th_street_royals", vampire="V1")
+    assert _pick(obs, d) == "recruit_47th_street_royals"
+
+
+def test_other_action_choice_loses_to_ordinary_bleed_with_blood():
+    obs = _obs([_vamp("V1", "ready", 3)])
+    d = _decision("action_choice", "bleed", "hunt", "recruit_47th_street_royals", vampire="V1")
+    assert _pick(obs, d) == "bleed"
+
+
+def test_other_action_choice_loses_to_lethal_bleed():
+    obs = _obs([_vamp("V1", "ready", 3)], opponent_pool=1)
+    d = _decision("action_choice", "bleed", "hunt", "recruit_47th_street_royals", vampire="V1")
+    assert _pick(obs, d) == "bleed"
+
+
 def test_add_blood_declined_when_it_would_cross_critical_pool():
     obs = _obs([_vamp("V1", "uncontrolled", 1)], pool=3)
     d = _decision("influence_action", "add_blood:V1", "end_phase")
