@@ -1,0 +1,172 @@
+{
+  "source": "https://www.vekn.net/two-player-format/680-2-player-decklist-hecata",
+  "vekn_last_updated": "2025-06-14",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Hecata",
+  "crypt": [
+    {
+      "name": "Roger de Camden",
+      "count": 2,
+      "capacity": 10,
+      "group": 6,
+      "krcg_id": 201732,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Hel-Blá",
+      "count": 2,
+      "capacity": 9,
+      "group": 6,
+      "krcg_id": 201731,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Parijat, The Dark Oracle",
+      "count": 2,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201726,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Monica Giovanni",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201723,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Gebeyehu Abdu",
+      "count": 2,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201718,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Holliday \"Burgundy\" Hall",
+      "count": 2,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201720,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Family Gathering",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 102289,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Misdirection",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101225,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Powerbase: Munich",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102301,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shroud of Decay",
+      "type": "Action",
+      "count": 6,
+      "krcg_id": 102295,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Bone Shambler",
+      "type": "Action/Ally",
+      "count": 4,
+      "krcg_id": 102293,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shadow Cast",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 102280,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shadow Cloak",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 102281,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Where the Veil Thins",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 102285,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Eyes of Argus",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100680,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Enhanced Senses",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100644,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Telepathic Counter",
+      "type": "Reaction",
+      "count": 3,
+      "krcg_id": 101948,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101321,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Arms of Ahriman",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 102275,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Rolling with the Punches",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101649,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Martyr’s Resilience",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101175,
+      "note": "VEKN decklist page uses a curly apostrophe (’) in this name; confirmed by user 2026-10-17 as krcg id 101175 (Martyr's Resilience). Name kept as VEKN wrote it.",
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}

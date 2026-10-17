@@ -1,0 +1,192 @@
+{
+  "source": "https://www.vekn.net/two-player-format/660-2-player-decklist",
+  "vekn_last_updated": "2025-07-08",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Gangrel",
+  "crypt": [
+    {
+      "name": "Ragnar Nordstrom",
+      "count": 4,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201660,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Massimiliano",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201602,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Casey Snyder",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201521,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Kuyén",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201574,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "André the Manipulator",
+      "count": 1,
+      "capacity": 6,
+      "group": 5,
+      "krcg_id": 200081,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Dario Ziggler",
+      "count": 1,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201583,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Life in the City",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 101104,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Army of Rats",
+      "type": "Action",
+      "count": 1,
+      "krcg_id": 100093,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Deep Song",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 100515,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Rewilding",
+      "type": "Action",
+      "count": 1,
+      "krcg_id": 101632,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Thing",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 101972,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Double Deuce",
+      "type": "Ally",
+      "count": 1,
+      "krcg_id": 102220,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Earth Control",
+      "type": "Action Modifier",
+      "count": 4,
+      "krcg_id": 100600,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Cats' Guidance",
+      "type": "Reaction",
+      "count": 1,
+      "krcg_id": 100308,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Deep Ecology",
+      "type": "Reaction",
+      "count": 3,
+      "krcg_id": 102219,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Eyes of the Wild",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102222,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Organized Resistance",
+      "type": "Reaction",
+      "count": 3,
+      "krcg_id": 102230,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Protection Racket",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101501,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Body Flare",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 100230,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Carrion Crows",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 100301,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Mythic Form",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 101262,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Rolling with the Punches",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101649,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Soak",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101817,
+      "implementation_status": "implemented"
+    }
+  ],
+  "unmatched": []
+}

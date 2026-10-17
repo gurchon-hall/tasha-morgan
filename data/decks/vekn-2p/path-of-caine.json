@@ -1,0 +1,163 @@
+{
+  "source": "https://www.vekn.net/two-player-format/788-2-player-decklist-path-of-caine",
+  "vekn_last_updated": "2026-10-05",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Path of Caine",
+  "crypt": [
+    {
+      "name": "Algirdas, The Solar Prophet",
+      "count": 4,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201738,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Berenguela, The Vicious",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201742,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Przemysław, War Beast",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201768,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Grażyna \"Butcher\" Olesińska",
+      "count": 2,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201755,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Hekla \"Bonecrusher\" Jónasdóttir",
+      "count": 2,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201756,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Fame",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100698,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Monster",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101242,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Rumor Mill, Tabloid Newspaper, The",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101662,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Tension in the Ranks",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101958,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Abuse of Power",
+      "type": "Action",
+      "count": 3,
+      "krcg_id": 102309,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Fiendish Tongue",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 100726,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Pillars Fall",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 102333,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Augury of Doom",
+      "type": "Action",
+      "count": 1,
+      "krcg_id": 102310,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Rage of Apedemak",
+      "type": "Combat",
+      "count": 6,
+      "krcg_id": 102336,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Slam",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 101798,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wall of Filth",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 102347,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Taste of Vitae",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 101945,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Dance with the Devil",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 102315,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Sentry Signal",
+      "type": "Reaction",
+      "count": 6,
+      "krcg_id": 102339,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Ensnare a Beast",
+      "type": "Reaction",
+      "count": 3,
+      "krcg_id": 102319,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}

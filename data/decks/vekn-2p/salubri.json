@@ -1,0 +1,192 @@
+{
+  "source": "https://www.vekn.net/two-player-format/665-2-player-decklist-salubri",
+  "vekn_last_updated": "2025-07-08",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Salubri",
+  "crypt": [
+    {
+      "name": "Seraphina",
+      "count": 3,
+      "capacity": 8,
+      "group": 7,
+      "krcg_id": 201686,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Aniel",
+      "count": 2,
+      "capacity": 6,
+      "group": 7,
+      "krcg_id": 201666,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Malachi",
+      "count": 3,
+      "capacity": 6,
+      "group": 7,
+      "krcg_id": 201676,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Sakhar",
+      "count": 2,
+      "capacity": 6,
+      "group": 7,
+      "krcg_id": 201685,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Opikun",
+      "count": 2,
+      "capacity": 5,
+      "group": 7,
+      "krcg_id": 201680,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Life in the City",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 101104,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Dominate Kine",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 100573,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Scouting Mission",
+      "type": "Action",
+      "count": 5,
+      "krcg_id": 101698,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Touch of Valeren",
+      "type": "Action/Combat",
+      "count": 2,
+      "krcg_id": 102262,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Bonding",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 100236,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Forced Confessional",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102250,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Seduction",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101712,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Sleeping Mind, The",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101805,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Threats",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 101978,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Eyes of Argus",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100680,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Precognition",
+      "type": "Reaction",
+      "count": 1,
+      "krcg_id": 101475,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Telepathic Counter",
+      "type": "Reaction",
+      "count": 3,
+      "krcg_id": 101948,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101321,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Pulled Fangs",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 101515,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Rolling with the Punches",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101649,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Soak",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101817,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Weighted Walking Stick",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 102169,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Spirit’s Thouch, The",
+      "type": "Reaction",
+      "count": 1,
+      "krcg_id": 101850,
+      "note": "VEKN decklist page has a typo (curly apostrophe + 'Thouch' + trailing 'The') in this name; same typo already confirmed by user 2026-10-08 for the allowed-list page, confirmed again here 2026-10-17 as krcg id 101850 (Spirit's Touch). Name kept as VEKN wrote it.",
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}

@@ -1,0 +1,172 @@
+{
+  "source": "https://www.vekn.net/two-player-format/658-2-player-decklist-banu-haqim",
+  "vekn_last_updated": "2025-07-08",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Banu Haqim",
+  "crypt": [
+    {
+      "name": "Kasim Bayar",
+      "count": 2,
+      "capacity": 9,
+      "group": 6,
+      "krcg_id": 201598,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Oluwafunmilayo",
+      "count": 2,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201656,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Farah Sarroub",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201587,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Kassandra Tassaki",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201604,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Khadija Al-Kindi",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201599,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Kalinda",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201596,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Warmaksan",
+      "count": 2,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201594,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Fame",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100698,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Rumor Mill, Tabloid Newspaper, The",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101662,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Fleetness",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 100747,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Kine Resources Contested",
+      "type": "Political Action",
+      "count": 2,
+      "krcg_id": 101056,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Parity Shift",
+      "type": "Political Action",
+      "count": 2,
+      "krcg_id": 101353,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Old Friends",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101318,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Swallowed by the Night",
+      "type": "Action Modifier/Combat",
+      "count": 4,
+      "krcg_id": 101913,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Elder Intervention",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100618,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Second Tradition: Domain",
+      "type": "Reaction",
+      "count": 5,
+      "krcg_id": 101706,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Hunger of Marduk",
+      "type": "Combat",
+      "count": 6,
+      "krcg_id": 102227,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Pursuit",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 101523,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Rego Motum",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101588,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Side Strike",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 101778,
+      "implementation_status": "implemented"
+    }
+  ],
+  "unmatched": []
+}

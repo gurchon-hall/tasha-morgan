@@ -1,0 +1,207 @@
+{
+  "source": "https://www.vekn.net/two-player-format/789-2-player-decklist-path-of-cathari",
+  "vekn_last_updated": "2026-10-05",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Path of Cathari",
+  "crypt": [
+    {
+      "name": "Aelswith, The Irresistible",
+      "count": 3,
+      "capacity": 9,
+      "group": 6,
+      "krcg_id": 201735,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Jürgen, The Libertine",
+      "count": 3,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201758,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Fotini Katsikaris",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201751,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Glissando",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201753,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Osvaldo Kühnemann",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201767,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Devorah",
+      "count": 1,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201748,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Gostoso",
+      "count": 1,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201754,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Life in the City",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 101104,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Golconda: Inner Peace",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100842,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Forward Momentum",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102323,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Enthrall",
+      "type": "Action",
+      "count": 3,
+      "krcg_id": 102320,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Enchant Kindred",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 100640,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Social Charm",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 101819,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Entrancement",
+      "type": "Action",
+      "count": 1,
+      "krcg_id": 100652,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Seeds of Terror",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 102338,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Subversion",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 102341,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Change of Target",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 100323,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Cloak the Gathering",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 100362,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Fever Pitch",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102321,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Hedonism",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102328,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Soak",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101817,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Telepathic Counter",
+      "type": "Reaction",
+      "count": 3,
+      "krcg_id": 101948,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Eyes of Argus",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100680,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101321,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Visions of Zapathasura",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102265,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Swift Cover",
+      "type": "Action Modifier/Combat",
+      "count": 4,
+      "krcg_id": 102342,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}

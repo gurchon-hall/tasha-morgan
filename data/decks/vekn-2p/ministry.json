@@ -1,0 +1,179 @@
+{
+  "source": "https://www.vekn.net/two-player-format/663-2-player-decklist-ministry",
+  "vekn_last_updated": "2025-05-17",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Ministry",
+  "crypt": [
+    {
+      "name": "Sergio Bueno",
+      "count": 3,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201662,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Vivian VI",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201615,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Hesha Ruhadze",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201591,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Elisha Tucker",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201586,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Crystal Lynn",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201582,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Jenny Silver",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201593,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Life in the City",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 101104,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Enchant Kindred",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 100640,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Platinum Protocol, The",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 102232,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Kine Resources Contested",
+      "type": "Political Action",
+      "count": 2,
+      "krcg_id": 101056,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Faceless Night",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 100687,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Lost in Crowds",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 101125,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Spying Mission",
+      "type": "Action Modifier",
+      "count": 1,
+      "krcg_id": 101857,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "True Love's Face",
+      "type": "Action Modifier",
+      "count": 4,
+      "krcg_id": 102041,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Swallowed by the Night",
+      "type": "Action Modifier/Combat",
+      "count": 3,
+      "krcg_id": 101913,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Form of the Bat",
+      "type": "Action Modifier/Reaction",
+      "count": 2,
+      "krcg_id": 102223,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101321,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Party Out Of Bounds",
+      "type": "Reaction",
+      "count": 4,
+      "krcg_id": 102231,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Visions of Zapathasura",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102265,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Body Flare",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 100230,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Wake with Evening’s Freshness",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102137,
+      "note": "VEKN decklist page uses a curly apostrophe (’) in this name; confirmed by user 2026-10-17 as krcg id 102137 (Wake with Evening's Freshness). Name kept as VEKN wrote it.",
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}

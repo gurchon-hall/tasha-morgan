@@ -1,0 +1,178 @@
+{
+  "source": "https://www.vekn.net/two-player-format/662-2-player-decklist-malkavian",
+  "vekn_last_updated": "2025-04-21",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Malkavian",
+  "crypt": [
+    {
+      "name": "Juliet Parr",
+      "count": 3,
+      "capacity": 9,
+      "group": 6,
+      "krcg_id": 201698,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Abraham Mellon",
+      "count": 2,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201634,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Alexander Silverson",
+      "count": 2,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201530,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Donny Kowalczyk",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201544,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Andi Liu",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201532,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Gelasia Fotiou",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201548,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Life in the City",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 101104,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Obfuscate",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101310,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Dominate Kine",
+      "type": "Action",
+      "count": 1,
+      "krcg_id": 100573,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Scouting Mission",
+      "type": "Action",
+      "count": 6,
+      "krcg_id": 101698,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Bonding",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 100236,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Cloak the Gathering",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 100362,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Faceless Night",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 100687,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Lost in Crowds",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101125,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Spying Mission",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101857,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Threats",
+      "type": "Action Modifier",
+      "count": 5,
+      "krcg_id": 101978,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Swallowed by the Night",
+      "type": "Action Modifier/Combat",
+      "count": 4,
+      "krcg_id": 101913,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Eyes of Argus",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100680,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Telepathic Counter",
+      "type": "Reaction",
+      "count": 4,
+      "krcg_id": 101948,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wake with Evening's Freshness",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102137,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Weighted Walking Stick",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 102169,
+      "implementation_status": "implemented"
+    }
+  ],
+  "unmatched": []
+}

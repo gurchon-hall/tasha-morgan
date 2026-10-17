@@ -1,0 +1,241 @@
+{
+  "source": "https://www.vekn.net/two-player-format/790-2-player-decklist-path-of-death-and-the-soul",
+  "vekn_last_updated": "2026-10-05",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Path of Death and the Soul",
+  "crypt": [
+    {
+      "name": "Ashur-uballit, Son of the Abyss",
+      "count": 3,
+      "capacity": 10,
+      "group": 6,
+      "krcg_id": 201741,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Huldu, The Desecrator",
+      "count": 2,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201757,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Frau Schädel",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201752,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Aitana, The Unholy",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201737,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Zbigniew, Hunter of Mekhet",
+      "count": 2,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201780,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Anxo Vilela",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201740,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Dummy Corporation",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100594,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Golconda: Inner Peace",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100842,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Powerbase: Munich",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102301,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Cursed Abattoir",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102313,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Scouting Mission",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 101698,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shroud of Decay",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 102295,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Far Mastery",
+      "type": "Action",
+      "count": 1,
+      "krcg_id": 100703,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Putrescent Sustenance",
+      "type": "Action",
+      "count": 1,
+      "krcg_id": 102335,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Mirror Walk",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101223,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shadow Cast",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102280,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shadow Cloak",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102281,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Where the Veil Thins",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102285,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Arms of Ahriman",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 102275,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Martyr's Resilience",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 101175,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Rego Motum",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 101588,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Rolling with the Punches",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 101649,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Theft of Vitae",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 101966,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Wind Dance",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 102185,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Bone Shambler",
+      "type": "Ally",
+      "count": 5,
+      "krcg_id": 102293,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Vagabond Mystic",
+      "type": "Ally",
+      "count": 1,
+      "krcg_id": 102087,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Heartrender",
+      "type": "Ally",
+      "count": 1,
+      "krcg_id": 102327,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Telepathic Counter",
+      "type": "Reaction",
+      "count": 4,
+      "krcg_id": 101948,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Eyes of Argus",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100680,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shadow Sentinel",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102294,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Reaction",
+      "count": 1,
+      "krcg_id": 101321,
+      "implementation_status": "implemented"
+    }
+  ],
+  "unmatched": []
+}

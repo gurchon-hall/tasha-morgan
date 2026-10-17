@@ -1,0 +1,199 @@
+{
+  "source": "https://www.vekn.net/two-player-format/664-2-player-decklist-nosferatu",
+  "vekn_last_updated": "2025-05-17",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Nosferatu",
+  "crypt": [
+    {
+      "name": "Molly MacDonald",
+      "count": 2,
+      "capacity": 10,
+      "group": 7,
+      "krcg_id": 201704,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Nikolaus Vermeulen",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201705,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Belinde",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201537,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Dowager, The",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201545,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Larissa Moreira",
+      "count": 3,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201553,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Horace Radcliffe",
+      "count": 1,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201549,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Dummy Corporation",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100594,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Fame",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100698,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Army of Rats",
+      "type": "Action",
+      "count": 1,
+      "krcg_id": 100093,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Creeping Sabotage",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 102213,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Deep Song",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 100515,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Owl Companion",
+      "type": "Retainer",
+      "count": 1,
+      "krcg_id": 101340,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Old Friends",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101318,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Swallowed by the Night",
+      "type": "Action Modifier/Combat",
+      "count": 3,
+      "krcg_id": 101913,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Cats' Guidance",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100308,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Forced Awakening",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100760,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Guard Dogs",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100863,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Instinctive Reaction",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100995,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Protected District",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102214,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Warrens, The",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102216,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Carrion Crows",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 100301,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Slam",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 101798,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Taste of Vitae",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101945,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Voracious Vermin",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 102266,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}

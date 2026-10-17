@@ -1,0 +1,185 @@
+{
+  "source": "https://www.vekn.net/two-player-format/661-2-player-decklist-lasombra",
+  "vekn_last_updated": "2025-04-21",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Lasombra",
+  "crypt": [
+    {
+      "name": "Gnaeus Aemilius Augustinus",
+      "count": 3,
+      "capacity": 10,
+      "group": 6,
+      "krcg_id": 201712,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Yewon Ong",
+      "count": 3,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201716,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "María del Toro",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201714,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Kamaluddin",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201713,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Aintzane Arriaga",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201708,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Azucena",
+      "count": 1,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201710,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Grooming the Protégé",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 100860,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Life in the City",
+      "type": "Master",
+      "count": 2,
+      "krcg_id": 101104,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Scouting Mission",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 101698,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Domain Challenge",
+      "type": "Political Action",
+      "count": 1,
+      "krcg_id": 100570,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Kine Resources Contested",
+      "type": "Political Action",
+      "count": 3,
+      "krcg_id": 101056,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Parity Shift",
+      "type": "Political Action",
+      "count": 2,
+      "krcg_id": 101353,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Amici Noctis",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102274,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Ominous Chorus",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 102278,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shadow Cast",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 102280,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shadow Cloak",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 102281,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Threats",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101978,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Where the Veil Thins",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102285,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Second Tradition: Domain",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101706,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Shadow Sentinel",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102294,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Truth in Darkness",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 102284,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Arms of Ahriman",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 102275,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Slam",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 101798,
+      "implementation_status": "implemented"
+    }
+  ],
+  "unmatched": []
+}

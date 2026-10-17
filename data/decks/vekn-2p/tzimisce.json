@@ -1,0 +1,164 @@
+{
+  "source": "https://www.vekn.net/two-player-format/669-2-player-decklist-tzimisce",
+  "vekn_last_updated": "2025-05-17",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Tzimisce",
+  "crypt": [
+    {
+      "name": "Ángel Guerrero",
+      "count": 4,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201665,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Branimira",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201667,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Clara Hjortshøj",
+      "count": 2,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201669,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Whisper",
+      "count": 2,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201690,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Nesserian",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201678,
+      "note": "VEKN decklist page spells this name 'Nesserian' (double s); confirmed by user 2026-10-17 as krcg id 201678 (Neserian, single s). Name kept as VEKN wrote it.",
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Fame",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100698,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Life in the City",
+      "type": "Master",
+      "count": 3,
+      "krcg_id": 101104,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Scouting Mission",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 101698,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Deep Song",
+      "type": "Action",
+      "count": 4,
+      "krcg_id": 100515,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Earth Control",
+      "type": "Action Modifier",
+      "count": 4,
+      "krcg_id": 100600,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Threats",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 101978,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Obedient Flesh",
+      "type": "Action Modifier/Combat",
+      "count": 3,
+      "krcg_id": 102255,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Form of the Bat",
+      "type": "Action Modifier/Reaction",
+      "count": 2,
+      "krcg_id": 102223,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "One With the Land",
+      "type": "Reaction",
+      "count": 3,
+      "krcg_id": 102256,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Guard Dogs",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100863,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101321,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Body Flare",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 100230,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Carrion Crows",
+      "type": "Combat",
+      "count": 5,
+      "krcg_id": 100301,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Mythic Form",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 101262,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Voracious Vermin",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 102266,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}

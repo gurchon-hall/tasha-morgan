@@ -1,0 +1,186 @@
+{
+  "source": "https://www.vekn.net/two-player-format/689-2-player-decklist-ravnos",
+  "vekn_last_updated": "2026-10-03",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Ravnos",
+  "crypt": [
+    {
+      "name": "Noluthando",
+      "count": 2,
+      "capacity": 8,
+      "group": 7,
+      "krcg_id": 201785,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Sreelekha",
+      "count": 4,
+      "capacity": 8,
+      "group": 7,
+      "krcg_id": 201687,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Doc Martina",
+      "count": 2,
+      "capacity": 6,
+      "group": 7,
+      "krcg_id": 201670,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Luciano Carvalho",
+      "count": 1,
+      "capacity": 6,
+      "group": 7,
+      "krcg_id": 201675,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Roberto Rivamonte",
+      "count": 2,
+      "capacity": 6,
+      "group": 7,
+      "krcg_id": 201683,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Gathii",
+      "count": 1,
+      "capacity": 5,
+      "group": 7,
+      "krcg_id": 201672,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Dummy Corporation",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100594,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Life in the City",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101104,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Perfectionist",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101388,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Break the Bonds",
+      "type": "Action",
+      "count": 5,
+      "krcg_id": 102247,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Tier of Souls",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 101984,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "City Star Taxi",
+      "type": "Ally",
+      "count": 1,
+      "krcg_id": 102234,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Shilmulo Tarot",
+      "type": "Equipment",
+      "count": 1,
+      "krcg_id": 101767,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Cloak the Gathering",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 100362,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Faceless Night",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 100687,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Lost in Crowds",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 101125,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Spying Mission",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101857,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Swallowed by the Night",
+      "type": "Action Modifier/Combat",
+      "count": 2,
+      "krcg_id": 101913,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Guard Dogs",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100863,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101321,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Visions of Zapathasura",
+      "type": "Reaction",
+      "count": 4,
+      "krcg_id": 102265,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Voracious Vermin",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 102266,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "True Love’s Face",
+      "type": "Action Modifier",
+      "count": 5,
+      "krcg_id": 102041,
+      "note": "VEKN decklist page uses a curly apostrophe (’) in this name; confirmed by user 2026-10-17 as krcg id 102041 (True Love's Face). Name kept as VEKN wrote it.",
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}

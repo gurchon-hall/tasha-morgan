@@ -1,0 +1,228 @@
+{
+  "source": "https://www.vekn.net/two-player-format/791-2-player-decklist-path-of-power-and-the-inner-voice",
+  "vekn_last_updated": "2026-10-05",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Path of Power and the Inner Voice",
+  "crypt": [
+    {
+      "name": "Aaradhya, The Callous Tyrant",
+      "count": 3,
+      "capacity": 10,
+      "group": 6,
+      "krcg_id": 201733,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Věnceslava, The Implacable",
+      "count": 2,
+      "capacity": 9,
+      "group": 6,
+      "krcg_id": 201776,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Üresség",
+      "count": 2,
+      "capacity": 8,
+      "group": 6,
+      "krcg_id": 201775,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Khin Aye",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201760,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Concordia",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201744,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Rasha Tarabzouni",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201769,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Lyyli Yösydän",
+      "count": 1,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201764,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Dummy Corporation",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100594,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Golconda: Inner Peace",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100842,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Misdirection",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101225,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Perfectionist",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101388,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wider View",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102180,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Enchant Kindred",
+      "type": "Action",
+      "count": 3,
+      "krcg_id": 100640,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Iron Glare",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101008,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Voter Captivation",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102131,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Dominant Personality",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102316,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Relentlessness",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102337,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Unthinkable Humiliation",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 102346,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Perfect Paragon",
+      "type": "Action Modifier",
+      "count": 1,
+      "krcg_id": 101387,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Magnetic Authority",
+      "type": "Action Modifier",
+      "count": 1,
+      "krcg_id": 102331,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Absolute Tyranny",
+      "type": "Action Modifier/Reaction",
+      "count": 2,
+      "krcg_id": 102308,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Slam",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 101798,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Soak",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 101817,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Weighted Walking Stick",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 102169,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Cold War",
+      "type": "Political Action",
+      "count": 4,
+      "krcg_id": 102312,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Domain Challenge",
+      "type": "Political Action",
+      "count": 1,
+      "krcg_id": 100570,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Empires Fall",
+      "type": "Political Action",
+      "count": 1,
+      "krcg_id": 102318,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Elder Intervention",
+      "type": "Reaction",
+      "count": 3,
+      "krcg_id": 100618,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "On the Qui Vive",
+      "type": "Reaction",
+      "count": 3,
+      "krcg_id": 101321,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Wake with Evening's Freshness",
+      "type": "Reaction",
+      "count": 1,
+      "krcg_id": 102137,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}

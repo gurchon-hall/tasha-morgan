@@ -1,0 +1,199 @@
+{
+  "source": "https://www.vekn.net/two-player-format/667-2-player-decklist-tremere",
+  "vekn_last_updated": "2025-05-17",
+  "fetched_on": "2026-10-17",
+  "name": "2-player decklist: Tremere",
+  "crypt": [
+    {
+      "name": "Karl Schrekt",
+      "count": 3,
+      "capacity": 10,
+      "group": 6,
+      "krcg_id": 201621,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Ian Carfax",
+      "count": 3,
+      "capacity": 9,
+      "group": 7,
+      "krcg_id": 201697,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Ayelech",
+      "count": 2,
+      "capacity": 7,
+      "group": 6,
+      "krcg_id": 201535,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Inês Tristão",
+      "count": 2,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201551,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Lloyd Brooks",
+      "count": 1,
+      "capacity": 6,
+      "group": 6,
+      "krcg_id": 201556,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Chrysanthemum",
+      "count": 1,
+      "capacity": 5,
+      "group": 6,
+      "krcg_id": 201542,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "library": [
+    {
+      "name": "Chantry",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 100329,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Misdirection",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 101225,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "WMRH Talk Radio",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102189,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Wasserschloss Anif, Austria",
+      "type": "Master",
+      "count": 1,
+      "krcg_id": 102152,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Dominate Kine",
+      "type": "Action",
+      "count": 2,
+      "krcg_id": 100573,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Scouting Mission",
+      "type": "Action",
+      "count": 5,
+      "krcg_id": 101698,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Bonding",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 100236,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Mirror Walk",
+      "type": "Action Modifier",
+      "count": 3,
+      "krcg_id": 101223,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Threats",
+      "type": "Action Modifier",
+      "count": 2,
+      "krcg_id": 101978,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Eyes of Argus",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 100680,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Forced Awakening",
+      "type": "Reaction",
+      "count": 1,
+      "krcg_id": 100760,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Melange",
+      "type": "Reaction",
+      "count": 1,
+      "krcg_id": 101195,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Precognition",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101475,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Second Tradition: Domain",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101706,
+      "implementation_status": "implemented"
+    },
+    {
+      "name": "Spirit's Touch",
+      "type": "Reaction",
+      "count": 2,
+      "krcg_id": 101850,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Blood Fury",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 100201,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Rego Motum",
+      "type": "Combat",
+      "count": 3,
+      "krcg_id": 101588,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Soul Burn",
+      "type": "Combat",
+      "count": 1,
+      "krcg_id": 101829,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Theft of Vitae",
+      "type": "Combat",
+      "count": 4,
+      "krcg_id": 101966,
+      "implementation_status": "not_implemented"
+    },
+    {
+      "name": "Wind Dance",
+      "type": "Combat",
+      "count": 2,
+      "krcg_id": 102185,
+      "implementation_status": "not_implemented"
+    }
+  ],
+  "unmatched": []
+}
