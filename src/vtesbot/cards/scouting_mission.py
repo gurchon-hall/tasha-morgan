@@ -165,9 +165,7 @@ def _provide_scouting_mission_basic(
 
     return [
         HookOption(
-            choice=Choice(
-                "scouting_mission:basic", "Scouting Mission [dom]: Bleed with +1 bleed"
-            ),
+            choice=Choice("scouting_mission:basic", "Scouting Mission [dom]: Bleed with +1 bleed"),
             apply=_apply,
             played_card_type=CARD_TYPE,
         )

@@ -412,7 +412,9 @@ def test_fame_oust_mid_combat_resolves_the_simultaneous_second_damage_first(monk
     game.state.agents["P2"] = p2
     monkeypatch.setattr(combat, "_resolve_one_strike", lambda *a, **k: (1, False, False))
 
-    combat._resolve_strike_pair(game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {})
+    combat._resolve_strike_pair(
+        game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {}, {}
+    )
 
     assert game.state.game_over is True
     assert game.state.winner == "P2"
@@ -437,7 +439,9 @@ def test_fame_double_torpor_in_one_strike_pair_is_a_tie(monkeypatch):
     game.state.agents["P2"] = ScriptedAgent("P2")
     monkeypatch.setattr(combat, "_resolve_one_strike", lambda *a, **k: (1, False, False))
 
-    combat._resolve_strike_pair(game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {})
+    combat._resolve_strike_pair(
+        game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {}, {}
+    )
 
     assert game.state.game_over is True
     assert game.state.winner is None
@@ -463,7 +467,9 @@ def test_fame_double_torpor_with_the_other_side_above_three_pool_is_an_ordinary_
     game.state.agents["P2"] = ScriptedAgent("P2")
     monkeypatch.setattr(combat, "_resolve_one_strike", lambda *a, **k: (1, False, False))
 
-    combat._resolve_strike_pair(game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {})
+    combat._resolve_strike_pair(
+        game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {}, {}
+    )
 
     assert game.state.game_over is True
     assert game.state.winner == "P2"
