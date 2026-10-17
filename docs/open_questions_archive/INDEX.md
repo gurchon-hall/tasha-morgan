@@ -43,3 +43,4 @@ an entry.
 | OQ-32 | `002.md` | Diana Iadanza - no "cancel as played" hook |
 | OQ-33 | `002.md` | Diana Iadanza - no cancel-type marker |
 | OQ-34 | `002.md` | Loup - no action-succeeded signal or turn card |
+| OQ-35 | `002.md` | Disputed Territory - no location control-transfer |

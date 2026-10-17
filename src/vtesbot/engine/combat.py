@@ -1,13 +1,18 @@
 """Basic combat: hand strikes, maneuvers/range, dodge, additional strikes,
 before-range and end-of-round windows (Rulebook §4 Combat). See
-OQ-3,18,19,25,27,28,29,47."""
+OQ-3,18,19,25,27,28,29,47,60."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from . import hooks
-from .damage import ROUND_STATE_CONTEXT_KEY, apply_damage
+from .damage import (
+    COMBAT_STATE_CONTEXT_KEY,
+    ROUND_NUMBER_KEY,
+    ROUND_STATE_CONTEXT_KEY,
+    apply_damage,
+)
 from .decision import Choice, Decision
 from .pool import simultaneous_pool_losses
 
@@ -36,10 +41,12 @@ LONG_RANGE = "long"
 """The two legal values of `GameState.combat_range` (Rulebook §4 Determine
 Range)."""
 
-COMBAT_STATE_CONTEXT_KEY = "combat_state"
-"""Context key for the shared, combat-scoped (not round-scoped) scratch
-dict `run_combat` creates once per combat, for a once-per-combat grant
-(e.g. Saku)."""
+# COMBAT_STATE_CONTEXT_KEY is imported from .damage above (canonical
+# definition lives there, to avoid a circular import -- see that module's
+# own docstring); re-exported under this name for every card module that
+# already imports it from here (`seed_pre_combat_maneuver_grant`'s own
+# siblings below, `cards/saku_pihlajamaki.py`, `tests/rules/test_pre_combat_
+# maneuver_grant.py`).
 
 PRE_COMBAT_MANEUVER_GRANT_KEY = "pre_combat_maneuver_grants"
 """Key inside `combat_state` for a pre-combat maneuver grant seeded via
@@ -73,6 +80,54 @@ def consume_pre_combat_maneuver_grant(context: Mapping[str, Any]) -> None:
     vampire_id = context["vampire"]
     if grants.get(vampire_id, 0) > 0:
         grants[vampire_id] -= 1
+
+
+BLOCK_TIME_COMBAT_GRANT_KEY = "block_time_combat_grants"
+"""Key inside `combat_state` (OQ-60): `dict[str, dict[str, int]]`, vampire
+instance id -> {grant_name: count}, for a one-shot combat-time effect grant
+earned by a reaction played during the block attempt's own stealth/
+intercept resolution (before `run_combat` is even called), seeded via
+`run_combat`'s `initial_combat_state` by `action.py::perform_minion_
+action` -- see `action.py::grant_block_time_combat_effect` for the
+`pending`-side half of this mechanism, and that function's own docstring
+for why this is forwarded only for the vampire that ends up the successful
+blocker, never for any other candidate, and never into a second/follow-up
+combat. Same per-vampire-dict shape as `PRE_COMBAT_MANEUVER_GRANT_KEY`,
+generalized from a single named "maneuver" grant to arbitrary named
+grants, since `DAMAGE_PREVENTION_HOOK` and other block-attempt-time
+reactions are not maneuvers."""
+
+
+def seed_block_time_combat_grants(grants: dict[str, dict[str, int]]) -> dict[str, Any]:
+    """Build an `initial_combat_state` seed (OQ-60) from `action.py::
+    perform_minion_action`'s own forwarded `pending[PENDING_BLOCK_TIME_
+    COMBAT_GRANT_KEY]` bookkeeping. Used by `perform_minion_action` only;
+    merges alongside any `seed_pre_combat_maneuver_grant` seed for the same
+    combat (distinct top-level keys, never colliding)."""
+    return {BLOCK_TIME_COMBAT_GRANT_KEY: grants}
+
+
+def block_time_combat_grant_available(context: Mapping[str, Any], grant_name: str) -> bool:
+    """Whether `context["vampire"]` currently has an unclaimed block-time
+    combat grant named `grant_name` (OQ-60); missing `combat_state`
+    degrades to False, same convention as `pre_combat_maneuver_available`."""
+    combat_state = context.get(COMBAT_STATE_CONTEXT_KEY)
+    if combat_state is None:
+        return False
+    per_vampire = combat_state.get(BLOCK_TIME_COMBAT_GRANT_KEY, {}).get(context["vampire"], {})
+    return per_vampire.get(grant_name, 0) > 0
+
+
+def consume_block_time_combat_grant(context: Mapping[str, Any], grant_name: str) -> None:
+    """Consume one of `context["vampire"]`'s unclaimed block-time combat
+    grants named `grant_name` (OQ-60); missing state or none left is a
+    no-op, same convention as `consume_pre_combat_maneuver_grant`."""
+    combat_state = context.get(COMBAT_STATE_CONTEXT_KEY)
+    if combat_state is None:
+        return
+    per_vampire = combat_state.get(BLOCK_TIME_COMBAT_GRANT_KEY, {}).get(context["vampire"])
+    if per_vampire and per_vampire.get(grant_name, 0) > 0:
+        per_vampire[grant_name] -= 1
 
 
 ADDITIONAL_STRIKE_LIMIT_KEY = "additional_strike_limit_used"
@@ -253,6 +308,7 @@ def _resolve_strike_pair(
     acting_vampire: VampireInPlay,
     blocking_player: str,
     blocking_vampire: VampireInPlay,
+    combat_state: dict[str, Any],
     round_state: dict[str, Any],
     *,
     acting_participates: bool = True,
@@ -298,6 +354,7 @@ def _resolve_strike_pair(
                 normal=damage_to_blocking,
                 round_state=round_state,
                 inflicted_by=acting_vampire.instance_id,
+                combat_state=combat_state,
             )
         if damage_to_acting:
             apply_damage(
@@ -307,6 +364,7 @@ def _resolve_strike_pair(
                 normal=damage_to_acting,
                 round_state=round_state,
                 inflicted_by=blocking_vampire.instance_id,
+                combat_state=combat_state,
             )
 
 
@@ -516,12 +574,16 @@ def run_combat(
     initial_combat_state: dict[str, Any] | None = None,
 ) -> None:
     """Resolve combat between the acting and blocking minion (Rulebook §4
-    Combat). `initial_combat_state` (OQ-25) pre-seeds a grant that must
-    exist before round 1."""
+    Combat). `initial_combat_state` (OQ-25/OQ-60) pre-seeds a grant that must
+    exist before round 1 -- a pre-combat maneuver grant
+    (`seed_pre_combat_maneuver_grant`), a block-attempt-time combat grant
+    (`seed_block_time_combat_grants`), or both (distinct top-level keys,
+    merged by the caller)."""
     # One combat-scoped scratch dict, created once for the whole combat
     # (not recreated per round, unlike round_state below).
     combat_state: dict[str, Any] = initial_combat_state if initial_combat_state is not None else {}
     before_range_offered = False
+    round_number = 0
     while True:
         if state.game_over:
             break  # Rulebook §5: play continues only while 2+ Methuselahs remain.
@@ -538,9 +600,14 @@ def run_combat(
             if state.game_over:
                 break
 
+        round_number += 1
         # One fresh round-scoped scratch dict per round (OQ-18/28); never
-        # carries a flag into a later round of the same combat.
-        round_state: dict[str, Any] = {}
+        # carries a flag into a later round of the same combat. Pre-seeded
+        # with this round's 1-indexed number (OQ-60) so a
+        # `DAMAGE_PREVENTION_HOOK` provider can tell "is this round 1"
+        # (`damage.py::is_round_one`) without needing `combat_state`'s own
+        # cross-round persistence for that part.
+        round_state: dict[str, Any] = {ROUND_NUMBER_KEY: round_number}
 
         # --- Determine Range step (Rulebook §4 step 2): before strikes. ---
         _determine_range(
@@ -557,7 +624,13 @@ def run_combat(
 
         # --- Strike step: acting minion's controller chooses first; simultaneous resolution. ---
         _resolve_strike_pair(
-            state, acting_player, acting_vampire, blocking_player, blocking_vampire, round_state
+            state,
+            acting_player,
+            acting_vampire,
+            blocking_player,
+            blocking_vampire,
+            combat_state,
+            round_state,
         )
         if state.game_over:
             break
@@ -586,6 +659,7 @@ def run_combat(
                     acting_vampire,
                     blocking_player,
                     blocking_vampire,
+                    combat_state,
                     round_state,
                     acting_participates=acting_extra,
                     blocking_participates=blocking_extra,

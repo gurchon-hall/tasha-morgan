@@ -1,0 +1,398 @@
+{
+  "id": 101475,
+  "printed_name": "Precognition",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Precognition"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Precognición"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Précognition"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300005,
+        "code": "Sabbat"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PT",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300010,
+        "code": "Anarchs"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAG",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anarchs/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300011,
+        "code": "BH"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/black-hand/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300014,
+        "code": "KMW"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PAl",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/kindred-most-wanted/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "SKM",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300024,
+        "code": "HttB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/heirs-to-the-blood/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300030,
+        "code": "SP"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "DoF",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-preconstructed/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300032,
+        "code": "FB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/first-blood/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PH",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/precognition.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/precognition.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Precognición",
+      "text": "[aus] +1 de intercepción.\n[AUS] Como antes, y este vampiro puede prevenirse de 1 de daño durante el primer asalto del combate resultante si bloquea.",
+      "flavor": "\"Mala memoria, la que sólo funciona hacia atrás\", censuró la Reina.\nLewis Carroll, \"A través del espejo\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/precognition.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Précognition",
+      "text": "[aus] +1 en interception.\n[AUS] Comme ci-dessus et ce vampire peut prévenir 1 point de dégâts durant le premier round du combat résultant s'il bloque.",
+      "flavor": "\"Une mémoire qui n'opère que dans le passé n'a rien de bien fameux\", déclara la Reine.\nLewis Carroll, \"De l'autre côté du miroir\"",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/precognition.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/precognition.jpg",
+  "types": [
+    "Reaction"
+  ],
+  "formats": [],
+  "artists": [
+    "Eric LaCombe",
+    "Anna Christenson"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "[AUS] The damage prevention can only be used if the block is successful, and only in the resulting (block-induced) combat. [LSJ 20010813]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20010813]",
+          "label": "LSJ 20010813",
+          "url": "https://usenet.krcg.org/t/8MR4bq0Cxj4/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[AUS]",
+          "symbol": "A",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "[AUS] The prevention does not carry over to a follow-up combat (eg. [CEL] {101507|Psyche!}). [LSJ 20010819-2]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20010819-2]",
+          "label": "LSJ 20010819-2",
+          "url": "https://usenet.krcg.org/t/8MR4bq0Cxj4/#m14"
+        }
+      ],
+      "cards": [
+        {
+          "id": 101507,
+          "printed_name": "Psyche!",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": [
+        {
+          "text": "[AUS]",
+          "symbol": "A",
+          "count": ""
+        },
+        {
+          "text": "[CEL]",
+          "symbol": "C",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "[AUS] The prevention is provided again if a second block happens on the same action (eg. after [PRO] {100771|Form of Mist}). [LSJ 20010814-2]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20010814-2]",
+          "label": "LSJ 20010814-2",
+          "url": "https://usenet.krcg.org/t/8MR4bq0Cxj4/#m3"
+        }
+      ],
+      "cards": [
+        {
+          "id": 100771,
+          "printed_name": "Form of Mist",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": [
+        {
+          "text": "[AUS]",
+          "symbol": "A",
+          "count": ""
+        },
+        {
+          "text": "[PRO]",
+          "symbol": "J",
+          "count": ""
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "text": "[aus] +1 intercept.\n[AUS] As above, and this vampire can prevent 1 damage during the first round of the resulting combat if they block.",
+  "draft": "",
+  "flavor": "\"It's a poor sort of memory that only works backwards,\" the Queen remarked.\nLewis Carroll, \"Through the Looking Glass\"",
+  "legal": "1996-11-27",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "aus"
+    ]
+  }
+}

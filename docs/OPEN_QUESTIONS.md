@@ -12,37 +12,6 @@ entries live in `docs/open_questions_archive/` once this file fills
 up — check `docs/open_questions_archive/INDEX.md` too when looking
 up an OQ number or the highest one used so far.
 
-## OQ-35 - Disputed Territory - no location control-transfer (status: resolved)
-
-- Situation: Disputed Territory (krcg id 100557, Political Action):
-  "Choose a location and a Methuselah. Successful referendum means the
-  chosen Methuselah takes control of the chosen location." Needed a
-  generic way to change who controls an existing in-play "location" — a
-  concept OQ-23 already found is not a distinct krcg type, but free text
-  on either a standalone Master card or an attached Equipment.
-- Rules/interactions: rulings on file via krcg, verbatim: "If used to
-  steal an equipment representing a location, it can be placed on any
-  minion controlled by the new controller" [RTR 19960112]; "Changing the
-  controller of a location has no other effect, unless specified by card
-  text. Exception: A location 'on' another controlled card is moved onto
-  an appropriate card controlled by the new controller of the location"
-  [RTR 19980623]; "If used to 'change' the control of a location... to
-  the same Methuselah, the location cannot be moved to another minion
-  controlled by the same Methuselah" [LSJ 19971002].
-- Solution: added `engine/attachments.py::transfer_attachment_control`
-  (always re-hosts onto a caller-supplied destination vampire, per the
-  Exception clause — an attached card is always "on" a vampire; rejects
-  a same-controller call whose `new_host` is not the attachment's own
-  current host, per [LSJ 19971002] — a `rules-auditor` finding fixed
-  after this entry's first landing omitted that clause entirely) and
-  `engine/master_cards.py::transfer_master_card_control` (never re-hosts a
-  standalone card, only moves it between `PlayerState.master_cards` dicts
-  and reassigns `controller`). Which destination vampire/controller to use
-  is left to whichever future card module calls these (its own `Decision`,
-  not built here). Disputed Territory's own card module (`cards/
-  disputed_territory.py`, `Status.IMPLEMENTED`) was written in a later
-  pass.
-
 ## OQ-36 - Voter Captivation - no post-resolution dispatch (status: resolved)
 
 - Situation: Voter Captivation (krcg id 102131): "Only usable after
@@ -833,3 +802,41 @@ up an OQ number or the highest one used so far.
   Blocks Bone Shambler, Political Ally, Double Deuce, Heartrender,
   City Star Taxi, The Vozhd of Juiz de Fora, The Vozhd of Sofia
   (none written yet).
+
+## OQ-60 - Precognition - no round-1-only combat grant from block (status: resolved)
+
+- Situation: Precognition (krcg id 101475, Reaction, Mono Auspex):
+  "[aus] +1 intercept. [AUS] As above, and this vampire can prevent 1
+  damage during the first round of the resulting combat if they
+  block." The superior clause's damage-prevention half needed two
+  things no hook surface exposed: (1) a way for that reaction's own
+  `apply()` (run during the block attempt's stealth/intercept
+  resolution, before `run_combat` is even called) to hand a grant
+  forward into the *later, separate* `run_combat` call for that same
+  blocker; and (2) a way for a `DAMAGE_PREVENTION_HOOK` provider to
+  tell "is this round 1 of the current combat."
+- Rules/interactions: "The damage prevention can only be used if the
+  block is successful, and only in the resulting (block-induced)
+  combat." [LSJ 20010813]; "does not carry over to a follow-up combat"
+  [LSJ 20010819-2]; "is provided again if a second block happens on
+  the same action" [LSJ 20010814-2] — together read as a one-shot
+  grant, tied to the specific vampire that played the card and that
+  same vampire ending up as the blocker, usable at most once, only in
+  round 1 of the one resulting combat.
+- Solution: `engine/action.py::grant_block_time_combat_effect` records
+  a grant into the block attempt's own `pending[PENDING_BLOCK_TIME_
+  COMBAT_GRANT_KEY]`, keyed by the reacting vampire's instance id;
+  `perform_minion_action` forwards only the entry keyed by the
+  eventual successful `blocker` into that one `run_combat` call's
+  `initial_combat_state` (`engine/combat.py::seed_block_time_combat_
+  grants`/`block_time_combat_grant_available`/`consume_block_time_
+  combat_grant`, keyed `BLOCK_TIME_COMBAT_GRANT_KEY`) — a grant for
+  any other candidate is simply never read, and nothing carries into a
+  second `run_combat` call. `engine/damage.py::is_round_one` reads a
+  new `ROUND_NUMBER_KEY` that `run_combat` now writes into `round_
+  state` at the top of each round, and `apply_damage` now also threads
+  `combat_state` into `DAMAGE_PREVENTION_HOOK`'s own context alongside
+  `round_state`. Generic mechanism proven in `tests/rules/test_block_
+  time_combat_grant.py`; Precognition itself is now `Status.IMPLEMENTED`
+  (`src/vtesbot/cards/precognition.py`, tests in `tests/cards/
+  test_precognition.py`).

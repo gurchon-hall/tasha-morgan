@@ -1,12 +1,12 @@
 """Minion action: announce, block, resolve/combat (Rulebook §4; 2P collapses
-prey/predator, CLAUDE.md §3). See OQ-9,11,17,25,26,30,31,34,36,39,46,48."""
+prey/predator, CLAUDE.md §3). See OQ-9,11,17,25,26,30,31,34,36,39,46,48,60."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from . import hooks
-from .combat import run_combat, seed_pre_combat_maneuver_grant
+from .combat import run_combat, seed_block_time_combat_grants, seed_pre_combat_maneuver_grant
 from .decision import Choice, Decision
 
 if TYPE_CHECKING:
@@ -75,6 +75,47 @@ second filter, a defender holding e.g. Second Tradition: Domain or
 Organized Resistance could unlock-and-force-block with a vampire the actor
 had just named excluded, defeating the exclusion entirely (rules-auditor
 finding)."""
+
+
+PENDING_BLOCK_TIME_COMBAT_GRANT_KEY = "block_time_combat_grants"
+"""`pending[...]` key (OQ-60): holds `dict[str, dict[str, int]]`, vampire
+instance id -> {grant_name: count}, written by `grant_block_time_combat_
+effect` from a reaction's own `apply` closure, played during the block
+attempt's own stealth/intercept resolution (`_duel_stealth_intercept`,
+before `run_combat` even exists) -- e.g. Precognition's (krcg 101475)
+superior clause, "this vampire can prevent 1 damage during the first round
+of the resulting combat if they block." `perform_minion_action` forwards
+only the entry keyed by the vampire that ends up the successful `blocker`
+into that one combat's own `initial_combat_state`
+(`combat.py::seed_block_time_combat_grants`) -- a grant recorded for a
+vampire that attempted and failed, or never got to attempt, is simply never
+read, and nothing here ever threads into a second, later `run_combat` call
+(each `perform_minion_action` call owns one `pending` dict, forwarded at
+most once). Matches [LSJ 20010813] (successful block, resulting combat
+only), [LSJ 20010819-2] (no carryover to a follow-up combat), and
+[LSJ 20010814-2] (re-earned fresh on a second block attempt, since the
+reaction is played, and this dict written, again each time)."""
+
+
+def grant_block_time_combat_effect(
+    pending: dict[str, Any] | None, vampire_id: str, grant_name: str, count: int = 1
+) -> None:
+    """Record a one-shot combat-time effect grant (OQ-60), tied to
+    `vampire_id` -- the specific vampire whose controller played the
+    block-attempt-time reaction, read back by `combat.py::block_time_
+    combat_grant_available`/`consume_block_time_combat_grant` once (and
+    only if) that vampire ends up the successful blocker -- see
+    `PENDING_BLOCK_TIME_COMBAT_GRANT_KEY` above. A provider calls this from
+    its own `apply` closure, passing the `pending` dict it received via its
+    own provider `context["pending"]` (the same convention every other
+    `pending`-writing helper in this module uses). `pending is None` is a
+    no-op, mirroring `ActiveInterceptDecrease`'s own `pending`-is-optional
+    contract."""
+    if pending is None:
+        return
+    grants = pending.setdefault(PENDING_BLOCK_TIME_COMBAT_GRANT_KEY, {})
+    per_vampire = grants.setdefault(vampire_id, {})
+    per_vampire[grant_name] = per_vampire.get(grant_name, 0) + count
 
 
 def _excluded_block_candidates(pending: dict[str, Any] | None) -> set[str]:
@@ -516,7 +557,10 @@ def perform_minion_action(
     """Announce, block attempt, resolve or combat (Rulebook §4). Dispatches
     `ACTION_SUCCEEDED_HOOK` (OQ-34) then `REFERENDUM_RESOLVED_HOOK`
     (OQ-36). `block_candidate_predicate` is forwarded unchanged to
-    `attempt_block` -- see that function's own docstring."""
+    `attempt_block` -- see that function's own docstring. Also forwards any
+    `PENDING_BLOCK_TIME_COMBAT_GRANT_KEY` entry (OQ-60) recorded for the
+    successful blocker into that combat's own `initial_combat_state` -- see
+    `grant_block_time_combat_effect`'s own docstring."""
     vampire.locked = True
     pending: dict[str, Any] = {}
     blocker = attempt_block(
@@ -535,9 +579,17 @@ def perform_minion_action(
         return
     if blocker is not None:
         blocker.locked = True
-        initial_combat_state = (
+        initial_combat_state: dict[str, Any] | None = (
             seed_pre_combat_maneuver_grant(maneuver_grant) if maneuver_grant is not None else None
         )
+        block_time_grants = pending.get(PENDING_BLOCK_TIME_COMBAT_GRANT_KEY, {}).get(
+            blocker.instance_id
+        )
+        if block_time_grants:
+            seeded = seed_block_time_combat_grants({blocker.instance_id: dict(block_time_grants)})
+            initial_combat_state = (
+                seeded if initial_combat_state is None else {**initial_combat_state, **seeded}
+            )
         run_combat(state, actor_player, vampire, defender_player, blocker, initial_combat_state)
         if state.game_over:
             clear_woken_vampires(state)

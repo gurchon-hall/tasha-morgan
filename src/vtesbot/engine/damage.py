@@ -6,7 +6,14 @@ Taste of Vitae. OQ-55: `DAMAGE_PREVENTION_HOOK`'s own context also carries `roun
 (`MANDATORY_FULL_PREVENTION_KEY`/`mandatory_full_prevention_active`/
 `mark_mandatory_full_prevention_active`), for a once-activated-then-automatic effect (e.g.
 Rolling with the Punches' superior clause) -- distinct from `DAMAGE_PREVENTION_HOOK` itself,
-which only ever offers a freely-declinable choice."""
+which only ever offers a freely-declinable choice. OQ-60: `round_state` now also carries a
+1-indexed `ROUND_NUMBER_KEY`, written by `combat.py::run_combat` at the top of each round
+(`is_round_one` query helper), and `DAMAGE_PREVENTION_HOOK`'s own context also carries the
+combat-scoped `combat_state` (`COMBAT_STATE_CONTEXT_KEY`, canonical home here -- `combat.py`
+imports it, not the reverse, same reasoning as `ROUND_STATE_CONTEXT_KEY`'s own docstring) --
+together let a provider gate a "round 1 of the resulting combat only, if this vampire
+blocked" effect (e.g. Precognition, krcg 101475) via `combat.py::block_time_combat_grant_
+available`/`consume_block_time_combat_grant`."""
 
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
@@ -19,6 +26,37 @@ if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
 
 DAMAGE_PREVENTION_HOOK = "damage_prevention"
+
+COMBAT_STATE_CONTEXT_KEY = "combat_state"
+"""Context key for the shared, combat-scoped (not round-scoped) scratch dict
+`combat.py::run_combat` creates once per combat (OQ-60; canonical definition
+lives here, not `engine/combat.py`, for the same circular-import reason as
+`ROUND_STATE_CONTEXT_KEY` below -- `combat.py` imports `apply_damage` from
+this module). `combat.py::COMBAT_STATE_CONTEXT_KEY` re-exports this same
+object. Threaded into both `MANEUVER_HOOK`'s own context (already, e.g. Saku
+Pihlajamäki's once-per-combat grant) and `DAMAGE_PREVENTION_HOOK`'s own
+context (OQ-60 addition, below) so a provider can read/write combat-scoped
+state (e.g. `combat.py`'s block-time combat grant helpers) from either hook."""
+
+ROUND_NUMBER_KEY = "round_number"
+"""Key in the round-scoped scratch dict (OQ-60): the 1-indexed round number
+for the current round, written once by `combat.py::run_combat` at the top of
+each round's own loop iteration -- lets a `DAMAGE_PREVENTION_HOOK` provider
+gate a "round 1 only" effect (e.g. Precognition, krcg 101475, "this vampire
+can prevent 1 damage during the first round of the resulting combat") without
+needing `combat_state`'s own cross-round persistence for that part. See
+`is_round_one` below."""
+
+
+def is_round_one(round_state: Mapping[str, Any] | None) -> bool:
+    """Whether the current round is round 1 of its combat (OQ-60 query
+    helper). `round_state is None` (a hook offered outside `run_combat`, or
+    before this key existed) degrades to False, same convention as every
+    other round-scoped query in this module."""
+    if round_state is None:
+        return False
+    return round_state.get(ROUND_NUMBER_KEY) == 1
+
 
 ROUND_STATE_CONTEXT_KEY = "round_state"
 """Context key for the shared, round-scoped scratch dict `combat.run_combat`
@@ -181,6 +219,7 @@ def apply_damage(
     aggravated: int = 0,
     round_state: dict[str, Any] | None = None,
     inflicted_by: str | None = None,
+    combat_state: dict[str, Any] | None = None,
 ) -> None:
     """Resolve `normal` + `aggravated` damage (§4). Order: prevent, mend (normal only),
     normal before aggravated. `round_state` (OQ-29) records blood spent when given;
@@ -189,7 +228,12 @@ def apply_damage(
     dispatched. `inflicted_by` (the attacking vampire's own instance id, when known) records
     the post-prevention total under `DAMAGE_SUCCESSFULLY_INFLICTED_KEY`, distinct from and
     in addition to `round_state`'s existing `BLOOD_LOST_TO_DAMAGE_KEY` bookkeeping -- see
-    that key's own docstring."""
+    that key's own docstring. `combat_state` (OQ-60), when given by `combat.py::run_combat`'s
+    own strike-resolution call sites, is threaded into `DAMAGE_PREVENTION_HOOK`'s context
+    alongside `round_state`, so a provider can also consult combat-scoped state (e.g. a
+    block-attempt-time grant, `combat.py::block_time_combat_grant_available`) together with
+    `is_round_one(round_state)`; `None` (every call site outside `run_combat`, e.g. Pulled
+    Fangs' own attachment-damage trigger) degrades to "no combat-scoped state available"."""
     if normal < 0 or aggravated < 0:
         raise ValueError("damage amounts must be non-negative")
     if normal == 0 and aggravated == 0:
@@ -219,6 +263,7 @@ def apply_damage(
             "vampire": vampire.instance_id,
             "damage": damage_box,
             ROUND_STATE_CONTEXT_KEY: round_state,
+            COMBAT_STATE_CONTEXT_KEY: combat_state,
         },
     )
     normal = max(0, damage_box["normal"])
