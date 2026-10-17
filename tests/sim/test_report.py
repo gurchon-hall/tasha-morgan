@@ -95,3 +95,79 @@ def test_benchmark_summaries_count_ties_separately():
     assert batch.stuck_seeds == []
     assert "ties=1" in summarize(batch)
     assert "ties=1" in summarize_versus(batch, 500)
+
+
+def test_write_batch_report_adds_economic_columns_after_action_columns(tmp_path: Path):
+    """Phase A (`tmp/heuristic-agent-audit-plan.md`): the new `{player}_
+    {field}` columns are purely additive, placed after the existing
+    action-count columns."""
+    from vtesbot.sim import write_batch_report
+    from vtesbot.sim.invariants import ACTION_NAMES, ECONOMIC_FIELDS
+    from vtesbot.sim.runner import BatchResult
+
+    r1 = MatchResult(
+        seed=1,
+        turns_played=5,
+        game_over=True,
+        winner="P1",
+        victory_points={"P1": 2},
+        log=ReplayLog(),
+        final_pools={"P1": 20, "P2": 0},
+        economic_counts={"P1": {"bleed_pool_dealt": 3}, "P2": {}},
+    )
+    r2 = MatchResult(
+        seed=2,
+        turns_played=7,
+        game_over=True,
+        winner="P2",
+        victory_points={"P2": 2},
+        log=ReplayLog(),
+        final_pools={"P1": 0, "P2": 20},
+    )
+    batch = BatchResult(results=[r1, r2])
+
+    write_batch_report(batch, tmp_path)
+
+    rows = (tmp_path / "batch_results.csv").read_text(encoding="utf-8").splitlines()
+    header = rows[0].split(",")
+    players = ["P1", "P2"]
+    expected_len = (
+        8 + len(players) + len(players) * len(ACTION_NAMES) + len(players) * len(ECONOMIC_FIELDS)
+    )
+    assert len(header) == expected_len
+    for p in players:
+        for f in ECONOMIC_FIELDS:
+            assert f"{p}_{f}" in header
+
+    last_action_col = max(header.index(f"{p}_{a}") for p in players for a in ACTION_NAMES)
+    first_economic_col = min(header.index(f"{p}_{f}") for p in players for f in ECONOMIC_FIELDS)
+    assert first_economic_col > last_action_col
+
+    data_row = rows[1].split(",")
+    assert data_row[header.index("P1_bleed_pool_dealt")] == "3"
+    assert data_row[header.index("P2_bleed_pool_dealt")] == "0"
+
+
+def test_sample_losses_and_ties_reaches_a_loss_buried_past_sample_count(tmp_path: Path):
+    """A P1 loss past the first `sample_count` wins only gets a `samples/`
+    decision log when `sample_losses_and_ties=True` (opt-in default-off,
+    so existing callers are unaffected)."""
+    from vtesbot.sim import write_batch_report
+    from vtesbot.sim.runner import BatchResult
+
+    wins = [
+        MatchResult(
+            seed=s, turns_played=1, game_over=True, winner="P1", victory_points={}, log=ReplayLog()
+        )
+        for s in range(5)
+    ]
+    buried_loss = MatchResult(
+        seed=99, turns_played=1, game_over=True, winner="P2", victory_points={}, log=ReplayLog()
+    )
+    batch = BatchResult(results=[*wins, buried_loss])
+
+    write_batch_report(batch, tmp_path / "off", sample_count=3)
+    assert not (tmp_path / "off" / "samples" / "99.summary.txt").exists()
+
+    write_batch_report(batch, tmp_path / "on", sample_count=3, sample_losses_and_ties=True)
+    assert (tmp_path / "on" / "samples" / "99.summary.txt").exists()

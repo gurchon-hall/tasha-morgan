@@ -13,7 +13,7 @@ from vtesbot.engine.log import ReplayLog
 from vtesbot.engine.phases.turn import run_until_game_over
 from vtesbot.engine.setup import DeckSpec, setup_game
 
-from .invariants import action_counts, check_no_activity_after_oust, is_self_oust
+from .invariants import action_counts, check_no_activity_after_oust, economic_counts, is_self_oust
 from .report import write_batch_report, write_match_report
 
 AgentFactory = Callable[[str, int], Agent]
@@ -29,6 +29,7 @@ class MatchResult:
     log: ReplayLog
     final_pools: dict[str, int] = field(default_factory=dict)
     action_counts: dict[str, dict[str, int]] = field(default_factory=dict)
+    economic_counts: dict[str, dict[str, int]] = field(default_factory=dict)
     self_oust: bool = False
 
     @property
@@ -72,6 +73,7 @@ def run_match(
         log=state.log,
         final_pools={p: ps.pool for p, ps in state.players.items()},
         action_counts=action_counts(state.log, list(turn_order)),
+        economic_counts=economic_counts(state.log, list(turn_order)),
         self_oust=is_self_oust(state.log),
     )
     if report_dir is not None:
@@ -102,10 +104,13 @@ def run_many(
     max_turns: int = 1000,
     report_dir: Path | None = None,
     report_sample_count: int = 3,
+    report_sample_losses_and_ties: bool = False,
 ) -> BatchResult:
     """Runs `run_match` per seed, catching exceptions so one bad seed
     doesn't hide the rest (milestone 4). `report_dir` opts in to
-    `write_batch_report`'s CSV/crash-log/sample output."""
+    `write_batch_report`'s CSV/crash-log/sample output;
+    `report_sample_losses_and_ties` forwards unchanged -- see that
+    function's own docstring."""
     batch = BatchResult()
     for seed in seeds:
         try:
@@ -115,5 +120,10 @@ def run_many(
         except Exception as exc:  # intentionally broad: this is a crash collector
             batch.crashes.append((seed, exc))
     if report_dir is not None:
-        write_batch_report(batch, report_dir, sample_count=report_sample_count)
+        write_batch_report(
+            batch,
+            report_dir,
+            sample_count=report_sample_count,
+            sample_losses_and_ties=report_sample_losses_and_ties,
+        )
     return batch

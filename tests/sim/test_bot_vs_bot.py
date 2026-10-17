@@ -20,6 +20,7 @@ from vtesbot.engine import CryptCard, LibraryCard
 from vtesbot.engine.setup import DeckSpec
 from vtesbot.formats import load_allowed_list
 from vtesbot.sim import run_many, run_match
+from vtesbot.sim.invariants import ECONOMIC_FIELDS
 
 
 def _tiny_deck(prefix: str) -> DeckSpec:
@@ -42,6 +43,13 @@ def test_single_match_runs_to_completion():
     assert result.winner in ("P1", "P2")
     assert result.turns_played > 0
     assert len(result.log.entries) > 0
+    assert set(result.economic_counts) == {"P1", "P2"}
+    assert all(field in result.economic_counts["P1"] for field in ECONOMIC_FIELDS)
+    assert any(
+        result.economic_counts[p][field]
+        for p in ("P1", "P2")
+        for field in ("pool_spent_add_blood", "bleed_pool_dealt")
+    )
 
 
 def test_run_match_is_deterministic_for_a_given_seed():

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from vtesbot.engine.log import ReplayLog
 
-from .invariants import ACTION_NAMES
+from .invariants import ACTION_NAMES, ECONOMIC_FIELDS
 
 if TYPE_CHECKING:
     from .runner import BatchResult, MatchResult
@@ -60,9 +60,23 @@ def write_match_report(result: MatchResult, directory: Path) -> tuple[Path, Path
     return summary_path, decisions_path
 
 
-def write_batch_report(batch: BatchResult, directory: Path, *, sample_count: int = 3) -> Path:
+def write_batch_report(
+    batch: BatchResult,
+    directory: Path,
+    *,
+    sample_count: int = 3,
+    sample_losses_and_ties: bool = False,
+) -> Path:
     """Writes `batch_results.csv`, `crashes.log`, and a `samples/` subfolder
-    with `write_match_report`'s output for the first `sample_count` games."""
+    with `write_match_report`'s output for the first `sample_count` games.
+
+    `sample_losses_and_ties` (opt-in, default `False` so existing callers
+    are unaffected): a batch dominated by P1 wins still samples every P1
+    loss/tie beyond the first `sample_count`, capped at `sample_count * 4`
+    extra games (bounds disk use). "Loss/tie" is from P1's own perspective
+    (`winner != "P1"`), the same P1-as-subject convention `summarize_versus`
+    already uses -- the CSV/report shape has no other notion of which seat
+    is "the" agent under test."""
     directory.mkdir(parents=True, exist_ok=True)
 
     csv_path = directory / "batch_results.csv"
@@ -74,6 +88,7 @@ def write_batch_report(batch: BatchResult, directory: Path, *, sample_count: int
             + ["self_oust", "tie"]
             + [f"{p}_final_pool" for p in players]
             + [f"{p}_{a}" for p in players for a in ACTION_NAMES]
+            + [f"{p}_{f}" for p in players for f in ECONOMIC_FIELDS]
         )
         for r in batch.results:
             vp = ";".join(f"{player}={points}" for player, points in r.victory_points.items())
@@ -81,6 +96,7 @@ def write_batch_report(batch: BatchResult, directory: Path, *, sample_count: int
                 [r.seed, r.turns_played, r.game_over, r.stuck, r.winner, vp, r.self_oust, r.tie]
                 + [r.final_pools.get(p, "") for p in players]
                 + [r.action_counts.get(p, {}).get(a, 0) for p in players for a in ACTION_NAMES]
+                + [r.economic_counts.get(p, {}).get(f, 0) for p in players for f in ECONOMIC_FIELDS]
             )
 
     crashes_path = directory / "crashes.log"
@@ -88,7 +104,19 @@ def write_batch_report(batch: BatchResult, directory: Path, *, sample_count: int
         for seed, exc in batch.crashes:
             f.write(format_crash(seed, exc) + "\n\n")
 
-    for sample in batch.results[:sample_count]:
+    samples = list(batch.results[:sample_count])
+    if sample_losses_and_ties:
+        extra_cap = sample_count * 4
+        sampled_seeds = {r.seed for r in samples}
+        for r in batch.results:
+            if len(samples) >= sample_count + extra_cap:
+                break
+            if r.seed in sampled_seeds or r.winner == "P1":
+                continue
+            samples.append(r)
+            sampled_seeds.add(r.seed)
+
+    for sample in samples:
         write_match_report(sample, directory / "samples")
 
     return directory
