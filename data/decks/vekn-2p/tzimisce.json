@@ -73,7 +73,7 @@
       "type": "Action",
       "count": 4,
       "krcg_id": 101698,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Deep Song",

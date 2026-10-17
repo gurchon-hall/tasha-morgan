@@ -1,0 +1,178 @@
+{
+  "id": 101698,
+  "printed_name": "Scouting Mission",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Scouting Mission"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300005,
+        "code": "Sabbat"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat/scoutingmission.jpg"
+    },
+    {
+      "set": {
+        "id": 300006,
+        "code": "SW"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PL",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-war/scoutingmission.jpg"
+    },
+    {
+      "set": {
+        "id": 300009,
+        "code": "CE"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/camarilla-edition/scoutingmission.jpg"
+    },
+    {
+      "set": {
+        "id": 300011,
+        "code": "BH"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/black-hand/scoutingmission.jpg"
+    },
+    {
+      "set": {
+        "id": 300017,
+        "code": "Third"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/third-edition/scoutingmission.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 6,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/scoutingmission.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PL",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/scoutingmission.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/scoutingmission.jpg",
+  "types": [
+    "Action"
+  ],
+  "formats": [],
+  "artists": [
+    "Scott Fischer"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "[dom] Ⓓ Bleed with +1 bleed.\n[DOM] +1 stealth action. Add 2 blood to a younger vampire in your uncontrolled region.",
+  "draft": "",
+  "flavor": "It's amazing how trusting these Camarilla bastards can be.\nJimmy Dunn",
+  "legal": "1996-11-27",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "dom"
+    ]
+  }
+}

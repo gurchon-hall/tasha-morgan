@@ -94,7 +94,7 @@
       "type": "Action",
       "count": 6,
       "krcg_id": 101698,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Bonding",
