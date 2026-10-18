@@ -21,7 +21,7 @@ an entry.
 | OQ-10 | `001.md` | Contested unique allies lack hidden state |
 | OQ-11 | `001.md` | Bonding - carrying an early hook effect forward |
 | OQ-12 | `001.md` | 47th Street Royals - recruit-ally action not wired |
-| OQ-13 | `001.md` | 47th Street Royals - recruit_ally_play omits acting vampire |
+| OQ-13 | `001.md` | 47th Street Royals - recruit_ally_play omits vampire |
 | OQ-14 | `001.md` | 47th Street Royals - recruit makes contested-ally gap live |
 | OQ-15 | `001.md` | Ally contest resolution loop not wired |
 | OQ-16 | `001.md` | Contested Cards - "cannot contest yourself" unimplemented |
@@ -45,3 +45,6 @@ an entry.
 | OQ-34 | `002.md` | Loup - no action-succeeded signal or turn card |
 | OQ-35 | `002.md` | Disputed Territory - no location control-transfer |
 | OQ-36 | `002.md` | Voter Captivation - no post-resolution dispatch |
+| OQ-37 | `002.md` | Scalpel Tongue - no mid-cast vote cancellation |
+| OQ-38 | `002.md` | Voter Captivation/Scalpel Tongue - who may play it |
+| OQ-39 | `002.md` | Loup - implemented despite a ruling gap |
