@@ -1,0 +1,122 @@
+{
+  "id": 201680,
+  "printed_name": "Opikun",
+  "unicity_suffix": "",
+  "suffix": "G7",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Opikun"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Opikun (G7)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300040,
+        "code": "V5C"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-companion/opikung7.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PS",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/opikung7.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/opikung7.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Mark Kelly"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "The ability can be used when in torpor. [LSJ 20011022]",
+      "group": "Ability usable in torpor",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20011022]",
+          "label": "LSJ 20011022",
+          "url": "https://usenet.krcg.org/t/KMg4MwD-Jn0/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    },
+    {
+      "text": "Cannot be used to prevent aggravated damage, even if the minion treats them as normal damage (eg. {101790|Skin of Night}). [LSJ 20040812-2] [PIB 20130327]",
+      "group": "Prevent non-aggravated",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20040812-2]",
+          "label": "LSJ 20040812-2",
+          "url": "https://usenet.krcg.org/t/E7D1cVmAdqQ/#m5"
+        },
+        {
+          "text": "[PIB 20130327]",
+          "label": "PIB 20130327",
+          "url": "https://www.vekn.net/forum/rules-questions/46279-soak-vs-treat-agg-damage-as-normal-damage#46285"
+        }
+      ],
+      "cards": [
+        {
+          "id": 101790,
+          "printed_name": "Skin of Night",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Independent: Once each combat involving a vampire you control, Opikun can burn 1 blood to prevent up to 2 non-aggravated damage to that vampire from the opposing minion's strike.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2024-01-31",
+  "banned": null,
+  "clan": "Salubri",
+  "path": "",
+  "advanced": false,
+  "capacity": 5,
+  "group": "G7",
+  "disciplines": [
+    "aus",
+    "dom",
+    "FOR"
+  ],
+  "title": null
+}
