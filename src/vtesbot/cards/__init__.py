@@ -64,6 +64,7 @@ from . import (
     telepathic_counter,
     the_platinum_protocol,
     threats,
+    touch_of_valeren,
     valeriya_zinovieva,
     voter_captivation,
     weighted_walking_stick,
@@ -75,6 +76,7 @@ __all__: list[str] = []  # import-for-side-effect only; nothing is re-exported.
 _LOADED_MODULES = (
     alexa_draper,
     alice_chen,
+    aniel,
     atiena,
     bonding,
     carmelita_neillson,
@@ -134,6 +136,7 @@ _LOADED_MODULES = (
     telepathic_counter,
     the_platinum_protocol,
     threats,
+    touch_of_valeren,
     valeriya_zinovieva,
     voter_captivation,
     weighted_walking_stick,

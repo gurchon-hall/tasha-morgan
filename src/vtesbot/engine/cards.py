@@ -141,3 +141,16 @@ class CardAttachment:
     Celerity) or a Unique master card attached to a vampire (e.g. Fame)
     is not equipment and defaults to `False`, correctly excluded from
     that offer."""
+    requires_discipline: bool = False
+    """Whether this attachment's own originating library card carries a
+    nonzero printed Discipline requirement (OQ-62; `LibraryCard.
+    discipline_requirement`/`requires_discipline` free function above), set
+    by the attaching card module itself at construction time from its own
+    already-fetched krcg data, never inferred by the engine -- same
+    precedent as `is_equipment`. Gates Aniel (krcg 201666): "...burn 1
+    corruption counter or a card requiring a Discipline from another ready
+    minion...". Every attaching card implemented so far (Celerity, Fame,
+    Perfectionist, Pulled Fangs, Weighted Walking Stick) prints an empty
+    discipline requirement and so correctly defaults to `False`
+    (data/cards/100312.json, 100698.json, 101388.json, 101515.json,
+    102169.json, re-verified 2026-10-17)."""

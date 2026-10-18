@@ -191,10 +191,14 @@ def build_attachment_removal_action_spec(
     never contributes), and that either side's vampire may contribute, not
     only the attachment's own controller's.
 
-    Reuses `CardAttachment.counters` (already a generic running-count field,
-    e.g. Revelation of Ecstasy's corruption counters) as the contribution
-    tally instead of inventing a second one -- callers must not otherwise
-    mutate `counters` on an attachment built against this helper.
+    Reuses `CardAttachment.counters` (already a generic attachment-level
+    running-count field, e.g. Weighted Walking Stick's own 5-ammo count) as
+    the contribution tally instead of inventing a second one -- callers must
+    not otherwise mutate `counters` on an attachment built against this
+    helper. Distinct from a vampire's own `VampireInPlay.corruption_counters`
+    (`engine/corruption.py`) -- corruption counters live on the minion
+    itself, never on an attachment (see that field's own docstring); nothing
+    using *that* keyword ever reuses this helper.
     `contributions_required` is caller-supplied (Pulled Fangs' own text
     names exactly two; this helper does not hardcode that number, since it
     is the calling card's own fact, not a rule of this mechanism).

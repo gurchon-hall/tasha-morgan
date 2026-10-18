@@ -76,12 +76,13 @@ def attach_card(
     name: str,
     counters: int | None = None,
     is_equipment: bool = False,
+    requires_discipline: bool = False,
 ) -> CardAttachment:
     """Put a new, contest-trackable attachment onto `vampire` (OQ-22). `controller` is
     caller-supplied (§2), unchecked (OQ-22 addendum). Only for Unique cards; else
-    construct `CardAttachment` directly. `is_equipment` is the caller's own
-    printed-card-type fact (see `CardAttachment.is_equipment`'s own docstring),
-    not inferred here."""
+    construct `CardAttachment` directly. `is_equipment`/`requires_discipline` are the
+    caller's own printed-card-type facts (see `CardAttachment.is_equipment`/
+    `.requires_discipline`'s own docstrings), not inferred here."""
     attachment = CardAttachment(
         krcg_id=krcg_id,
         name=name,
@@ -90,6 +91,7 @@ def attach_card(
         instance_id=state.players[controller].new_attachment_instance_id(),
         zone="attached",
         is_equipment=is_equipment,
+        requires_discipline=requires_discipline,
     )
     vampire.attachments.append(attachment)
     return attachment
