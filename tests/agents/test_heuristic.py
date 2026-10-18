@@ -20,6 +20,7 @@ def _vamp(iid: str, zone: str, blood: int, capacity: int = 5, controller: str = 
         name=iid,
         capacity=capacity,
         attachments=(),
+        corruption_counters={},
     )
 
 
