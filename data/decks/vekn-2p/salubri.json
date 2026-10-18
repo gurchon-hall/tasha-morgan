@@ -86,7 +86,7 @@
       "type": "Action/Combat",
       "count": 2,
       "krcg_id": 102262,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Bonding",

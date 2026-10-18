@@ -1,0 +1,104 @@
+{
+  "id": 102262,
+  "printed_name": "Touch of Valeren",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Touch of Valeren"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300040,
+        "code": "V5C"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-companion/touchofvaleren.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PS",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/touchofvaleren.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/touchofvaleren.jpg",
+  "types": [
+    "Action",
+    "Combat"
+  ],
+  "formats": [],
+  "artists": [
+    "Francisco Tébar"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "[COMBAT]Cannot be used if there is no damage to prevent. [LSJ 20001114]",
+      "group": "Immideate damage prevention",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20001114]",
+          "label": "LSJ 20001114",
+          "url": "https://usenet.krcg.org/t/qXSlM7Grq1c/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[COMBAT]",
+          "symbol": "4",
+          "count": ""
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "text": "[for] [ACTION] +1 stealth action. Add 3 blood or life to a minion, not to exceed their starting life.\n[for] [COMBAT] Prevent all damage from the opposing minion's strike.\n[FOR] [COMBAT] Only usable by a ready vampire not involved in the combat involving another minion you control. Prevent all damage to that minion from the opposing minion's strike.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2024-01-31",
+  "banned": null,
+  "cost": {
+    "type": "Blood",
+    "value": 1
+  },
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [
+    "Salubri"
+  ],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "for"
+    ]
+  }
+}
