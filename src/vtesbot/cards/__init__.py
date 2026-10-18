@@ -103,6 +103,7 @@ _LOADED_MODULES = (
     lucinde_alastor,
     madison,
     maila,
+    malachi,
     marcos_belegrad,
     mkhokheli,
     modius,

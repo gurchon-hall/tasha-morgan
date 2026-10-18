@@ -26,7 +26,7 @@
       "capacity": 6,
       "group": 7,
       "krcg_id": 201676,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Sakhar",
@@ -135,7 +135,7 @@
       "type": "Reaction",
       "count": 1,
       "krcg_id": 101475,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Telepathic Counter",

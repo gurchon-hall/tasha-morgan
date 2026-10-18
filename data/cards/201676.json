@@ -1,0 +1,81 @@
+{
+  "id": 201676,
+  "printed_name": "Malachi",
+  "unicity_suffix": "",
+  "suffix": "G7",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Malachi"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Malachi (G7)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300040,
+        "code": "V5C"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-companion/malachig7.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PS",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/malachig7.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/malachig7.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Martín de Diego Sábada"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Independent.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2024-01-31",
+  "banned": null,
+  "clan": "Salubri",
+  "path": "",
+  "advanced": false,
+  "capacity": 6,
+  "group": "G7",
+  "disciplines": [
+    "AUS",
+    "DOM",
+    "FOR"
+  ],
+  "title": null
+}
