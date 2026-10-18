@@ -10,7 +10,7 @@
       "capacity": 8,
       "group": 6,
       "krcg_id": 201662,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Vivian VI",
@@ -87,7 +87,7 @@
       "type": "Action",
       "count": 4,
       "krcg_id": 102232,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Kine Resources Contested",

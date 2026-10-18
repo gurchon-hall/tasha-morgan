@@ -1,0 +1,190 @@
+{
+  "id": 102232,
+  "printed_name": "The Platinum Protocol",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "The Platinum Protocol"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Platinum Protocol, The"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Platinum Protocol"
+    },
+    {
+      "type": "Vernacular",
+      "name": "El protocolo de platino"
+    },
+    {
+      "type": "Vernacular",
+      "name": "protocolo de platino, El"
+    },
+    {
+      "type": "Vernacular",
+      "name": "protocolo de platino"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Carte de membre platinum"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PMin",
+          "copies": 7,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/theplatinumprotocol.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PMi",
+          "copies": 5,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/theplatinumprotocol.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "El protocolo de platino",
+      "text": "Requiere a un Anarquista. Se puede usar más de una disciplina para jugar esta carta. Ⓓ Sangra.\n[obf] Ésta es una acción con +1 de sigilo.\n[pre] Ésta es una acción con +1 de sangrado.\n[pro] Ponle 1 ficha de corrupción a un siervo controlado por el Matusalén objetivo si el sangrado tiene éxito (1 o más).",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/theplatinumprotocol.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Carte de membre platinum",
+      "text": "Requiert un Anarch. Plus d'une Discipline peut être utilisée pour jouer cette carte. Ⓓ Mordre.\n[obf] Ceci est une action à +1 en discrétion.\n[pre] La morsure est à +1 en morsure.\n[pro] Mettre 1 compteur corruption sur un serviteur contrôlé par le Mathusalem ciblé si la morsure est réussie (pour 1 ou plus).",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/theplatinumprotocol.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/theplatinumprotocol.jpg",
+  "types": [
+    "Action"
+  ],
+  "formats": [],
+  "artists": [
+    "Kim Aldau"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "[pro] The minion getting the corruption counter is chosen at action resolution (not declaration). [ANK 20240706] [LSJ 20080608]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20240706]",
+          "label": "ANK 20240706",
+          "url": "https://www.vekn.net/forum/rules-questions/81563-break-the-bonds-presence-target?start=18#111945"
+        },
+        {
+          "text": "[LSJ 20080608]",
+          "label": "LSJ 20080608",
+          "url": "https://usenet.krcg.org/t/j5ShUmUt-vM/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[pro]",
+          "symbol": "j",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "[pro] Putting a corruption counter on a minion does not give you an opportunity to steal it. [ANK 20200925] [ANK 20211105]",
+      "group": "",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20200925]",
+          "label": "ANK 20200925",
+          "url": "https://www.vekn.net/forum/rules-questions/78861-revelation-of-wrath#100820"
+        },
+        {
+          "text": "[ANK 20211105]",
+          "label": "ANK 20211105",
+          "url": "https://www.vekn.net/forum/rules-questions/79460-sarrasin-corruption-and-effect-triggers#103791"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[pro]",
+          "symbol": "j",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "When played, a multi-Disciplines card counts as requiring the Discipline(s) being used. In the hand, library, or ash heap, the card is considered to require any and/or all Disciplines listed on it. [LSJ 20011204-3] [PIB 20130704]",
+      "group": "Multi-discipline",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20011204-3]",
+          "label": "LSJ 20011204-3",
+          "url": "https://usenet.krcg.org/t/JhBwcZjDlaQ/#m1"
+        },
+        {
+          "text": "[PIB 20130704]",
+          "label": "PIB 20130704",
+          "url": "https://www.vekn.net/forum/rules-questions/50982-iron-heart-vs-virtuosa#50984"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Requires an Anarch. More than one Discipline can be used to play this card. Ⓓ Bleed.\n[obf] This is a +1 stealth action.\n[pre] The bleed is with +1 bleed.\n[pro] Put 1 corruption counter on a minion controlled by the target Methuselah if the bleed is successful (for 1 or more).",
+  "draft": "",
+  "flavor": "",
+  "legal": "2021-12-31",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Choice",
+    "disciplines": [
+      "obf",
+      "pre",
+      "pro"
+    ]
+  }
+}
