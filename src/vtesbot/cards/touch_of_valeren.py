@@ -151,9 +151,7 @@ def _has_card_in_hand(state: GameState, player: str) -> bool:
 
 
 def _controlled_vampires_in_play(state: GameState, player: str) -> list[VampireInPlay]:
-    return [
-        v for v in state.players[player].vampires.values() if v.zone in VAMPIRE_IN_PLAY_ZONES
-    ]
+    return [v for v in state.players[player].vampires.values() if v.zone in VAMPIRE_IN_PLAY_ZONES]
 
 
 def _controlled_allies_in_play(state: GameState, player: str) -> list[AllyInPlay]:

@@ -73,9 +73,7 @@ module docstring)."""
 
 
 def _eligible_equipment_cards(state: GameState, player: str) -> list[Any]:
-    return [
-        card for card in state.players[player].library if card.card_type == EQUIPMENT_CARD_TYPE
-    ]
+    return [card for card in state.players[player].library if card.card_type == EQUIPMENT_CARD_TYPE]
 
 
 def _provide_sakhar(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:

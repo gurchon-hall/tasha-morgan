@@ -95,9 +95,7 @@ ALLY_IN_PLAY_ZONES = ("ready",)
 
 
 def _controlled_vampires_in_play(state: GameState, player: str) -> list[VampireInPlay]:
-    return [
-        v for v in state.players[player].vampires.values() if v.zone in VAMPIRE_IN_PLAY_ZONES
-    ]
+    return [v for v in state.players[player].vampires.values() if v.zone in VAMPIRE_IN_PLAY_ZONES]
 
 
 def _controlled_allies_in_play(state: GameState, player: str) -> list[AllyInPlay]:
@@ -116,9 +114,7 @@ def _vampire_option(vampire: VampireInPlay) -> HookOption:
 
         return ActionCardSpec(base_stealth=SERAPHINA_STEALTH, directed=False, resolve=resolve)
 
-    return HookOption(
-        choice=Choice(f"seraphina:blood:{vampire.instance_id}", label), apply=_apply
-    )
+    return HookOption(choice=Choice(f"seraphina:blood:{vampire.instance_id}", label), apply=_apply)
 
 
 def _ally_option(ally: AllyInPlay) -> HookOption:
@@ -136,9 +132,7 @@ def _ally_option(ally: AllyInPlay) -> HookOption:
 
         return ActionCardSpec(base_stealth=SERAPHINA_STEALTH, directed=False, resolve=resolve)
 
-    return HookOption(
-        choice=Choice(f"seraphina:life:{ally.instance_id}", label), apply=_apply
-    )
+    return HookOption(choice=Choice(f"seraphina:life:{ally.instance_id}", label), apply=_apply)
 
 
 def _provide_seraphina(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:

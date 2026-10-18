@@ -100,7 +100,7 @@ def test_intercept_not_offered_for_a_locked_auspex_vampire():
 
 
 def test_intercept_not_offered_for_an_undirected_action():
-    """"Only usable during an action directed at you (or a card you
+    """ "Only usable during an action directed at you (or a card you
     control)." -- an undirected action (e.g. hunt) never offers this
     clause at all, regardless of eligibility."""
     builder = ScenarioBuilder(seed=1)
@@ -194,9 +194,7 @@ def test_a_second_eligible_vampire_can_still_use_their_own_copy():
 def test_wake_not_offered_without_the_card_in_hand():
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("A1", capacity=3)
-    builder.player("P2", pool=30).ready_vampire(
-        "D1", capacity=3, locked=True, disciplines=("AUS",)
-    )
+    builder.player("P2", pool=30).ready_vampire("D1", capacity=3, locked=True, disciplines=("AUS",))
     game = builder.build()
 
     assert _offer_wake(game, defender="P2") == []
