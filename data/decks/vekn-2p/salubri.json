@@ -185,7 +185,7 @@
       "count": 1,
       "krcg_id": 101850,
       "note": "VEKN decklist page has a typo (curly apostrophe + 'Thouch' + trailing 'The') in this name; same typo already confirmed by user 2026-10-08 for the allowed-list page, confirmed again here 2026-10-17 as krcg id 101850 (Spirit's Touch). Name kept as VEKN wrote it.",
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     }
   ],
   "unmatched": []
