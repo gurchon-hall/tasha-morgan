@@ -1,5 +1,5 @@
 """Minion action: announce, block, resolve/combat (Rulebook §4; 2P collapses
-prey/predator, CLAUDE.md §3). See OQ-9,11,17,25,26,30,31,34,36,39,46,48,60."""
+prey/predator, CLAUDE.md §3). See OQ-9,11,17,25,26,30,31,34,36,39,46,48,60,65."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -48,6 +48,40 @@ WAKE_LOCKED_MINION_HOOK = "wake_locked_minion"
 """OQ-48: defender-side sibling of `INTERCEPT_DECREASE_HOOK`/
 `STEALTH_INCREASE_HOOK`. `apply()` sets `woken = True` on a locked
 vampire; block stays fully contestable."""
+
+FORCE_BLOCK_ATTEMPT_FAILURE_HOOK = "force_block_attempt_failure"
+"""OQ-65: acting-side sibling of `INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_
+HOOK`, offered reactively at *both* branches of `_duel_stealth_intercept`
+once a specific blocker is fixed -- merged into the same `Decision` as those
+two siblings in the "block currently succeeds" branch (OQ-30/31), and asked
+alone, after the defender has declined/exhausted `INTERCEPT_MODIFIER_HOOK`,
+in the "block currently fails on the raw numbers" branch too (added by a
+rules-auditor finding on this hook's first landing). The two offer points
+exist for two different reasons: forcing an already-succeeding attempt to
+fail outright is this hook's "attempt fails" half; offering it even while
+already failing on the numbers is for its *other*, independent half --
+"cannot attempt to block this action again" has nothing to do with the
+current numbers, is not itself a stealth/intercept value modifier, and so is
+not covered by the "only when needed" scoping that keeps `STEALTH_MODIFIER_
+HOOK`/`INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_HOOK` out of that branch
+(OQ-31/39). Unlike those two numeric siblings, choosing this option does not
+feed back into the stealth/intercept comparison at all: `_duel_stealth_
+intercept` returns `forced_failure=True` only from the "succeeds" branch
+(moot in the "fails" branch, where the numbers already mean failure) --
+`attempt_block` reads that flag to treat the attempt as failed outright,
+regardless of the returned `stealth`/`intercept` values -- deliberately not
+modeled as an extreme `ActiveInterceptDecrease`, which would still let the
+defender respond with more intercept before the duel ends. `apply()`'s
+return is ignored, same contract as its siblings. Built for Forced
+Confessional (krcg 102250), "[DOM] That attempt fails and the blocking
+minion cannot attempt to block this action again." -- a provider also
+typically writes the blocking vampire's own `instance_id` into `pending[
+PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY]` directly (the same convention
+`cards/seduction.py`/`cards/sleeping_mind.py` already use from
+`BLOCK_CANDIDATE_EXCLUSION_HOOK`'s own proactive offer point); that half
+needs no new primitive, since `attempt_block`'s retry loop already re-reads
+that same set fresh on every iteration, before the candidate list is
+rebuilt."""
 
 BLOCK_CANDIDATE_EXCLUSION_HOOK = "block_candidate_exclusion"
 """Subtractive sibling of `BLOCK_CANDIDATE_INJECTION_HOOK`: offered to
@@ -220,10 +254,18 @@ def _duel_stealth_intercept(
     action: str | None = None,
     directed: bool | None = None,
     pending: dict[str, Any] | None = None,
-) -> tuple[int, int]:
+) -> tuple[int, int, bool]:
     """Resolve the stealth/intercept ping-pong for one block attempt.
     Baselines fold active `ActiveInterceptDecrease`/`ActiveStealthIncrease`
-    (OQ-30/39)."""
+    (OQ-30/39). Third return value (OQ-65): `True` once the actor has
+    forced this attempt to fail outright via `FORCE_BLOCK_ATTEMPT_FAILURE_
+    HOOK` -- `attempt_block` must check this before comparing the returned
+    `stealth`/`intercept` at all. That hook is offered to the actor in
+    *both* branches below (see its own docstring): merged with the other
+    numeric modifiers while the attempt currently succeeds, and alone,
+    once the defender has nothing left to add, while it already fails on
+    the raw numbers -- its own "cannot attempt to block this action again"
+    half is independent of which branch the duel is currently in."""
     stealth = base_stealth + _active_stealth_increase(pending)
     intercept = _active_intercept_decrease(pending, blocker)
     context = {
@@ -246,16 +288,46 @@ def _duel_stealth_intercept(
                 intercept=intercept,
                 **context,
             )
-            if not options:
-                return stealth, intercept
-            delta = _ask_modifier(state, defender, INTERCEPT_MODIFIER_HOOK, options, context)
-            if delta is None or state.game_over:
-                return stealth, intercept
-            intercept += delta
+            added = False
+            if options:
+                delta = _ask_modifier(state, defender, INTERCEPT_MODIFIER_HOOK, options, context)
+                if state.game_over:
+                    return stealth, intercept, False
+                if delta is not None:
+                    intercept += delta
+                    added = True
+            if added:
+                continue
+            # Still failing on the raw numbers (rules-auditor finding, OQ-65):
+            # "only when needed" (OQ-31/39) scopes solely to stealth/intercept
+            # *value* modifiers (never offered here, since nothing is needed
+            # from them yet) -- it does not scope FORCE_BLOCK_ATTEMPT_FAILURE_
+            # HOOK's own non-numeric "cannot attempt to block this action
+            # again" half, which has nothing to do with whether the current
+            # numbers already fail and must still be offered to the actor
+            # here, impulse returning to them now that the defender has
+            # nothing left to add.
+            force_fail_options = hooks.offer(
+                FORCE_BLOCK_ATTEMPT_FAILURE_HOOK,
+                state,
+                player=actor,
+                stealth=stealth,
+                intercept=intercept,
+                **context,
+            )
+            if force_fail_options:
+                chosen = _ask_stealth_or_modifier(
+                    state, actor, [], [], [], force_fail_options, context
+                )
+                if chosen is not None:
+                    option, _kind = chosen
+                    option.apply(state)
+            return stealth, intercept, False
         else:
             # Block currently succeeds: stealth may be added, only now
             # needed (OQ-31/39: actor may also decrease intercept or
-            # increase stealth here, reactively; see _ask_stealth_or_modifier).
+            # increase stealth here, reactively, or force the attempt to
+            # fail outright, OQ-65; see _ask_stealth_or_modifier).
             stealth_options = hooks.offer(
                 STEALTH_MODIFIER_HOOK,
                 state,
@@ -280,18 +352,40 @@ def _duel_stealth_intercept(
                 intercept=intercept,
                 **context,
             )
-            if not stealth_options and not decrease_options and not increase_options:
-                return stealth, intercept
+            force_fail_options = hooks.offer(
+                FORCE_BLOCK_ATTEMPT_FAILURE_HOOK,
+                state,
+                player=actor,
+                stealth=stealth,
+                intercept=intercept,
+                **context,
+            )
+            if (
+                not stealth_options
+                and not decrease_options
+                and not increase_options
+                and not force_fail_options
+            ):
+                return stealth, intercept, False
             chosen = _ask_stealth_or_modifier(
-                state, actor, stealth_options, decrease_options, increase_options, context
+                state,
+                actor,
+                stealth_options,
+                decrease_options,
+                increase_options,
+                force_fail_options,
+                context,
             )
             if chosen is None:
-                return stealth, intercept
+                return stealth, intercept, False
             option, kind = chosen
+            if kind == "force_fail":
+                option.apply(state)
+                return stealth, intercept, not state.game_over
             if kind == "intercept_decrease":
                 option.apply(state)
                 if state.game_over:
-                    return stealth, intercept
+                    return stealth, intercept, False
                 # Re-evaluated fresh, same as the baseline at the top of
                 # this function: never cached (OQ-11).
                 intercept = _active_intercept_decrease(pending, blocker)
@@ -301,7 +395,7 @@ def _duel_stealth_intercept(
             else:
                 stealth += option.apply(state)
                 if state.game_over:
-                    return stealth, intercept
+                    return stealth, intercept, False
 
 
 def _ask_modifier(
@@ -335,20 +429,24 @@ def _ask_stealth_or_modifier(
     stealth_options: list[hooks.HookOption],
     decrease_options: list[hooks.HookOption],
     increase_options: list[hooks.HookOption],
+    force_fail_options: list[hooks.HookOption],
     context: dict,
 ) -> tuple[hooks.HookOption, str] | None:
     """Merge `STEALTH_MODIFIER_HOOK`/`INTERCEPT_DECREASE_HOOK`/
-    `STEALTH_INCREASE_HOOK` into one `Decision` (OQ-31/39). Returns
-    `(option, kind)` or `None`."""
+    `STEALTH_INCREASE_HOOK`/`FORCE_BLOCK_ATTEMPT_FAILURE_HOOK` into one
+    `Decision` (OQ-31/39/65). Returns `(option, kind)` or `None`."""
     decrease_values = {o.choice.value for o in decrease_options}
     increase_values = {o.choice.value for o in increase_options}
+    force_fail_values = {o.choice.value for o in force_fail_options}
     by_value = {o.choice.value: o for o in stealth_options}
     by_value.update({o.choice.value: o for o in decrease_options})
     by_value.update({o.choice.value: o for o in increase_options})
+    by_value.update({o.choice.value: o for o in force_fail_options})
     choices = (
         tuple(o.choice for o in stealth_options)
         + tuple(o.choice for o in decrease_options)
         + tuple(o.choice for o in increase_options)
+        + tuple(o.choice for o in force_fail_options)
         + (Choice("decline", "Decline"),)
     )
     hooks.ensure_unique_choice_values(choices, decision_kind=STEALTH_MODIFIER_HOOK)
@@ -367,6 +465,8 @@ def _ask_stealth_or_modifier(
         return option, "intercept_decrease"
     if answer.value in increase_values:
         return option, "stealth_increase"
+    if answer.value in force_fail_values:
+        return option, "force_fail"
     return option, "stealth_delta"
 
 
@@ -421,7 +521,16 @@ def attempt_block(
     loop, since `candidates`/`injected_options` are rebuilt fresh each
     iteration -- a vampire that only becomes a candidate later in the same
     loop (e.g. via `WAKE_LOCKED_MINION_HOOK`) is still checked against it
-    then, not against a stale snapshot taken before the loop started."""
+    then, not against a stale snapshot taken before the loop started.
+
+    `FORCE_BLOCK_ATTEMPT_FAILURE_HOOK` (OQ-65): a chosen option there makes
+    `_duel_stealth_intercept` return `forced_failure=True`, which this
+    function treats as an ordinary failed attempt (loop back, same as any
+    other) regardless of the returned `stealth`/`intercept` numbers -- a
+    provider typically also excludes the named blocker via
+    `BLOCK_CANDIDATE_EXCLUSION_HOOK`'s own `pending` key, so it is not
+    merely retried but removed from the candidate pool for the rest of this
+    action (see that hook's own docstring)."""
     if pending is None:
         pending = {}
     while not state.game_over:
@@ -522,7 +631,7 @@ def attempt_block(
         instance_id = choice.value.split(":", 1)[1]
         blocker = state.players[defender].vampires[instance_id]
 
-        stealth, intercept = _duel_stealth_intercept(
+        stealth, intercept, forced_failure = _duel_stealth_intercept(
             state,
             actor,
             defender,
@@ -535,10 +644,11 @@ def attempt_block(
         )
         if state.game_over:
             return None
-        if intercept >= stealth:
+        if not forced_failure and intercept >= stealth:
             return blocker
-        # Failed attempt: does not lock the blocker, does not end the
-        # window -- loop back and re-offer another attempt or decline.
+        # Failed attempt (naturally, or forced outright via OQ-65): does
+        # not lock the blocker, does not end the window -- loop back and
+        # re-offer another attempt or decline.
 
 
 def perform_minion_action(

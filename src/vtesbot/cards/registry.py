@@ -42,6 +42,13 @@ class Hook(StrEnum):
     """Defender-side sibling of `INTERCEPT_DECREASE`/`STEALTH_INCREASE`,
     offered to `defender` only (OQ-48). Sets `woken=True` on a locked
     vampire, or `AllyInPlay.skip_next_unlock` for an ally."""
+    FORCE_BLOCK_ATTEMPT_FAILURE = "force_block_attempt_failure"
+    """Acting-side sibling of `INTERCEPT_DECREASE`/`STEALTH_INCREASE`, offered
+    only reactively once a block candidate is fixed (OQ-65). Forces the
+    current block attempt to fail outright, bypassing the stealth/intercept
+    comparison entirely -- distinct from an extreme `INTERCEPT_DECREASE`
+    delta, which would still let the defender respond. Built for Forced
+    Confessional (krcg 102250)."""
     BLEED_AMOUNT_MODIFIER = "bleed_amount_modifier"
     BLEED_AMOUNT_FIXED_MODIFIER = "bleed_amount_fixed_modifier"
     DAMAGE_PREVENTION = "damage_prevention"

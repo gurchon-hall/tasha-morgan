@@ -100,7 +100,7 @@
       "type": "Action Modifier",
       "count": 2,
       "krcg_id": 102250,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Seduction",
