@@ -105,6 +105,13 @@ class AllyInPlay:
     name: str
     controller: str
     life: int
+    starting_life: int
+    """Printed starting life (OQ-61), fixed once by `engine/allies.py::
+    recruit_ally` from the `life` it is given at recruitment -- never
+    recomputed afterward, same spirit as a vampire's own `CryptCard.capacity`
+    being fixed at print. `life` itself stays the live, damage-reducible
+    counter; this field is the cap `engine/allies.py::add_life` reads (e.g.
+    Seraphina, krcg 201686: "...not to exceed starting life.")."""
     strength: int = 0
     bleed: int = 0
     zone: str = "ready"

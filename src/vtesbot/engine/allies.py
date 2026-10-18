@@ -48,6 +48,7 @@ def recruit_ally(
         name=name,
         controller=player,
         life=life,
+        starting_life=life,
         strength=strength,
         bleed=bleed,
         zone="ready",
@@ -55,6 +56,18 @@ def recruit_ally(
     )
     p.allies[instance_id] = ally
     return ally
+
+
+def add_life(ally: AllyInPlay, amount: int) -> int:
+    """Add life to an ally, capped at its own printed `starting_life` (OQ-61;
+    e.g. Seraphina, krcg 201686: "...can add 2 blood or life to a minion you
+    control... not to exceed starting life."). Mirrors `engine/damage.py::
+    add_blood`'s capped shape. Returns the amount actually added."""
+    if amount <= 0:
+        return 0
+    added = min(amount, ally.starting_life - ally.life)
+    ally.life += added
+    return added
 
 
 def detect_contest_on_recruit(state: GameState, recruited: AllyInPlay) -> None:
