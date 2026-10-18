@@ -128,7 +128,7 @@
       "type": "Reaction",
       "count": 2,
       "krcg_id": 100680,
-      "implementation_status": "not_implemented"
+      "implementation_status": "implemented"
     },
     {
       "name": "Precognition",

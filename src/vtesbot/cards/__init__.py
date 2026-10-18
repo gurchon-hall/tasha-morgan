@@ -79,6 +79,7 @@ _LOADED_MODULES = (
     dominate_kine,
     dust_up,
     enchant_kindred,
+    eyes_of_argus,
     fame,
     fiorenza_savona,
     fleetness,

@@ -1,0 +1,380 @@
+{
+  "id": 100680,
+  "printed_name": "Eyes of Argus",
+  "unicity_suffix": "",
+  "suffix": "",
+  "kind": "Library",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Eyes of Argus"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Ojos de Argos"
+    },
+    {
+      "type": "Vernacular",
+      "name": "Yeux d'Argus"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300022,
+        "code": "KoT"
+      },
+      "occurrences": [
+        {
+          "type": "Rarity",
+          "frequency": "C",
+          "multiplier": 1.0,
+          "bundle": "",
+          "copies": 0,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 300024,
+        "code": "HttB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/heirs-to-the-blood/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 300028,
+        "code": "Anthology"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anthology/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 320002,
+        "code": "KoTR"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "B",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/keepers-of-tradition-reprint/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 320003,
+        "code": "Ant1"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/anthology-i/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 300030,
+        "code": "SP"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "DoF",
+          "copies": 4,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PwN",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-preconstructed/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PH",
+          "copies": 3,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 5,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 6,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PM",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTr",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 300040,
+        "code": "V5C"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PSal",
+          "copies": 4,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-companion/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 300041,
+        "code": "30th"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/thirtieth-anniversary/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 300042,
+        "code": "NB3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PH",
+          "copies": 2,
+          "date": null
+        },
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PS",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-iii/eyesofargus.jpg"
+    },
+    {
+      "set": {
+        "id": 300043,
+        "code": "SV5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PCathari",
+          "copies": 3,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/sabbat-v5/eyesofargus.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Ojos de Argos",
+      "text": "[aus] Sólo utilizable durante una acción directa contra ti (o una carta que controles). +2 de intercepción.\n[AUS] Sólo utilizable por un vampiro girado. Este vampiro se despierta (ignora el requisito de estar enderezado para jugar cartas de reacción e intentar bloquear hasta el final de la acción).",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/eyesofargus.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Yeux d'Argus",
+      "text": "[aus] Seulement utilisable durant une action dirigée contre vous (ou une carte que vous contrôlez). +2 en interception.\n[AUS] Seulement utilisable par un vampire incliné. Ce vampire se réveille (il n'a pas besoin d'être redressé pour jouer des cartes de réaction et tenter de bloquer jusqu'à la fin de l'action).",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/eyesofargus.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/eyesofargus.jpg",
+  "types": [
+    "Reaction"
+  ],
+  "formats": [],
+  "artists": [
+    "Heather V. Kreiter"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "[AUS]The minion need not attempt to block nor play further reaction cards: that is merely an option. [TOM 19951129]",
+      "group": "Wake",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[TOM 19951129]",
+          "label": "TOM 19951129",
+          "url": "https://usenet.krcg.org/t/jjBzopH-yrQ/#m3"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[AUS]",
+          "symbol": "A",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "[AUS]Can be played or used after action resolution (e.g. to use a reaction card like {100705|Fast Reaction} after combat). [LSJ 20091123]",
+      "group": "Wake",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20091123]",
+          "label": "LSJ 20091123",
+          "url": "https://usenet.krcg.org/t/Yt7LsvWFwiM/"
+        }
+      ],
+      "cards": [
+        {
+          "id": 100705,
+          "printed_name": "Fast Reaction",
+          "unicity_suffix": "",
+          "suffix": ""
+        }
+      ],
+      "symbols": [
+        {
+          "text": "[AUS]",
+          "symbol": "A",
+          "count": ""
+        }
+      ]
+    },
+    {
+      "text": "[AUS]Can be played or used during the “as a card is played” window, except in combat, or when there is no action. [ANK 20210817]",
+      "group": "Wake",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[ANK 20210817]",
+          "label": "ANK 20210817",
+          "url": "https://www.vekn.net/forum/rules-questions/79275-wake-cards-during-the-as-play-window-and-other-exotic-cancelling-effects?start=0#102931"
+        }
+      ],
+      "cards": [],
+      "symbols": [
+        {
+          "text": "[AUS]",
+          "symbol": "A",
+          "count": ""
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "text": "[aus] Only usable during an action directed at you (or a card you control). +2 intercept.\n[AUS] Only usable by a locked vampire. This vampire wakes (they ignore the requirement to be unlocked for playing reaction cards and attempting to block until the end of the action).",
+  "draft": "",
+  "flavor": "",
+  "legal": "2008-12-19",
+  "banned": null,
+  "cost": null,
+  "burn_option": false,
+  "trifle": false,
+  "clan_requirement": [],
+  "path_requirement": [],
+  "discipline_requirement": {
+    "type": "Mono",
+    "disciplines": [
+      "aus"
+    ]
+  }
+}
