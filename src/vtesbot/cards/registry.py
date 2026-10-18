@@ -147,6 +147,16 @@ class Hook(StrEnum):
     actor proactively in `attempt_block`'s retry loop, before the
     defender's own candidate list is computed (`cards/seduction.py`,
     `cards/sleeping_mind.py`)."""
+    BLOCK_ATTEMPT_COST = "block_attempt_cost"
+    """Passive, per-candidate mandatory cost gate (`engine/action.py::
+    BlockAttemptCost`/`BLOCK_ATTEMPT_COST_HOOK`): a crypt card's own passive
+    ability, applying across every action type it ever performs, not one
+    action card's own printed text. Distinct from `block_candidate_
+    predicate` (an `ActionCardSpec` field, no `Hook` entry of its own since
+    it is supplied per-action, not registered globally). A candidate that
+    cannot afford an applicable cost is not offered at all; one that can
+    pays it the instant it is chosen to attempt (Sergio Bueno, krcg
+    201662)."""
     EQUIPMENT_ATTACHMENT = "equipment_attachment"
 
 

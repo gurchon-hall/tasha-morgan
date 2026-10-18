@@ -1,0 +1,81 @@
+{
+  "id": 201662,
+  "printed_name": "Sergio Bueno",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Sergio Bueno"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Sergio Bueno (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PMi",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/sergiobuenog6.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/sergiobuenog6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Ginés Quiñonero-Santiago"
+  ],
+  "variants": [],
+  "rulings": [
+    {
+      "text": "The passive ability applies even if the vampire is in torpor. [LSJ 20011022]",
+      "group": "Ability active in torpor",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[LSJ 20011022]",
+          "label": "LSJ 20011022",
+          "url": "https://usenet.krcg.org/t/KMg4MwD-Jn0/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Anarch Baron of Santo Domingo: Minions with 1 or more of your corruption counters must burn 1 blood or life to attempt to block Sergio.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2023-08-31",
+  "banned": null,
+  "clan": "Ministry",
+  "path": "",
+  "advanced": false,
+  "capacity": 8,
+  "group": "G6",
+  "disciplines": [
+    "aus",
+    "pot",
+    "OBF",
+    "PRE",
+    "PRO"
+  ],
+  "title": "Baron"
+}

@@ -493,6 +493,87 @@ def _candidate_allowed_by_predicate(
     return vampire is not None and predicate(vampire)
 
 
+@dataclass(frozen=True)
+class BlockAttemptCost:
+    """One provider's mandatory, non-optional cost gate on a specific block
+    candidate attempting to block a specific actor -- a passive crypt-text
+    ability that applies across *every* action type its named vampire ever
+    performs (e.g. Sergio Bueno, krcg 201662: "Minions with 1 or more of
+    your corruption counters must burn 1 blood or life to attempt to block
+    Sergio"), not an unconditional, stateless property of *one action's own
+    printed text*. Contrast `block_candidate_predicate` (below): that one is
+    supplied once per `ActionCardSpec` by the acting action card itself and
+    never mutates state; this one is registered globally via
+    `hooks.register(BLOCK_ATTEMPT_COST_HOOK, ...)` by the crypt card whose
+    passive ability it is, and its `pay(state)` runs unconditionally the
+    instant the gated candidate is chosen to attempt -- independent of
+    whether the stealth/intercept duel that follows succeeds or fails (the
+    printed wording is "to attempt to block", not "to block successfully").
+
+    `can_pay` is evaluated once, at candidate-list-build time, against
+    whatever resource `pay` would deduct; a candidate with any contribution
+    whose `can_pay` is False is not offered as a `block_with:<id>`/injected
+    choice at all, mirroring every other "never offer a play that cannot
+    resolve" convention in this codebase (e.g. `cards/line_brawl.py`)."""
+
+    can_pay: bool
+    pay: Callable[[GameState], None]
+
+
+BLOCK_ATTEMPT_COST_HOOK = "block_attempt_cost"
+"""Passive, per-candidate cost-gate hook (see `BlockAttemptCost` above),
+dispatched by `attempt_block` for every candidate it is about to offer --
+both the hardcoded `ready_unlocked_vampires` list and
+`BLOCK_CANDIDATE_INJECTION_HOOK`'s own offered options -- re-queried fresh
+on every pass through the retry loop, same convention as
+`block_candidate_predicate`. A provider's context carries `candidate` (the
+instance_id of `defender`'s own vampire under consideration), `actor`,
+`defender`, `acting_vampire` (the instance_id of the vampire whose action is
+being blocked -- this, not `defender`'s own candidate, is who a passive
+ability like Sergio Bueno's own keys off of), `action`, `directed`. Returns
+a `BlockAttemptCost | None` per provider call -- `None` means this
+provider's passive ability simply does not apply to this candidate right
+now (not "paid in full"). Never offered as a `Decision`: CLAUDE.md §5's
+"mandatory effects defined by the rules" exception -- the printed text
+reads "must burn", with no "you may" and no choice of *which* candidate is
+charged (the only real decision left, which candidate the defender's agent
+picks to attempt with, is still offered normally via `block_attempt`)."""
+
+
+def _block_attempt_costs(
+    state: GameState,
+    *,
+    actor: str,
+    defender: str,
+    acting_vampire: VampireInPlay | None,
+    candidate_instance_id: str,
+    action: str | None,
+    directed: bool | None,
+) -> list[BlockAttemptCost] | None:
+    """`None` if `candidate_instance_id` cannot be offered at all (some
+    applicable `BLOCK_ATTEMPT_COST_HOOK` contribution has `can_pay=False`);
+    otherwise the (possibly empty) list of costs to `pay` once chosen."""
+    contributions: list[BlockAttemptCost] = hooks.collect(
+        BLOCK_ATTEMPT_COST_HOOK,
+        state,
+        player=defender,
+        actor=actor,
+        defender=defender,
+        acting_vampire=acting_vampire.instance_id if acting_vampire is not None else None,
+        candidate=candidate_instance_id,
+        action=action,
+        directed=directed,
+    )
+    if any(not cost.can_pay for cost in contributions):
+        return None
+    return contributions
+
+
+def _pay_block_attempt_costs(state: GameState, costs: list[BlockAttemptCost]) -> None:
+    for cost in costs:
+        cost.pay(state)
+
+
 def attempt_block(
     state: GameState,
     actor: str,
@@ -522,6 +603,14 @@ def attempt_block(
     iteration -- a vampire that only becomes a candidate later in the same
     loop (e.g. via `WAKE_LOCKED_MINION_HOOK`) is still checked against it
     then, not against a stale snapshot taken before the loop started.
+
+    `BLOCK_ATTEMPT_COST_HOOK` (see `BlockAttemptCost` above) composes with
+    both: a candidate excluded by either `block_candidate_predicate` or
+    `BLOCK_CANDIDATE_EXCLUSION_HOOK` is never even checked against it, and a
+    candidate that passes both but cannot afford an applicable cost is
+    still excluded. A candidate that can afford it pays the instant it is
+    chosen (`_pay_block_attempt_costs`), before `_duel_stealth_intercept`
+    even runs.
 
     `FORCE_BLOCK_ATTEMPT_FAILURE_HOOK` (OQ-65): a chosen option there makes
     `_duel_stealth_intercept` return `forced_failure=True`, which this
@@ -556,14 +645,28 @@ def attempt_block(
         if state.game_over:
             return None
         excluded = _excluded_block_candidates(pending)
-        candidates = [
-            v
-            for v in state.ready_unlocked_vampires(defender)
-            if v.instance_id not in excluded
-            and _candidate_allowed_by_predicate(
+        candidate_costs: dict[str, list[BlockAttemptCost]] = {}
+        candidates = []
+        for v in state.ready_unlocked_vampires(defender):
+            if v.instance_id in excluded:
+                continue
+            if not _candidate_allowed_by_predicate(
                 state, defender, block_candidate_predicate, v.instance_id
+            ):
+                continue
+            costs = _block_attempt_costs(
+                state,
+                actor=actor,
+                defender=defender,
+                acting_vampire=acting_vampire,
+                candidate_instance_id=v.instance_id,
+                action=action,
+                directed=directed,
             )
-        ]
+            if costs is None:
+                continue  # cannot afford a mandatory block-attempt cost: not offered at all.
+            candidate_costs[v.instance_id] = costs
+            candidates.append(v)
         candidate_choices = tuple(
             Choice(f"block_with:{v.instance_id}", f"Block with {v.card.name}") for v in candidates
         )
@@ -589,14 +692,28 @@ def attempt_block(
                     "BLOCK_CANDIDATE_EXCLUSION_HOOK can veto it (engine "
                     "invariant, see HookOption's own docstring)"
                 )
-        injected_options = [
-            injected
-            for injected in injected_options
-            if injected.block_candidate_instance_id not in excluded
-            and _candidate_allowed_by_predicate(
+        filtered_injected_options = []
+        for injected in injected_options:
+            if injected.block_candidate_instance_id in excluded:
+                continue
+            if not _candidate_allowed_by_predicate(
                 state, defender, block_candidate_predicate, injected.block_candidate_instance_id
+            ):
+                continue
+            costs = _block_attempt_costs(
+                state,
+                actor=actor,
+                defender=defender,
+                acting_vampire=acting_vampire,
+                candidate_instance_id=injected.block_candidate_instance_id,
+                action=action,
+                directed=directed,
             )
-        ]
+            if costs is None:
+                continue  # cannot afford a mandatory block-attempt cost: not offered at all.
+            candidate_costs[injected.block_candidate_instance_id] = costs
+            filtered_injected_options.append(injected)
+        injected_options = filtered_injected_options
         by_injected_value = {o.choice.value: o for o in injected_options}
 
         offered_choices = candidate_choices + tuple(o.choice for o in injected_options)
@@ -625,11 +742,19 @@ def attempt_block(
             # runs the stealth/intercept ping-pong for this candidate.
             injected_option = by_injected_value[choice.value]
             hooks.mark_reaction_played(pending, injected_option)
+            _pay_block_attempt_costs(
+                state, candidate_costs.get(injected_option.block_candidate_instance_id, [])
+            )
+            if state.game_over:
+                return None
             injected_blocker = injected_option.apply(state)
             return None if state.game_over else injected_blocker
 
         instance_id = choice.value.split(":", 1)[1]
         blocker = state.players[defender].vampires[instance_id]
+        _pay_block_attempt_costs(state, candidate_costs.get(instance_id, []))
+        if state.game_over:
+            return None
 
         stealth, intercept, forced_failure = _duel_stealth_intercept(
             state,

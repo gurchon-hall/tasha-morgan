@@ -85,6 +85,50 @@ def test_woken_locked_vampire_exposes_its_real_block_eligibility():
     assert view.is_ready_unlocked is True
 
 
+def test_corruption_counters_are_public_once_a_vampire_is_in_play():
+    """Rules-auditor finding: a corruption counter is always placed by a
+    visible card effect, so it is public information for a ready/torpor
+    vampire, same as `attachments` (OQ-58) -- needed by a defender's own
+    agent to see Sergio Bueno's (krcg 201662) block-eligibility gate."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1")
+    builder.player("P2").ready_vampire("V1", capacity=3)
+    game = builder.build()
+    game.vampire("V1").corruption_counters["P1"] = 2
+
+    obs = build_observation(game.state, "P1")
+
+    view = next(v for v in obs.vampires if v.instance_id == "V1")
+    assert view.corruption_counters == {"P1": 2}
+
+
+def test_corruption_counters_are_a_copy_not_the_live_dict():
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1")
+    builder.player("P2").ready_vampire("V1", capacity=3)
+    game = builder.build()
+    game.vampire("V1").corruption_counters["P1"] = 1
+
+    obs = build_observation(game.state, "P1")
+    view = next(v for v in obs.vampires if v.instance_id == "V1")
+    view.corruption_counters["P1"] = 999
+
+    assert game.vampire("V1").corruption_counters == {"P1": 1}
+
+
+def test_corruption_counters_are_hidden_for_a_face_down_opponent_vampire():
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1")
+    builder.player("P2").uncontrolled_vampire("Secret-V", capacity=4)
+    game = builder.build()
+    game.vampire("Secret-V").corruption_counters["P1"] = 1
+
+    obs = build_observation(game.state, "P1")
+
+    hidden = next(v for v in obs.vampires if v.controller == "P2")
+    assert hidden.corruption_counters == {}
+
+
 def test_a_recruited_ally_is_fully_visible_to_the_other_player():
     """Rules-auditor finding: an ally in the ready region is public, same as
     a ready vampire (Rulebook §4 Recruit Ally) -- there is no face-down

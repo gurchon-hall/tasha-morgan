@@ -322,6 +322,25 @@ def any_true(hook: str, state: GameState, **context: Any) -> bool:
     return False
 
 
+def collect(hook: str, state: GameState, **context: Any) -> list[Any]:
+    """Passive hook whose providers return an arbitrary per-provider value
+    (not a `HookOption`): each provider returns `None` to mean "does not
+    apply right now" (dropped), or any other value to contribute -- unlike
+    `sum_modifiers`/`union_modifiers`, which fix the combining operation
+    (add / union) and so require every provider to return a homogeneous
+    numeric/iterable contribution. Needed where a provider's contribution is
+    itself a small record a caller must act on individually (e.g.
+    `engine/action.py::BLOCK_ATTEMPT_COST_HOOK`'s `BlockAttemptCost`, one
+    per candidate, carrying its own `can_pay`/`pay` rather than folding into
+    one combined total)."""
+    results: list[Any] = []
+    for provider in _PROVIDERS.get(hook, ()):
+        value = provider(state, context)  # type: ignore[arg-type]
+        if value is not None:
+            results.append(value)
+    return results
+
+
 def union_modifiers(hook: str, state: GameState, **context: Any) -> tuple[Any, ...]:
     """Set-valued counterpart to `sum_modifiers`: unions every provider's
     contribution (e.g. discipline-level codes). Returns a sorted tuple, not

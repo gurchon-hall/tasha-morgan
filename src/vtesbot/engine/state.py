@@ -51,6 +51,23 @@ class VampireInPlay:
     unlock phases (the card's own text); cleared by `_unlock_own_vampires`
     each unlock, unlike `woken`'s per-action scope."""
 
+    corruption_counters: dict[str, int] = field(default_factory=dict)
+    """Corruption counters on this vampire, keyed by the placing Methuselah's
+    `player_id` (see `engine/corruption.py`). Sergio Bueno (krcg 201662,
+    `cards/sergio_bueno.py`): "Minions with 1 or more of YOUR corruption
+    counters must burn 1 blood or life to attempt to block Sergio." -- the
+    printed keyword is scoped to *whoever placed* the counter, not a flat
+    total, so a dict keyed by placer is the correct shape even though a 2P
+    duel (CLAUDE.md §3) only ever has one possible placer besides this
+    vampire's own controller. Distinct from `engine/cards.py::
+    CardAttachment.counters` (a generic attachment-level running count, e.g.
+    Weighted Walking Stick's own ammo/Pulled Fangs' own stealth-action-burn
+    tally) -- every legal-2P card printing the "corruption counter" keyword
+    puts the counter on the minion itself, never on an attached card: Aniel
+    (201666), Sergio Bueno (201662), The Platinum Protocol (102232);
+    Revelation of Ecstasy (101624, not on the active 2P list) agrees but is
+    out of scope."""
+
     action_card_played_turn: dict[str, int] = field(default_factory=dict)
     """Generic "same named action card at most once per turn" cap (OQ-57,
     `docs/OPEN_QUESTIONS.md`). Rulebook §4 Detailed Turn Sequence (`data/

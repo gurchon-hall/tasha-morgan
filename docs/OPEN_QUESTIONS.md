@@ -810,6 +810,81 @@ up an OQ number or the highest one used so far.
   (`src/vtesbot/cards/precognition.py`, tests in `tests/cards/
   test_precognition.py`).
 
+## OQ-63 - Corruption counters wrongly attachment-bound (status: resolved)
+
+- Situation: `cards/aniel.py`'s own corruption-counter clause (shipped
+  under OQ-62) modeled "burn 1 corruption counter... from another ready
+  minion" as requiring a `CardAttachment` present on the target vampire
+  with a positive `counters` field -- i.e. a corruption counter could only
+  exist riding on an attachment. Caught in review before any other card
+  built on the same (wrong) assumption.
+- Rules/interactions: verified via live `krcg.load()` text for every
+  legal-2P card using the "corruption counter" keyword: Aniel (201666,
+  quoted above); Sergio Bueno (201662, Anarch Baron of Santo Domingo,
+  unimplemented): "Minions with 1 or more of your corruption counters must
+  burn 1 blood or life to attempt to block Sergio." [LSJ 20011022: passive
+  ability applies even in torpor]; The Platinum Protocol (102232, library
+  Action, unimplemented): "...[pro] Put 1 corruption counter on a minion
+  controlled by the target Methuselah if the bleed is successful (for 1 or
+  more)." [ANK 20240706]/[LSJ 20080608]: counter target chosen at
+  resolution, not declaration; [ANK 20200925]/[ANK 20211105]: placing a
+  counter does not allow stealing it. Revelation of Ecstasy (101624, not
+  on the active 2P list, cited only as the stale precedent that misled the
+  original implementation): "...put 1 corruption counter on the target
+  minion. If the number of your corruption counters on the minion equals
+  or exceeds their capacity or cost, you can burn those counters to steal
+  the target minion." Every one of these texts puts the counter on the
+  minion itself, never on an attached card; no legal-2P card ever puts a
+  corruption counter on an attachment.
+- Solution: added `VampireInPlay.corruption_counters` (`engine/state.py`),
+  a `dict[str, int]` keyed by the placing Methuselah's `player_id` --
+  Sergio Bueno's own "YOUR corruption counters" wording is placer-scoped,
+  not a flat total, even though a 2P duel (CLAUDE.md §3) only ever has one
+  possible placer besides the vampire's own controller; chosen over a flat
+  `int` as the more future-proof shape per the task's own direction, same
+  design-call precedent as OQ-61/62. `engine/corruption.py::
+  add_corruption_counters`/`burn_corruption_counters` (floored at zero,
+  mirroring `engine/damage.py::add_blood`/`engine/allies.py::add_life`'s
+  own capped-helper shape, here capped below instead of above) /
+  `total_corruption_counters`. `cards/aniel.py`'s corruption-counter clause
+  now offers one option per placer with a counter present on the targeted
+  vampire, burning via `burn_corruption_counters` directly -- no attachment
+  involved. `engine/phases/minion.py::build_attachment_removal_action_
+  spec`'s own docstring (which had cited Revelation of Ecstasy's corruption
+  counters as a precedent for reusing `CardAttachment.counters`) corrected
+  to cite Weighted Walking Stick's own ammo count instead, and to note the
+  new field's existence. `tests/rules/test_corruption_counters.py` proves
+  the primitive generically; `tests/cards/test_aniel.py` updated to match.
+  `add_corruption_counters` itself is not yet exercised by any card (no
+  implemented card places a corruption counter) -- left in place for
+  Sergio Bueno/The Platinum Protocol, neither built here.
+
+## OQ-64 - Sergio Bueno - no block-attempt mandatory cost-gate hook (status: resolved)
+
+- Situation: Sergio Bueno (krcg 201662): "Minions with 1 or more of your
+  corruption counters must burn 1 blood or life to attempt to block
+  Sergio." Neither `block_candidate_predicate` (a stateless, per-action-
+  card property filter) nor `BLOCK_CANDIDATE_EXCLUSION_HOOK` (an
+  actor-chosen exclusion) fit: this is a passive crypt ability spanning
+  every action type its vampire ever performs, and a mandatory cost paid
+  the instant a candidate attempts, win or lose -- not merely a boolean
+  filter.
+- Rules/interactions: a missing engine primitive, not a ruling ambiguity
+  (same category as OQ-46/48/59's own "missing/deferred engine capability"
+  classification) -- the card text and its one on-file ruling
+  ([LSJ 20011022], moot here since the engine never offers a torpid
+  vampire as `acting_vampire` in the first place) already settle the rule.
+- Solution: `engine/action.py::BlockAttemptCost`/`BLOCK_ATTEMPT_COST_HOOK`,
+  dispatched per-candidate (both the hardcoded `ready_unlocked_vampires`
+  list and `BLOCK_CANDIDATE_INJECTION_HOOK` options) via the new
+  `engine/hooks.py::collect` combinator; a candidate that cannot afford an
+  applicable cost is not offered at all, one that can pays it
+  (`_pay_block_attempt_costs`) the instant it is chosen, before the
+  stealth/intercept duel. Generic mechanism proven in `tests/rules/
+  test_block_attempt_cost.py`; Sergio Bueno (201662) is now
+  `Status.IMPLEMENTED` (`src/vtesbot/cards/sergio_bueno.py`, tests in
+  `tests/cards/test_sergio_bueno.py`).
+
 ## OQ-65 - Forced Confessional - no force-block-attempt-failure hook (status: resolved)
 
 - Situation: Forced Confessional (krcg 102250): "[DOM] That attempt fails

@@ -56,6 +56,15 @@ class VampireView:
     """OQ-58 (`docs/OPEN_QUESTIONS.md`): every live `CardAttachment` currently on this
     vampire (`AttachmentView`'s own docstring). Empty, not merely absent, for a face-down
     uncontrolled vampire -- see `visible_identity`'s own gate below."""
+    corruption_counters: dict[str, int]
+    """Per-placer corruption counter tally (`VampireInPlay.corruption_counters`,
+    `engine/corruption.py`): public information once a vampire is in play -- a counter is
+    always placed by a visible card effect both players witness, so no hidden-identity gate
+    beyond the host's own `visible_identity` applies (mirrors `attachments` above). A copy,
+    not the live dict, so a reader can never mutate engine state through it. Needed by a
+    defending Methuselah's own agent to see Sergio Bueno's (krcg 201662) block-eligibility
+    gate coming before choosing a block candidate. Empty for a face-down uncontrolled
+    vampire, same as `attachments`."""
 
 
 @dataclass(frozen=True)
@@ -185,6 +194,7 @@ def build_observation(state: GameState, viewer: str) -> Observation:
                 if visible_identity
                 else ()
             ),
+            corruption_counters=dict(v.corruption_counters) if visible_identity else {},
         )
 
     def ally_view(a: AllyInPlay) -> AllyView:
