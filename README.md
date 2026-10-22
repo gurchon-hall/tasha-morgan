@@ -31,15 +31,12 @@ This installs both the runtime dependency (`krcg`) and the dev tools
 ## Running the checks
 
 ```sh
-uv run pytest
-uv run ruff check .
-uv run ruff format --check .
-uv run pymarkdown scan docs/ CLAUDE.md
-uv run pretty-format-json --no-sort-keys --no-ensure-ascii $(find data -name '*.json')
+uv run python scripts/check.py
 ```
 
-The last two only matter when a change touches a tracked `.md` file or
-anything under `data/` (CLAUDE.md §6).
+Runs pytest, ruff (lint and format), the 3-line comment cap,
+markdown lint, the docs-index check and the `data/` JSON check, then
+prints a summary (CLAUDE.md §6). `--skip <step>` drops one step.
 
 ## Running a bot-vs-bot simulation
 

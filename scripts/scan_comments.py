@@ -1,43 +1,6 @@
-"""Flag candidate comments/docstrings and doc entries for the `trim-comments` skill.
-
-This is a *candidate scanner*, not a linter: CLAUDE.md §6's comment rule
-("minimal... only when the WHY is non-obvious... never restate what the
-code already says") and the rules-docs entry format (§2, DES-016) both
-turn on judgment a regex cannot make --
-whether a given sentence is "the why" or just restates the next line is a
-reading-comprehension call. This script only narrows down what a human (or
-an agent doing the `trim-comments` QA pass) should read closely; it never
-edits a file itself and a clean run is not proof the pass is done.
-
-Checks:
-  - Inline `#` comments whose words substantially overlap the code on the
-    same line (possible restatement) -- skipped if the comment contains a
-    citation-like token (SS, "Rulebook", "2P variant", "RUL-"/"ENG-"/"DES-", "ruling",
-    "krcg"), since overlap with cited rule language is expected, not a
-    restatement smell.
-  - Inline/docstring comments matching task-reference language ("fix for",
-    "added for", "this PR", "used by the caller", "see issue/ticket/#123")
-    instead of timeless rationale.
-  - Module-level docstrings of `src/vtesbot/cards/*.py` files with no
-    rule-source citation token at all. Every implemented card's module
-    docstring follows one settled convention (card text + rulings quoted
-    verbatim, see any existing card file) -- this is the one place a
-    missing citation is a reliable signal rather than a guess. Function/
-    class docstrings elsewhere are not checked: deciding whether a given
-    function "implements a rule" (CLAUDE.md §2) and therefore needs a
-    citation is a judgment call this script cannot make reliably, and a
-    blanket check there produces mostly noise (plumbing helpers, registry
-    glue, dataclass fields -- see the skill's own notes on this).
-  - `docs/rulings/` and `docs/engine/`: any `resolved` entry whose bullet
-    labels are not exactly Situation / Rules & interactions / Solution.
-
-Usage:
-    python scripts/scan_comments.py [path ...]
-
-With no paths, scans src/vtesbot/engine, src/vtesbot/cards, docs/rulings and
-docs/engine. Exit code is always 0: every finding is a candidate to review,
-not a failure.
-"""
+"""Candidate list for the `trim-comments` skill: restatements, task framing, card modules
+with no citation, resolved entries with the wrong labels. Never edits; always exits 0.
+The 3-line cap itself is enforced by `scripts/comment_lines.py`."""
 
 from __future__ import annotations
 
@@ -114,8 +77,8 @@ def scan_python_file(path: Path, check_module_citation: bool) -> list[str]:
             if not _has_citation(tok.string):
                 findings.append(
                     f"{path}:{tok.start[0]}: module docstring has no rule-source "
-                    "citation token (Rulebook/2P variant/RUL-/ENG-/DES-/ruling/krcg) -- every "
-                    "implemented card cites its card text/rulings here"
+                    "citation token (Rulebook/2P variant/RUL-/ENG-/DES-/ruling/krcg) -- a card "
+                    "module names its krcg id and snapshot"
                 )
         elif tok.type not in (
             tokenize.NEWLINE,
