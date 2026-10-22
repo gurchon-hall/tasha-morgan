@@ -327,7 +327,8 @@ class PollingStepBeforeCastContext(TypedDict):
 
 class PollingStepMidCastContext(TypedDict):
     """`offer` on each casting turn, beside the vote sources. `apply` returns
-    the `source_id` of the cast it cancels. See ENG-027."""
+    the `source_id` it cancels (ENG-027), or adds a vote source to `pending`
+    that can be cast from then on (ENG-051)."""
 
     player: str
     phase: Literal["mid_cast"]

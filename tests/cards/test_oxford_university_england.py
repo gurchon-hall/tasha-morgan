@@ -27,7 +27,7 @@ from vtesbot.engine.master_cards import (
 )
 from vtesbot.engine.phases.master import master_phase
 from vtesbot.engine.phases.unlock import unlock_phase
-from vtesbot.engine.politics import POLLING_STEP_HOOK, political_action
+from vtesbot.engine.politics import POLLING_STEP_HOOK, political_action, resolve_referendum
 
 
 def _oxford_card() -> LibraryCard:
@@ -328,6 +328,30 @@ def test_lock_and_burn_pool_ability_fires_during_a_real_political_actions_pollin
     # 4 (burn 2 pool * 2 votes) + 1 (political action card) for vs 0 against.
     assert result is True
     assert game.state.players["P1"].pool == 1  # 3 - 2 burned
+    assert location.locked is True
+    actor.assert_exhausted()
+
+
+def test_ability_is_usable_while_votes_are_cast():
+    """Rulebook §4 The Referendum, Polling: "during the polling step" includes
+    casting, so the +2X source is castable from the next step (ENG-051)."""
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=3).ready_vampire("V1", capacity=3, blood=1)
+    builder.player("P2", pool=30)
+    game = builder.build()
+    location = bring_master_card_into_play(game.state, "P1", krcg_id=KRCG_ID, name=NAME)
+    actor = ScriptedAgent("P1")
+    actor.expect(POLLING_STEP_HOOK, "pass")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    actor.expect("polling_step_cast", f"oxford:{location.instance_id}:1")
+    actor.expect("polling_step_cast", f"for:oxford:{location.instance_id}:1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    votes_for, votes_against, _ = resolve_referendum(game.state, "P1", "P2", game.vampire("V1"))
+
+    assert (votes_for, votes_against) == (3, 0)  # 1 card + 2 (burn 1 pool)
+    assert game.state.players["P1"].pool == 2
     assert location.locked is True
     actor.assert_exhausted()
 

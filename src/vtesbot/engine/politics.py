@@ -348,18 +348,19 @@ def _collect_vote_sources(
                 )
             )
     for extra in pending.get("extra_sources", ()):
-        source_id = extra["source_id"]
-        if source_id in forced_abstain:
-            continue
-        sources.append(
-            VoteSource(
-                source_id=source_id,
-                player=extra["player"],
-                votes=extra["votes"],
-                label=extra["label"],
-            )
-        )
+        if extra["source_id"] not in forced_abstain:
+            sources.append(_extra_vote_source(extra))
     return sources
+
+
+def _extra_vote_source(extra: dict[str, Any]) -> VoteSource:
+    """A card-granted `pending["extra_sources"]` entry as a castable source."""
+    return VoteSource(
+        source_id=extra["source_id"],
+        player=extra["player"],
+        votes=extra["votes"],
+        label=extra["label"],
+    )
 
 
 def _has_political_action_card_in_hand(state: GameState, player: str) -> bool:
@@ -393,8 +394,8 @@ def _cast_votes(
     caller_vampire: VampireInPlay | None = None,
 ) -> tuple[int, int, list[tuple[str, str, int, str]]]:
     """Rulebook §4 steps 2-3 (RUL-005/RUL-006/ENG-027/ENG-031): strict two-player
-    alternation, caller first, closing on a full idle lap. Also offers
-    mid-cast cancellation (ENG-027) and sums the cast bonus hook (ENG-031)."""
+    alternation, caller first, closing on a full idle lap. Also offers mid-cast
+    options (ENG-027 cancellation, ENG-051 new sources) and the cast bonus."""
     votes_for = 0
     votes_against = 0
     casts: list[tuple[str, str, int, str]] = []
@@ -407,7 +408,7 @@ def _cast_votes(
             (source for source in remaining.values() if source.player == turn),
             key=lambda source: source.source_id,
         )
-        cancel_options = hooks.offer(
+        mid_cast_options = hooks.offer(
             POLLING_STEP_HOOK,
             state,
             player=turn,
@@ -420,10 +421,10 @@ def _cast_votes(
             casts=list(casts),
             pending=pending,
         )
-        if not mine and not cancel_options:
+        if not mine and not mid_cast_options:
             consecutive_passes += 1
         else:
-            cancel_by_value = {o.choice.value: o for o in cancel_options}
+            mid_cast_by_value = {o.choice.value: o for o in mid_cast_options}
             choices: tuple[Choice, ...] = ()
             against_cost = hooks.sum_modifiers(
                 VOTE_AGAINST_POOL_COST_HOOK,
@@ -449,7 +450,7 @@ def _cast_votes(
                             f"Cast {source.votes} vote(s) against ({source.label})",
                         ),
                     )
-            choices += tuple(o.choice for o in cancel_options)
+            choices += tuple(o.choice for o in mid_cast_options)
             choices += (Choice("pass", "Pass (hold back remaining votes for now)"),)
             hooks.ensure_unique_choice_values(choices, decision_kind="polling_step_cast")
             decision = Decision(
@@ -465,14 +466,21 @@ def _cast_votes(
             answer = state.ask(decision).value
             if answer == "pass":
                 consecutive_passes += 1
-            elif answer in cancel_by_value:
+            elif answer in mid_cast_by_value:
                 consecutive_passes = 0
-                cancel_option = cancel_by_value[answer]
-                hooks.mark_reaction_played(pending, cancel_option)
-                canceled_source_id = cancel_option.apply(state)
-                votes_for, votes_against = _apply_retroactive_vote_cancellation(
-                    canceled_source_id, remaining, casts, votes_for, votes_against
-                )
+                option = mid_cast_by_value[answer]
+                hooks.mark_reaction_played(pending, option)
+                known_extras = len(pending["extra_sources"])
+                canceled_source_id = option.apply(state)
+                # Rulebook §4 The Referendum, Polling: a "during the polling step" card is
+                # usable while votes are cast; its source is castable from the next step.
+                for extra in pending["extra_sources"][known_extras:]:
+                    if extra["source_id"] not in pending.get("forced_abstain", set()):
+                        remaining[extra["source_id"]] = _extra_vote_source(extra)
+                if canceled_source_id is not None:
+                    votes_for, votes_against = _apply_retroactive_vote_cancellation(
+                        canceled_source_id, remaining, casts, votes_for, votes_against
+                    )
             else:
                 consecutive_passes = 0
                 direction, source_id = answer.split(":", 1)

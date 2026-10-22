@@ -110,13 +110,16 @@ def _provide_perfect_paragon_basic(
     pending = context.get("pending")
     if pending is None:
         return []  # no scratch container to record the vote source into.
+    source_id = f"perfect_paragon:{acting_vampire.instance_id}"
+    if any(extra["source_id"] == source_id for extra in pending["extra_sources"]):
+        return []  # Rulebook §4: a minion plays the same modifier once per action.
 
     def _apply(s: GameState) -> None:
         play_from_hand(s, player, KRCG_ID)
         acting_vampire.blood -= BLOOD_COST
         pending["extra_sources"].append(
             {
-                "source_id": f"perfect_paragon:{acting_vampire.instance_id}",
+                "source_id": source_id,
                 "player": player,
                 "votes": BASIC_VOTES,
                 "label": f"Perfect Paragon [pre] ({acting_vampire.card.name})",

@@ -19,7 +19,7 @@ from vtesbot.cards.perfect_paragon import KRCG_ID
 from vtesbot.engine import LibraryCard, hooks
 from vtesbot.engine.action import INTERCEPT_DECREASE_HOOK, attempt_block
 from vtesbot.engine.allies import recruit_ally
-from vtesbot.engine.politics import POLLING_STEP_HOOK, political_action
+from vtesbot.engine.politics import POLLING_STEP_HOOK, political_action, resolve_referendum
 
 NAME = "Perfect Paragon"
 
@@ -170,6 +170,57 @@ def test_basic_clause_end_to_end_through_a_real_political_action():
     assert game.blood_of("V1") == 0  # 1-blood cost paid
     assert game.state.players["P1"].hand == []
     assert [c.name for c in game.state.players["P1"].ash_heap] == [NAME]
+    actor.assert_exhausted()
+
+
+def test_basic_played_while_votes_are_cast_adds_a_castable_source():
+    """Rulebook §4 The Referendum, Polling: "during the polling step" includes casting,
+    so the +3 source joins the casting laps (ENG-051)."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=3, blood=1, disciplines=("pre",)
+    )
+    p1.hand.append(_card())
+    builder.player("P2", pool=30)
+    game = builder.build()
+    actor = ScriptedAgent("P1")
+    actor.expect(POLLING_STEP_HOOK, "pass")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    actor.expect("polling_step_cast", "perfect_paragon:basic")
+    actor.expect("polling_step_cast", "for:perfect_paragon:V1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    votes_for, votes_against, _ = resolve_referendum(game.state, "P1", "P2", game.vampire("V1"))
+
+    assert (votes_for, votes_against) == (4, 0)
+    assert game.blood_of("V1") == 0
+    assert [c.name for c in game.state.players["P1"].ash_heap] == [NAME]
+    actor.assert_exhausted()
+
+
+def test_a_second_copy_is_not_offered_in_the_same_action():
+    """Rulebook §4: "The same minion cannot play the same action modifier or
+    reaction card more than once during each action." """
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=3, blood=3, disciplines=("pre",)
+    )
+    p1.hand.extend([_card(), _card()])
+    builder.player("P2", pool=30)
+    game = builder.build()
+    actor = ScriptedAgent("P1")
+    actor.expect(POLLING_STEP_HOOK, "perfect_paragon:basic")
+    actor.expect("polling_step_cast", "for:perfect_paragon:V1")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    votes_for, votes_against, _ = resolve_referendum(game.state, "P1", "P2", game.vampire("V1"))
+
+    assert (votes_for, votes_against) == (4, 0)
+    assert game.blood_of("V1") == 2
+    assert [c.name for c in game.state.players["P1"].hand] == [NAME]
     actor.assert_exhausted()
 
 

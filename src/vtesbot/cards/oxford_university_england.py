@@ -148,8 +148,6 @@ def _own_unlocked_in_play_instances(state: GameState, player: str) -> list[Maste
 
 
 def _provide_oxford_polling_step(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
-    if context.get("phase") != "before_cast":
-        return []
     player = context["player"]
     pending = context["pending"]
 

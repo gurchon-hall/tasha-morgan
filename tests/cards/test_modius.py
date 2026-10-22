@@ -27,7 +27,7 @@ from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards import registry
 from vtesbot.cards.modius import KRCG_ID
 from vtesbot.engine import CryptCard
-from vtesbot.engine.politics import POLLING_STEP_HOOK, political_action
+from vtesbot.engine.politics import POLLING_STEP_HOOK, political_action, resolve_referendum
 
 
 def _make_modius(builder_player, instance_id: str) -> None:
@@ -84,6 +84,34 @@ def test_modius_discards_a_master_card_for_1_vote_while_ready():
     assert game.state.players["P1"].hand == []
     assert [c.name for c in game.state.players["P1"].ash_heap] == ["Fake Master"]
     assert game.pool_of("P1") == 30  # the cost is a discarded card, never pool
+    actor.assert_exhausted()
+
+
+def test_modius_ability_is_usable_while_votes_are_cast():
+    """Rulebook §4 The Referendum, Polling: "during the polling step" includes casting,
+    so the +1 source joins the casting laps (ENG-051)."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30)
+    p1.ready_vampire("Modius1", capacity=8, blood=1)
+    _make_modius(p1, "Modius1")
+    p1.hand_cards(["Fake Master"], card_type="Master")
+    builder.player("P2", pool=30)
+    game = builder.build()
+    actor = ScriptedAgent("P1")
+    actor.expect(POLLING_STEP_HOOK, "pass")
+    actor.expect("polling_step_cast", "for:title:Modius1")
+    actor.expect("polling_step_cast", "modius_discard_master:Modius1")
+    actor.expect("polling_step_cast", "for:modius:Modius1:0")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = ScriptedAgent("P2")
+
+    votes_for, votes_against, _ = resolve_referendum(
+        game.state, "P1", "P2", game.vampire("Modius1")
+    )
+
+    assert (votes_for, votes_against) == (4, 0)  # 1 card + 2 Prince + 1 Modius
+    assert [c.name for c in game.state.players["P1"].ash_heap] == ["Fake Master"]
     actor.assert_exhausted()
 
 
