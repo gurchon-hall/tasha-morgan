@@ -46,7 +46,15 @@ Range)."""
 # own docstring); re-exported under this name for every card module that
 # already imports it from here (`seed_pre_combat_maneuver_grant`'s own
 # siblings below, `cards/saku_pihlajamaki.py`, `tests/rules/test_pre_combat_
-# maneuver_grant.py`).
+# maneuver_grant.py`). Besides `MANEUVER_HOOK`/`DAMAGE_PREVENTION_HOOK`, also
+# threaded into `BEFORE_RANGE_HOOK`'s context (`_ask_before_range`) and
+# `COMBAT_STRENGTH_MODIFIER_HOOK`'s context (`_strike_strength`, reached via
+# `_resolve_one_strike`/`_resolve_strike_pair`) -- lets a provider activated
+# before range is determined record a flag/bonus in `combat_state` that a
+# later strike's own strength computation, in any round of the *same*
+# combat, reads back (e.g. Kasim Bayar, krcg 201598). A fresh `run_combat`
+# call creates a new `combat_state` dict, so nothing here ever leaks into a
+# separate, later combat for the same vampire in the same turn.
 
 PRE_COMBAT_MANEUVER_GRANT_KEY = "pre_combat_maneuver_grants"
 """Key inside `combat_state` for a pre-combat maneuver grant seeded via
@@ -211,16 +219,26 @@ def _is_ready(vampire: VampireInPlay) -> bool:
 
 
 def _strike_strength(
-    state: GameState, player: str, vampire: VampireInPlay, opponent: VampireInPlay
+    state: GameState,
+    player: str,
+    vampire: VampireInPlay,
+    opponent: VampireInPlay,
+    combat_state: dict[str, Any],
 ) -> int:
     """Hand strike = base strength (default 1, Rulebook §4) plus any
-    passive `combat_strength_modifier` contribution."""
+    passive `combat_strength_modifier` contribution. `combat_state`
+    (OQ-60, same combat-scoped scratch dict `MANEUVER_HOOK`/
+    `DAMAGE_PREVENTION_HOOK` already receive) is threaded into the hook's
+    context so a provider can read back a whole-combat-duration bonus
+    activated earlier in the same combat (e.g. a `BEFORE_RANGE_HOOK`
+    option granting "+N strength that combat")."""
     return HAND_STRIKE_STRENGTH + hooks.sum_modifiers(
         COMBAT_STRENGTH_MODIFIER_HOOK,
         state,
         player=player,
         vampire=vampire.instance_id,
         opponent=opponent.instance_id,
+        combat_state=combat_state,
     )
 
 
@@ -280,6 +298,7 @@ def _resolve_one_strike(
     vampire: VampireInPlay,
     opponent: VampireInPlay,
     round_state: dict[str, Any],
+    combat_state: dict[str, Any],
     *,
     participates: bool,
 ) -> tuple[int, bool, bool]:
@@ -293,7 +312,7 @@ def _resolve_one_strike(
         by_value[choice].apply(state)  # dodge's own side effect, if any
         return 0, True, False
     if choice == HAND_STRIKE_VALUE:
-        return _strike_strength(state, player, vampire, opponent), False, False
+        return _strike_strength(state, player, vampire, opponent, combat_state), False, False
     if choice == NO_STRIKE_VALUE:
         return 0, False, False
     result = by_value[choice].apply(state)  # card-granted strike option: its own damage
@@ -323,6 +342,7 @@ def _resolve_strike_pair(
         acting_vampire,
         blocking_vampire,
         round_state,
+        combat_state,
         participates=acting_participates,
     )
     if state.game_over:
@@ -333,6 +353,7 @@ def _resolve_strike_pair(
         blocking_vampire,
         acting_vampire,
         round_state,
+        combat_state,
         participates=blocking_participates,
     )
     if acting_dodges and not blocking_ignore_dodge:
@@ -547,10 +568,17 @@ def _ask_before_range(
     acting_vampire: VampireInPlay,
     blocking_player: str,
     blocking_vampire: VampireInPlay,
+    combat_state: dict[str, Any],
 ) -> None:
     """Rulebook §4 step 1, Before Range (OQ-47): two-sided impulse window,
     acting combatant first (OQ-3). Dispatched exactly once per combat,
-    before round 1's Determine Range."""
+    before round 1's Determine Range. `combat_state` (OQ-60) is threaded
+    into the hook's context -- same combat-scoped scratch dict `MANEUVER_
+    HOOK`/`DAMAGE_PREVENTION_HOOK` already receive -- so a provider acting
+    here can record a once-per-combat flag and/or a whole-combat-duration
+    effect `COMBAT_STRENGTH_MODIFIER_HOOK` reads back on every later strike
+    of this same combat (e.g. Kasim Bayar, krcg 201598: discard a political
+    action here for "+2 strength that combat")."""
     hooks.resolve_impulse_window(
         state,
         BEFORE_RANGE_HOOK,
@@ -561,6 +589,7 @@ def _ask_before_range(
             "acting_vampire": acting_vampire.instance_id,
             "blocking_player": blocking_player,
             "blocking_vampire": blocking_vampire.instance_id,
+            COMBAT_STATE_CONTEXT_KEY: combat_state,
         },
     )
 
@@ -594,7 +623,12 @@ def run_combat(
         # per combat, before round 1's Determine Range step. ---
         if not before_range_offered:
             _ask_before_range(
-                state, acting_player, acting_vampire, blocking_player, blocking_vampire
+                state,
+                acting_player,
+                acting_vampire,
+                blocking_player,
+                blocking_vampire,
+                combat_state,
             )
             before_range_offered = True
             if state.game_over:

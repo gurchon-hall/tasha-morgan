@@ -33,10 +33,15 @@ COMBAT_STATE_CONTEXT_KEY = "combat_state"
 lives here, not `engine/combat.py`, for the same circular-import reason as
 `ROUND_STATE_CONTEXT_KEY` below -- `combat.py` imports `apply_damage` from
 this module). `combat.py::COMBAT_STATE_CONTEXT_KEY` re-exports this same
-object. Threaded into both `MANEUVER_HOOK`'s own context (already, e.g. Saku
-Pihlajamäki's once-per-combat grant) and `DAMAGE_PREVENTION_HOOK`'s own
-context (OQ-60 addition, below) so a provider can read/write combat-scoped
-state (e.g. `combat.py`'s block-time combat grant helpers) from either hook."""
+object. Threaded into `MANEUVER_HOOK`'s own context (already, e.g. Saku
+Pihlajamäki's once-per-combat grant), `DAMAGE_PREVENTION_HOOK`'s own
+context (OQ-60 addition, below), and -- as of the same combat-state-plumbing
+pass -- `BEFORE_RANGE_HOOK`'s and `COMBAT_STRENGTH_MODIFIER_HOOK`'s own
+contexts (`combat.py::_ask_before_range`/`_strike_strength`) so a provider
+can read/write combat-scoped state (e.g. `combat.py`'s block-time combat
+grant helpers, or a once-per-combat strength bonus activated before range is
+determined and read back on every later strike of the same combat) from any
+of these hooks."""
 
 ROUND_NUMBER_KEY = "round_number"
 """Key in the round-scoped scratch dict (OQ-60): the 1-indexed round number
