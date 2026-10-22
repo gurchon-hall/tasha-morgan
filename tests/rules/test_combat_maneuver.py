@@ -38,7 +38,7 @@ def _combat_game(*, acting_label: str = "V1", blocking_label: str = "B1", blocki
 
 def _capture_range_via_strength_modifier(captured: list, *, player: str = "P1"):
     """`"combat_strength_modifier"` is a passive, always-consulted hook
-    (`hooks.sum_modifiers`) fired from `_strike_strength`, so registering a
+    (`hooks.sum_modifiers`) fired from `hand_strike_damage`, so registering a
     fake provider against it is a convenient, zero-side-effect way to read
     `state.combat_range` at the exact moment a hand strike resolves, without
     inventing a new test-only hook."""

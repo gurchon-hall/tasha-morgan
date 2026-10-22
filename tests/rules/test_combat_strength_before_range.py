@@ -1,6 +1,6 @@
 """`combat_state` (ENG-040 primitive, `engine/damage.py::COMBAT_STATE_CONTEXT_KEY`)
 threaded into `BEFORE_RANGE_HOOK`'s and `COMBAT_STRENGTH_MODIFIER_HOOK`'s own
-contexts (`engine/combat.py::_ask_before_range`/`_strike_strength`, reached
+contexts (`engine/combat.py::_ask_before_range`/`hand_strike_damage`, reached
 via `_resolve_one_strike`/`_resolve_strike_pair`) -- the same combat-scoped
 scratch dict `MANEUVER_HOOK`/`DAMAGE_PREVENTION_HOOK` already receive
 (`cards/saku_pihlajamaki.py`'s/`cards/opikun.py`'s own once-per-combat caps).
@@ -22,7 +22,7 @@ Also covers the rules-auditor finding on that same mechanism (`cards/
 kasim_bayar.py`'s own "Engine gap closed" docstring section, 2026-10-22):
 `engine/combat.py::hand_strike_strength`, the shared helper every call site
 computing "what a plain hand strike deals right now" now goes through
-(`_strike_strength` internally, plus `cards/dust_up.py`, `cards/slam.py`,
+(`hand_strike_damage` internally, plus `cards/dust_up.py`, `cards/slam.py`,
 `cards/weighted_walking_stick.py`), and `_ask_strike`'s own `COMBAT_STRIKE_
 OPTION_HOOK` offer, which now forwards `combat_state` too -- so the fake
 bonus below still applies when the bonused vampire strikes via one of

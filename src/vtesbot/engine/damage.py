@@ -38,7 +38,7 @@ object. Threaded into `MANEUVER_HOOK`'s own context (already, e.g. Saku
 Pihlajamäki's once-per-combat grant), `DAMAGE_PREVENTION_HOOK`'s own
 context (ENG-040 addition, below), and -- as of the same combat-state-plumbing
 pass -- `BEFORE_RANGE_HOOK`'s and `COMBAT_STRENGTH_MODIFIER_HOOK`'s own
-contexts (`combat.py::_ask_before_range`/`_strike_strength`) so a provider
+contexts (`combat.py::_ask_before_range`/`hand_strike_damage`) so a provider
 can read/write combat-scoped state (e.g. `combat.py`'s block-time combat
 grant helpers, or a once-per-combat strength bonus activated before range is
 determined and read back on every later strike of the same combat) from any

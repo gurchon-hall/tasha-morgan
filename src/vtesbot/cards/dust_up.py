@@ -7,8 +7,8 @@ Text: "Requires an Anarch.
 
 Rulings:
 - [TOM 19960225] "[ani] [pot] Additional damage inherits all of the
-  properties of the base damage." The +1/+2 sit on top of
-  `hand_strike_strength`; a plain hand strike has no other property today.
+  properties of the base damage." Both strikes are built from
+  `hand_strike_damage` with `dataclasses.replace` (ENG-048).
 - [ANK 20220204] [cel] the additional strike is not optional, so the
   "(limited)" cap gates the dodge itself.
 - [LSJ 20011204-3] [PIB 20130704] when played, the card requires the
@@ -26,6 +26,7 @@ Notes:
 """
 
 from collections.abc import Mapping
+from dataclasses import replace
 from typing import Any
 
 from vtesbot.cards.card import Card
@@ -35,7 +36,7 @@ from vtesbot.engine.combat import (
     COMBAT_STATE_CONTEXT_KEY,
     StrikeDamage,
     additional_strike_limit_used,
-    hand_strike_strength,
+    hand_strike_damage,
     mark_additional_strike_limit_used,
 )
 from vtesbot.engine.hooks import Hook, HookOption
@@ -58,8 +59,8 @@ def _playable(state: GameState, ctx: Mapping[str, Any], discipline: str) -> bool
     )
 
 
-def _base_damage(state: GameState, ctx: Mapping[str, Any]) -> int:
-    return hand_strike_strength(
+def _base_damage(state: GameState, ctx: Mapping[str, Any]) -> StrikeDamage:
+    return hand_strike_damage(
         state, ctx["player"], ctx["vampire"], ctx["opponent"], ctx.get(COMBAT_STATE_CONTEXT_KEY)
     )
 
@@ -78,11 +79,11 @@ def _set_grant(round_state: dict[str, Any] | None, vampire_id: str, value: bool)
 def _ani_strike(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
     if not _playable(state, ctx, "ani"):
         return []
-    player, damage = ctx["player"], _base_damage(state, ctx) + 1
+    player, base = ctx["player"], _base_damage(state, ctx)
 
     def apply(s: GameState) -> StrikeDamage:
         card.play_from_hand(s, player)
-        return StrikeDamage(amount=damage, ignore_dodge=True)
+        return replace(base, amount=base.amount + 1, ignore_dodge=True)
 
     return [card.option("dust_up:ani", "Dust Up [ani]: hand strike +1, cannot be dodged", apply)]
 
@@ -91,11 +92,11 @@ def _ani_strike(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
 def _pot_strike(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
     if not _playable(state, ctx, "pot"):
         return []
-    player, damage = ctx["player"], _base_damage(state, ctx) + 2
+    player, base = ctx["player"], _base_damage(state, ctx)
 
     def apply(s: GameState) -> StrikeDamage:
         card.play_from_hand(s, player)
-        return StrikeDamage(amount=damage, ignore_dodge=False)
+        return replace(base, amount=base.amount + 2)
 
     return [card.option("dust_up:pot", "Dust Up [pot]: hand strike +2 damage", apply)]
 

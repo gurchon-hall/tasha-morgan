@@ -53,12 +53,11 @@ against it.
 "[pot] Strike: hand strike at +2 damage." (basic clause): same shape as
 Dust Up's own `[pot]` clause (identical printed text) -- a plain
 `COMBAT_STRIKE_OPTION_HOOK` grant, gated on basic-or-superior `"pot"`, the
-card in hand, and at least 1 blood on the acting vampire. "+2 damage" is
-computed relative to whatever a plain hand strike would otherwise deal
-right now, the same non-hardcoded computation as `dust_up.py`'s
-`_base_hand_strike_damage`, so the "[TOM 19960225]" ruling (additional
-damage stacks with, rather than replaces, any other strength bonus) holds
-structurally. No `ignore_dodge` flag: an ordinary, dodgeable strike.
+card in hand, and at least 1 blood on the acting vampire. The strike is
+the plain hand strike's damage (`engine/combat.py::hand_strike_damage`) at
++2, built with `dataclasses.replace`, so "Additional damage inherits all of
+the properties of the base damage" [TOM 19960225] holds (ENG-048). No
+`ignore_dodge` flag: an ordinary, dodgeable strike.
 
 "[POT] As above, with 1 optional maneuver, only usable to get to close
 range." (superior clause): a `MANEUVER_HOOK` provider, gated on superior
@@ -95,6 +94,7 @@ docstring gives for its own basic clause, the inverse case.
 """
 
 from collections.abc import Mapping
+from dataclasses import replace
 from typing import Any
 
 from vtesbot.cards._shared import play_from_hand
@@ -108,7 +108,7 @@ from vtesbot.engine.combat import (
     MANEUVER_HOOK,
     StrikeDamage,
     commit_strike_for_round,
-    hand_strike_strength,
+    hand_strike_damage,
     strike_committed_this_round,
 )
 from vtesbot.engine.decision import Choice
@@ -142,17 +142,10 @@ def _has_card_in_hand(state: GameState, player: str) -> bool:
     return any(card.krcg_id == KRCG_ID for card in state.players[player].hand)
 
 
-def _base_hand_strike_damage(state: GameState, context: Mapping[str, Any]) -> int:
-    """The damage a plain hand strike would deal right now (`engine/
-    combat.py::hand_strike_strength`'s own shared computation, also used by
-    `_strike_strength` internally): base strength plus any live
-    `combat_strength_modifier` contribution, including a whole-combat-
-    duration bonus recorded in `combat_state` (ENG-040; now threaded into
-    this hook's own context by `engine/combat.py::_ask_strike`) -- so this
-    card's own "+2 damage" stacks with, rather than replaces, any other
-    strength bonus already in play, per "[a]dditional damage inherits all
-    of the properties of the base damage" [TOM 19960225]."""
-    return hand_strike_strength(
+def _base_hand_strike_damage(state: GameState, context: Mapping[str, Any]) -> StrikeDamage:
+    """A plain hand strike's damage and properties right now, including any
+    whole-combat strength bonus in `combat_state` (ENG-040, ENG-048)."""
+    return hand_strike_damage(
         state,
         context["player"],
         context["vampire"],
@@ -180,7 +173,7 @@ def _provide_basic(state: GameState, context: Mapping[str, Any]) -> list[HookOpt
     def _apply(s: GameState) -> StrikeDamage:
         play_from_hand(s, player, KRCG_ID)
         vampire.blood -= BLOOD_COST
-        return StrikeDamage(amount=base + STRIKE_BONUS, ignore_dodge=False)
+        return replace(base, amount=base.amount + STRIKE_BONUS)
 
     return [
         HookOption(
@@ -220,7 +213,7 @@ def _provide_superior_maneuver(state: GameState, context: Mapping[str, Any]) -> 
             # round's own contract) -- no further side effect: the card was
             # already played, and its cost already paid, above.
             base = _base_hand_strike_damage(s2, context)
-            return StrikeDamage(amount=base + STRIKE_BONUS, ignore_dodge=False)
+            return replace(base, amount=base.amount + STRIKE_BONUS)
 
         strike_option = HookOption(
             choice=Choice("slam:superior_strike", "Slam [POT]: hand strike +2 damage (committed)"),

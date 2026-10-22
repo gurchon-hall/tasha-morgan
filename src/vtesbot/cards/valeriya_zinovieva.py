@@ -39,7 +39,7 @@ passive, mandatory numeric hook ... for printed vampire abilities that are
 not a choice, e.g. a flat '+1 strength' line"), summed via
 `hooks.sum_modifiers` into every strike damage computation for this
 vampire. No new engine hook wiring is needed: the call site
-(`_strike_strength`) and the generic `sum_modifiers` contract already
+(`hand_strike_damage`) and the generic `sum_modifiers` contract already
 exist.
 
 Target/scope: "+1 strength" is Valeriya's own strength, affecting only

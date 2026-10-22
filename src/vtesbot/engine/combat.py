@@ -50,7 +50,7 @@ Range)."""
 # maneuver_grant.py`). Besides `MANEUVER_HOOK`/`DAMAGE_PREVENTION_HOOK`, also
 # threaded into `BEFORE_RANGE_HOOK`'s context (`_ask_before_range`),
 # `COMBAT_STRENGTH_MODIFIER_HOOK`'s context (`hand_strike_strength`/
-# `_strike_strength`, reached via `_resolve_one_strike`/`_resolve_strike_
+# `hand_strike_damage`, reached via `_resolve_one_strike`/`_resolve_strike_
 # pair`), and `COMBAT_STRIKE_OPTION_HOOK`'s context (`_ask_strike`, so a
 # card-sourced strike-substitute provider's own `hand_strike_strength` call
 # sees the same bonus a plain hand strike does -- rules-auditor finding,
@@ -170,12 +170,13 @@ def mark_additional_strike_limit_used(context: Mapping[str, Any]) -> None:
 
 @dataclass(frozen=True)
 class StrikeDamage:
-    """Richer return shape for a `COMBAT_STRIKE_OPTION_HOOK` provider's
-    `apply`, flagging a strike dodge-proof. `amount` is the damage;
-    `ignore_dodge=True` means the opponent's dodge has no effect."""
+    """A strike's damage and its properties (ENG-048): what a
+    `COMBAT_STRIKE_OPTION_HOOK` option's `apply` returns. `ignore_dodge`: the
+    opponent's dodge has no effect; `aggravated`: dealt as aggravated damage."""
 
     amount: int
     ignore_dodge: bool = False
+    aggravated: bool = False
 
 
 COMMITTED_STRIKE_KEY = "committed_strike"
@@ -242,10 +243,10 @@ def hand_strike_strength(
     shape every card module already has on hand from its own hook
     `context` -- the single shared implementation every call site computing
     "what a plain hand strike would deal right now" to add a card-printed
-    bonus on top of (`_strike_strength` below, plus `cards/dust_up.py`,
+    bonus on top of (`hand_strike_damage` below, plus `cards/dust_up.py`,
     `cards/slam.py`, `cards/weighted_walking_stick.py`) must go through,
     rather than each re-deriving the sum independently: that previously let
-    `combat_state` reach `_strike_strength` without reaching the three card
+    `combat_state` reach `hand_strike_damage` without reaching the three card
     modules' own copies, so a `COMBAT_STRENGTH_MODIFIER_HOOK` provider
     reading `combat_state` (e.g. the prospective Kasim Bayar, krcg 201598)
     would have silently contributed 0 whenever the bonused vampire struck
@@ -264,18 +265,18 @@ def hand_strike_strength(
     )
 
 
-def _strike_strength(
+def hand_strike_damage(
     state: GameState,
     player: str,
-    vampire: VampireInPlay,
-    opponent: VampireInPlay,
-    combat_state: dict[str, Any],
-) -> int:
-    """Thin adapter over `hand_strike_strength` for this module's own call
-    sites, which hold `VampireInPlay` objects rather than instance ids."""
-    return hand_strike_strength(
-        state, player, vampire.instance_id, opponent.instance_id, combat_state
-    )
+    vampire: str,
+    opponent: str,
+    combat_state: Mapping[str, Any] | None = None,
+) -> StrikeDamage:
+    """A plain hand strike's damage with its properties (Rulebook §4: normal,
+    dodgeable). A "hand strike at +N" card derives its strike from this with
+    `dataclasses.replace`, so the extra damage inherits every property of
+    the base damage (ENG-048)."""
+    return StrikeDamage(amount=hand_strike_strength(state, player, vampire, opponent, combat_state))
 
 
 def _ask_strike(
@@ -290,11 +291,11 @@ def _ask_strike(
     `combat_dodge_option`. Pops a maneuver-committed strike first (ENG-019).
     Returns `(chosen_value, options_by_value, dodge_values)`. `combat_state`
     (ENG-040) is threaded into `COMBAT_STRIKE_OPTION_HOOK`'s own context --
-    not just into `_strike_strength`'s separate call below -- so a card-sourced
-    strike-substitute provider computing its own "+N damage over a plain
-    hand strike" (e.g. `cards/dust_up.py`, `cards/slam.py`, `cards/
-    weighted_walking_stick.py`, via `hand_strike_strength`) can read back the
-    same whole-combat-duration bonus a plain hand strike sees."""
+    not just into the plain hand strike's own `hand_strike_damage` call -- so a
+    card-sourced strike computing "+N over a plain hand strike" (`cards/
+    dust_up.py`, `cards/slam.py` via `hand_strike_damage`; `cards/
+    weighted_walking_stick.py` via `hand_strike_strength`) sees the same
+    whole-combat-duration bonus a plain hand strike does."""
     # Relies on this being the first _ask_strike call for vampire since
     # Determine Range always finishes before the strike step begins.
     committed = round_state.get(COMMITTED_STRIKE_KEY, {}).pop(vampire.instance_id, None)
@@ -345,26 +346,26 @@ def _resolve_one_strike(
     combat_state: dict[str, Any],
     *,
     participates: bool,
-) -> tuple[int, bool, bool]:
+) -> tuple[StrikeDamage, bool]:
     """Resolve one combatant's strike for one strike-pair step (ENG-012/ENG-019).
-    `participates=False` offers no choice. Returns `(damage, dodges,
-    ignore_opponent_dodge)`; dodge zeroes damage unless dodge-proof."""
+    `participates=False` offers no choice. Returns `(damage, dodges)`; a dodge
+    zeroes the opponent's damage unless that strike is dodge-proof."""
     if not participates:
-        return 0, False, False
+        return StrikeDamage(0), False
     choice, by_value, dodge_values = _ask_strike(
         state, player, vampire, opponent, round_state, combat_state
     )
     if choice in dodge_values:
         by_value[choice].apply(state)  # dodge's own side effect, if any
-        return 0, True, False
+        return StrikeDamage(0), True
     if choice == HAND_STRIKE_VALUE:
-        return _strike_strength(state, player, vampire, opponent, combat_state), False, False
+        return hand_strike_damage(
+            state, player, vampire.instance_id, opponent.instance_id, combat_state
+        ), False
     if choice == NO_STRIKE_VALUE:
-        return 0, False, False
+        return StrikeDamage(0), False
     result = by_value[choice].apply(state)  # card-granted strike option: its own damage
-    if isinstance(result, StrikeDamage):
-        return result.amount, False, result.ignore_dodge
-    return result, False, False
+    return (result if isinstance(result, StrikeDamage) else StrikeDamage(result)), False
 
 
 def _resolve_strike_pair(
@@ -382,7 +383,7 @@ def _resolve_strike_pair(
     """One choose/resolve-strike step (Rulebook §4 step 4): acting minion
     chooses first, strikes resolve simultaneously. Used for the normal and
     each additional-strike pair."""
-    damage_to_blocking, acting_dodges, acting_ignore_dodge = _resolve_one_strike(
+    damage_to_blocking, acting_dodges = _resolve_one_strike(
         state,
         acting_player,
         acting_vampire,
@@ -393,7 +394,7 @@ def _resolve_strike_pair(
     )
     if state.game_over:
         return
-    damage_to_acting, blocking_dodges, blocking_ignore_dodge = _resolve_one_strike(
+    damage_to_acting, blocking_dodges = _resolve_one_strike(
         state,
         blocking_player,
         blocking_vampire,
@@ -402,10 +403,10 @@ def _resolve_strike_pair(
         combat_state,
         participates=blocking_participates,
     )
-    if acting_dodges and not blocking_ignore_dodge:
-        damage_to_acting = 0
-    if blocking_dodges and not acting_ignore_dodge:
-        damage_to_blocking = 0
+    if acting_dodges and not damage_to_acting.ignore_dodge:
+        damage_to_acting = StrikeDamage(0)
+    if blocking_dodges and not damage_to_blocking.ignore_dodge:
+        damage_to_blocking = StrikeDamage(0)
 
     # Simultaneous: both strikes resolve in one step (round_state records
     # blood lost, ENG-020).
@@ -413,26 +414,47 @@ def _resolve_strike_pair(
     # DES-010: both sides' damage still resolves deliberately (simultaneous
     # torpor pool losses are one event, oust decided only afterwards).
     with simultaneous_pool_losses(state):
-        if damage_to_blocking:
-            apply_damage(
+        if damage_to_blocking.amount:
+            _apply_strike(
                 state,
                 blocking_player,
                 blocking_vampire,
-                normal=damage_to_blocking,
-                round_state=round_state,
-                inflicted_by=acting_vampire.instance_id,
-                combat_state=combat_state,
+                damage_to_blocking,
+                acting_vampire,
+                round_state,
+                combat_state,
             )
-        if damage_to_acting:
-            apply_damage(
+        if damage_to_acting.amount:
+            _apply_strike(
                 state,
                 acting_player,
                 acting_vampire,
-                normal=damage_to_acting,
-                round_state=round_state,
-                inflicted_by=blocking_vampire.instance_id,
-                combat_state=combat_state,
+                damage_to_acting,
+                blocking_vampire,
+                round_state,
+                combat_state,
             )
+
+
+def _apply_strike(
+    state: GameState,
+    player: str,
+    target: VampireInPlay,
+    damage: StrikeDamage,
+    striker: VampireInPlay,
+    round_state: dict[str, Any],
+    combat_state: dict[str, Any],
+) -> None:
+    apply_damage(
+        state,
+        player,
+        target,
+        normal=0 if damage.aggravated else damage.amount,
+        aggravated=damage.amount if damage.aggravated else 0,
+        round_state=round_state,
+        inflicted_by=striker.instance_id,
+        combat_state=combat_state,
+    )
 
 
 def _ask_additional_strike(

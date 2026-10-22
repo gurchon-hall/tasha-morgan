@@ -410,7 +410,9 @@ def test_fame_oust_mid_combat_resolves_the_simultaneous_second_damage_first(monk
     p2 = ScriptedAgent("P2")
     p2.expect("mend_damage", "1")
     game.state.agents["P2"] = p2
-    monkeypatch.setattr(combat, "_resolve_one_strike", lambda *a, **k: (1, False, False))
+    monkeypatch.setattr(
+        combat, "_resolve_one_strike", lambda *a, **k: (combat.StrikeDamage(1), False)
+    )
 
     combat._resolve_strike_pair(
         game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {}, {}
@@ -437,7 +439,9 @@ def test_fame_double_torpor_in_one_strike_pair_is_a_tie(monkeypatch):
         attach_card(game.state, game.vampire(vid), controller=owner, krcg_id=KRCG_ID, name="Fame")
     game.state.agents["P1"] = ScriptedAgent("P1")
     game.state.agents["P2"] = ScriptedAgent("P2")
-    monkeypatch.setattr(combat, "_resolve_one_strike", lambda *a, **k: (1, False, False))
+    monkeypatch.setattr(
+        combat, "_resolve_one_strike", lambda *a, **k: (combat.StrikeDamage(1), False)
+    )
 
     combat._resolve_strike_pair(
         game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {}, {}
@@ -465,7 +469,9 @@ def test_fame_double_torpor_with_the_other_side_above_three_pool_is_an_ordinary_
         attach_card(game.state, game.vampire(vid), controller=owner, krcg_id=KRCG_ID, name="Fame")
     game.state.agents["P1"] = ScriptedAgent("P1")
     game.state.agents["P2"] = ScriptedAgent("P2")
-    monkeypatch.setattr(combat, "_resolve_one_strike", lambda *a, **k: (1, False, False))
+    monkeypatch.setattr(
+        combat, "_resolve_one_strike", lambda *a, **k: (combat.StrikeDamage(1), False)
+    )
 
     combat._resolve_strike_pair(
         game.state, "P2", game.vampire("V2"), "P1", game.vampire("V1"), {}, {}

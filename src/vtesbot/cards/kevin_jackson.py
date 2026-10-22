@@ -43,7 +43,7 @@ exception, same as Valeriya Zinovieva's own unconditional "+1 strength",
 `src/vtesbot/cards/valeriya_zinovieva.py`) -- summed via
 `engine/combat.py::COMBAT_STRENGTH_MODIFIER_HOOK`/`hooks.sum_modifiers` into
 every strike damage computation for the matching combatant. No new engine
-hook wiring is needed: `_strike_strength`'s existing call already passes
+hook wiring is needed: `hand_strike_damage`'s existing call already passes
 `opponent` (the live strike's other combatant's id) alongside `player`/
 `vampire`, which this card's own clan-conditional check needs and no
 previously-implemented `combat_strength_modifier` provider has read before.
