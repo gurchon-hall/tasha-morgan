@@ -20,7 +20,7 @@ from ..attachments import (
 )
 from ..contests import resolve_one_contest
 from ..decision import Choice, Decision
-from ..hooks import HookOption
+from ..hooks import Hook, HookOption
 from ..master_cards import resolve_one_master_card_contest
 from ..pool import gain_pool
 
@@ -28,15 +28,10 @@ if TYPE_CHECKING:
     from ..state import GameState
 
 EDGE_GAIN_EFFECT = "edge_gain"
-UNLOCK_PHASE_MANDATORY_EFFECT_HOOK = "unlock_phase_mandatory_effect"
-"""`hooks.offer`-style hook (one `HookOption` per currently-applicable
-mandatory effect, e.g. Fame's clause-4 burn), queried once per iteration
-of `_resolve_optional_effects_in_chosen_order`'s own loop and folded into
-its ordering choice. Mandatory because an unresolved option keeps
-reappearing every iteration (dedup by the option's own `Choice.value`,
-namespaced `"mandatory:"` by this module, not by the provider) -- the
-loop cannot end, and `unlock_phase` cannot return, while one remains
-(Fame's own ruling, quoted on this module's own docstring above)."""
+UNLOCK_PHASE_MANDATORY_EFFECT_HOOK = Hook.UNLOCK_PHASE_MANDATORY_EFFECT
+"""One `HookOption` per pending mandatory effect, folded into the unlock
+phase's player-chosen ordering loop, which cannot end while one remains
+(Fame's ruling: such payments "can be ordered with other unlock effects")."""
 
 
 def unlock_phase(state: GameState, player: str) -> None:

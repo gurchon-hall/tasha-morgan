@@ -21,11 +21,12 @@ from typing import TYPE_CHECKING, Any
 from . import hooks
 from .attachments import effective_capacity
 from .decision import Choice, Decision
+from .hooks import Hook
 
 if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
 
-DAMAGE_PREVENTION_HOOK = "damage_prevention"
+DAMAGE_PREVENTION_HOOK = Hook.DAMAGE_PREVENTION
 
 COMBAT_STATE_CONTEXT_KEY = "combat_state"
 """Context key for the shared, combat-scoped (not round-scoped) scratch dict
@@ -71,7 +72,7 @@ it there too would be circular) so a `DAMAGE_PREVENTION_HOOK` provider can
 read/write round-scoped state (ENG-036) the same way combat-scoped hooks
 already do. `engine/combat.py::ROUND_STATE_CONTEXT_KEY` re-exports this same
 object; degrades to no entry when a hook is offered directly."""
-VAMPIRE_ENTERS_TORPOR_HOOK = "vampire_enters_torpor"
+VAMPIRE_ENTERS_TORPOR_HOOK = Hook.VAMPIRE_ENTERS_TORPOR
 """Mandatory reaction hook, dispatched by `send_to_torpor` (ENG-014, Fame). Passes the live
 `VampireInPlay`, safe since `run_effects` only runs trusted card code."""
 

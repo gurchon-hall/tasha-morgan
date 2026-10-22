@@ -10,12 +10,13 @@ from typing import TYPE_CHECKING
 
 from . import hooks
 from .decision import Choice, Decision
+from .hooks import Hook
 
 if TYPE_CHECKING:
     from .cards import LibraryCard
     from .state import GameState
 
-HAND_SIZE_MODIFIER_HOOK = "hand_size_modifier"
+HAND_SIZE_MODIFIER_HOOK = Hook.HAND_SIZE_MODIFIER
 """Passive, mandatory numeric hook (`hooks.sum_modifiers` contract) -- see
 module docstring. Matches `src/vtesbot/cards/registry.py::Hook.
 HAND_SIZE_MODIFIER`'s own string value."""

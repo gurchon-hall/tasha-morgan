@@ -10,23 +10,19 @@ from typing import TYPE_CHECKING, Any
 from . import hooks
 from .combat import run_combat, seed_block_time_combat_grants, seed_pre_combat_maneuver_grant
 from .decision import Choice, Decision
+from .hooks import Hook
 
 if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
 
-STEALTH_MODIFIER_HOOK = "stealth_modifier"
-INTERCEPT_MODIFIER_HOOK = "intercept_modifier"
-BLOCK_CANDIDATE_INJECTION_HOOK = "block_candidate_injection"
-"""ENG-018: mirrors `Hook.BLOCK_CANDIDATE_INJECTION`. `apply()` must unlock
-the vampire and return it as an unconditional successful block. Every
-option must also set `HookOption.block_candidate_instance_id` to that same
-vampire's own `instance_id` -- `attempt_block` filters injected options
-against `BLOCK_CANDIDATE_EXCLUSION_HOOK`'s own exclusion set by this id,
-same as it already does for the hardcoded `ready_unlocked_vampires` list,
-so a named-and-excluded vampire (e.g. `cards/sleeping_mind.py`) cannot be
-forced back in as an injected candidate (rules-auditor finding)."""
+STEALTH_MODIFIER_HOOK = Hook.STEALTH_MODIFIER
+INTERCEPT_MODIFIER_HOOK = Hook.INTERCEPT_MODIFIER
+BLOCK_CANDIDATE_INJECTION_HOOK = Hook.BLOCK_CANDIDATE_INJECTION
+"""ENG-018. `apply()` unlocks the vampire and returns it as a successful block;
+each option sets `HookOption.block_candidate_instance_id` so vampires excluded
+via `BLOCK_CANDIDATE_EXCLUSION_HOOK` are filtered out."""
 
-INTERCEPT_DECREASE_HOOK = "intercept_decrease"
+INTERCEPT_DECREASE_HOOK = Hook.INTERCEPT_DECREASE
 """ENG-021/RUL-009: mirrors `Hook.INTERCEPT_DECREASE`. Offered to `actor`
 proactively and reactively; `apply()` appends an `ActiveInterceptDecrease`
 to `pending`, not a delta."""
@@ -36,7 +32,7 @@ PENDING_INTERCEPT_DECREASE_KEY = "intercept_decrease_modifiers"
 appended to (never replaced) by each activated `INTERCEPT_DECREASE_HOOK`
 option's own `apply` closure."""
 
-STEALTH_INCREASE_HOOK = "stealth_increase"
+STEALTH_INCREASE_HOOK = Hook.STEALTH_INCREASE
 """RUL-011: `INTERCEPT_DECREASE_HOOK`'s sibling for actor's stealth.
 `apply()` appends an `ActiveStealthIncrease` to `pending`; no `qualifies`
 predicate needed."""
@@ -46,57 +42,20 @@ PENDING_STEALTH_INCREASE_KEY = "stealth_increase_modifiers"
 appended to (never replaced) by each activated `STEALTH_INCREASE_HOOK`
 option's own `apply` closure."""
 
-WAKE_LOCKED_MINION_HOOK = "wake_locked_minion"
+WAKE_LOCKED_MINION_HOOK = Hook.WAKE_LOCKED_MINION
 """ENG-030: defender-side sibling of `INTERCEPT_DECREASE_HOOK`/
 `STEALTH_INCREASE_HOOK`. `apply()` sets `woken = True` on a locked
 vampire; block stays fully contestable."""
 
-FORCE_BLOCK_ATTEMPT_FAILURE_HOOK = "force_block_attempt_failure"
-"""ENG-045: acting-side sibling of `INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_
-HOOK`, offered reactively at *both* branches of `_duel_stealth_intercept`
-once a specific blocker is fixed -- merged into the same `Decision` as those
-two siblings in the "block currently succeeds" branch (ENG-021/RUL-009), and asked
-alone, after the defender has declined/exhausted `INTERCEPT_MODIFIER_HOOK`,
-in the "block currently fails on the raw numbers" branch too (added by a
-rules-auditor finding on this hook's first landing). The two offer points
-exist for two different reasons: forcing an already-succeeding attempt to
-fail outright is this hook's "attempt fails" half; offering it even while
-already failing on the numbers is for its *other*, independent half --
-"cannot attempt to block this action again" has nothing to do with the
-current numbers, is not itself a stealth/intercept value modifier, and so is
-not covered by the "only when needed" scoping that keeps `STEALTH_MODIFIER_
-HOOK`/`INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_HOOK` out of that branch
-(RUL-009/RUL-011). Unlike those two numeric siblings, choosing this option does not
-feed back into the stealth/intercept comparison at all: `_duel_stealth_
-intercept` returns `forced_failure=True` only from the "succeeds" branch
-(moot in the "fails" branch, where the numbers already mean failure) --
-`attempt_block` reads that flag to treat the attempt as failed outright,
-regardless of the returned `stealth`/`intercept` values -- deliberately not
-modeled as an extreme `ActiveInterceptDecrease`, which would still let the
-defender respond with more intercept before the duel ends. `apply()`'s
-return is ignored, same contract as its siblings. Built for Forced
-Confessional (krcg 102250), "[DOM] That attempt fails and the blocking
-minion cannot attempt to block this action again." -- a provider also
-typically writes the blocking vampire's own `instance_id` into `pending[
-PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY]` directly (the same convention
-`cards/seduction.py`/`cards/sleeping_mind.py` already use from
-`BLOCK_CANDIDATE_EXCLUSION_HOOK`'s own proactive offer point); that half
-needs no new primitive, since `attempt_block`'s retry loop already re-reads
-that same set fresh on every iteration, before the candidate list is
-rebuilt."""
+FORCE_BLOCK_ATTEMPT_FAILURE_HOOK = Hook.FORCE_BLOCK_ATTEMPT_FAILURE
+"""ENG-045. Actor-side, once a blocker is fixed, in both branches of
+`_duel_stealth_intercept`: the attempt fails outright (`forced_failure`),
+bypassing stealth/intercept; `apply()` return ignored (Forced Confessional)."""
 
-BLOCK_CANDIDATE_EXCLUSION_HOOK = "block_candidate_exclusion"
-"""Subtractive sibling of `BLOCK_CANDIDATE_INJECTION_HOOK`: offered to
-`actor` in the same proactive slot as `INTERCEPT_DECREASE_HOOK`/
-`STEALTH_INCREASE_HOOK` (Rulebook §4: "as the action is announced",
-before the defender's block-candidate list is computed at all).
-`apply()` adds the chosen vampire's `instance_id` to
-`pending[PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY]` -- it does not touch
-stealth/intercept, since the named vampire must not be a block candidate
-in the first place, not merely fail an attempt. Needed by
-`cards/seduction.py` (krcg 101712) and `cards/sleeping_mind.py` (krcg
-101805); generic plumbing, not a rule of its own -- see those modules for
-the citations."""
+BLOCK_CANDIDATE_EXCLUSION_HOOK = Hook.BLOCK_CANDIDATE_EXCLUSION
+"""Actor-side, proactive (Rulebook §4 "as the action is announced"), before the
+defender's candidate list exists: `apply()` adds the vampire's id to
+`pending[PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY]` (Seduction, Sleeping Mind)."""
 
 PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY = "block_candidate_exclusions"
 """`pending[...]` key: holds a `set[str]` of excluded `instance_id`s,
@@ -209,19 +168,16 @@ HOOK` plus `hooks.PENDING_REACTION_PLAYED_KEY`, not on this discriminator
 or `played_card_type`, per its own card text's unqualified "a successful
 action") must not mistake this for one if it is ever added."""
 
-ACTION_SUCCEEDED_HOOK = "action_succeeded"
-"""ENG-024: mirrors `Hook.ACTION_SUCCEEDED`. Rulebook §4: success means not
-blocked. Dispatched via `run_effects` after `resolve(pending)`; never on
-the blocked branch. Forwards this action's own `pending` dict in context
-so a provider can read anything recorded during the action (e.g.
-`hooks.PENDING_REACTION_PLAYED_KEY`, for `cards/perfectionist.py`'s krcg
-101388 "no reaction cards were played" gate)."""
+ACTION_SUCCEEDED_HOOK = Hook.ACTION_SUCCEEDED
+"""ENG-024. `run_effects` after an unblocked action's `resolve(pending)`
+(Rulebook §4: success means not blocked); context forwards that `pending`,
+e.g. `PENDING_REACTION_PLAYED_KEY` for Perfectionist."""
 
 PENDING_REFERENDUM_RESULT_KEY = "referendum_result"
 """Mirrors `politics.py::REFERENDUM_RESULT_KEY` (duplicated, not imported,
 to avoid a circular import). See `REFERENDUM_RESOLVED_HOOK` below."""
 
-REFERENDUM_RESOLVED_HOOK = "referendum_resolved"
+REFERENDUM_RESOLVED_HOOK = Hook.REFERENDUM_RESOLVED
 """ENG-026: mirrors `Hook.REFERENDUM_RESOLVED`, strictly after a political
 action's `resolve()` returns, only if it passed; dispatched via
 `resolve_impulse_window`."""
@@ -522,24 +478,10 @@ class BlockAttemptCost:
     pay: Callable[[GameState], None]
 
 
-BLOCK_ATTEMPT_COST_HOOK = "block_attempt_cost"
-"""Passive, per-candidate cost-gate hook (see `BlockAttemptCost` above),
-dispatched by `attempt_block` for every candidate it is about to offer --
-both the hardcoded `ready_unlocked_vampires` list and
-`BLOCK_CANDIDATE_INJECTION_HOOK`'s own offered options -- re-queried fresh
-on every pass through the retry loop, same convention as
-`block_candidate_predicate`. A provider's context carries `candidate` (the
-instance_id of `defender`'s own vampire under consideration), `actor`,
-`defender`, `acting_vampire` (the instance_id of the vampire whose action is
-being blocked -- this, not `defender`'s own candidate, is who a passive
-ability like Sergio Bueno's own keys off of), `action`, `directed`. Returns
-a `BlockAttemptCost | None` per provider call -- `None` means this
-provider's passive ability simply does not apply to this candidate right
-now (not "paid in full"). Never offered as a `Decision`: CLAUDE.md §5's
-"mandatory effects defined by the rules" exception -- the printed text
-reads "must burn", with no "you may" and no choice of *which* candidate is
-charged (the only real decision left, which candidate the defender's agent
-picks to attempt with, is still offered normally via `block_attempt`)."""
+BLOCK_ATTEMPT_COST_HOOK = Hook.BLOCK_ATTEMPT_COST
+"""`collect`, mandatory: per block candidate, a provider returns a
+`BlockAttemptCost` or `None`; unaffordable candidates are not offered. Context:
+`candidate`, `actor`, `defender`, `acting_vampire`, `action`, `directed`."""
 
 
 def _block_attempt_costs(

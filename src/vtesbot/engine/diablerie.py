@@ -29,23 +29,17 @@ from typing import TYPE_CHECKING
 from . import hooks
 from .damage import add_blood, burn_vampire
 from .decision import Choice, Decision
+from .hooks import Hook
 from .politics import resolve_referendum
 
 if TYPE_CHECKING:
     from .cards import CardAttachment
     from .state import GameState, VampireInPlay
 
-DIABLERIE_HOOK = "diablerie"
-"""Matches `cards/registry.py::Hook.DIABLERIE`. Two-sided impulse window
-(`hooks.resolve_impulse_window`, CLAUDE.md rule 4: "acting Methuselah gets
-the impulse first ... then the other player"), dispatched by
-`resolve_diablerie` once blood/equipment/burn (steps 1-3) are fully
-resolved, but strictly *before* the automatic Blood Hunt referendum --
-see that function's own docstring for why this ordering, not "mandatory,
-no Decision" `run_effects` (contrast `damage.py::VAMPIRE_ENTERS_TORPOR_HOOK`):
-a card registering here (e.g. a future Queen Anne module's "she can
-unlock") offers the diablerist's controller an *optional* `HookOption`,
-not a forced effect."""
+DIABLERIE_HOOK = Hook.DIABLERIE
+"""Two-sided impulse window (`resolve_impulse_window`, acting Methuselah
+first) after diablerie steps 1-3, before the Blood Hunt referendum; options
+are optional effects, not forced ones (e.g. Queen Anne's unlock)."""
 
 
 def _move_attachment_to_diablerist(

@@ -14,6 +14,7 @@ from .damage import (
     apply_damage,
 )
 from .decision import Choice, Decision
+from .hooks import Hook
 from .pool import simultaneous_pool_losses
 
 if TYPE_CHECKING:
@@ -25,15 +26,15 @@ NO_STRIKE_VALUE = "no_strike"
 """The two built-in strike choices `_ask_strike` always offers (Rulebook
 §4). Named constants so `commit_strike_for_round` can reject a colliding
 card-sourced value."""
-COMBAT_STRIKE_OPTION_HOOK = "combat_strike_option"
-COMBAT_STRENGTH_MODIFIER_HOOK = "combat_strength_modifier"
-COMBAT_DODGE_OPTION_HOOK = "combat_dodge_option"
-COMBAT_ADDITIONAL_STRIKE_HOOK = "combat_additional_strike"
-MANEUVER_HOOK = "maneuver"
+COMBAT_STRIKE_OPTION_HOOK = Hook.COMBAT_STRIKE_OPTION
+COMBAT_STRENGTH_MODIFIER_HOOK = Hook.COMBAT_STRENGTH_MODIFIER
+COMBAT_DODGE_OPTION_HOOK = Hook.COMBAT_DODGE_OPTION
+COMBAT_ADDITIONAL_STRIKE_HOOK = Hook.COMBAT_ADDITIONAL_STRIKE
+MANEUVER_HOOK = Hook.MANEUVER
 """Matches `Hook.MANEUVER`'s string value."""
-END_OF_ROUND_HOOK = "end_of_round"
+END_OF_ROUND_HOOK = Hook.END_OF_ROUND
 """Matches `Hook.END_OF_ROUND`'s string value (ENG-020)."""
-BEFORE_RANGE_HOOK = "before_range"
+BEFORE_RANGE_HOOK = Hook.BEFORE_RANGE
 """Matches `Hook.BEFORE_RANGE`'s string value (ENG-029)."""
 
 CLOSE_RANGE = "close"

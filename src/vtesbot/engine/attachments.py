@@ -8,16 +8,17 @@ from typing import TYPE_CHECKING
 from . import hooks
 from .cards import CardAttachment
 from .decision import Choice, Decision
+from .hooks import Hook
 from .pool import can_afford_without_ousting, lose_pool
 
 if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
 
-CAPACITY_MODIFIER_HOOK = "capacity_modifier"
+CAPACITY_MODIFIER_HOOK = Hook.CAPACITY_MODIFIER
 """Passive numeric hook (`hooks.sum_modifiers`): an attachment's printed capacity bonus is
 mandatory and always-on while in play (CLAUDE.md rule 3 exception), so no `Decision` is raised."""
 
-DISCIPLINE_LEVEL_MODIFIER_HOOK = "discipline_level_modifier"
+DISCIPLINE_LEVEL_MODIFIER_HOOK = Hook.DISCIPLINE_LEVEL_MODIFIER
 """Passive, set-valued hook (`hooks.union_modifiers`): same mandatory-fact shape as
 `CAPACITY_MODIFIER_HOOK`, but for a granted discipline-level code (e.g. `"cel"`/`"CEL"`)."""
 

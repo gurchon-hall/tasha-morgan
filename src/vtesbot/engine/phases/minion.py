@@ -34,6 +34,7 @@ from ..damage import add_blood, send_to_torpor
 from ..decision import Choice, Decision
 from ..diablerie import resolve_diablerie
 from ..hand import draw_replacement_card
+from ..hooks import Hook
 from ..pool import lose_pool
 from ..state import EnterCombatGrant
 
@@ -55,16 +56,16 @@ DIABLERIE_STEALTH_OTHER_CONTROLLER = 0
 """Same source: "0 stealth, if ... different controllers." """
 RECRUIT_ALLY_STEALTH = 1
 """Rulebook §4 Recruit Ally: "Default stealth: +1 stealth." """
-RECRUIT_ALLY_PLAY_HOOK = "recruit_ally_play"
+RECRUIT_ALLY_PLAY_HOOK = Hook.RECRUIT_ALLY_PLAY
 """`HookOption` hook (mirrors `master.py`'s `master_phase_play`): offers one
 option per playable Ally card in hand; `apply(state)` returns a
 `RecruitAllySpec` (ENG-006)."""
-ACTION_CARD_PLAY_HOOK = "action_card_play"
+ACTION_CARD_PLAY_HOOK = Hook.ACTION_CARD_PLAY
 """`HookOption` hook (ENG-011): generalizes `RECRUIT_ALLY_PLAY_HOOK` to
 Action-type library cards; offers one option per playable Action card in
 hand; `apply(state)` returns an `ActionCardSpec` below."""
-BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
-BLEED_AMOUNT_FIXED_MODIFIER_HOOK = "bleed_amount_fixed_modifier"
+BLEED_AMOUNT_MODIFIER_HOOK = Hook.BLEED_AMOUNT_MODIFIER
+BLEED_AMOUNT_FIXED_MODIFIER_HOOK = Hook.BLEED_AMOUNT_FIXED_MODIFIER
 """Mandatory numeric hook (`hooks.sum_modifiers`, CLAUDE.md rule 3) for an
 unconditional printed bleed bonus, applied before the optional
 `bleed_amount_modifier` window opens."""
@@ -154,20 +155,10 @@ def build_enter_combat_action_spec(
     return ActionCardSpec(base_stealth=0, directed=True, resolve=resolve, name=name)
 
 
-ATTACHMENT_REMOVAL_ACTION_HOOK = "attachment_removal_action_play"
-"""`HookOption` hook (name mirrors `ACTION_CARD_PLAY_HOOK`/`RECRUIT_ALLY_
-PLAY_HOOK`'s own "_play" suffix convention; deliberately distinct from the
-`ACTION_ATTACHMENT_REMOVAL` discriminator string below, a different
-namespace), offered alongside `ACTION_CARD_PLAY_HOOK`/`RECRUIT_
-ALLY_PLAY_HOOK` in `_choose_and_perform_action` (same "default action list,
-gated on at least one eligible target existing" shape as the hardcoded
-"Diablerise a Vampire in Torpor" choice): one option per attachment a card
-module wants removable this way, offered for the acting vampire;
-`apply(state)` returns an `ActionCardSpec` built via `build_attachment_
-removal_action_spec` below. Generalizes Pulled Fangs' (krcg 101515) own
-"Any vampire(s) can burn this card with two +1 stealth actions" clause --
-not itself playing a card from hand, so kept off `ACTION_CARD_PLAY_HOOK`
-(see `ACTION_ATTACHMENT_REMOVAL`'s own docstring)."""
+ATTACHMENT_REMOVAL_ACTION_HOOK = Hook.ATTACHMENT_REMOVAL_ACTION_PLAY
+"""Offered with `ACTION_CARD_PLAY_HOOK` in `_choose_and_perform_action`: one
+option per removable attachment; `apply()` returns an `ActionCardSpec` from
+`build_attachment_removal_action_spec` (Pulled Fangs; plays no card)."""
 
 ATTACHMENT_REMOVAL_STEALTH = 1
 """"+1 stealth action" bare (no "Ⓓ" marker): undirected, baseline 0 (same
@@ -260,14 +251,10 @@ def active_enter_combat_grants(state: GameState, player: str) -> list[EnterComba
     ]
 
 
-CANNOT_HUNT_HOOK = "cannot_hunt"
-"""Passive boolean hook (`hooks.any_true`, CLAUDE.md rule 3 exception, mirrors
-`attachments.py::CAPACITY_MODIFIER_HOOK`): an attachment's printed "cannot hunt" clause is
-mandatory and always-on while attached, so no `Decision` is raised for it. Needed by Pulled
-Fangs (krcg 101515): "The attached vampire cannot hunt; if they must hunt, they go to torpor
-instead." Checked by `minion_phase`'s own mandatory-hunt loop before calling `_perform_hunt`
--- a vampire for which any provider returns True is sent straight to `send_to_torpor`
-instead, never attempting the hunt action at all (not blockable, not an action)."""
+CANNOT_HUNT_HOOK = Hook.CANNOT_HUNT
+"""`any_true`, mandatory: an attachment's "cannot hunt" clause. Checked by
+`minion_phase`'s mandatory-hunt loop; such a vampire goes to torpor instead,
+not as an action (Pulled Fangs)."""
 
 
 def minion_phase(state: GameState, player: str) -> None:

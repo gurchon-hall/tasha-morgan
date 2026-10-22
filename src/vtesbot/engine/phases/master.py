@@ -24,12 +24,13 @@ from typing import TYPE_CHECKING
 
 from .. import hooks
 from ..decision import Choice, Decision
+from ..hooks import Hook
 
 if TYPE_CHECKING:
     from ..state import GameState
 
-MASTER_PHASE_PLAY_HOOK = "master_phase_play"
-MASTER_PHASE_ABILITY_HOOK = "master_phase_ability"
+MASTER_PHASE_PLAY_HOOK = Hook.MASTER_PHASE_PLAY
+MASTER_PHASE_ABILITY_HOOK = Hook.MASTER_PHASE_ABILITY
 """A crypt card's own printed master-phase ability (module docstring):
 offered alongside `MASTER_PHASE_PLAY_HOOK` every iteration, but choosing
 one of its options never touches `actions_remaining`/the trifle bonus."""
