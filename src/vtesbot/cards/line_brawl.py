@@ -126,6 +126,7 @@ from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.cards import Sect
 from vtesbot.engine.decision import Choice, Decision
 from vtesbot.engine.hooks import HookOption
@@ -192,7 +193,7 @@ def _provide_line_brawl_cel(state: GameState, context: Mapping[str, Any]) -> lis
     acting_vampire = _controllers_vampire(state, context)
     if not _requires_an_anarch(acting_vampire):
         return []
-    disciplines = acting_vampire.card.disciplines  # type: ignore[union-attr]
+    disciplines = effective_disciplines(state, acting_vampire)  # type: ignore[union-attr]
     if CEL not in disciplines and CEL.upper() not in disciplines:
         return []
     if not _has_card_in_hand(state, player):
@@ -229,7 +230,7 @@ def _provide_line_brawl_pot(state: GameState, context: Mapping[str, Any]) -> lis
     acting_vampire = _controllers_vampire(state, context)
     if not _requires_an_anarch(acting_vampire):
         return []
-    disciplines = acting_vampire.card.disciplines  # type: ignore[union-attr]
+    disciplines = effective_disciplines(state, acting_vampire)  # type: ignore[union-attr]
     if POT not in disciplines and POT.upper() not in disciplines:
         return []
     if not _has_card_in_hand(state, player):
@@ -279,7 +280,7 @@ def _provide_line_brawl_pre(state: GameState, context: Mapping[str, Any]) -> lis
     acting_vampire = _controllers_vampire(state, context)
     if not _requires_an_anarch(acting_vampire):
         return []
-    disciplines = acting_vampire.card.disciplines  # type: ignore[union-attr]
+    disciplines = effective_disciplines(state, acting_vampire)  # type: ignore[union-attr]
     if PRE not in disciplines and PRE.upper() not in disciplines:
         return []
     if not _has_card_in_hand(state, player):

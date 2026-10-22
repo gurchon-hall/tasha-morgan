@@ -63,6 +63,7 @@ from typing import Any
 from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.damage import (
     DAMAGE_PREVENTION_HOOK,
     ROUND_STATE_CONTEXT_KEY,
@@ -120,7 +121,7 @@ def _provide_prevent(state: GameState, context: Mapping[str, Any]) -> list[HookO
     vampire = state.players[player].vampires.get(context["vampire"])
     if vampire is None:
         return []
-    disciplines = vampire.card.disciplines
+    disciplines = effective_disciplines(state, vampire)
     if BASIC not in disciplines and SUPERIOR not in disciplines:
         return []
     if not _has_card_in_hand(state, player):

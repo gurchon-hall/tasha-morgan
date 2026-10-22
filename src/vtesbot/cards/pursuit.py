@@ -77,6 +77,7 @@ from typing import Any
 from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.combat import (
     COMBAT_ADDITIONAL_STRIKE_HOOK,
     MANEUVER_HOOK,
@@ -115,7 +116,7 @@ def _provide_maneuver(state: GameState, context: Mapping[str, Any]) -> list[Hook
     vampire = _controllers_vampire(state, context)
     if vampire is None:
         return []
-    disciplines = vampire.card.disciplines
+    disciplines = effective_disciplines(state, vampire)
     if CEL_BASIC not in disciplines and CEL_SUPERIOR not in disciplines:
         return []
     player = context["player"]
@@ -140,7 +141,7 @@ def _provide_additional_strike(state: GameState, context: Mapping[str, Any]) -> 
     vampire = _controllers_vampire(state, context)
     if vampire is None:
         return []
-    disciplines = vampire.card.disciplines
+    disciplines = effective_disciplines(state, vampire)
     if CEL_SUPERIOR not in disciplines:
         return []
     player = context["player"]

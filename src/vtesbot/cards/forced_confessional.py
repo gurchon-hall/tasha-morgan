@@ -102,6 +102,7 @@ from vtesbot.engine.action import (
     PENDING_INTERCEPT_DECREASE_KEY,
     ActiveInterceptDecrease,
 )
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.state import GameState, VampireInPlay
@@ -148,7 +149,7 @@ def _provide_forced_confessional_basic(
         return []
     if acting_vampire.card.clan != CLAN:
         return []
-    disciplines = acting_vampire.card.disciplines
+    disciplines = effective_disciplines(state, acting_vampire)
     if BASIC not in disciplines and SUPERIOR not in disciplines:
         return []
     player = context["player"]
@@ -194,7 +195,7 @@ def _provide_forced_confessional_superior(
         return []
     if acting_vampire.card.clan != CLAN:
         return []
-    if SUPERIOR not in acting_vampire.card.disciplines:
+    if SUPERIOR not in effective_disciplines(state, acting_vampire):
         return []
     player = context["player"]
     if not _has_card_in_hand(state, player):

@@ -78,6 +78,7 @@ from vtesbot.engine.action import (
     BLOCK_CANDIDATE_EXCLUSION_HOOK,
     PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY,
 )
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.decision import Choice, Decision
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.state import GameState, VampireInPlay
@@ -179,7 +180,7 @@ def _provide_seduction_basic(state: GameState, context: Mapping[str, Any]) -> li
     acting_vampire = _acting_vampire(state, context)
     if acting_vampire is None:
         return []
-    disciplines = acting_vampire.card.disciplines
+    disciplines = effective_disciplines(state, acting_vampire)
     if BASIC not in disciplines and SUPERIOR not in disciplines:
         return []
     if not _has_card_in_hand(state, player):
@@ -212,7 +213,7 @@ def _provide_seduction_superior(state: GameState, context: Mapping[str, Any]) ->
     acting_vampire = _acting_vampire(state, context)
     if acting_vampire is None:
         return []
-    if SUPERIOR not in acting_vampire.card.disciplines:
+    if SUPERIOR not in effective_disciplines(state, acting_vampire):
         return []
     if not _has_card_in_hand(state, player):
         return []

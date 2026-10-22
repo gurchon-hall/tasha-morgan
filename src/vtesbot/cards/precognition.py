@@ -99,6 +99,7 @@ from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import INTERCEPT_MODIFIER_HOOK, grant_block_time_combat_effect
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.combat import block_time_combat_grant_available, consume_block_time_combat_grant
 from vtesbot.engine.damage import (
     DAMAGE_PREVENTION_HOOK,
@@ -140,8 +141,8 @@ def _has_card_in_hand(state: GameState, player: str) -> bool:
     return any(card.krcg_id == KRCG_ID for card in state.players[player].hand)
 
 
-def _is_auspex(vampire: VampireInPlay) -> bool:
-    disciplines = vampire.card.disciplines
+def _is_auspex(state: GameState, vampire: VampireInPlay) -> bool:
+    disciplines = effective_disciplines(state, vampire)
     return BASIC in disciplines or SUPERIOR in disciplines
 
 
@@ -149,7 +150,7 @@ def _eligible(state: GameState, player: str, used_by: set[str]) -> list[VampireI
     return [
         v
         for v in state.players[player].vampires.values()
-        if v.is_ready_unlocked and v.instance_id not in used_by and _is_auspex(v)
+        if v.is_ready_unlocked and v.instance_id not in used_by and _is_auspex(state, v)
     ]
 
 
@@ -190,7 +191,7 @@ def _provide_precognition_intercept(
                 played_card_type=CARD_TYPE,
             )
         )
-        if SUPERIOR in vampire.card.disciplines:
+        if SUPERIOR in effective_disciplines(state, vampire):
 
             def _make_superior(v: VampireInPlay):
                 def _apply(s: GameState) -> int:

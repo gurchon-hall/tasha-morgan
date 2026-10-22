@@ -53,7 +53,7 @@ def _playable(state: GameState, ctx: Mapping[str, Any], discipline: str) -> bool
     return (
         vampire is not None
         and vampire.card.sect is Sect.ANARCH
-        and has_discipline(vampire, discipline)
+        and has_discipline(state, vampire, discipline)
         and card.in_hand(state, ctx["player"])
     )
 

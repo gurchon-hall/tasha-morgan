@@ -66,6 +66,7 @@ from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.cards import Sect
 from vtesbot.engine.corruption import add_corruption_counters
 from vtesbot.engine.decision import Choice, Decision
@@ -96,8 +97,8 @@ CARD_TYPE = "Action"
 this module's own "Card type: Action" docstring fact above."""
 
 
-def _has_discipline(vampire: VampireInPlay, discipline: str) -> bool:
-    disciplines = vampire.card.disciplines
+def _has_discipline(state: GameState, vampire: VampireInPlay, discipline: str) -> bool:
+    disciplines = effective_disciplines(state, vampire)
     return discipline in disciplines or discipline.upper() in disciplines
 
 
@@ -129,9 +130,9 @@ def _provide_the_platinum_protocol(
     acting_vampire = _controllers_vampire(state, context)
     if not _requires_an_anarch(acting_vampire):
         return []
-    has_obf = _has_discipline(acting_vampire, OBF)
-    has_pre = _has_discipline(acting_vampire, PRE)
-    has_pro = _has_discipline(acting_vampire, PRO)
+    has_obf = _has_discipline(state, acting_vampire, OBF)
+    has_pre = _has_discipline(state, acting_vampire, PRE)
+    has_pro = _has_discipline(state, acting_vampire, PRO)
     if not (has_obf or has_pre or has_pro):
         return []
     if not _has_card_in_hand(state, player):

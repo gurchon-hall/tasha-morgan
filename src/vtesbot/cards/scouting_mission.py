@@ -54,6 +54,7 @@ from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import effective_capacity, hooks
 from vtesbot.engine.action import ACTION_BLEED
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.damage import add_blood
 from vtesbot.engine.decision import Choice, Decision
 from vtesbot.engine.hooks import HookOption
@@ -112,7 +113,7 @@ def _provide_scouting_mission_basic(
     if acting_vampire is None:
         return []  # `player` is the defender this window, not the acting player.
 
-    disciplines = acting_vampire.card.disciplines
+    disciplines = effective_disciplines(state, acting_vampire)
     if BASIC not in disciplines and SUPERIOR not in disciplines:
         return []
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
@@ -180,7 +181,7 @@ def _provide_scouting_mission_superior(
     if acting_vampire is None:
         return []
 
-    if SUPERIOR not in acting_vampire.card.disciplines:
+    if SUPERIOR not in effective_disciplines(state, acting_vampire):
         return []
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
         return []

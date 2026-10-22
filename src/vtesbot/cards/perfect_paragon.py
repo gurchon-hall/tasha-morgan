@@ -60,6 +60,7 @@ from vtesbot.engine.action import (
     PENDING_INTERCEPT_DECREASE_KEY,
     ActiveInterceptDecrease,
 )
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.politics import POLLING_STEP_HOOK
@@ -98,7 +99,7 @@ def _provide_perfect_paragon_basic(
     acting_vampire = _caller_vampire(state, context)
     if acting_vampire is None:
         return []
-    disciplines = acting_vampire.card.disciplines
+    disciplines = effective_disciplines(state, acting_vampire)
     if BASIC not in disciplines and SUPERIOR not in disciplines:
         return []
     player = context["player"]
@@ -154,7 +155,7 @@ def _provide_perfect_paragon_superior(
     acting_vampire = _acting_vampire_for_intercept_decrease(state, context)
     if acting_vampire is None:
         return []
-    if SUPERIOR not in acting_vampire.card.disciplines:
+    if SUPERIOR not in effective_disciplines(state, acting_vampire):
         return []
     player = context["player"]
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):

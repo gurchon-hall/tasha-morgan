@@ -106,6 +106,7 @@ from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.cards.threats import LIMITED_USED_KEY
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.phases.minion import PENDING_BLEED_AMOUNT_KEY
@@ -137,7 +138,7 @@ def _provide_bonding_basic(state: GameState, context: Mapping[str, Any]) -> list
     if acting_vampire is None:
         return []  # `player` is the defender this turn of the impulse window, not the bleeder.
 
-    disciplines = acting_vampire.card.disciplines
+    disciplines = effective_disciplines(state, acting_vampire)
     if BASIC not in disciplines and SUPERIOR not in disciplines:
         return []
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
@@ -181,7 +182,7 @@ def _provide_bonding_superior(state: GameState, context: Mapping[str, Any]) -> l
     if acting_vampire is None:
         return []
 
-    if SUPERIOR not in acting_vampire.card.disciplines:
+    if SUPERIOR not in effective_disciplines(state, acting_vampire):
         return []
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
         return []

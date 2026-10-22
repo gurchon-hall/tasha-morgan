@@ -59,6 +59,7 @@ from vtesbot.cards._shared import remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED, force_lock_ready_unlocked_minion
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.phases.minion import (
@@ -111,7 +112,7 @@ def _provide_propaganda_basic(state: GameState, context: Mapping[str, Any]) -> l
     acting_vampire = _controllers_vampire(state, context)
     if acting_vampire is None:
         return []
-    disciplines = acting_vampire.card.disciplines
+    disciplines = effective_disciplines(state, acting_vampire)
     if BASIC not in disciplines and SUPERIOR not in disciplines:
         return []
     if not _has_card_in_hand(state, player):
@@ -182,7 +183,7 @@ def _provide_propaganda_superior(state: GameState, context: Mapping[str, Any]) -
     acting_vampire = _controllers_vampire(state, context)
     if acting_vampire is None:
         return []
-    if SUPERIOR not in acting_vampire.card.disciplines:
+    if SUPERIOR not in effective_disciplines(state, acting_vampire):
         return []
     if not _has_card_in_hand(state, player):
         return []

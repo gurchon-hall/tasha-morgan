@@ -151,6 +151,7 @@ from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import REFERENDUM_RESOLVED_HOOK
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.damage import add_blood
 from vtesbot.engine.decision import Choice, Decision
 from vtesbot.engine.hooks import HookOption
@@ -206,7 +207,10 @@ def _provide_voter_captivation_basic(
     if (
         target is None
         or target.instance_id in granted
-        or not (BASIC in target.card.disciplines or SUPERIOR in target.card.disciplines)
+        or not (
+            BASIC in effective_disciplines(state, target)
+            or SUPERIOR in effective_disciplines(state, target)
+        )
     ):
         return []
 
@@ -245,7 +249,11 @@ def _provide_voter_captivation_superior(
     margin = context["margin"]
     granted = _granted(context["pending"])
     target = _caller_vampire(state, context)
-    if target is None or target.instance_id in granted or SUPERIOR not in target.card.disciplines:
+    if (
+        target is None
+        or target.instance_id in granted
+        or SUPERIOR not in effective_disciplines(state, target)
+    ):
         return []
 
     def _cost(s: GameState) -> None:

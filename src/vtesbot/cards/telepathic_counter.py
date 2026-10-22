@@ -71,6 +71,7 @@ from typing import Any
 from vtesbot.cards._shared import bleed_bookkeeping, play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.state import GameState, VampireInPlay
@@ -95,7 +96,7 @@ def _eligible_vampires(state: GameState, player: str, used_by: set[str]) -> list
         for v in state.players[player].vampires.values()
         if v.is_ready_unlocked
         and v.instance_id not in used_by
-        and ("aus" in v.card.disciplines or "AUS" in v.card.disciplines)
+        and ("aus" in effective_disciplines(state, v) or "AUS" in effective_disciplines(state, v))
     ]
 
 
@@ -138,7 +139,7 @@ def _provide_telepathic_counter(state: GameState, context: Mapping[str, Any]) ->
                 played_card_type=CARD_TYPE,
             )
         )
-        if "AUS" in vampire.card.disciplines:
+        if "AUS" in effective_disciplines(state, vampire):
             options.append(
                 HookOption(
                     choice=Choice(

@@ -55,6 +55,7 @@ from typing import Any
 from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.damage import DAMAGE_PREVENTION_HOOK, ROUND_STATE_CONTEXT_KEY
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
@@ -120,7 +121,7 @@ def _provide_soak(state: GameState, context: Mapping[str, Any]) -> list[HookOpti
     if damage_box.get("normal", 0) <= 0:
         return []  # "Cannot be used if there is no damage to prevent." [LSJ 20001114]
 
-    disciplines = vampire.card.disciplines
+    disciplines = effective_disciplines(state, vampire)
     options: list[HookOption] = []
 
     def _apply_basic(s: GameState) -> None:

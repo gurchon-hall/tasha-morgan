@@ -85,6 +85,7 @@ from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.action import INTERCEPT_MODIFIER_HOOK, WAKE_LOCKED_MINION_HOOK
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.state import GameState, VampireInPlay
@@ -122,7 +123,9 @@ def _eligible_basic(state: GameState, player: str, used_by: set[str]) -> list[Va
         for v in state.players[player].vampires.values()
         if v.is_ready_unlocked
         and v.instance_id not in used_by
-        and (BASIC in v.card.disciplines or SUPERIOR in v.card.disciplines)
+        and (
+            BASIC in effective_disciplines(state, v) or SUPERIOR in effective_disciplines(state, v)
+        )
     ]
 
 
@@ -137,7 +140,7 @@ def _eligible_superior(state: GameState, player: str, used_by: set[str]) -> list
         and v.locked
         and not v.woken
         and v.instance_id not in used_by
-        and SUPERIOR in v.card.disciplines
+        and SUPERIOR in effective_disciplines(state, v)
     ]
 
 

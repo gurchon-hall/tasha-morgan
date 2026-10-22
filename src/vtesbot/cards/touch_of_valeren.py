@@ -113,7 +113,7 @@ from vtesbot.cards._shared import play_from_hand, remove_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.allies import add_life
-from vtesbot.engine.attachments import effective_capacity
+from vtesbot.engine.attachments import effective_capacity, effective_disciplines
 from vtesbot.engine.damage import COMBAT_STATE_CONTEXT_KEY, DAMAGE_PREVENTION_HOOK, add_blood
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
@@ -226,7 +226,7 @@ def _provide_touch_of_valeren_action(
         return []
     if acting_vampire.card.clan != CLAN:
         return []
-    disciplines = acting_vampire.card.disciplines
+    disciplines = effective_disciplines(state, acting_vampire)
     if BASIC not in disciplines and SUPERIOR not in disciplines:
         return []
     if not _has_card_in_hand(state, player):
@@ -267,7 +267,7 @@ def _provide_touch_of_valeren_self(
         return []
     if vampire.card.clan != CLAN:
         return []
-    disciplines = vampire.card.disciplines
+    disciplines = effective_disciplines(state, vampire)
     if BASIC not in disciplines and SUPERIOR not in disciplines:
         return []
     if not _has_card_in_hand(state, player):
@@ -322,7 +322,7 @@ def _provide_touch_of_valeren_assist(
             continue
         if candidate.card.clan != CLAN:
             continue
-        if SUPERIOR not in candidate.card.disciplines:
+        if SUPERIOR not in effective_disciplines(state, candidate):
             continue
         if candidate.blood < BLOOD_COST:
             continue  # printed blood cost, paid by the playing (candidate) vampire.

@@ -132,6 +132,7 @@ from typing import Any
 from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.politics import POLLING_STEP_HOOK
@@ -170,8 +171,14 @@ def _controls_basic_vampire(state: GameState, player: str) -> bool:
     *both* basic-or-better Celerity and basic-or-better Presence."""
     return any(
         v.is_ready_unlocked
-        and (CEL_BASIC in v.card.disciplines or CEL_SUPERIOR in v.card.disciplines)
-        and (PRE_BASIC in v.card.disciplines or PRE_SUPERIOR in v.card.disciplines)
+        and (
+            CEL_BASIC in effective_disciplines(state, v)
+            or CEL_SUPERIOR in effective_disciplines(state, v)
+        )
+        and (
+            PRE_BASIC in effective_disciplines(state, v)
+            or PRE_SUPERIOR in effective_disciplines(state, v)
+        )
         for v in state.players[player].vampires.values()
     )
 
@@ -182,8 +189,8 @@ def _controls_superior_vampire(state: GameState, player: str) -> bool:
     gate) with *both* superior Celerity and superior Presence."""
     return any(
         v.is_ready_unlocked
-        and CEL_SUPERIOR in v.card.disciplines
-        and PRE_SUPERIOR in v.card.disciplines
+        and CEL_SUPERIOR in effective_disciplines(state, v)
+        and PRE_SUPERIOR in effective_disciplines(state, v)
         for v in state.players[player].vampires.values()
     )
 
@@ -197,8 +204,14 @@ def _caller_may_play_basic(state: GameState, context: Mapping[str, Any]) -> bool
     return (
         vampire is not None
         and vampire.zone == "ready"
-        and (CEL_BASIC in vampire.card.disciplines or CEL_SUPERIOR in vampire.card.disciplines)
-        and (PRE_BASIC in vampire.card.disciplines or PRE_SUPERIOR in vampire.card.disciplines)
+        and (
+            CEL_BASIC in effective_disciplines(state, vampire)
+            or CEL_SUPERIOR in effective_disciplines(state, vampire)
+        )
+        and (
+            PRE_BASIC in effective_disciplines(state, vampire)
+            or PRE_SUPERIOR in effective_disciplines(state, vampire)
+        )
     )
 
 
@@ -208,8 +221,8 @@ def _caller_may_play_superior(state: GameState, context: Mapping[str, Any]) -> b
     return (
         vampire is not None
         and vampire.zone == "ready"
-        and CEL_SUPERIOR in vampire.card.disciplines
-        and PRE_SUPERIOR in vampire.card.disciplines
+        and CEL_SUPERIOR in effective_disciplines(state, vampire)
+        and PRE_SUPERIOR in effective_disciplines(state, vampire)
     )
 
 

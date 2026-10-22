@@ -54,6 +54,7 @@ from typing import Any
 from vtesbot.cards._shared import bleed_bookkeeping, play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
+from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.state import GameState
@@ -73,7 +74,7 @@ def _provide_threats(state: GameState, context: Mapping[str, Any]) -> list[HookO
     if acting_vampire is None:
         return []  # `player` is the defender this turn of the impulse window, not the bleeder.
 
-    disciplines = acting_vampire.card.disciplines
+    disciplines = effective_disciplines(state, acting_vampire)
     if "dom" not in disciplines and "DOM" not in disciplines:
         return []
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
