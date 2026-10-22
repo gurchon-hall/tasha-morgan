@@ -15,63 +15,65 @@ Look the card up in the active list `data/formats/2p/<date>.json`.
 Not listed → stop and report. Already implemented → you are fixing
 it; start from its tests.
 
-## 2. Fetch the official data (never from memory)
+## 2. Fetch and snapshot the official data (never from memory)
 
-Use KRCG. The API has changed across versions — confirm it against the
-installed version (`python -c "import krcg; print(krcg.__version__)"`,
-`help(krcg.load)`) before relying on any attribute name. As of krcg 4.18
-(this project's installed version), there is no `krcg.vtes` submodule at
-all (`from krcg.vtes import VTES` raises `ModuleNotFoundError`); use:
+The project pins krcg ≥ 5.14 (`pyproject.toml`). `krcg.load()`
+returns a `CardDict`; there is no `krcg.vtes` module and cards have
+no `to_json()`. Check the installed version first (`uv run python -c
+"import importlib.metadata as m; print(m.version('krcg'))"`) and
+re-check attribute names with `dir(card)` if it changed.
 
 ```python
 import krcg
+import msgspec
 
-cards = krcg.load()
-card = cards["Card Name"]  # or cards[krcg_id]
-data = card.to_json()  # inspect keys: text, rulings, types, ...
+card = krcg.load()["Card Name"]  # or [krcg_id]
+card.text, card.rulings  # the clauses and rulings to cover
+path = f"data/cards/{card.id}.json"
+with open(path, "wb") as f:
+    f.write(msgspec.json.format(msgspec.json.encode(card), indent=2))
 ```
 
-Save the raw JSON to `data/cards/<card_id>.json` so the implementation
-is tied to a fixed text. If KRCG and the VEKN site disagree, report
-it.
+Then run the data JSON fix from CLAUDE.md §6 on that file. The
+snapshot ties the implementation to a fixed text; it is the verbatim
+record, so the docstring does not repeat it. If KRCG and the VEKN
+card page disagree, report it.
 
-## 3. Analyse the text
+## 3. Analyse the text (in your head and the tests, not the docstring)
 
-Write a short breakdown in the module docstring — short means it,
-per CLAUDE.md §6 (minimal comments, WHY over WHAT): aim for under
-~20-25 lines, not an essay on how you investigated it.
-
-- verbatim card text (basic and superior levels separately) — this
-  one is always quoted in full, it's the one thing memory must never
-  stand in for;
 - requirements (clan, discipline, capacity, title, sect), costs
   (blood / pool / other), timing window, target(s), duration;
-- rulings: cite the reference for each one; quote the wording verbatim
-  only when the exact phrasing is load-bearing for the implementation
-  or the blocked/implemented decision — otherwise a one-line summary
-  with its citation is enough, especially for rulings that are generic
-  background and not specific to this card;
-- state the WHY only where a reader couldn't infer it from the code:
-  which clause is blocked and why, which engine hook it rides on. Do
-  not restate this checklist, narrate alternatives you rejected, or
-  re-explain a `RUL`/`ENG` entry already written up under `docs/` —
-  cite it by id instead of repeating it.
-
-Flag any wording referring to **prey / predator / "other
-Methuselahs" / votes from several players** — check it against the
-duel setting. Unclear → `RUL` entry (see `vtes-rules-reference`),
-mark `blocked`.
+- each ruling and what it changes;
+- wording referring to **prey / predator / "other Methuselahs" /
+  votes from several players**: check it against the duel setting
+  (RUL-001). Unclear → `RUL` entry (`vtes-rules-reference`), block
+  the card.
 
 ## 4. Implement
 
-- File: `src/vtesbot/cards/<snake_case_name>.py`.
-- Use only hooks the engine exposes. Missing hook → stop, describe
-  it, hand off to `rules-engineer`.
-- Requirements and costs are checked by the card's
-  `is_playable(observation-side context)` and surfaced as legal
-  choices; never let an agent play an unplayable card.
-- Superior/basic are separate choices when the vampire has the
+- File: `src/vtesbot/cards/<snake_case_name>.py`, built on
+  `cards/card.py::Card` (`cards/celerity.py` shows the API; its
+  docstring predates the 3-line rule). Do not copy modules that still
+  call `register(CardRegistration(...))`.
+- Docstring, 3 lines max (CLAUDE.md §6):
+
+  ```python
+  """Celerity (Master: Discipline). krcg 100312. Snapshot: data/cards/100312.json
+  Superior is read from effective disciplines, so copies stack (ENG-002)."""
+  ```
+
+- `card = Card(KRCG_ID, "Name", "<krcg type>")` registers the card;
+  library cards need the type. Wire each effect with
+  `@card.on(Hook.X)`; offer choices with `card.option(value, label,
+  apply)` so the agent only ever sees legal plays. Requirements and
+  costs are checked inside the provider: an unplayable card yields no
+  option.
+- Superior/basic are separate options when the vampire has the
   superior level.
+- Missing hook → do not work around it. Open an `ENG` entry, call
+  `card.block("ENG-<nnn>", planned_hooks=(...))` with no providers
+  wired, and report it for `rules-engineer` (`add-engine-hook`).
+- Unclear ruling → same, with `card.block("RUL-<nnn>")`.
 
 ## 5. Test
 
@@ -85,13 +87,13 @@ File: `tests/cards/test_<snake_case_name>.py`. Minimum:
 
 Use the `rules-scenario-test` skill helpers.
 
-## 6. Register
+## 6. Verify
 
-Add the entry to the card registry with
-`status = "implemented" | "blocked"`, the KRCG id, and the data
-snapshot path.
+`Card(...)` registers itself; there is no separate registry edit. Run
+`uv run python scripts/check.py`.
 
 ## 7. Report
 
 One line per card: `Card Name — implemented (n tests)` or
-`Card Name — blocked: RUL-<nnn> / ENG-<nnn> (missing hook <x>)`.
+`Card Name — blocked: RUL-<nnn> / ENG-<nnn> (missing hook <x>)`, plus
+the file list and the `check.py` summary.

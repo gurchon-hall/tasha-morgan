@@ -96,8 +96,9 @@ the opponent can attempt to block essentially every action. Any card
 whose text distinguishes prey from predator must be checked against
 this; if the outcome is unclear → `RUL` entry.
 
-The format is a **living playtest** (cards are added/removed; last
-observed update: 2026-10-03). Never hard-code legality.
+The format is a **living playtest** (cards are added/removed; the
+versions held and their dates are in `data/formats/2p/CHANGELOG.md`).
+Never hard-code legality.
 
 ---
 
@@ -174,49 +175,47 @@ tests/
 
 - Python ≥ 3.14, full type hints, `dataclasses` or `pydantic` for
   state.
-- Comments: minimal. Only when the WHY is non-obvious (a rule
-  subtlety, a workaround, an invariant); never restate what the
-  code already says. Docstrings still cite rule sources (§2) and
-  cover ruling-driven edge cases a reader couldn't infer from the
-  code.
-- Tests: `pytest`. Lint/format: `ruff`. Markdown lint:
-  `pymarkdownlnt` (`uv run pymarkdown scan docs/ CLAUDE.md`),
-  config in `.pymarkdown`. Any change touching a tracked `.md`
-  file (`docs/rulings/`, `docs/engine/`, `docs/design/`,
-  `CLAUDE.md`, ...) runs this and `python scripts/docs_index.py
-  --check` alongside `pytest`/`ruff` as part of closing
-  verification, every time, not only when something already looks
-  off.
-- JSON lint: every tracked `.json` file under `data/` must be
-  pretty-printed (`pre-commit-hooks`'s `pretty-format-json`, 2-space
-  indent, keys left in source order, no `\uXXXX`-escaping of
-  non-ASCII) — `uv run pretty-format-json --no-sort-keys
-  --no-ensure-ascii $(find data -name '*.json')` to check,
-  add `--autofix` to fix in place. Any change touching a file
-  under `data/` runs this alongside `pytest`/`ruff` as part of
-  closing verification, every time.
+- Run tools with `uv run` first. If `uv` is not on PATH, use the
+  project venv's interpreter with `-m <tool>` (`.venv/Scripts/python`
+  on Windows, `.venv/bin/python` elsewhere); never a system Python.
+- Comments: **at most 3 lines** per docstring and per block of `#`
+  lines, in `src/`, `tests/` and `scripts/`. Only the WHY that is
+  non-obvious (a rule subtlety, a workaround, an invariant), never a
+  restatement of the code. A docstring implementing a rule cites its
+  source (§2). Reasoning, history and quoted rulings go in the
+  `RUL`/`ENG`/`DES` entry, cited by id. A card module's docstring is
+  its name, krcg id, snapshot path (`data/cards/<id>.json`, which holds
+  the verbatim text) and entry ids. `scripts/comment_lines.py` enforces
+  the cap on changed lines (`--all` for the whole tree).
+- Data JSON: every tracked `.json` under `data/` is pretty-printed
+  (`pre-commit-hooks`'s `pretty-format-json`, 2-space indent, keys in
+  source order, non-ASCII unescaped); fix with `uv run
+  pretty-format-json --autofix --no-sort-keys --no-ensure-ascii
+  <files>`.
+- **Closing verification**: `uv run python scripts/check.py` runs
+  pytest, ruff check and format, the comment cap, pymarkdownlnt
+  (`docs/`, `CLAUDE.md`, `.claude/`; config in `.pymarkdown`), the
+  docs-index check and the data JSON check. Run it before reporting
+  any change as done, every time, and report its summary.
 - A card is **implemented** only when: effect code + test(s)
   covering its text and each known ruling + registry entry + listed
   in the active 2P list.
 - A rule is **implemented** only when a scenario test exists,
   ideally reproducing a worked example from the rulebook.
-- Commits are small; one card or one rule mechanism per change.
-- **No commit without the user's explicit, per-commit approval.**
-  This applies to every agent and subagent working in this repo,
-  with no exception for "read-only review" or "leave it staged for
-  the user" instructions in a delegating prompt — those have been
-  observed not to hold. Prepare changes (staged or not) and report
-  back; never run `git commit` (or `git add` as a step toward one)
-  on your own initiative. After any subagent call that had shell/
-  git access, check `git log` and `git status` before trusting that
-  the working tree is still in the state it was left in.
+- Changes are small: one card or one rule mechanism per proposed
+  commit.
+- **The user alone stages and commits.** No agent or subagent runs
+  `git add`, `git commit` or any other command that changes the
+  index or history. `.claude/hooks/block-git-writes.sh` (PreToolUse,
+  set in `.claude/settings.json`) blocks them; never work around it.
+  When a step is done and verified, leave it in the working tree and
+  report its file list with a proposed commit message. After a
+  subagent with shell access returns, run `git status` before
+  trusting the working tree.
 
 ---
 
 ## 7. Agents and skills
-
-Every agent above works under the "no commit without approval"
-rule in §6: prepare and report, never commit on your own.
 
 | Kind | Name | Use it for |
 | --- | --- | --- |
@@ -226,14 +225,23 @@ rule in §6: prepare and report, never commit on your own.
 | agent | `test-engineer` | scenario tests, ruling regressions, sim runs |
 | agent | `bot-strategist` | decision-making agents (heuristic, then search) |
 | agent | `format-curator` | syncs VEKN 2P allowed list, decklists, changelog |
-| skill | `vtes-rules-reference` | condensed rules + no-guessing procedure |
+| skill | `card-pipeline` | main session: one card end to end, across agents |
+| skill | `vtes-rules-reference` | rules map, no-guessing rule, entry format |
 | skill | `implement-card` | step-by-step workflow for one card |
-| skill | `sync-2p-format` | updating the allowed list from VEKN |
+| skill | `add-engine-hook` | adding a `Hook` a card needs (most `ENG` entries) |
 | skill | `rules-scenario-test` | how to write an engine scenario test |
+| skill | `trim-comments` | comment and rules-docs content pass |
+| skill | `sync-2p-format` | updating the allowed list from VEKN |
 | skill | `deck-validation` | parsing a decklist and checking 2P legality |
 
-High-stakes changes (core engine, combat, impulse) are reviewed by
-`rules-auditor`, which has not written the code.
+- Every agent works under §6: it never stages or commits.
+- Agents preload their skills through the `skills:` frontmatter
+  field. Subagents do not see the main session's auto-memory, so any
+  rule that must bind them lives in this file, an agent file or a
+  skill.
+- High-stakes changes (core engine, combat, impulse) are reviewed by
+  `rules-auditor`, given the diff and the list of what changed, never
+  the implementer's own explanation.
 
 ---
 
@@ -269,3 +277,19 @@ High-stakes changes (core engine, combat, impulse) are reviewed by
    worth revisiting once milestones 5–7 exist to compare against;
    approach (featurizing `Observation`, reward shaping, which
    algorithm) is unsettled -- see §8's "Bot strength target".
+
+---
+
+## 10. Current state
+
+Facts that change as the project moves; update this section with them.
+
+- Progress, card counts and known limitations: `README.md` Status.
+  Open entries: the `README.md` index of each `docs/` folder.
+- **Card authoring API**: new and edited card modules use
+  `cards/card.py::Card` (reference: `cards/celerity.py`). Most modules
+  still call `register(CardRegistration(...))`; their migration is a
+  separate, planned pass. Do not copy their style.
+- **Comment cap**: most existing code predates the 3-line rule (§6);
+  `uv run python scripts/comment_lines.py --all` lists the backlog.
+  Comply on what you touch; do not trim unrelated code on the side.

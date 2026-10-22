@@ -17,17 +17,17 @@ description: >-
   proves.
 - Fully deterministic: fixed seed, explicit library order when draws
   matter.
-- Cite the source in the test docstring (rulebook section, 2P variant
-  section, card ruling).
+- Docstring: the source (rulebook section, 2P variant section, card
+  ruling) and what it proves, 3 lines max (CLAUDE.md §6).
 
 ## Shape
 
+Adapted from `tests/rules/test_damage.py`:
+
 ```python
-def test_aggravated_damage_burns_wounded_vampire():
-    """Rulebook §4 Damage Resolution — aggravated damage on a
-    wounded vampire. Worked example: a ready vampire with 1 blood
-    takes 2 normal + 1 aggravated damage; burns 1 blood to mend, is
-    wounded by the 2nd point, and the aggravated point burns him."""
+def test_aggravated_damage_on_a_healthy_vampire_wounds_and_torpors_at_once():
+    """Rulebook worked example (Nassir): 1 aggravated damage on a ready
+    vampire with 1 blood cannot be mended; it goes to torpor, blood kept."""
     game = (
         ScenarioBuilder(seed=1, format="2p")
         .player("A")
@@ -35,26 +35,33 @@ def test_aggravated_damage_burns_wounded_vampire():
         .player("B")
         .build()
     )
+    game.state.agents["A"] = ScriptedAgent("A")  # no decision expected
 
-    game.apply_damage(target="V1", normal=2, aggravated=1, source=None)
-    game.run_until_decision_or_end()
+    game.apply_damage(target="V1", aggravated=1)
 
-    assert game.zone_of("V1") == "ash_heap"
+    assert game.zone_of("V1") == "torpor"
+    assert game.blood_of("V1") == 1
 ```
 
-(`ScenarioBuilder` and helper names are the project's test helpers;
-create them in `tests/helpers.py` if absent and keep them in sync
-with the engine API.)
+The helpers live in `tests/helpers.py`: `ScenarioBuilder` (players,
+`ready_vampire` / `torpid_vampire` / `uncontrolled_vampire`,
+`hand_card(s)`, `library_cards`, `crypt_deck_cards`, `edge_holder`),
+`ScenarioGame` (`state`, `vampire`, `zone_of`, `blood_of`, `pool_of`,
+`apply_damage`) and `ScriptedAgent`. Read the file before using a
+helper; add one there (not in a test) when a scenario needs it, and
+keep it in sync with the engine API. Zone names are the engine's own
+(`"ready"`, `"torpor"`, `"burned"`, ...).
 
 ## Scripting decisions
 
-Use a `ScriptedAgent` that answers decisions from a list and **fails
-the test** if:
+`ScriptedAgent(player).expect(kind, value)` answers decisions in
+order and fails the test if:
 
 - the engine asks a decision the script did not expect;
 - a scripted choice is not among `decision.choices` (proves illegal
   options are not offered);
-- the script still has unused answers at the end.
+- answers remain unused — only when you call `assert_exhausted()`,
+  so call it at the end of any scripted scenario.
 
 Always also assert what was **offered**: e.g. that a stealth modifier
 is *not* offered when no block attempt is ongoing.
@@ -70,14 +77,15 @@ is *not* offered when no block attempt is ongoing.
 - invariants after the step (no negative counters, card conservation,
   hand size).
 
-## Rulebook worked examples worth reproducing first
+## Rulebook worked examples worth reproducing
 
 Influence phase (Nora / Alexa Draper transfers), combat with
 additional strikes (Wauneka / Flávio Gonçalves), steal blood vs ally
 (Chrysanthemum / Underbridge Stray), aggravated damage (Nassir,
 Tamoszius, Ryan), bleed with Bonding after blocks declined (Sully /
 Alexis), block with reaction card on a hunt (Wauneka / Ayelech).
+Check `tests/rules/` first; some already exist.
 
-Note: some cards named in these examples may not be in the 2P allowed
-list; use them only as rules fixtures, built directly with the
-builder, not as playable cards.
+Some cards named in these examples may not be in the 2P allowed list;
+use them only as rules fixtures, built directly with the builder, not
+as playable cards.

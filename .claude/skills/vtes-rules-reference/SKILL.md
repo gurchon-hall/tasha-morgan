@@ -18,8 +18,8 @@ A local, versioned cache of the rulebook and 2P-variant pages
 `data/sources/rulebook/<date>/<n>-<slug>.md` and
 `data/sources/2p-variant/<date>/{variant,updates}.md`; read the cache
 first for routine implementation/testing work instead of fetching
-live every time. **`rules-auditor`, and anyone resolving an Open
-Question, must still re-fetch the live page** — both depend on
+live every time. **`rules-auditor`, and anyone resolving a `RUL`
+entry, must still re-fetch the live page** — both depend on
 independent verification that a trusted cache would undermine.
 See `data/sources/rulebook/CHANGELOG.md` for a caveat: individual
 rulebook sections get edited without the cover "v1.1" label changing,
@@ -109,19 +109,10 @@ acting Methuselah. The window ends when everyone passes.
 3. If unblocked → pay cost, resolve. If blocked → action card
    burned, cost not paid, blocker locks, combat.
 
-"Cost not paid when blocked" scopes to the **action card's own**
-printed cost (Action, Political Action, Equipment, Retainer, Ally,
-...) — the card played to perform the action itself. It does NOT
-apply to an Action Modifier played during that same action: an Action
-Modifier resolves immediately when played (not deferred to the
-action's own resolve step), so its own cost (card discarded + any
-printed blood/pool/etc.) is paid in full the instant it is played,
-regardless of whether the action later turns out blocked or
-unblocked. Model this as: an action card's `HookOption`/equivalent
-pays its cost only inside the unblocked `resolve()` branch; an Action
-Modifier's `HookOption.cost` pays unconditionally at the moment it is
-chosen (same mechanism `apply_chosen_option` already uses for
-cancel-as-played, ENG-022).
+"Cost not paid when blocked" covers only the action's own cost. "The
+costs of action modifiers and reaction cards are always paid when the
+cards are played, regardless of the success of the action" (§4 Minion
+Phase, block resolution). Engine side: ENG-050.
 
 Three states to model: no current block attempt / ongoing block
 attempt / blocks declined by all.
@@ -216,7 +207,7 @@ numbering (CLAUDE.md §2, DES-016):
    - Impacted code:
    ```
 
-   Then run `python scripts/docs_index.py` to regenerate the folder's
+   Then run `uv run python scripts/docs_index.py` to regenerate the folder's
    `README.md` index.
 3. Make the code path raise `UnresolvedRulingError("RUL-<nnn>")`, or
    mark the card `blocked` with `blocked_reason="RUL-<nnn>"` (or
@@ -258,5 +249,5 @@ entry, not a re-litigation, so no fact may change, only its length.
 A `DES` entry uses `Context` / `Decision` / `Consequence`. A decision
 replaced by a later one gets `status: superseded` plus
 `superseded_by: DES-<nnn>`; it is never deleted. Regenerate the index
-(`python scripts/docs_index.py`) after any front-matter or title
+(`uv run python scripts/docs_index.py`) after any front-matter or title
 change.

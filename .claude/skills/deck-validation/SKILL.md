@@ -18,9 +18,10 @@ line number instead of skipping it.
 
 ## Name resolution
 
-Resolve every name through KRCG (`VTES[...]`, `VTES.complete(...)` for
-suggestions). Ambiguous or unknown names are reported with the
-suggestions; never auto-pick.
+Resolve every name through `vtesbot.decks.name_resolution` (over
+`krcg.load()`; krcg ≥ 5.14 has no `krcg.vtes` module). Only an exact
+fold/alias match auto-resolves; ambiguous or unknown names are
+reported with their candidates; never auto-pick.
 
 ## Checks (each violation cites its rule)
 
@@ -41,7 +42,7 @@ Run the checks with `scripts/validate_deck.py` (not a one-off inline
 script — keeps the checks reproducible across decks and syncs):
 
 ```bash
-python scripts/validate_deck.py <deck.json> \
+uv run python scripts/validate_deck.py <deck.json> \
   --format data/formats/2p/<date>.json
 ```
 

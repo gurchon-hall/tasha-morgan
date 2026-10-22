@@ -49,7 +49,7 @@ not reconstruct a list from memory.
    matching reproducible across syncs):
 
    ```bash
-   python scripts/krcg_match.py <flat name/type list>.json \
+   uv run python scripts/krcg_match.py <flat name/type list>.json \
      -o <result>.json
    ```
 
@@ -79,6 +79,8 @@ not reconstruct a list from memory.
    added/removed, decklist changes, rule changes, source URLs.
 8. Do **not** switch the active format version in config yourself;
    tell the user what switching would make illegal or unimplemented.
+9. Run `uv run python scripts/check.py` (it includes the data JSON
+   check); leave the result in the working tree, unstaged.
 
 ## Report
 
