@@ -1,0 +1,88 @@
+{
+  "id": 201647,
+  "printed_name": "Queen Anne",
+  "unicity_suffix": "G6",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Queen Anne (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300036,
+        "code": "FoL"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fall-of-london/queenanneg6.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/queenanneg6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Amy Wilkins"
+  ],
+  "variants": [
+    {
+      "type": "Previous",
+      "id": 201139,
+      "suffix": "G2"
+    }
+  ],
+  "rulings": [
+    {
+      "text": "Cannot be used during a referendum that is automatically passing. [PIB 20150105] [LSJ 19980107]",
+      "group": "Usable during the polling step",
+      "reminder": false,
+      "references": [
+        {
+          "text": "[PIB 20150105]",
+          "label": "PIB 20150105",
+          "url": "https://www.vekn.net/forum/rules-questions/68465-voting-is-complicated#68493"
+        },
+        {
+          "text": "[LSJ 19980107]",
+          "label": "LSJ 19980107",
+          "url": "https://usenet.krcg.org/t/aUUs4VCR_Ec/#m1"
+        }
+      ],
+      "cards": [],
+      "symbols": []
+    }
+  ],
+  "cards": [],
+  "text": "Camarilla Prince of London: During the polling step of a referendum called by Anne, she can burn 1 blood to force a younger Camarilla vampire to abstain. After she diablerizes a vampire, she can unlock. +1 bleed.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2022-11-13",
+  "banned": null,
+  "clan": "Ventrue",
+  "path": "",
+  "advanced": false,
+  "capacity": 10,
+  "group": "G6",
+  "disciplines": [
+    "aus",
+    "obf",
+    "DOM",
+    "FOR",
+    "PRE"
+  ],
+  "title": "Prince"
+}

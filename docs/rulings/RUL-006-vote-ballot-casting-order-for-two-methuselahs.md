@@ -1,5 +1,6 @@
 ---
-status: resolved
+status: superseded
+superseded_by: RUL-017
 date: 2026-10-11
 cards:
 ---
@@ -23,3 +24,4 @@ cards:
   step (cast or pass) regardless of who just acted; a full lap
   completing with no casts (`consecutive_passes` reaching 2) closes
   the window.
+  Superseded by RUL-017 (declaration rounds).
