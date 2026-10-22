@@ -199,10 +199,22 @@ tests/
 - A rule is **implemented** only when a scenario test exists,
   ideally reproducing a worked example from the rulebook.
 - Commits are small; one card or one rule mechanism per change.
+- **No commit without the user's explicit, per-commit approval.**
+  This applies to every agent and subagent working in this repo,
+  with no exception for "read-only review" or "leave it staged for
+  the user" instructions in a delegating prompt — those have been
+  observed not to hold. Prepare changes (staged or not) and report
+  back; never run `git commit` (or `git add` as a step toward one)
+  on your own initiative. After any subagent call that had shell/
+  git access, check `git log` and `git status` before trusting that
+  the working tree is still in the state it was left in.
 
 ---
 
 ## 7. Agents and skills
+
+Every agent above works under the "no commit without approval"
+rule in §6: prepare and report, never commit on your own.
 
 | Kind | Name | Use it for |
 | ---- | ---- | ---------- |
