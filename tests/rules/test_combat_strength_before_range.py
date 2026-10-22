@@ -219,7 +219,7 @@ def _set_sect(builder_player, instance_id: str, sect: Sect) -> None:
 
 
 def test_bonus_applies_when_striking_via_dust_up_instead_of_a_plain_hand_strike():
-    """Dust Up's `[pot]` clause (`cards/dust_up.py::_provide_pot`) computes
+    """Dust Up's `[pot]` clause (`cards/dust_up.py::_pot_strike`) computes
     "+2 damage" over `hand_strike_strength`'s own value -- which must include
     this once-activated, whole-combat-duration bonus just like a plain hand
     strike does (rules-auditor finding: previously it silently did not, since

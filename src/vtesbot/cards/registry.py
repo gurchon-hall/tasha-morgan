@@ -1,10 +1,12 @@
-"""Card implementation registry (CLAUDE.md §6): a module registers itself
-at import via `register(CardRegistration(...))`. `krcg_id` is the key
-(DES-005: static catalogue, not GameState).
+"""Card implementation registry (CLAUDE.md §6): a card module registers
+itself at import, via `cards/card.py::Card` (or, until every module is
+migrated, `register(CardRegistration(...))`). `krcg_id` is the key (DES-005:
+static catalogue, not GameState).
 """
 
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Protocol
 
 from vtesbot.engine.hooks import Hook as Hook
 
@@ -30,10 +32,27 @@ class CardRegistration:
     (not a ruling ambiguity -- see e.g. Queen Anne/Alexa Draper)."""
 
 
-_REGISTRY: dict[int, CardRegistration] = {}
+class RegisteredCard(Protocol):
+    """What the registry reads: a `CardRegistration` or a `card.Card`."""
+
+    @property
+    def krcg_id(self) -> int: ...
+    @property
+    def name(self) -> str: ...
+    @property
+    def status(self) -> Status: ...
+    @property
+    def hooks(self) -> tuple[Hook, ...]: ...
+    @property
+    def source(self) -> str: ...
+    @property
+    def blocked_reason(self) -> str | None: ...
 
 
-def register(reg: CardRegistration) -> CardRegistration:
+_REGISTRY: dict[int, RegisteredCard] = {}
+
+
+def register[R: RegisteredCard](reg: R) -> R:
     if reg.krcg_id in _REGISTRY:
         raise ValueError(f"card {reg.krcg_id} ({reg.name!r}) is already registered")
     if reg.status is Status.BLOCKED and not reg.blocked_reason:
@@ -42,11 +61,11 @@ def register(reg: CardRegistration) -> CardRegistration:
     return reg
 
 
-def get(krcg_id: int) -> CardRegistration | None:
+def get(krcg_id: int) -> RegisteredCard | None:
     return _REGISTRY.get(krcg_id)
 
 
-def all_registrations() -> tuple[CardRegistration, ...]:
+def all_registrations() -> tuple[RegisteredCard, ...]:
     return tuple(_REGISTRY.values())
 
 
