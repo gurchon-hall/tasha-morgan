@@ -30,8 +30,8 @@ provides. Read `CLAUDE.md` first.
 1. **Random-legal agent** — baseline and fuzzer for the engine.
 2. **Heuristic agent** — explicit, readable rules (e.g. when to
    block, transfer allocation, whether to bleed or hunt). Each
-   heuristic is documented in `docs/DECISIONS.md` as a design choice,
-   not as a VtES fact.
+   heuristic is documented as a `DES` entry in `docs/design/` as a
+   design choice, not as a VtES fact.
 3. **Search agent** — only after the engine is stable. The approach
    (determinized MCTS / ISMCTS, other) is an open decision: write a
    short proposal with trade-offs and get the user's approval before
@@ -39,8 +39,8 @@ provides. Read `CLAUDE.md` first.
 
 ## Comments
 
-Minimal (CLAUDE.md §6): a heuristic's rationale belongs in
-`docs/DECISIONS.md` as a design choice, cited by reference from the
+Minimal (CLAUDE.md §6): a heuristic's rationale belongs in a `DES`
+entry (`docs/design/`) as a design choice, cited by its id from the
 code, not written out in-line as a block comment.
 
 ## Honesty about strategy

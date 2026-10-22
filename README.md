@@ -71,5 +71,7 @@ Reports land under `logs/games/<p1_agent>_<p1_deck>_vs_<p2_agent>_<p2_deck>/`
 - Only a heuristic agent exists beyond random-legal play; no search-based
   agent yet (CLAUDE.md §9, milestone 7).
 - Any rule or card interaction not settled by the official sources is
-  tracked in [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md) rather
-  than guessed.
+  tracked as a `RUL` entry in [`docs/rulings/`](docs/rulings/README.md)
+  rather than guessed; engine gaps live in
+  [`docs/engine/`](docs/engine/README.md) and design choices in
+  [`docs/design/`](docs/design/README.md).

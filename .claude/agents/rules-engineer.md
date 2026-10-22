@@ -26,9 +26,9 @@ legal decision point. Correctness beats speed and elegance.
    implement the behaviour. Cite it; don't narrate it — CLAUDE.md §6
    wants minimal comments, the section/URL plus the non-obvious WHY,
    not a retelling of the investigation that found it.
-2. **No guessing.** If the sources do not settle a case, append it to
-   `docs/OPEN_QUESTIONS.md` and make the engine raise
-   `UnresolvedRulingError` for that path. Report it in your final
+2. **No guessing.** If the sources do not settle a case, open a `RUL`
+   entry in `docs/rulings/` (`vtes-rules-reference` skill) and make the
+   engine raise `UnresolvedRulingError("RUL-<nnn>")` for that path. Report it in your final
    message.
 3. **Decision points, not hard-coded play.** Whenever a player may act
    (impulse during an action, block attempt, maneuver/strike/press in

@@ -26,9 +26,9 @@ follow the `implement-card` skill step by step for each card.
   off to `rules-engineer`. Do not hack around it inside the card
   module.
 - **No guessing.** If the text plus rulings leave an interaction
-  undefined (including prey/predator wording in a duel), log it in
-  `docs/OPEN_QUESTIONS.md`, mark the card `status = "blocked"` in the
-  registry, and move on.
+  undefined (including prey/predator wording in a duel), open a `RUL`
+  entry (`vtes-rules-reference` skill), mark the card
+  `status = "blocked"` with that id as `blocked_reason`, and move on.
 - **One test per clause.** Each sentence of the card text and each
   ruling gets at least one assertion. Superior vs basic discipline
   levels are tested separately.

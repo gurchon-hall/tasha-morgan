@@ -184,93 +184,79 @@ prey. Withdrawal rules exist (§5 Advanced).
 
 ## Procedure when something is unclear (mandatory)
 
+Rules docs are one file per entry, in three kinds with their own
+numbering (CLAUDE.md §2, DES-016):
+
+- `RUL` -- `docs/rulings/`: how a rule or card text is read.
+- `ENG` -- `docs/engine/`: an engine mechanism a card needs, a gap in
+  one, or an engine bug found in review.
+- `DES` -- `docs/design/`: a project, architecture or bot choice (not
+  a VtES fact).
+
 1. Re-read the card text, its rulings, the 2P variant page and the
    rulebook section.
-2. Still unclear or conflicting → do **not** choose. Before
-   appending, count the `## OQ-` headings in `docs/OPEN_QUESTIONS.md`.
-   If it already has 25, archive first (step 2a) — otherwise append
-   directly (step 2b).
+2. Still unclear or conflicting → do **not** choose. Create
+   `docs/rulings/RUL-<nnn>-<slug>.md` (or `docs/engine/ENG-...` when
+   the gap is a missing engine mechanism rather than a reading of the
+   rules). `<nnn>` is the next free number in that folder (zero-padded
+   to 3 digits; numbers are never reused or renumbered):
 
-   2a. **Archive, then append.** Move the oldest entries still
-       marked `(status: resolved...)` (never an `open` one, even if
-       it is the oldest) out of `docs/OPEN_QUESTIONS.md` into
-       `docs/open_questions_archive/<NNN>.md`: reuse the highest-
-       numbered existing archive file if it has fewer than 25
-       entries, otherwise create the next `<NNN>.md`. Keep each
-       moved entry byte-for-byte (same `## OQ-<n>: ...` heading,
-       same body) — moving a file is not a chance to edit a ruling.
-       Update `docs/open_questions_archive/INDEX.md` with the
-       OQ-N → archive-file mapping for every entry moved. Only once
-       `docs/OPEN_QUESTIONS.md` is back under 25 entries, continue
-       to step 2b.
-   2b. **Append** to `docs/OPEN_QUESTIONS.md`:
+   ```markdown
+   ---
+   status: open
+   date: <YYYY-MM-DD>
+   cards: <Card Name>; <Other Card>
+   ---
 
-   ```text
-   ## OQ-<n>: <short title>   (status: open)
+   # RUL-<nnn> - <Card or Topic name> - <short description>
+
    - Situation:
-   - Sources read (with URL/section):
-   - Candidate readings: A / B
-   - Impacted code/cards:
+   - Sources read: (with URL/section)
+   - Candidate readings: A / B      (ENG: Needed mechanism:)
+   - Impacted code:
    ```
 
-   `<n>` continues the global counter — check both
-   `docs/OPEN_QUESTIONS.md` and `docs/open_questions_archive/
-   INDEX.md` for the highest `OQ-<n>` used so far; numbers are never
-   reused or renumbered.
-3. Make the code path raise `UnresolvedRulingError("OQ-<n>")`, or
-   mark the card `blocked`.
-4. Mention the OQ in your final report so the user can decide (or
-   ask a VEKN judge).
-
-If an archived entry (`OQ-<n>` in `docs/open_questions_archive/`)
-later needs a resolution update (e.g. a `rules-auditor` follow-up),
-edit it in place in its archive file — do not move it back to
-`docs/OPEN_QUESTIONS.md` just to append to it.
+   Then run `python scripts/docs_index.py` to regenerate the folder's
+   `README.md` index.
+3. Make the code path raise `UnresolvedRulingError("RUL-<nnn>")`, or
+   mark the card `blocked` with `blocked_reason="RUL-<nnn>"` (or
+   `"ENG-<nnn>"`).
+4. Mention the entry id in your final report so the user can decide
+   (or ask a VEKN judge).
 
 ## Closing an entry (mandatory trim)
 
-The instant an entry's status flips to `resolved` (whether that
-happens in `docs/OPEN_QUESTIONS.md` or directly in an archive file via
-the update path above), rewrite its body down to exactly three
-bullets — drop everything else (audit-round play-by-play, rejected
-alternatives, full "impacted code" file lists, test-file enumerations,
-pass counts): this is an editorial trim of the same entry, not a
-re-litigation, so no fact may change, only its length.
+The instant an entry's status flips to `resolved`, set `status:
+resolved` in its front matter and rewrite its body down to exactly
+three bullets — drop everything else (audit-round play-by-play,
+rejected alternatives, full "impacted code" file lists, test-file
+enumerations, pass counts): this is an editorial trim of the same
+entry, not a re-litigation, so no fact may change, only its length.
 
 ```text
-## OQ-<n> - <Card/Topic name> - <short description>   (status: resolved)
 - Situation:
-- Rules/interactions:
+- Rules & interactions:
 - Solution:
 ```
 
-- **Title**: `OQ-<n> - <Card or Topic name, if one exists> - <short
+- **Title**: `<ID> - <Card or Topic name, if one exists> - <short
   description>`. Tie the title to the specific card that was blocked
-  wherever one exists (e.g. `OQ-32 - Diana Iadanza - No "cancel as
+  wherever one exists (e.g. `ENG-022 - Diana Iadanza - no "cancel as
   played" hook`); fall back to a plain topic description only for an
-  entry with no associated card (e.g. `OQ-2 - Interface target`).
+  entry with no associated card.
 - **Situation**: the problem found, in enough detail to stand alone —
   what card/text/rule prompted it, why it blocked something.
-- **Rules/interactions**: the sourced reading that settles it — the
+- **Rules & interactions**: the sourced reading that settles it — the
   governing rule/ruling/citation, condensed to what it actually says,
   not the research narrative that led there.
 - **Solution**: what was built or decided, and what (if anything) is
   deliberately still left open for a future pass. Name the lasting
   pointers (new hooks, modules, functions) a future implementer needs;
   drop the rest.
-- An entry still `open` is never trimmed this way — only a `resolved`
-  one, the moment it closes.
+- An entry still `open` is never trimmed this way.
 
-This applies whether the entry is being newly resolved, or archived
-later still in its original, untrimmed form (archive it after trimming
-first — the trim is not part of the archive-move step itself, it
-happens as soon as the status flips to `resolved`, which may be well
-before that entry's own turn to be archived).
-
-### Archive index summary
-
-`docs/open_questions_archive/INDEX.md` lists one row per archived
-`OQ-<n>` (not grouped into ranges), with columns `OQ | Archive file |
-Summary`. `Summary` is that entry's own title (everything after the
-number in its heading) — update it in the same change that moves an
-entry into an archive file.
+A `DES` entry uses `Context` / `Decision` / `Consequence`. A decision
+replaced by a later one gets `status: superseded` plus
+`superseded_by: DES-<nnn>`; it is never deleted. Regenerate the index
+(`python scripts/docs_index.py`) after any front-matter or title
+change.

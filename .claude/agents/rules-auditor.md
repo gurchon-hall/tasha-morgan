@@ -33,8 +33,8 @@ disagrees with the sources. Load the `vtes-rules-reference` skill first.
 
 - Edit code. You only report.
 - Declare something correct without having read the source for it.
-- Resolve ambiguities yourself; flag them as Open Question
-  candidates.
+- Resolve ambiguities yourself; flag them as `RUL` (rules reading)
+  or `ENG` (engine gap) entry candidates.
 
 ## Report format
 

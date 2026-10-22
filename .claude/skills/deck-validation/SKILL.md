@@ -50,7 +50,7 @@ and type per section, and reports "Implementation status" for every
 card (informational — never affects the LEGAL/ILLEGAL verdict or exit
 code) by looking each `krcg_id` up against
 `src/vtesbot/cards/registry.py`: `"implemented"`, `"blocked"` (with its
-`OQ-<n>` reason), or `"not_implemented"` (no registry entry). Pass
+`RUL-<nnn>`/`ENG-<nnn>` reason), or `"not_implemented"` (no registry entry). Pass
 `--annotate` to also write those as `"implementation_status"` /
 `"blocked_reason"` fields back into the deck fixture's own crypt/library
 entries, instead of only printing them — rerun with `--annotate` after
@@ -67,7 +67,7 @@ LEGAL | ILLEGAL
 Violations:
  - <rule>: <detail>  (source)
 Not yet playable by the bot:
- - <card>: blocked (OQ-n) | not implemented
+ - <card>: blocked (RUL-nnn / ENG-nnn) | not implemented
 ```
 
 A deck can be legal yet not playable by the bot; keep the two verdicts

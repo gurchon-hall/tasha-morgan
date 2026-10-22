@@ -54,13 +54,12 @@ per CLAUDE.md §6 (minimal comments, WHY over WHAT): aim for under
 - state the WHY only where a reader couldn't infer it from the code:
   which clause is blocked and why, which engine hook it rides on. Do
   not restate this checklist, narrate alternatives you rejected, or
-  re-explain an Open Question already written up in
-  `docs/OPEN_QUESTIONS.md` — cite it by number instead of repeating
-  it.
+  re-explain a `RUL`/`ENG` entry already written up under `docs/` —
+  cite it by id instead of repeating it.
 
 Flag any wording referring to **prey / predator / "other
 Methuselahs" / votes from several players** — check it against the
-duel setting. Unclear → Open Question (see `vtes-rules-reference`),
+duel setting. Unclear → `RUL` entry (see `vtes-rules-reference`),
 mark `blocked`.
 
 ## 4. Implement
@@ -95,4 +94,4 @@ snapshot path.
 ## 7. Report
 
 One line per card: `Card Name — implemented (n tests)` or
-`Card Name — blocked: OQ-<n> / missing hook <x>`.
+`Card Name — blocked: RUL-<nnn> / ENG-<nnn> (missing hook <x>)`.

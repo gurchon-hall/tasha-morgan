@@ -2,8 +2,8 @@
 
 This is a *candidate scanner*, not a linter: CLAUDE.md §6's comment rule
 ("minimal... only when the WHY is non-obvious... never restate what the
-code already says") and the OPEN_QUESTIONS.md/DECISIONS.md formats (§2,
-`docs/DECISIONS.md` D-6) both turn on judgment a regex cannot make --
+code already says") and the rules-docs entry format (§2, DES-016) both
+turn on judgment a regex cannot make --
 whether a given sentence is "the why" or just restates the next line is a
 reading-comprehension call. This script only narrows down what a human (or
 an agent doing the `trim-comments` QA pass) should read closely; it never
@@ -12,7 +12,7 @@ edits a file itself and a clean run is not proof the pass is done.
 Checks:
   - Inline `#` comments whose words substantially overlap the code on the
     same line (possible restatement) -- skipped if the comment contains a
-    citation-like token (SS, "Rulebook", "2P variant", "OQ-", "ruling",
+    citation-like token (SS, "Rulebook", "2P variant", "RUL-"/"ENG-"/"DES-", "ruling",
     "krcg"), since overlap with cited rule language is expected, not a
     restatement smell.
   - Inline/docstring comments matching task-reference language ("fix for",
@@ -28,18 +28,15 @@ Checks:
     citation is a judgment call this script cannot make reliably, and a
     blanket check there produces mostly noise (plumbing helpers, registry
     glue, dataclass fields -- see the skill's own notes on this).
-  - `docs/OPEN_QUESTIONS.md`: total entry count against the 25-entry cap
-    (`docs/DECISIONS.md` D-6) -- this one check is an objective count, so
-    it is the only thing that sets a non-zero exit code -- and any
-    `resolved` entry whose bullet labels are not exactly Situation /
-    Rules/interactions / Solution (the format commit 3a7cd98 settled on).
+  - `docs/rulings/` and `docs/engine/`: any `resolved` entry whose bullet
+    labels are not exactly Situation / Rules & interactions / Solution.
 
 Usage:
     python scripts/scan_comments.py [path ...]
 
-With no paths, scans src/vtesbot/engine, src/vtesbot/cards and
-docs/OPEN_QUESTIONS.md. Exit code: 1 if OPEN_QUESTIONS.md is over its cap,
-0 otherwise (every other finding is a candidate to review, not a failure).
+With no paths, scans src/vtesbot/engine, src/vtesbot/cards, docs/rulings and
+docs/engine. Exit code is always 0: every finding is a candidate to review,
+not a failure.
 """
 
 from __future__ import annotations
@@ -51,7 +48,7 @@ import tokenize
 from pathlib import Path
 
 _CITATION_RE = re.compile(
-    r"§|\bss\d|\brulebook\b|\b2p variant\b|\boq-\d|\bd-\d|\bruling\b|\bkrcg\b",
+    r"§|\bss\d|\brulebook\b|\b2p variant\b|\b(?:rul|eng|des)-\d|\bruling\b|\bkrcg\b",
     re.IGNORECASE,
 )
 
@@ -68,8 +65,7 @@ _TASK_RE = re.compile("|".join(TASK_REFERENCE_PATTERNS), re.IGNORECASE)
 
 _WORD_RE = re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*")
 
-OQ_HEADING_RE = re.compile(r"^## (OQ-\d+)\s*[:-]\s+.+\(status: (open|resolved)\)\s*$", re.MULTILINE)
-OQ_CAP = 25
+ENTRY_RE = re.compile(r"^(?:RUL|ENG)-\d{3}-.*\.md$")
 
 
 def _has_citation(text: str) -> bool:
@@ -118,7 +114,7 @@ def scan_python_file(path: Path, check_module_citation: bool) -> list[str]:
             if not _has_citation(tok.string):
                 findings.append(
                     f"{path}:{tok.start[0]}: module docstring has no rule-source "
-                    "citation token (Rulebook/2P variant/OQ-/ruling/krcg) -- every "
+                    "citation token (Rulebook/2P variant/RUL-/ENG-/DES-/ruling/krcg) -- every "
                     "implemented card cites its card text/rulings here"
                 )
         elif tok.type not in (
@@ -132,37 +128,18 @@ def scan_python_file(path: Path, check_module_citation: bool) -> list[str]:
     return findings
 
 
-def scan_open_questions(path: Path) -> tuple[list[str], int]:
-    findings = []
+def scan_rules_entry(path: Path) -> list[str]:
     text = path.read_text(encoding="utf-8")
-    headings = OQ_HEADING_RE.findall(text)
-    count = len(headings)
-    if count > OQ_CAP:
-        findings.append(
-            f"{path}: {count} entries exceeds the {OQ_CAP}-entry cap "
-            "(docs/DECISIONS.md D-6) -- archive the oldest resolved entries"
-        )
-
-    entries = re.split(r"(?=^## OQ-\d+)", text, flags=re.MULTILINE)[1:]
-    expected_labels = ("Situation", "Rules/interactions", "Solution")
-    for entry in entries:
-        heading_match = re.match(r"^## (OQ-\d+)\s*[:-].*\(status: (open|resolved)\)", entry)
-        if not heading_match:
-            continue
-        oq_id, status = heading_match.groups()
-        if status != "resolved":
-            continue
-        # A label may carry a parenthetical qualifier, e.g. "Solution (user
-        # ruling, same precedent as OQ-20):" -- compare only the part before
-        # any "(".
-        raw_labels = re.findall(r"^- ([^\n:]*?):", entry, flags=re.MULTILINE)
-        labels = [label.split(" (", 1)[0].strip() for label in raw_labels]
-        if labels != list(expected_labels):
-            findings.append(
-                f"{path}: {oq_id} (resolved) has fields {labels!r}, expected "
-                f"{list(expected_labels)!r}"
-            )
-    return findings, count
+    if not re.search(r"^status: resolved$", text, flags=re.MULTILINE):
+        return []
+    expected_labels = ["Situation", "Rules & interactions", "Solution"]
+    # A label may carry a parenthetical qualifier, e.g. "Solution (user
+    # ruling):" -- compare only the part before any "(".
+    raw_labels = re.findall(r"^- ([^\n:]*?):", text, flags=re.MULTILINE)
+    labels = [label.split(" (", 1)[0].strip() for label in raw_labels]
+    if labels != expected_labels:
+        return [f"{path}: resolved entry has fields {labels!r}, expected {expected_labels!r}"]
+    return []
 
 
 def main() -> int:
@@ -177,14 +154,17 @@ def main() -> int:
         targets = [
             repo_root / "src" / "vtesbot" / "engine",
             repo_root / "src" / "vtesbot" / "cards",
-            repo_root / "docs" / "OPEN_QUESTIONS.md",
+            repo_root / "docs" / "rulings",
+            repo_root / "docs" / "engine",
         ]
 
-    exit_code = 0
     all_findings: list[str] = []
 
     for target in targets:
         if target.is_dir():
+            for entry in sorted(target.glob("*.md")):
+                if ENTRY_RE.match(entry.name):
+                    all_findings.extend(scan_rules_entry(entry))
             for py_file in sorted(target.rglob("*.py")):
                 is_card_module = "cards" in py_file.parts and not (
                     py_file.stem.startswith("_") or py_file.stem == "registry"
@@ -196,18 +176,15 @@ def main() -> int:
                 target.stem.startswith("_") or target.stem == "registry"
             )
             all_findings.extend(scan_python_file(target, check_module_citation))
-        elif target.name == "OPEN_QUESTIONS.md":
-            findings, _count = scan_open_questions(target)
-            all_findings.extend(findings)
-            if any("exceeds the" in f for f in findings):
-                exit_code = 1
+        elif ENTRY_RE.match(target.name):
+            all_findings.extend(scan_rules_entry(target))
 
     if not all_findings:
         print("No candidates found.")
     for finding in all_findings:
         print(finding)
 
-    return exit_code
+    return 0
 
 
 if __name__ == "__main__":

@@ -2,6 +2,14 @@
   "extensions": {
     "front-matter": {
       "enabled": true
+    },
+    "markdown-tables": {
+      "enabled": true
+    }
+  },
+  "plugins": {
+    "md060": {
+      "style": "compact"
     }
   }
 }

@@ -2,16 +2,15 @@
 name: trim-comments
 description: >-
   QA pass that audits code comments/docstrings (src/vtesbot) and the
-  tracked rules docs (docs/OPEN_QUESTIONS.md, docs/DECISIONS.md,
-  docs/open_questions_archive/) for content that no longer earns its
-  place, per CLAUDE.md §6's "minimal comments, WHY only" rule and the
-  OPEN_QUESTIONS.md cap/format in §2. Always run this before the
+  tracked rules docs (docs/rulings/, docs/engine/, docs/design/) for
+  content that no longer earns its place, per CLAUDE.md §6's "minimal
+  comments, WHY only" rule and the entry format in §2. Always run this before the
   closing-verification `pymarkdownlnt` pass (`uv run pymarkdown scan
   docs/ CLAUDE.md`) whenever a change touched a tracked `.md` file or
   added/edited comments -- trimming content first means markdownlint
   isn't reflowing prose that is about to be cut anyway. Use it whenever
   the user asks to "trim comments," "clean up docstrings," "tidy
-  OPEN_QUESTIONS," or as part of closing out any card/engine/docs
+  the rules docs," or as part of closing out any card/engine/docs
   change.
 ---
 
@@ -35,7 +34,7 @@ python scripts/scan_comments.py
 ```
 
 With no arguments this scans `src/vtesbot/engine`,
-`src/vtesbot/cards` and `docs/OPEN_QUESTIONS.md`; pass paths to
+`src/vtesbot/cards` and `docs/rulings/` + `docs/engine/`; pass paths to
 narrow it to what the current change actually touched. It flags:
 
 - inline comments that likely just restate the line they sit on;
@@ -43,12 +42,10 @@ narrow it to what the current change actually touched. It flags:
   for this PR", "see issue #123") instead of timeless rationale;
 - a card module (`src/vtesbot/cards/<name>.py`) whose module
   docstring has no rule-source citation at all;
-- `docs/OPEN_QUESTIONS.md` going over its 25-entry cap, and any
-  `resolved` entry whose bullet labels aren't exactly Situation /
-  Rules/interactions / Solution.
+- any `resolved` RUL/ENG entry whose bullet labels aren't exactly
+  Situation / Rules & interactions / Solution.
 
-Exit code is 1 only for the entry-cap breach (an objective count);
-everything else is a non-zero-information candidate list, not a
+Exit code is 0 in every case; everything it prints is a non-zero-information candidate list, not a
 verdict. **A clean run does not mean the pass is done** -- the
 script cannot tell a justified long docstring from padding, so most
 of this skill's work is reading, not running the scanner. See the
@@ -69,11 +66,11 @@ infer from the code."*
 "Minimal" does not mean "short." The established house style for a
 rule-implementing module (see any file in `src/vtesbot/cards/`) is a
 *long* docstring: verbatim card text, verbatim rulings with their
-citation codes, the OQ(s) that settled an ambiguity, and the
+citation codes, the RUL/ENG entries that settled an ambiguity, and the
 engine-wiring rationale. That density is the point -- every sentence
 in it answers a "why would the code do it this way" question a
 reader would otherwise have to go dig up from KRCG, the rulebook or
-`docs/OPEN_QUESTIONS.md` themselves. Do not shorten these just to
+the rules docs themselves. Do not shorten these just to
 shorten them.
 
 **Exception: every file under `src/vtesbot/` except individual card
@@ -86,11 +83,10 @@ comment or docstring in them must be at most 200 characters
 (whitespace-collapsed, i.e. the content length, not the wrapped
 line count). A card's own module (e.g. `cards/diana_iadanza.py`)
 keeps the normal long-docstring house style above. Compact a
-citation to a short pointer (`OQ-32`, `D-5`, `Rulebook §5`) instead
-of quoting the ruling or rationale verbatim --
-the full text already lives in `docs/OPEN_QUESTIONS.md` /
-`docs/DECISIONS.md`, so the docstring only needs to point there, not
-repeat it. `src/vtesbot/engine/hooks.py` is the worked example: every
+citation to a short pointer (`ENG-022`, `DES-005`, `Rulebook §5`)
+instead of quoting the ruling or rationale verbatim -- the full text
+already lives in that entry's file under `docs/`, so the docstring
+only needs to point there, not repeat it. `src/vtesbot/engine/hooks.py` is the worked example: every
 docstring in it was trimmed to this cap. Verify with:
 
 ```bash
@@ -139,7 +135,7 @@ What actually gets trimmed:
   function implementing a specific rule (not plumbing) should cite
   its Rulebook/2P-variant section. If you can't find the citation it
   needs, that's a sign the rule was never sourced in the first place
-  -- raise it as an Open Question (`vtes-rules-reference` skill)
+  -- raise it as a `RUL` entry (`vtes-rules-reference` skill)
   rather than inventing one. **Never write a citation you have not
   verified against the source** (CLAUDE.md §2's no-guessing rule
   applies to documentation exactly as much as to engine behavior).
@@ -150,48 +146,36 @@ section first -- don't cut a sentence just because it looks verbose
 if it's covering a ruling-driven edge case a reader couldn't infer
 from the code.
 
-## 3. docs/OPEN_QUESTIONS.md
+## 3. Rules docs (docs/rulings/, docs/engine/)
 
-Procedure and cap live in CLAUDE.md §2 and `docs/DECISIONS.md` D-6;
-this skill enforces the content side of it, not the mechanics of
-archiving (that's `vtes-rules-reference`'s job when actually moving
-entries). What to check here:
+Format and procedure live in CLAUDE.md §2 and the
+`vtes-rules-reference` skill. What to check here:
 
 - Every `resolved` entry is trimmed to exactly three fields, in
-  order: `Situation`, `Rules/interactions`, `Solution` (a label may
-  carry a parenthetical qualifier, e.g. `Solution (user ruling, same
-  precedent as OQ-20):` -- that's fine, the label itself must still
-  be one of the three). This is the format commit `3a7cd98` settled
-  on; don't invent a different shape for a new entry even if the
-  old one being replaced used more fields.
-- Entry count against the 25-entry cap. If adding a new entry would
-  push the file over, archive the oldest `resolved` entries per
-  CLAUDE.md §2 before adding the new one -- never trim an `open`
-  entry just to make room; `open` entries are never archived
-  regardless of age.
-- Title convention: card-first where one exists -- `OQ-N` then the
-  card name, then a short description, then the status -- per the
-  same commit.
+  order: `Situation`, `Rules & interactions`, `Solution` (a label may
+  carry a parenthetical qualifier, e.g. `Solution (user ruling):` --
+  that's fine, the label itself must still be one of the three).
+  Don't invent a different shape for a new entry.
+- Title convention: `# <ID> - <Card name, where one exists> - <short
+  description>`; the file name is `<ID>-<slug>.md` and the front
+  matter's `status` matches the entry's real state.
 - A `resolved` entry's `Solution` should name *where* the fix lives
   (module/function) so a future reader doesn't have to re-derive it,
   but should not re-explain code that file's own docstring already
   covers in depth -- point at it instead of duplicating it.
+- After any title or front-matter edit, `python scripts/docs_index.py`
+  regenerates the folder's `README.md`.
 
-## 4. docs/DECISIONS.md and docs/open_questions_archive/
+## 4. docs/design/
 
-- `DECISIONS.md` entries (`## D-N`) follow the existing
-  Context/Decision/Consequence shape (some entries add Rationale) --
-  keep a trimmed entry terse but don't force it into
-  OPEN_QUESTIONS.md's stricter three-field shape; the two files
-  document different things (architecture choices that stay true
-  going forward vs. resolved rules ambiguities) and have always had
-  separate formats.
-- `open_questions_archive/<NNN>.md` is append-only once a file is
-  full (CLAUDE.md §2) -- never re-trim an already-archived entry's
-  content, and if `INDEX.md` and an archive file's actual entries
-  ever disagree on which `OQ-N` lives where, fix `INDEX.md` to match
-  the archive file (the archive file is the source of truth for
-  content, the index is just a lookup aid).
+- `DES` entries follow the Context/Decision/Consequence shape (some add
+  Rationale) -- keep a trimmed entry terse but don't force it into the
+  RUL/ENG three-field shape; they document different things
+  (architecture choices that stay true going forward vs. resolved rules
+  or engine questions).
+- A superseded decision keeps its file (`status: superseded`,
+  `superseded_by: DES-<nnn>`); trim it to a short stub rather than
+  deleting it, since ids are never reused.
 
 ## 5. Close out
 
@@ -202,6 +186,7 @@ After trimming, run the project's own closing-verification sequence
 uv run pytest
 uv run ruff check .
 uv run pymarkdown scan docs/ CLAUDE.md
+python scripts/docs_index.py --check
 ```
 
 If a `data/` JSON file was touched in the process (it shouldn't be,
