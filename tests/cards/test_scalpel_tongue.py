@@ -47,6 +47,7 @@ def _offer(state, player, casts, **extra):
         votes_for=extra.pop("votes_for", 0),
         votes_against=extra.pop("votes_against", 0),
         casts=casts,
+        pending=extra.pop("pending", {}),
     )
 
 
@@ -87,7 +88,6 @@ def test_not_offered_outside_the_mid_cast_phase():
         phase="before_cast",
         caller="P1",
         caller_vampire_id="V1",
-        other="P2",
         pending={"extra_sources": [], "forced_abstain": set()},
     )
 

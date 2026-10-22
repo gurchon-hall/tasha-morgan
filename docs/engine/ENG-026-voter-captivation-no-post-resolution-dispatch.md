@@ -16,7 +16,7 @@ cards: Voter Captivation
   returns, later than `POLLING_STEP`/`REFERENDUM_TALLIED`.
 - Rules & interactions: a missing engine primitive, not a ruling question —
   the hook's own trigger semantics were already settled when it was
-  named/reserved (its own docstring).
+  named/reserved.
 - Solution: `engine/politics.py::resolve_referendum` gained an optional
   `action_pending` parameter, writing its own tally/pass-fail outcome into
   `REFERENDUM_RESULT_KEY` inside whatever dict it is given (never its own

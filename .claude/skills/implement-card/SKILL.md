@@ -64,8 +64,11 @@ card page disagree, report it.
 
 - `card = Card(KRCG_ID, "Name", "<krcg type>")` registers the card;
   library cards need the type. Wire each effect with
-  `@card.on(Hook.X)`; offer choices with `card.option(value, label,
-  apply)` so the agent only ever sees legal plays. Requirements and
+  `@card.on(Hook.X)` on `def _name(state: GameState, ctx: XContext)`,
+  `XContext` from `engine/hook_contexts.py`: its docstring is the
+  hook's contract, and `Card.on` refuses any other annotation. Offer
+  choices with `card.option(value, label, apply)` so the agent only
+  ever sees legal plays. Requirements and
   costs are checked inside the provider: an unplayable card yields no
   option.
 - Superior/basic are separate options when the vampire has the
@@ -89,7 +92,9 @@ Use the `rules-scenario-test` skill helpers.
 
 ## 6. Verify
 
-`Card(...)` registers itself; there is no separate registry edit. Run
+`Card(...)` registers itself; there is no separate registry edit, and
+`cards/__init__.py` loads every module. Add the module to
+`[tool.basedpyright].include` in `pyproject.toml`. Run
 `uv run python scripts/check.py`.
 
 ## 7. Report

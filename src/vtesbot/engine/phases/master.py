@@ -31,9 +31,6 @@ if TYPE_CHECKING:
 
 MASTER_PHASE_PLAY_HOOK = Hook.MASTER_PHASE_PLAY
 MASTER_PHASE_ABILITY_HOOK = Hook.MASTER_PHASE_ABILITY
-"""A crypt card's own printed master-phase ability (module docstring):
-offered alongside `MASTER_PHASE_PLAY_HOOK` every iteration, but choosing
-one of its options never touches `actions_remaining`/the trifle bonus."""
 BASE_MASTER_ACTIONS = 1
 MAX_TRIFLE_BONUS_ACTIONS = 1
 """Rulebook §4 Master Phase: trifles grant one extra action, max one per phase."""

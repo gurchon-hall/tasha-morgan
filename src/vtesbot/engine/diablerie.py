@@ -37,9 +37,6 @@ if TYPE_CHECKING:
     from .state import GameState, VampireInPlay
 
 DIABLERIE_HOOK = Hook.DIABLERIE
-"""Two-sided impulse window (`resolve_impulse_window`, acting Methuselah
-first) after diablerie steps 1-3, before the Blood Hunt referendum; options
-are optional effects, not forced ones (e.g. Queen Anne's unlock)."""
 
 
 def _move_attachment_to_diablerist(

@@ -2,7 +2,9 @@
 hook providers, so its registry entry can never drift from what it wires.
 `cards/celerity.py` is the reference module."""
 
+import inspect
 import sys
+from annotationlib import Format
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Final
 
@@ -11,12 +13,25 @@ from vtesbot.cards.registry import Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.cards import LibraryCard
 from vtesbot.engine.decision import Choice
-from vtesbot.engine.hooks import UNWIRED_HOOKS, Hook, HookOption, Provider
+from vtesbot.engine.hook_contexts import HOOK_CONTEXTS
+from vtesbot.engine.hooks import UNWIRED_HOOKS, Hook, HookOption
 
 if TYPE_CHECKING:
     from vtesbot.engine.state import GameState
 
 _CARD_TYPE: Final = object()
+
+
+def _check_ctx_annotation(name: str, hook: Hook, provider: Callable[..., Any]) -> None:
+    params = list(inspect.signature(provider, annotation_format=Format.FORWARDREF).parameters)
+    if len(params) != 2:
+        raise TypeError(f"{name}: {provider.__name__} must take (state, ctx)")
+    annotation = inspect.get_annotations(provider, format=Format.FORWARDREF).get(params[1])
+    if annotation != HOOK_CONTEXTS[hook]:
+        raise TypeError(
+            f"{name}: {provider.__name__}'s ctx must be annotated "
+            f"{HOOK_CONTEXTS[hook]!r} for {hook}, got {annotation!r}"
+        )
 
 
 class Card:
@@ -56,14 +71,16 @@ class Card:
     def hooks(self) -> tuple[Hook, ...]:
         return tuple(self._hooks)
 
-    def on(self, hook: Hook) -> Callable[[Provider], Provider]:
-        """Decorator: register the function as this card's provider for `hook`."""
+    def on[P: Callable[[GameState, Any], Any]](self, hook: Hook) -> Callable[[P], P]:
+        """Decorator: register the function as this card's provider for `hook`.
+        Its `ctx` parameter must be annotated with `HOOK_CONTEXTS[hook]`."""
         if hook in UNWIRED_HOOKS:
             raise ValueError(f"{self.name}: {hook} has no engine dispatch site yet")
         if self.status is Status.BLOCKED:
             raise ValueError(f"{self.name}: a blocked card must not wire providers")
 
-        def decorate(provider: Provider) -> Provider:
+        def decorate(provider: P) -> P:
+            _check_ctx_annotation(self.name, hook, provider)
             hooks.register(hook, provider)
             self._wired = True
             if hook not in self._hooks:

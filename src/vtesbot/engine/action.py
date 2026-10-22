@@ -18,14 +18,8 @@ if TYPE_CHECKING:
 STEALTH_MODIFIER_HOOK = Hook.STEALTH_MODIFIER
 INTERCEPT_MODIFIER_HOOK = Hook.INTERCEPT_MODIFIER
 BLOCK_CANDIDATE_INJECTION_HOOK = Hook.BLOCK_CANDIDATE_INJECTION
-"""ENG-018. `apply()` unlocks the vampire and returns it as a successful block;
-each option sets `HookOption.block_candidate_instance_id` so vampires excluded
-via `BLOCK_CANDIDATE_EXCLUSION_HOOK` are filtered out."""
 
 INTERCEPT_DECREASE_HOOK = Hook.INTERCEPT_DECREASE
-"""ENG-021/RUL-009: mirrors `Hook.INTERCEPT_DECREASE`. Offered to `actor`
-proactively and reactively; `apply()` appends an `ActiveInterceptDecrease`
-to `pending`, not a delta."""
 
 PENDING_INTERCEPT_DECREASE_KEY = "intercept_decrease_modifiers"
 """`pending[...]` key (ENG-021): holds a `list[ActiveInterceptDecrease]`,
@@ -33,9 +27,6 @@ appended to (never replaced) by each activated `INTERCEPT_DECREASE_HOOK`
 option's own `apply` closure."""
 
 STEALTH_INCREASE_HOOK = Hook.STEALTH_INCREASE
-"""RUL-011: `INTERCEPT_DECREASE_HOOK`'s sibling for actor's stealth.
-`apply()` appends an `ActiveStealthIncrease` to `pending`; no `qualifies`
-predicate needed."""
 
 PENDING_STEALTH_INCREASE_KEY = "stealth_increase_modifiers"
 """`pending[...]` key (RUL-011): holds a `list[ActiveStealthIncrease]`,
@@ -43,19 +34,10 @@ appended to (never replaced) by each activated `STEALTH_INCREASE_HOOK`
 option's own `apply` closure."""
 
 WAKE_LOCKED_MINION_HOOK = Hook.WAKE_LOCKED_MINION
-"""ENG-030: defender-side sibling of `INTERCEPT_DECREASE_HOOK`/
-`STEALTH_INCREASE_HOOK`. `apply()` sets `woken = True` on a locked
-vampire; block stays fully contestable."""
 
 FORCE_BLOCK_ATTEMPT_FAILURE_HOOK = Hook.FORCE_BLOCK_ATTEMPT_FAILURE
-"""ENG-045. Actor-side, once a blocker is fixed, in both branches of
-`_duel_stealth_intercept`: the attempt fails outright (`forced_failure`),
-bypassing stealth/intercept; `apply()` return ignored (Forced Confessional)."""
 
 BLOCK_CANDIDATE_EXCLUSION_HOOK = Hook.BLOCK_CANDIDATE_EXCLUSION
-"""Actor-side, proactive (Rulebook §4 "as the action is announced"), before the
-defender's candidate list exists: `apply()` adds the vampire's id to
-`pending[PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY]` (Seduction, Sleeping Mind)."""
 
 PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY = "block_candidate_exclusions"
 """`pending[...]` key: holds a `set[str]` of excluded `instance_id`s,
@@ -169,18 +151,12 @@ or `played_card_type`, per its own card text's unqualified "a successful
 action") must not mistake this for one if it is ever added."""
 
 ACTION_SUCCEEDED_HOOK = Hook.ACTION_SUCCEEDED
-"""ENG-024. `run_effects` after an unblocked action's `resolve(pending)`
-(Rulebook §4: success means not blocked); context forwards that `pending`,
-e.g. `PENDING_REACTION_PLAYED_KEY` for Perfectionist."""
 
 PENDING_REFERENDUM_RESULT_KEY = "referendum_result"
 """Mirrors `politics.py::REFERENDUM_RESULT_KEY` (duplicated, not imported,
 to avoid a circular import). See `REFERENDUM_RESOLVED_HOOK` below."""
 
 REFERENDUM_RESOLVED_HOOK = Hook.REFERENDUM_RESOLVED
-"""ENG-026: mirrors `Hook.REFERENDUM_RESOLVED`, strictly after a political
-action's `resolve()` returns, only if it passed; dispatched via
-`resolve_impulse_window`."""
 
 
 def clear_woken_vampires(state: GameState) -> None:
@@ -479,9 +455,6 @@ class BlockAttemptCost:
 
 
 BLOCK_ATTEMPT_COST_HOOK = Hook.BLOCK_ATTEMPT_COST
-"""`collect`, mandatory: per block candidate, a provider returns a
-`BlockAttemptCost` or `None`; unaffordable candidates are not offered. Context:
-`candidate`, `actor`, `defender`, `acting_vampire`, `action`, `directed`."""
 
 
 def _block_attempt_costs(

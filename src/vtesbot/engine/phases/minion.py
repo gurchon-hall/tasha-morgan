@@ -57,18 +57,9 @@ DIABLERIE_STEALTH_OTHER_CONTROLLER = 0
 RECRUIT_ALLY_STEALTH = 1
 """Rulebook §4 Recruit Ally: "Default stealth: +1 stealth." """
 RECRUIT_ALLY_PLAY_HOOK = Hook.RECRUIT_ALLY_PLAY
-"""`HookOption` hook (mirrors `master.py`'s `master_phase_play`): offers one
-option per playable Ally card in hand; `apply(state)` returns a
-`RecruitAllySpec` (ENG-006)."""
 ACTION_CARD_PLAY_HOOK = Hook.ACTION_CARD_PLAY
-"""`HookOption` hook (ENG-011): generalizes `RECRUIT_ALLY_PLAY_HOOK` to
-Action-type library cards; offers one option per playable Action card in
-hand; `apply(state)` returns an `ActionCardSpec` below."""
 BLEED_AMOUNT_MODIFIER_HOOK = Hook.BLEED_AMOUNT_MODIFIER
 BLEED_AMOUNT_FIXED_MODIFIER_HOOK = Hook.BLEED_AMOUNT_FIXED_MODIFIER
-"""Mandatory numeric hook (`hooks.sum_modifiers`, CLAUDE.md rule 3) for an
-unconditional printed bleed bonus, applied before the optional
-`bleed_amount_modifier` window opens."""
 PENDING_BLEED_AMOUNT_KEY = "bleed_amount_bonus"
 """Scratch-dict key (ENG-005): an earlier stealth/intercept provider in this
 same bleed action stores a running bonus here; `_perform_bleed`'s `resolve`
@@ -156,9 +147,6 @@ def build_enter_combat_action_spec(
 
 
 ATTACHMENT_REMOVAL_ACTION_HOOK = Hook.ATTACHMENT_REMOVAL_ACTION_PLAY
-"""Offered with `ACTION_CARD_PLAY_HOOK` in `_choose_and_perform_action`: one
-option per removable attachment; `apply()` returns an `ActionCardSpec` from
-`build_attachment_removal_action_spec` (Pulled Fangs; plays no card)."""
 
 ATTACHMENT_REMOVAL_STEALTH = 1
 """"+1 stealth action" bare (no "Ⓓ" marker): undirected, baseline 0 (same
@@ -252,9 +240,6 @@ def active_enter_combat_grants(state: GameState, player: str) -> list[EnterComba
 
 
 CANNOT_HUNT_HOOK = Hook.CANNOT_HUNT
-"""`any_true`, mandatory: an attachment's "cannot hunt" clause. Checked by
-`minion_phase`'s mandatory-hunt loop; such a vampire goes to torpor instead,
-not as an action (Pulled Fangs)."""
 
 
 def minion_phase(state: GameState, player: str) -> None:

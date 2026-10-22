@@ -91,7 +91,12 @@ def test_valeriya_grants_plus_one_strength_to_her_own_strike():
     game = builder.build()
 
     bonus = hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK, game.state, player="P1", vampire="Valeriya1", opponent="B1"
+        COMBAT_STRENGTH_MODIFIER_HOOK,
+        game.state,
+        player="P1",
+        vampire="Valeriya1",
+        opponent="B1",
+        combat_state=None,
     )
 
     assert bonus == 1
@@ -110,7 +115,12 @@ def test_valeriya_grants_no_bonus_to_a_different_vampire():
     game = builder.build()
 
     bonus = hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK, game.state, player="P1", vampire="Other", opponent="B1"
+        COMBAT_STRENGTH_MODIFIER_HOOK,
+        game.state,
+        player="P1",
+        vampire="Other",
+        opponent="B1",
+        combat_state=None,
     )
 
     assert bonus == 0
@@ -127,7 +137,12 @@ def test_valeriya_grants_no_bonus_to_the_opponents_side_of_the_same_strike():
     game = builder.build()
 
     bonus = hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK, game.state, player="P2", vampire="B1", opponent="Valeriya1"
+        COMBAT_STRENGTH_MODIFIER_HOOK,
+        game.state,
+        player="P2",
+        vampire="B1",
+        opponent="Valeriya1",
+        combat_state=None,
     )
 
     assert bonus == 0

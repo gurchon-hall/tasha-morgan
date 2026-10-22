@@ -224,6 +224,7 @@ def test_saku_maneuver_is_not_offered_for_a_different_vampire():
         vampire="Other",
         opponent="B1",
         combat_state={},
+        round_state={},
     )
 
     assert options == []

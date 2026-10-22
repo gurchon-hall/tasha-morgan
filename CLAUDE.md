@@ -193,7 +193,8 @@ tests/
   pretty-format-json --autofix --no-sort-keys --no-ensure-ascii
   <files>`.
 - **Closing verification**: `uv run python scripts/check.py` runs
-  pytest, ruff check and format, the comment cap, pymarkdownlnt
+  pytest, ruff check and format, basedpyright (the `Card`-API card
+  modules, `pyproject.toml`), the comment cap, pymarkdownlnt
   (`docs/`, `CLAUDE.md`, `.claude/`; config in `.pymarkdown`), the
   docs-index check and the data JSON check. Run it before reporting
   any change as done, every time, and report its summary.
@@ -287,9 +288,11 @@ Facts that change as the project moves; update this section with them.
 - Progress, card counts and known limitations: `README.md` Status.
   Open entries: the `README.md` index of each `docs/` folder.
 - **Card authoring API**: new and edited card modules use
-  `cards/card.py::Card` (reference: `cards/celerity.py`). Most modules
+  `cards/card.py::Card` (reference: `cards/celerity.py`), with each
+  provider's `ctx` typed from `engine/hook_contexts.py`. Most modules
   still call `register(CardRegistration(...))`; their migration is a
-  separate, planned pass. Do not copy their style.
+  separate, planned pass. Do not copy their style. basedpyright checks
+  only migrated modules (`[tool.basedpyright].include`).
 - **Comment cap**: most existing code predates the 3-line rule (§6);
   `uv run python scripts/comment_lines.py --all` lists the backlog.
   Comply on what you touch; do not trim unrelated code on the side.

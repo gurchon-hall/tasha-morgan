@@ -22,9 +22,6 @@ STANDARD_TRANSFERS = 4
 """2P variant §2.3: every influence phase thereafter, for both players."""
 
 INFLUENCE_PHASE_ACTION_HOOK = Hook.INFLUENCE_PHASE_ACTION
-"""ENG-016: a card-sourced, transfer-costed influence-phase option, offered
-alongside the three hardcoded transfer types. `HookOption.apply(state)`
-must return the `int` number of transfers consumed."""
 
 
 def influence_phase(state: GameState, player: str) -> None:

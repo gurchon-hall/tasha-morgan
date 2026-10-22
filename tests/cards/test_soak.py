@@ -45,6 +45,7 @@ def _offer(game, damage: dict[str, int], round_state: dict | None = None):
         vampire="V1",
         damage=damage,
         round_state=round_state,
+        combat_state=None,
     )
 
 
@@ -253,6 +254,7 @@ def test_once_per_round_cap_is_per_vampire_not_per_player():
         vampire="V1",
         damage={"normal": 4, "aggravated": 0},
         round_state=round_state,
+        combat_state=None,
     )
     options_v1[0].apply(built.state)
 
@@ -263,5 +265,6 @@ def test_once_per_round_cap_is_per_vampire_not_per_player():
         vampire="V2",
         damage={"normal": 4, "aggravated": 0},
         round_state=round_state,
+        combat_state=None,
     )
     assert {o.choice.value for o in options_v2} == {"soak:basic", "soak:superior"}

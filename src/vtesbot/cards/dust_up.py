@@ -39,6 +39,11 @@ from vtesbot.engine.combat import (
     hand_strike_damage,
     mark_additional_strike_limit_used,
 )
+from vtesbot.engine.hook_contexts import (
+    CombatAdditionalStrikeContext,
+    CombatDodgeOptionContext,
+    CombatStrikeOptionContext,
+)
 from vtesbot.engine.hooks import Hook, HookOption
 from vtesbot.engine.state import GameState
 
@@ -76,7 +81,7 @@ def _set_grant(round_state: dict[str, Any] | None, vampire_id: str, value: bool)
 
 
 @card.on(Hook.COMBAT_STRIKE_OPTION)
-def _ani_strike(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
+def _ani_strike(state: GameState, ctx: CombatStrikeOptionContext) -> list[HookOption]:
     if not _playable(state, ctx, "ani"):
         return []
     player, base = ctx["player"], _base_damage(state, ctx)
@@ -89,7 +94,7 @@ def _ani_strike(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
 
 
 @card.on(Hook.COMBAT_STRIKE_OPTION)
-def _pot_strike(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
+def _pot_strike(state: GameState, ctx: CombatStrikeOptionContext) -> list[HookOption]:
     if not _playable(state, ctx, "pot"):
         return []
     player, base = ctx["player"], _base_damage(state, ctx)
@@ -102,7 +107,7 @@ def _pot_strike(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
 
 
 @card.on(Hook.COMBAT_DODGE_OPTION)
-def _cel_dodge(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
+def _cel_dodge(state: GameState, ctx: CombatDodgeOptionContext) -> list[HookOption]:
     if not _playable(state, ctx, "cel") or additional_strike_limit_used(ctx):
         return []
     player, vampire_id, round_state = ctx["player"], ctx["vampire"], ctx.get("round_state")
@@ -120,7 +125,9 @@ def _cel_dodge(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
 
 
 @card.on(Hook.COMBAT_ADDITIONAL_STRIKE)
-def _cel_additional_strike(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
+def _cel_additional_strike(
+    state: GameState, ctx: CombatAdditionalStrikeContext
+) -> list[HookOption]:
     """Claims the grant; the "(limited)" cap was checked when it was granted."""
     vampire_id, round_state = ctx["vampire"], ctx.get("round_state")
     if context_vampire(state, ctx) is None or not _has_grant(round_state, vampire_id):

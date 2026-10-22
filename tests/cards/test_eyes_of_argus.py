@@ -35,8 +35,13 @@ def _offer_intercept(game, *, defender, actor="P1", directed=True, pending=None)
         game.state,
         player=defender,
         actor=actor,
+        defender=defender,
+        acting_vampire=None,
+        action=None,
         blocking_vampire=None,
         directed=directed,
+        stealth=1,
+        intercept=0,
         pending=pending,
     )
 

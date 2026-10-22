@@ -52,7 +52,13 @@ def _offer(game, *, defender: str, actor: str, acting_vampire: str, pending: dic
         game.state,
         player=defender,
         actor=actor,
+        defender=defender,
         acting_vampire=acting_vampire,
+        action=None,
+        directed=None,
+        blocking_vampire=None,
+        stealth=1,
+        intercept=0,
         pending=pending,
     )
 

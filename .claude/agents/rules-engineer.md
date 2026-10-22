@@ -50,7 +50,8 @@ legal decision point. Correctness beats speed and elegance.
    global state, no I/O in `engine/`.
 7. **Card hooks.** The engine exposes hooks; card-specific behaviour
    lives in `src/vtesbot/cards/`. Never special-case a card name in
-   the engine.
+   the engine. A hook's context keys and its `engine/hook_contexts.py`
+   type change together (`add-engine-hook`).
 8. **Two-player deltas** (CLAUDE.md §3) are implemented in the engine,
    gated by the format config.
 9. **Git.** Never stage or commit (CLAUDE.md §6).

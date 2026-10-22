@@ -18,114 +18,47 @@ PASS_VALUE = "pass"
 
 class Hook(StrEnum):
     """Every engine hook point a card's effect module may register against.
-    Members in `UNWIRED_HOOKS` have no engine dispatch site yet."""
+    A wired member's context and contract: `hook_contexts.py`. Members in
+    `UNWIRED_HOOKS` have no engine dispatch site yet."""
 
     MASTER_PHASE_PLAY = "master_phase_play"
     MASTER_PHASE_ABILITY = "master_phase_ability"
-    """A crypt card's printed "during your master phase" ability: offered with
-    `MASTER_PHASE_PLAY`, costing no master phase action (Lucinde, Alastor)."""
     INFLUENCE_PHASE_ACTION = "influence_phase_action"
-    """A card-sourced, transfer-costed option offered during the Influence
-    phase alongside the three hardcoded transfer types (ENG-016).
-    `apply(state)` returns the `int` transfers consumed."""
     STEALTH_MODIFIER = "stealth_modifier"
     INTERCEPT_MODIFIER = "intercept_modifier"
     INTERCEPT_DECREASE = "intercept_decrease"
-    """Acting-side Action Modifier reducing a blocking candidate's
-    intercept, offered proactively and reactively (ENG-021/RUL-009). Appends
-    an `ActiveInterceptDecrease` to `pending`; return ignored."""
     STEALTH_INCREASE = "stealth_increase"
-    """`INTERCEPT_DECREASE`'s sibling for the acting side's stealth
-    (RUL-011, Loup). Appends an `ActiveStealthIncrease` to `pending`; no
-    `qualifies` predicate needed."""
     WAKE_LOCKED_MINION = "wake_locked_minion"
-    """Defender-side sibling of `INTERCEPT_DECREASE`/`STEALTH_INCREASE`,
-    offered to `defender` only (ENG-030). Sets `woken=True` on a locked
-    vampire, or `AllyInPlay.skip_next_unlock` for an ally."""
     FORCE_BLOCK_ATTEMPT_FAILURE = "force_block_attempt_failure"
-    """Actor-side, once a blocker is fixed: the attempt fails outright,
-    bypassing stealth/intercept (ENG-045, Forced Confessional)."""
     BLEED_AMOUNT_MODIFIER = "bleed_amount_modifier"
     BLEED_AMOUNT_FIXED_MODIFIER = "bleed_amount_fixed_modifier"
     DAMAGE_PREVENTION = "damage_prevention"
     COMBAT_STRIKE_OPTION = "combat_strike_option"
     COMBAT_STRENGTH_MODIFIER = "combat_strength_modifier"
     COMBAT_DODGE_OPTION = "combat_dodge_option"
-    """A card/ability-granted dodge, offered alongside `COMBAT_STRIKE_OPTION`
-    at the strike step. Always deals 0 damage and zeroes the opponent's
-    simultaneous strike this round (ENG-012 Gap 2)."""
     COMBAT_ADDITIONAL_STRIKE = "combat_additional_strike"
-    """A card/ability-granted extra strike this round, offered after the
-    normal strike pair; using one re-enters the full strike-choice
-    machinery for that combatant's additional strike (ENG-012 Gap 2)."""
     CAPACITY_MODIFIER = "capacity_modifier"
     DISCIPLINE_LEVEL_MODIFIER = "discipline_level_modifier"
     HAND_SIZE_MODIFIER = "hand_size_modifier"
-    """Passive mandatory numeric hook (`hooks.sum_modifiers`), wired by
-    `effective_hand_size`. Contributes a signed delta to base hand size,
-    re-checked every call (e.g. Carmelita Neillson)."""
     RECRUIT_ALLY_PLAY = "recruit_ally_play"
     ACTION_CARD_PLAY = "action_card_play"
-    """A library card of type Action (not Action Modifier) that is itself
-    the acting minion's whole action, distinct from `RECRUIT_ALLY_PLAY`.
-    Generalizes that pattern beyond Allies (ENG-011)."""
     ATTACHMENT_REMOVAL_ACTION_PLAY = "attachment_removal_action_play"
-    """Cumulative "+1 stealth action, by either side's vampires, removes the
-    attachment after N" minion action (Pulled Fangs)."""
     CANNOT_HUNT = "cannot_hunt"
-    """Passive boolean hook (`hooks.any_true`): an attachment's mandatory
-    "cannot hunt" clause, checked by `minion_phase`'s own mandatory-hunt
-    loop before `_perform_hunt` (Pulled Fangs, krcg 101515)."""
     REFERENDUM_TALLIED = "referendum_tallied"
-    """Mandatory per-provider reaction fired once a referendum's votes are
-    tallied, before pass/fail effects. Hook site for Marcos Belegrad's
-    pool burn (RUL-005); no provider registered yet."""
     VAMPIRE_ENTERS_TORPOR = "vampire_enters_torpor"
-    """Mandatory per-provider reaction fired the instant a vampire's zone
-    flips to torpor (`send_to_torpor`). Added for Fame's torpor pool-burn
-    clause (ENG-014)."""
     UNLOCK_PHASE_MANDATORY_EFFECT = "unlock_phase_mandatory_effect"
-    """Mandatory but orderable unlock-phase effect, folded into the player's
-    chosen unlock ordering (ENG-014, Fame)."""
     MANEUVER = "maneuver"
-    """A card/ability-granted maneuver, offered during Determine Range,
-    acting side first, alternating, closing on two declines (RUL-008/ENG-019).
-    A bundled strike must call `commit_strike_for_round`."""
     END_OF_ROUND = "end_of_round"
-    """End of Round hook (Rulebook §4 Combat step 7), dispatched once per
-    round on every exit path; two-sided impulse window, acting side first
-    (RUL-002). Added for Taste of Vitae (ENG-020)."""
     BEFORE_RANGE = "before_range"
-    """Before Range hook (Rulebook §4 Combat step 1), offered once per
-    combat before round 1's Determine Range; two-sided impulse window,
-    acting side first (RUL-002/ENG-029)."""
     ACTION_SUCCEEDED = "action_succeeded"
-    """Mandatory per-provider reaction fired once an unblocked minion
-    action's `resolve()` returns, regardless of its own effect (ENG-024,
-    Loup). Context carries `actor_player`, `vampire`, `action`."""
     CANCEL_AS_PLAYED = "cancel_as_played"
-    """Generic "cancel a card as played" hook (ENG-022), offered to the
-    non-choosing side right after a `HookOption` is chosen, before its
-    `apply` runs; the original `cost` has already run regardless."""
     POLLING_STEP = "polling_step"
-    """Wired in `engine/politics.py` (RUL-005): a before-cast window before
-    casting, and (ENG-027) a mid-cast window merged into vote-casting for
-    retroactive cancellation. Return contract differs per phase."""
     REFERENDUM_RESOLVED = "referendum_resolved"
-    """Two-sided window after a passed political action's referendum fully
-    resolves, combat included (ENG-026); distinct from `REFERENDUM_TALLIED`."""
     VOTE_SOURCE_CAST_BONUS = "vote_source_cast_bonus"
-    """Passive mandatory numeric hook, dispatched the instant a specific
-    `VoteSource` is cast, after its own cast-time side effects (ENG-031,
-    Fiorenza Savona). Returned `int` folds into that cast's own total."""
     DIABLERIE = "diablerie"
     BLOCK_CANDIDATE_INJECTION = "block_candidate_injection"
     BLOCK_CANDIDATE_EXCLUSION = "block_candidate_exclusion"
-    """Actor-side, before the defender's candidate list is computed: removes a
-    vampire from the block candidates (Seduction, Sleeping Mind)."""
     BLOCK_ATTEMPT_COST = "block_attempt_cost"
-    """Passive per-candidate cost gate (`BlockAttemptCost`): unaffordable
-    candidates are not offered, others pay on attempting (Sergio Bueno)."""
     VOTE_AGAINST_POOL_COST = "vote_against_pool_cost"
     # Not dispatched by the engine yet (see UNWIRED_HOOKS):
     POLITICAL_ACTION = "political_action"
@@ -148,8 +81,8 @@ UNWIRED_HOOKS: frozenset[Hook] = frozenset(
     }
 )
 """Named for card classification (`CardRegistration.hooks`) but with no
-engine dispatch site: registering a provider against one would never be
-called. Wiring one means adding its call site and dropping it from here."""
+engine dispatch site. Wiring one means adding its call site and its
+`hook_contexts.py` type, and dropping it from here."""
 
 
 @dataclass(frozen=True)
@@ -175,7 +108,9 @@ class HookOption:
     block_candidate_instance_id: str | None = None
 
 
-Provider = Callable[["GameState", Mapping[str, Any]], list[HookOption]]
+Provider = Callable[["GameState", Mapping[str, Any]], Any]
+"""Returns `list[HookOption]` for option hooks, else the per-hook value
+(`hook_contexts.py`)."""
 
 _PROVIDERS: dict[Hook, list[Provider]] = defaultdict(list)
 
@@ -217,6 +152,7 @@ def restore(snapshot: dict[Hook, list[Provider]]) -> None:
 
 def offer(hook: Hook, state: GameState, **context: Any) -> list[HookOption]:
     """Collect every legal `HookOption` any registered provider offers right now."""
+    hook_contexts.check_context(hook, context)
     options: list[HookOption] = []
     for provider in _PROVIDERS.get(hook, ()):
         options.extend(provider(state, context))
@@ -254,8 +190,6 @@ def sanitize_decision_context(context: Mapping[str, Any]) -> dict[str, Any]:
 
 
 CANCEL_AS_PLAYED_HOOK = Hook.CANCEL_AS_PLAYED
-"""Mirrors `cards/registry.py::Hook.CANCEL_AS_PLAYED`'s own string value --
-see `apply_chosen_option` below for the dispatch this now drives (ENG-022)."""
 
 PENDING_REACTION_PLAYED_KEY = "reaction_played"
 """`pending[...]` key: set `True` the moment a Reaction-type `HookOption`
@@ -432,6 +366,7 @@ def sum_modifiers(hook: Hook, state: GameState, **context: Any) -> int:
     """Passive numeric-modifier hook: sums every provider's contribution for
     a mandatory, non-chosen effect (CLAUDE.md rule 3). Providers are plain
     callables returning 0 when they don't apply."""
+    hook_contexts.check_context(hook, context)
     total = 0
     for provider in _PROVIDERS.get(hook, ()):
         total += provider(state, context)  # type: ignore[arg-type]
@@ -442,6 +377,7 @@ def run_effects(hook: Hook, state: GameState, **context: Any) -> None:
     """Mandatory, non-chosen per-provider side-effect dispatch: calls every
     provider once, in order; each may mutate `state` directly. Stops once
     `state.game_over` (Rulebook §5)."""
+    hook_contexts.check_context(hook, context)
     for provider in _PROVIDERS.get(hook, ()):
         if state.game_over:
             return
@@ -449,10 +385,10 @@ def run_effects(hook: Hook, state: GameState, **context: Any) -> None:
 
 
 def any_true(hook: Hook, state: GameState, **context: Any) -> bool:
-    """Passive boolean hook (mirrors `sum_modifiers`/`union_modifiers`): True the moment any
-    provider's contribution for a mandatory, non-chosen fact is truthy (CLAUDE.md rule 3
-    exception, same as `attachments.py::CAPACITY_MODIFIER_HOOK`). Providers are plain
-    callables returning a falsy value when they don't apply; short-circuits like `any()`."""
+    """Passive boolean hook (mirrors `sum_modifiers`): True once any provider
+    returns truthy for a mandatory, non-chosen fact; providers return a falsy
+    value when they don't apply. Short-circuits like `any()`."""
+    hook_contexts.check_context(hook, context)
     for provider in _PROVIDERS.get(hook, ()):
         if provider(state, context):  # type: ignore[arg-type]
             return True
@@ -470,6 +406,7 @@ def collect(hook: Hook, state: GameState, **context: Any) -> list[Any]:
     `engine/action.py::BLOCK_ATTEMPT_COST_HOOK`'s `BlockAttemptCost`, one
     per candidate, carrying its own `can_pay`/`pay` rather than folding into
     one combined total)."""
+    hook_contexts.check_context(hook, context)
     results: list[Any] = []
     for provider in _PROVIDERS.get(hook, ()):
         value = provider(state, context)  # type: ignore[arg-type]
@@ -482,7 +419,11 @@ def union_modifiers(hook: Hook, state: GameState, **context: Any) -> tuple[Any, 
     """Set-valued counterpart to `sum_modifiers`: unions every provider's
     contribution (e.g. discipline-level codes). Returns a sorted tuple, not
     a frozenset, for determinism (CLAUDE.md §5)."""
+    hook_contexts.check_context(hook, context)
     result: set[Any] = set()
     for provider in _PROVIDERS.get(hook, ()):
         result.update(provider(state, context))  # type: ignore[arg-type]
     return tuple(sorted(result))
+
+
+from . import hook_contexts  # noqa: E402  (last: it imports `Hook` from here)

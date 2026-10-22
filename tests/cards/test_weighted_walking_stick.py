@@ -61,6 +61,7 @@ def _attach_context(
         "acting_vampire": acting_vampire,
         "blocking_player": blocking_player,
         "blocking_vampire": blocking_vampire,
+        "combat_state": {},
     }
 
 
@@ -193,7 +194,12 @@ def test_strike_not_offered_without_the_attachment():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     assert options == []
 
@@ -211,7 +217,12 @@ def test_strike_not_offered_once_counters_are_exhausted():
     )
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     assert options == []
 
@@ -226,7 +237,12 @@ def test_strike_deals_strength_plus_one_damage():
     )
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     assert {o.choice.value for o in options} == {"weighted_walking_stick:strike:V1"}
     amount = options[0].apply(game.state)
@@ -243,7 +259,12 @@ def test_strike_burns_one_counter_per_damage_inflicted():
     )
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     options[0].apply(game.state)
 
@@ -265,7 +286,12 @@ def test_strike_deals_full_damage_with_only_one_counter_left_then_burns_the_card
     )
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     amount = options[0].apply(game.state)
 

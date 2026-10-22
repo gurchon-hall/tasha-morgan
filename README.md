@@ -26,7 +26,8 @@ uv sync
 ```
 
 This installs both the runtime dependency (`krcg`) and the dev tools
-(`pytest`, `ruff`, `pymarkdownlnt`, `pre-commit-hooks`) into `.venv`.
+(`pytest`, `ruff`, `basedpyright`, `pymarkdownlnt`, `pre-commit-hooks`)
+into `.venv`.
 
 ## Running the checks
 
@@ -34,7 +35,7 @@ This installs both the runtime dependency (`krcg`) and the dev tools
 uv run python scripts/check.py
 ```
 
-Runs pytest, ruff (lint and format), the 3-line comment cap,
+Runs pytest, ruff (lint and format), basedpyright, the 3-line comment cap,
 markdown lint, the docs-index check and the `data/` JSON check, then
 prints a summary (CLAUDE.md §6). `--skip <step>` drops one step.
 

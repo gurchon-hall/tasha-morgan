@@ -19,6 +19,7 @@ STEPS: dict[str, list[str]] = {
     "pytest": [PY, "-m", "pytest", "-q"],
     "ruff-check": [PY, "-m", "ruff", "check", "."],
     "ruff-format": [PY, "-m", "ruff", "format", "--check", "."],
+    "pyright": [PY, "-m", "basedpyright"],
     "comment-lines": [PY, "scripts/comment_lines.py"],
     "markdown": [PY, "-m", "pymarkdown", "scan", "-r", "docs/", "CLAUDE.md", ".claude/"],
     "docs-index": [PY, "scripts/docs_index.py", "--check"],

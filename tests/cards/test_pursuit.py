@@ -51,7 +51,13 @@ def test_maneuver_not_offered_without_cel():
     game = builder.build()
 
     options = hooks.offer(
-        MANEUVER_HOOK, game.state, player="P1", vampire="V1", opponent="B1", combat_state={}
+        MANEUVER_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
+        round_state={},
     )
     assert options == []
 
@@ -63,7 +69,13 @@ def test_maneuver_not_offered_without_the_card_in_hand():
     game = builder.build()
 
     options = hooks.offer(
-        MANEUVER_HOOK, game.state, player="P1", vampire="V1", opponent="B1", combat_state={}
+        MANEUVER_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
+        round_state={},
     )
     assert options == []
 
@@ -80,7 +92,13 @@ def test_maneuver_offered_with_basic_cel():
     values = {
         o.choice.value
         for o in hooks.offer(
-            MANEUVER_HOOK, game.state, player="P1", vampire="V1", opponent="B1", combat_state={}
+            MANEUVER_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            combat_state={},
+            round_state={},
         )
     }
     assert values == {"pursuit:maneuver"}
@@ -100,7 +118,13 @@ def test_maneuver_also_offered_with_superior_cel():
     values = {
         o.choice.value
         for o in hooks.offer(
-            MANEUVER_HOOK, game.state, player="P1", vampire="V1", opponent="B1", combat_state={}
+            MANEUVER_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            combat_state={},
+            round_state={},
         )
     }
     assert values == {"pursuit:maneuver"}
@@ -120,7 +144,12 @@ def test_additional_strike_not_offered_with_only_basic_cel():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_ADDITIONAL_STRIKE_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
     )
     assert options == []
 
@@ -132,7 +161,12 @@ def test_additional_strike_not_offered_without_the_card_in_hand():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_ADDITIONAL_STRIKE_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
     )
     assert options == []
 
@@ -149,7 +183,12 @@ def test_additional_strike_offered_with_superior_cel():
     values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_ADDITIONAL_STRIKE_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            round_state={},
         )
     }
     assert values == {"pursuit:additional_strike"}
@@ -170,13 +209,24 @@ def test_superior_cel_unlocks_both_clauses_independently():
     maneuver_values = {
         o.choice.value
         for o in hooks.offer(
-            MANEUVER_HOOK, game.state, player="P1", vampire="V1", opponent="B1", combat_state={}
+            MANEUVER_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            combat_state={},
+            round_state={},
         )
     }
     extra_values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_ADDITIONAL_STRIKE_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            round_state={},
         )
     }
     assert maneuver_values == {"pursuit:maneuver"}

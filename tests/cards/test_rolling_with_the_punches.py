@@ -47,7 +47,15 @@ def _game(*, disciplines: tuple[str, ...] = ("for",), blood: int = 0, with_card:
 
 
 def _offer(game, damage: dict[str, int]):
-    return hooks.offer(DAMAGE_PREVENTION_HOOK, game.state, player="P1", vampire="V1", damage=damage)
+    return hooks.offer(
+        DAMAGE_PREVENTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        damage=damage,
+        combat_state=None,
+        round_state=None,
+    )
 
 
 def test_registered_as_implemented():
@@ -174,6 +182,7 @@ def _offer_both(game, damage: dict[str, int], round_state: dict | None = None):
         vampire="V1",
         damage=damage,
         round_state=round_state,
+        combat_state=None,
     )
 
 

@@ -29,9 +29,6 @@ if TYPE_CHECKING:
 
 EDGE_GAIN_EFFECT = "edge_gain"
 UNLOCK_PHASE_MANDATORY_EFFECT_HOOK = Hook.UNLOCK_PHASE_MANDATORY_EFFECT
-"""One `HookOption` per pending mandatory effect, folded into the unlock
-phase's player-chosen ordering loop, which cannot end while one remains
-(Fame's ruling: such payments "can be ordered with other unlock effects")."""
 
 
 def unlock_phase(state: GameState, player: str) -> None:

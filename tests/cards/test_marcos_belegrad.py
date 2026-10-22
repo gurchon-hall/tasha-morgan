@@ -206,7 +206,11 @@ def test_both_methuselahs_casting_against_at_one_pool_is_a_tie():
         game = builder.build()
         game.state.turn_order = order
         context = {
+            "caller": "P1",
+            "other": "P2",
             "caller_vampire": game.vampire("Marcos1"),
+            "votes_for": 0,
+            "votes_against": 2,
             "casts": [
                 ("P1", "a", 1, "against"),
                 ("P2", "b", 1, "against"),
@@ -228,7 +232,11 @@ def test_only_one_caster_at_one_pool_is_still_an_ordinary_oust():
     builder.player("P2", pool=5)
     game = builder.build()
     context = {
+        "caller": "P1",
+        "other": "P2",
         "caller_vampire": game.vampire("Marcos1"),
+        "votes_for": 1,
+        "votes_against": 1,
         "casts": [("P1", "a", 1, "against"), ("P2", "b", 1, "for")],
     }
 

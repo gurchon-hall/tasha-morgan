@@ -48,7 +48,7 @@ def _offer(game, *, player: str, round_state: dict | None = None):
         acting_vampire="V1",
         blocking_player="P2",
         blocking_vampire="B1",
-        **({ROUND_STATE_CONTEXT_KEY: round_state} if round_state is not None else {}),
+        **{ROUND_STATE_CONTEXT_KEY: round_state if round_state is not None else {}},
     )
 
 

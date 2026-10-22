@@ -64,7 +64,12 @@ def test_basic_strike_not_offered_without_pot():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     assert options == []
 
@@ -76,7 +81,12 @@ def test_basic_strike_not_offered_without_the_card_in_hand():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     assert options == []
 
@@ -92,7 +102,12 @@ def test_basic_strike_not_offered_without_enough_blood():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     assert options == []
 
@@ -109,7 +124,12 @@ def test_basic_strike_offered_with_basic_pot_and_enough_blood():
     values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_STRIKE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            combat_state={},
         )
     }
     assert values == {"slam:basic"}
@@ -129,7 +149,12 @@ def test_basic_strike_also_offered_with_superior_pot():
     values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_STRIKE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            combat_state={},
         )
     }
     assert values == {"slam:basic"}

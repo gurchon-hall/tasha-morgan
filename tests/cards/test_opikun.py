@@ -46,6 +46,7 @@ def _offer(game, *, damage, combat_state=None, vampire="V1"):
         vampire=vampire,
         damage=damage,
         combat_state=combat_state,
+        round_state=None,
     )
 
 

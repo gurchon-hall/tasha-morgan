@@ -49,8 +49,7 @@ def _offer(game, *, acting_vampire="V1", player="P1", defender="P2", pending=Non
         STEALTH_INCREASE_HOOK,
         game.state,
         player=player,
-        stealth=0,
-        intercept=0,
+        base_stealth=0,
         actor=player,
         defender=defender,
         acting_vampire=acting_vampire,
@@ -209,6 +208,7 @@ def test_table_wide_burn_from_any_toreadors_successful_action():
         actor_player="P2",
         vampire=game.vampire("V2"),
         action=ACTION_BLEED,
+        pending={},
     )
 
     assert p1_loup.zone == "burned"

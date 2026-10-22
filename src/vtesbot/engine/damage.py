@@ -73,8 +73,6 @@ read/write round-scoped state (ENG-036) the same way combat-scoped hooks
 already do. `engine/combat.py::ROUND_STATE_CONTEXT_KEY` re-exports this same
 object; degrades to no entry when a hook is offered directly."""
 VAMPIRE_ENTERS_TORPOR_HOOK = Hook.VAMPIRE_ENTERS_TORPOR
-"""Mandatory reaction hook, dispatched by `send_to_torpor` (ENG-014, Fame). Passes the live
-`VampireInPlay`, safe since `run_effects` only runs trusted card code."""
 
 
 BLOOD_LOST_TO_DAMAGE_KEY = "blood_lost_to_damage"

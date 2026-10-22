@@ -84,7 +84,12 @@ def test_kevin_gets_plus_one_strength_against_a_brujah():
     game = builder.build()
 
     bonus = hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK, game.state, player="P1", vampire="Kevin1", opponent="B1"
+        COMBAT_STRENGTH_MODIFIER_HOOK,
+        game.state,
+        player="P1",
+        vampire="Kevin1",
+        opponent="B1",
+        combat_state=None,
     )
 
     assert bonus == 1
@@ -99,7 +104,12 @@ def test_kevin_gets_no_bonus_against_a_non_brujah():
     game = builder.build()
 
     bonus = hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK, game.state, player="P1", vampire="Kevin1", opponent="T1"
+        COMBAT_STRENGTH_MODIFIER_HOOK,
+        game.state,
+        player="P1",
+        vampire="Kevin1",
+        opponent="T1",
+        combat_state=None,
     )
 
     assert bonus == 0
@@ -116,7 +126,12 @@ def test_a_brujah_gets_plus_one_strength_against_kevin():
     game = builder.build()
 
     bonus = hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK, game.state, player="P2", vampire="B1", opponent="Kevin1"
+        COMBAT_STRENGTH_MODIFIER_HOOK,
+        game.state,
+        player="P2",
+        vampire="B1",
+        opponent="Kevin1",
+        combat_state=None,
     )
 
     assert bonus == 1
@@ -138,6 +153,7 @@ def test_a_different_ventrue_gets_no_bonus_against_a_brujah():
         player="P1",
         vampire="OtherVentrue",
         opponent="B1",
+        combat_state=None,
     )
 
     assert bonus == 0

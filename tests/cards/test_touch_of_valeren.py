@@ -332,6 +332,7 @@ def _offer_self(game, *, damage, combat_state=None, vampire="D1"):
         vampire=vampire,
         damage=damage,
         combat_state=combat_state,
+        round_state=None,
     )
 
 
@@ -440,6 +441,7 @@ def _offer_assist(game, *, damage, combat_state=None, vampire="D1"):
         vampire=vampire,
         damage=damage,
         combat_state=combat_state,
+        round_state=None,
     )
 
 
@@ -580,6 +582,7 @@ def test_self_and_assist_can_both_be_offered_together():
         vampire="D1",
         damage={"normal": 2, "aggravated": 0},
         combat_state={},
+        round_state=None,
     )
 
     assert {o.choice.value for o in options} == {

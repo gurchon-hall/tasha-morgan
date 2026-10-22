@@ -16,13 +16,15 @@ Notes:
 - Not a trifle: playing it uses the master phase action.
 """
 
-from collections.abc import Mapping
-from typing import Any
-
 from vtesbot.cards.card import Card
 from vtesbot.cards.common import find_vampire
 from vtesbot.engine.attachments import effective_disciplines
 from vtesbot.engine.cards import CardAttachment
+from vtesbot.engine.hook_contexts import (
+    CapacityModifierContext,
+    DisciplineLevelModifierContext,
+    MasterPhasePlayContext,
+)
 from vtesbot.engine.hooks import Hook, HookOption
 from vtesbot.engine.state import GameState, VampireInPlay
 
@@ -48,7 +50,7 @@ def _eligible_targets(state: GameState) -> list[VampireInPlay]:
 
 
 @card.on(Hook.MASTER_PHASE_PLAY)
-def _play(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
+def _play(state: GameState, ctx: MasterPhasePlayContext) -> list[HookOption]:
     player = ctx["player"]
     if not card.in_hand(state, player):
         return []
@@ -69,13 +71,13 @@ def _play(state: GameState, ctx: Mapping[str, Any]) -> list[HookOption]:
 
 
 @card.on(Hook.CAPACITY_MODIFIER)
-def _capacity(state: GameState, ctx: Mapping[str, Any]) -> int:
+def _capacity(state: GameState, ctx: CapacityModifierContext) -> int:
     vampire = find_vampire(state, ctx["vampire"])
     return 0 if vampire is None else _attached_copies(vampire)
 
 
 @card.on(Hook.DISCIPLINE_LEVEL_MODIFIER)
-def _discipline_level(state: GameState, ctx: Mapping[str, Any]) -> tuple[str, ...]:
+def _discipline_level(state: GameState, ctx: DisciplineLevelModifierContext) -> tuple[str, ...]:
     vampire = find_vampire(state, ctx["vampire"])
     copies = 0 if vampire is None else _attached_copies(vampire)
     if vampire is None or copies == 0:

@@ -19,13 +19,8 @@ POLITICAL_ACTION_STEALTH = 1
 """Rulebook §4 Minion Phase default action list: political action baseline stealth +1."""
 
 POLLING_STEP_HOOK = Hook.POLLING_STEP
-"""String value matches `Hook.POLLING_STEP`. Plain string constant since
-engine modules never import `cards/registry.py` (CLAUDE.md §5/6)."""
 
 REFERENDUM_TALLIED_HOOK = Hook.REFERENDUM_TALLIED
-"""String value matches `Hook.REFERENDUM_TALLIED`. Fired via `run_effects`
-once `resolve_referendum`'s tally is known, before pass/fail effects
-(RUL-005)."""
 
 REFERENDUM_RESULT_KEY = "referendum_result"
 """ENG-026: key `resolve_referendum` writes its tally/pass-fail outcome into,
@@ -33,13 +28,8 @@ inside `action_pending`. Mirrors (not imports) `action.py::
 PENDING_REFERENDUM_RESULT_KEY`."""
 
 VOTE_SOURCE_CAST_BONUS_HOOK = Hook.VOTE_SOURCE_CAST_BONUS
-"""`sum_modifiers` hook: a bonus added to one specific `VoteSource`'s cast,
-dispatched by `_cast_votes` right after cast-time effects, before tally
-(ENG-031)."""
 
 VOTE_AGAINST_POOL_COST_HOOK = Hook.VOTE_AGAINST_POOL_COST
-"""`sum_modifiers` hook: pool a Methuselah will be forced to lose later for
-casting against this referendum; gates the choice only (DES-009, DES-009)."""
 
 POLITICAL_ACTION_CARD_TYPE = "Political Action"
 """`LibraryCard.card_type` value for a political action card, confirmed

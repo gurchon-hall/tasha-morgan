@@ -228,6 +228,7 @@ def test_superior_not_offered_without_the_card_in_hand():
         blocking_vampire="B1",
         action=ACTION_BLEED,
         pending={},
+        directed=None,
     )
 
     assert options == []
@@ -258,6 +259,7 @@ def test_superior_requires_superior_dominate_not_just_basic():
         blocking_vampire="B1",
         action=ACTION_BLEED,
         pending={},
+        directed=None,
     )
 
     assert options == []

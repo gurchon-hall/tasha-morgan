@@ -114,6 +114,7 @@ def test_weighted_walking_stick_attachment_is_visible_and_not_duplicated_in_ash_
         acting_vampire="V1",
         blocking_player="P2",
         blocking_vampire="B1",
+        combat_state={},
     )
     next(o for o in options if o.choice.value == "weighted_walking_stick:attach:V1").apply(
         game.state
@@ -150,6 +151,7 @@ def test_ash_heap_filter_is_count_based_not_identity_based():
         acting_vampire="V1",
         blocking_player="P2",
         blocking_vampire="B1",
+        combat_state={},
     )
     next(o for o in options if o.choice.value == "weighted_walking_stick:attach:V1").apply(
         game.state

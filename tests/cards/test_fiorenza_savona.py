@@ -59,6 +59,7 @@ def test_no_bonus_when_neither_edge_nor_pac_burn_flag_is_set():
         caster="P1",
         burns_edge=False,
         burns_pac_from_hand=False,
+        direction="for",
     )
 
     assert bonus == 0
@@ -78,6 +79,7 @@ def test_plus_one_when_fiorenzas_controller_burns_the_edge():
         caster="P1",
         burns_edge=True,
         burns_pac_from_hand=False,
+        direction="for",
     )
 
     assert bonus == 1
@@ -97,6 +99,7 @@ def test_plus_one_when_fiorenzas_controller_burns_a_political_action_card():
         caster="P1",
         burns_edge=False,
         burns_pac_from_hand=True,
+        direction="for",
     )
 
     assert bonus == 1
@@ -114,6 +117,7 @@ def test_no_bonus_for_a_methuselah_who_does_not_control_fiorenza():
         caster="P1",
         burns_edge=True,
         burns_pac_from_hand=False,
+        direction="for",
     )
 
     assert bonus == 0
@@ -136,6 +140,7 @@ def test_no_zone_qualifier_torpid_fiorenza_still_grants_the_bonus():
         caster="P1",
         burns_edge=True,
         burns_pac_from_hand=False,
+        direction="for",
     )
 
     assert bonus == 1
@@ -155,6 +160,7 @@ def test_an_uncontrolled_not_yet_revealed_fiorenza_grants_no_bonus():
         caster="P1",
         burns_edge=True,
         burns_pac_from_hand=False,
+        direction="for",
     )
 
     assert bonus == 0

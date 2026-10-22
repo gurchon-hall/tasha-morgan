@@ -84,10 +84,20 @@ def test_anarch_gate_blocks_all_three_clauses_for_a_non_anarch_vampire():
     game = builder.build()
 
     strike_options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     dodge_options = hooks.offer(
-        COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_DODGE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
     )
 
     assert strike_options == []
@@ -107,7 +117,12 @@ def test_anarch_gate_blocks_all_three_clauses_when_sect_is_unset():
 
     assert game.vampire("V1").card.sect is None
     strike_options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     assert strike_options == []
 
@@ -125,13 +140,23 @@ def test_anarch_gate_allows_all_three_clauses_for_an_anarch_vampire():
     strike_values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_STRIKE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            combat_state={},
         )
     }
     dodge_values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_DODGE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            round_state={},
         )
     }
 
@@ -155,7 +180,12 @@ def test_ani_not_offered_without_ani():
     values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_STRIKE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            combat_state={},
         )
     }
     assert "dust_up:ani" not in values
@@ -174,7 +204,12 @@ def test_pot_not_offered_without_pot():
     values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_STRIKE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            combat_state={},
         )
     }
     assert "dust_up:pot" not in values
@@ -191,7 +226,12 @@ def test_cel_dodge_not_offered_without_cel():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_DODGE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
     )
     assert options == []
 
@@ -206,10 +246,20 @@ def test_no_clause_offered_without_the_card_in_hand():
     game = builder.build()
 
     strike_options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     dodge_options = hooks.offer(
-        COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_DODGE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
     )
     assert strike_options == []
     assert dodge_options == []
@@ -229,7 +279,12 @@ def test_ani_deals_base_damage_plus_one_and_flags_ignore_dodge():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     option = next(o for o in options if o.choice.value == "dust_up:ani")
     result = option.apply(game.state)
@@ -259,7 +314,12 @@ def test_ani_damage_stacks_with_a_live_strength_modifier():
         game = builder.build()
 
         options = hooks.offer(
-            COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_STRIKE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            combat_state={},
         )
         option = next(o for o in options if o.choice.value == "dust_up:ani")
         result = option.apply(game.state)
@@ -323,7 +383,12 @@ def test_pot_deals_base_damage_plus_two_and_is_dodgeable():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_STRIKE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_STRIKE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        combat_state={},
     )
     option = next(o for o in options if o.choice.value == "dust_up:pot")
     result = option.apply(game.state)

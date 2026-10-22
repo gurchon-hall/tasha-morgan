@@ -34,9 +34,14 @@ mandatory). That section is the dispatch site's citation. No source →
 
 ## 3. Add the member and its dispatch site
 
-- `Hook.<NAME>` in `engine/hooks.py`, docstring 3 lines max: dispatch
-  style, who is asked, what a provider returns, entry id, example
-  card. Nothing else (CLAUDE.md §6).
+- `Hook.<NAME>` in `engine/hooks.py`, no docstring.
+- Its context in `engine/hook_contexts.py`: a `<Name>Context`
+  `TypedDict` with exactly the keys the dispatch site passes (one per
+  phase, joined in a union, if the keys differ by phase), added to
+  `HOOK_CONTEXTS`. Its docstring, 3 lines max, is the hook's contract:
+  dispatch style, who is asked, what `apply` or a provider returns,
+  entry id. Every dispatch is checked against it: a missing or
+  undeclared key raises `TypeError`.
 - In the engine module that dispatches it: `<NAME>_HOOK = Hook.<NAME>`
   and the call. `tests/rules/test_hook_enum.py` fails if a wired
   member has no such constant, or a constant is not a member.
@@ -46,17 +51,20 @@ mandatory). That section is the dispatch site's citation. No source →
   `collect` for passive values, `run_effects` for mandatory reactions.
   A chosen option goes through `apply_chosen_option` (cost, then
   cancel-as-played, ENG-022/ENG-050).
-- Not dispatched yet → add it to `UNWIRED_HOOKS` instead; `Card.on`
-  refuses it, `Card(also_uses=...)` can declare it.
+- Not dispatched yet → add it to `UNWIRED_HOOKS` instead, with no
+  context type; `Card.on` refuses it, `Card(also_uses=...)` can
+  declare it. `tests/rules/test_hook_contexts.py` fails if a wired
+  member has no context type.
 - 2P-only behaviour is gated by the format config (CLAUDE.md §3).
 
 ## 4. Test the mechanism, not the card
 
 Scenario tests under `tests/rules/` (`rules-scenario-test`) with a
 test-only provider: `hooks.register(Hook.<NAME>, provider)` inside the
-test. The autouse fixture in `tests/conftest.py` snapshots and
-restores the catalogue; never call `hooks.clear()`. Cover each branch
-the source names and assert what is offered, to whom, in which order.
+test; a test that dispatches directly passes the full context. The
+autouse fixture in `tests/conftest.py` snapshots and restores the
+catalogue; never call `hooks.clear()`. Cover each branch the source
+names and assert what is offered, to whom, in which order.
 
 ## 5. Close out
 

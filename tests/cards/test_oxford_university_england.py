@@ -246,6 +246,8 @@ def test_offers_one_option_per_legal_pool_burn_amount_during_the_polling_step():
         game.state,
         player="P1",
         phase="before_cast",
+        caller="P1",
+        caller_vampire_id="V1",
         pending={"extra_sources": []},
     )
 
@@ -270,6 +272,8 @@ def test_not_offered_to_the_opponent_of_the_controller():
         game.state,
         player="P2",
         phase="before_cast",
+        caller="P1",
+        caller_vampire_id="V1",
         pending={"extra_sources": []},
     )
 
@@ -291,6 +295,8 @@ def test_not_offered_while_contested():
         game.state,
         player="P1",
         phase="before_cast",
+        caller="P1",
+        caller_vampire_id="V1",
         pending={"extra_sources": []},
     )
 

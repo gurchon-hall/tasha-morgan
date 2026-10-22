@@ -50,7 +50,12 @@ def test_dodge_not_offered_without_cel():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_DODGE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
     )
     assert options == []
 
@@ -62,7 +67,12 @@ def test_dodge_not_offered_without_the_card_in_hand():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_DODGE_OPTION_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
     )
     assert options == []
 
@@ -79,7 +89,12 @@ def test_dodge_offered_with_basic_cel():
     values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_DODGE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            round_state={},
         )
     }
     assert values == {"side_strike:dodge"}
@@ -100,7 +115,12 @@ def test_dodge_also_offered_with_superior_cel():
     values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_DODGE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            round_state={},
         )
     }
     assert values == {"side_strike:dodge"}
@@ -150,7 +170,12 @@ def test_additional_strike_not_offered_with_only_basic_cel():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_ADDITIONAL_STRIKE_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
     )
     assert options == []
 
@@ -162,7 +187,12 @@ def test_additional_strike_not_offered_without_the_card_in_hand():
     game = builder.build()
 
     options = hooks.offer(
-        COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+        COMBAT_ADDITIONAL_STRIKE_HOOK,
+        game.state,
+        player="P1",
+        vampire="V1",
+        opponent="B1",
+        round_state={},
     )
     assert options == []
 
@@ -179,7 +209,12 @@ def test_additional_strike_offered_with_superior_cel():
     values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_ADDITIONAL_STRIKE_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            round_state={},
         )
     }
     assert values == {"side_strike:additional_strike"}
@@ -200,13 +235,23 @@ def test_superior_cel_unlocks_both_clauses_independently():
     dodge_values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_DODGE_OPTION_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_DODGE_OPTION_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            round_state={},
         )
     }
     extra_values = {
         o.choice.value
         for o in hooks.offer(
-            COMBAT_ADDITIONAL_STRIKE_HOOK, game.state, player="P1", vampire="V1", opponent="B1"
+            COMBAT_ADDITIONAL_STRIKE_HOOK,
+            game.state,
+            player="P1",
+            vampire="V1",
+            opponent="B1",
+            round_state={},
         )
     }
     assert dodge_values == {"side_strike:dodge"}

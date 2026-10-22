@@ -17,9 +17,6 @@ if TYPE_CHECKING:
     from .state import GameState
 
 HAND_SIZE_MODIFIER_HOOK = Hook.HAND_SIZE_MODIFIER
-"""Passive, mandatory numeric hook (`hooks.sum_modifiers` contract) -- see
-module docstring. Matches `src/vtesbot/cards/registry.py::Hook.
-HAND_SIZE_MODIFIER`'s own string value."""
 
 
 def effective_hand_size(state: GameState, player: str) -> int:
