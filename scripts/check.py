@@ -20,7 +20,7 @@ STEPS: dict[str, list[str]] = {
     "ruff-check": [PY, "-m", "ruff", "check", "."],
     "ruff-format": [PY, "-m", "ruff", "format", "--check", "."],
     "comment-lines": [PY, "scripts/comment_lines.py"],
-    "markdown": [PY, "-m", "pymarkdown", "scan", "docs/", "CLAUDE.md", ".claude/"],
+    "markdown": [PY, "-m", "pymarkdown", "scan", "-r", "docs/", "CLAUDE.md", ".claude/"],
     "docs-index": [PY, "scripts/docs_index.py", "--check"],
     "json": [
         PY,
