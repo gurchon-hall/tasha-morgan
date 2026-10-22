@@ -56,20 +56,20 @@ Red Question nor Mask of a Thousand Faces is implemented yet, and
 `CryptCard.sect`/`title` have no in-game mutation path modeled anywhere in
 this engine today, so the specific "changes sect mid-action" scenario is not
 reachable with the current card pool (not reachable today, but correctly
-modeled either way, per `dust_up.py`'s OQ-21 citation) -- not a fresh gap
+modeled either way, per `dust_up.py`'s RUL-007 citation) -- not a fresh gap
 introduced by this card, and no block on implementing the clause's own
 live-reads-every-time behaviour.
 
-§8 glossary, same page as the Reaction Card definition: "A minion cannot
-play the same reaction card more than once during a single action (even if
-using a different Discipline level)" -- restricts the same *minion*, not the
-whole Methuselah (two different eligible Anarch vampires may each play their
-own copy within the same action; this project's established precedent for
-this exact sentence, `telepathic_counter.py`'s own `USED_BY_KEY` set). Tracked
-per-action via the shared `pending: dict[str, Any]` scratch container
-(`engine/action.py::perform_minion_action`/`attempt_block`, OQ-11, `docs/
-OPEN_QUESTIONS.md`), threaded unchanged into this hook's own context across
-every retry of the block-attempt ping-pong for one action.
+§8 glossary, same page as the Reaction Card definition: "A minion cannot play
+the same reaction card more than once during a single action (even if using a
+different Discipline level)" -- restricts the same *minion*, not the whole
+Methuselah (two different eligible Anarch vampires may each play their own copy
+within the same action; this project's established precedent for this exact
+sentence, `telepathic_counter.py`'s own `USED_BY_KEY` set). Tracked per-action
+via the shared `pending: dict[str, Any]` scratch container
+(`engine/action.py::perform_minion_action`/`attempt_block`, ENG-005), threaded
+unchanged into this hook's own context across every retry of the block-attempt
+ping-pong for one action.
 
 "A reaction card does not lock the minion playing it." (Rulebook §2 Card
 Types, same paragraph as the Reaction Card definition): no provider below
@@ -98,7 +98,7 @@ from vtesbot.engine.state import GameState, VampireInPlay
 KRCG_ID = 101501
 USED_BY_KEY = "protection_racket_used_by"
 CARD_TYPE = "Reaction"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Reaction" docstring fact above."""
 
 

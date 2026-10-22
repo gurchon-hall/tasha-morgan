@@ -1,5 +1,5 @@
 """Political action announce/block/polling/tally (`engine/politics.py`).
-OQ-6 (`docs/OPEN_QUESTIONS.md`) is resolved: these scenarios cover both the
+RUL-005 is resolved: these scenarios cover both the
 generic "announce -> block attempt -> (blocked: combat) | (unblocked:
 referendum)" path and the referendum's polling step / vote tally itself
 (Rulebook §4 "The Referendum", see `engine/politics.py`'s own docstring for
@@ -26,7 +26,7 @@ def test_a_blocked_political_action_goes_to_combat_and_never_calls_a_referendum(
     with no intercept-granting card implemented; a fake intercept-modifier
     provider stands in for one here purely to exercise the "blocked ->
     combat" path end to end. A blocked political action's card is burned
-    before any referendum is called (OQ-5), so `political_action` returns
+    before any referendum is called (RUL-004), so `political_action` returns
     `None`, never resolving a tally."""
 
     def fake_intercept(state, context):
@@ -324,7 +324,7 @@ def test_the_pre_cast_and_post_tally_hook_contexts_both_carry_the_calling_vampir
     card whose own trigger names a *specific* titled vampire's referendum
     (e.g. Queen Anne's "a referendum called by Anne", Marcos Belegrad's "a
     referendum called by Marcos") rather than any referendum its controller
-    happens to call (`engine/politics.py` module docstring, OQ-6).
+    happens to call (`engine/politics.py` module docstring, RUL-005).
 
     The two contexts carry this identity differently, by design (`rules-
     auditor` finding, round 3): the pre-cast window may raise a real
@@ -385,7 +385,7 @@ def test_the_pre_cast_decision_context_never_leaks_the_live_vampire_object():
             return super().decide(observation, decision)
 
     def fake_provider(state, context):
-        # OQ-37 (`docs/OPEN_QUESTIONS.md`): `POLLING_STEP_HOOK` is now also
+        # ENG-027: `POLLING_STEP_HOOK` is now also
         # offered mid-cast (`context["phase"] == "mid_cast"`), whose own
         # `apply` contract differs (returns a `str` source id, not `None`)
         # -- this fake provider only ever stands in for the pre-cast shape.
@@ -529,7 +529,7 @@ def test_a_forced_abstain_source_is_excluded_from_casting_end_to_end():
 
 
 def test_a_player_no_longer_gets_to_cast_two_sources_back_to_back_ahead_of_the_other_players_turn():
-    """OQ-20 resolution proof: votes are cast in strict table-order
+    """RUL-006 resolution proof: votes are cast in strict table-order
     alternation (`User Ruling`, settled by the project's user from
     real-table play experience, quoted in full in `engine/politics.py::
     _cast_votes`'s own docstring) -- caller first each lap, then the other
@@ -588,7 +588,7 @@ def test_a_player_no_longer_gets_to_cast_two_sources_back_to_back_ahead_of_the_o
 
 
 def test_referendum_tallied_hook_fires_with_no_providers_registered():
-    """`REFERENDUM_TALLIED_HOOK` (OQ-6, Marcos Belegrad's future trigger
+    """`REFERENDUM_TALLIED_HOOK` (RUL-005, Marcos Belegrad's future trigger
     moment) has no provider registered in this pass: `hooks.run_effects`
     must still be a safe no-op (the project's "no providers => no behaviour
     change" invariant), proven here with the hooks registry left untouched
@@ -608,12 +608,12 @@ def test_referendum_tallied_hook_fires_with_no_providers_registered():
     actor.assert_exhausted()
 
 
-# --- variable_pool_burn_vote_options (OQ-23, Oxford University, England) ----
+# --- variable_pool_burn_vote_options (ENG-015, Oxford University, England) ----
 
 
 def test_variable_pool_burn_vote_options_offers_one_option_per_pool_amount():
     """Oxford's own shape ("burn X pool ... to get +2X votes"): one
-    `HookOption` per legal X from 1 to the controller's pool minus 1 (OQ-42), never
+    `HookOption` per legal X from 1 to the controller's pool minus 1 (DES-009), never
     X = 0 (CLAUDE.md "only when needed" -- burning 0 pool for 0 votes is not
     a meaningful choice)."""
     builder = ScenarioBuilder(seed=1)

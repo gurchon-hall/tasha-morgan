@@ -4,7 +4,7 @@ Card text: "Camarilla: If you burn the Edge for a vote, you get +1 vote. If
 you burn a political action card for a vote, you get +1 vote." No rulings
 on file.
 
-OQ-49 (`docs/OPEN_QUESTIONS.md`, resolved): both clauses are proven directly
+ENG-031 (resolved): both clauses are proven directly
 against the new `VOTE_SOURCE_CAST_BONUS_HOOK` (gating: which flag is set,
 whether the caster actually controls an in-play Fiorenza) and once end to
 end through a real `political_action`, where the bonus is the deciding
@@ -191,7 +191,7 @@ def test_the_bonus_is_the_margin_between_a_tied_and_a_passing_referendum():
 
 
 def test_a_mid_cast_cancellation_of_the_bonused_source_subtracts_the_full_total():
-    """OQ-37/OQ-49 interaction: cancelling a source that already carried
+    """ENG-027/ENG-031 interaction: cancelling a source that already carried
     Fiorenza's bonus must retroactively remove the *whole* cast amount
     (base + bonus), not just the base `VoteSource.votes` -- otherwise the
     bonus would silently survive a cancellation of its own source."""

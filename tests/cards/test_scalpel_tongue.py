@@ -12,15 +12,14 @@ gating for each clause, card-in-hand gating, the `"mid_cast"`-phase-only
 offer (never `"before_cast"`), narrowing to `"title:"`-sourced casts only
 (a political-action-card/Edge source is never offered as a target), the
 lock+cancel effect (basic clause) through a real `resolve_referendum` call,
-the superior clause's extra "burns 1 blood" (floored at 0), OQ-38's
+the superior clause's extra "burns 1 blood" (floored at 0), RUL-010's
 (resolved) asymmetric "who may play it" -- the caller only through their own
 acting vampire (even while it is already locked), the non-caller through any
 ready/unlocked qualifying vampire of their own (the pre-existing Reaction-rule
 check) -- and the user ruling that a target may already be locked when
 chosen, remaining locked afterwards with no special handling. The
 "automatically passing" ruling is not independently tested: this engine has
-no automatically-passing mechanism to reach it (module docstring, `docs/
-OPEN_QUESTIONS.md` OQ-6).
+no automatically-passing mechanism to reach it (module docstring RUL-005).
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -153,7 +152,7 @@ def test_basic_not_offered_through_a_locked_playing_vampire():
     requires their playing vampire be ready and unlocked -- contra the
     Rulebook glossary's "a ready unlocked minion can play a reaction card".
     `caller="P2"` forces P1 onto this Reaction-rule path rather than the
-    caller-side Action-Modifier path (OQ-38), which does not check `locked`
+    caller-side Action-Modifier path (RUL-010), which does not check `locked`
     at all (see `test_caller_may_play_through_their_own_locked_acting_
     vampire` below)."""
     builder = ScenarioBuilder(seed=1)
@@ -174,7 +173,7 @@ def test_basic_not_offered_through_a_locked_playing_vampire():
 def test_offered_to_either_player_independent_of_caller_role():
     """P1 (the caller) has no `caller_vampire_id` resolving to a qualifying
     vampire here (not passed -- defaults to `None`), so the caller-side
-    Action-Modifier path (OQ-38) offers nothing; P2 (the non-caller) is
+    Action-Modifier path (RUL-010) offers nothing; P2 (the non-caller) is
     unaffected, since their own use is governed by the Reaction rule
     instead, independent of caller role."""
     builder = ScenarioBuilder(seed=1)
@@ -193,7 +192,7 @@ def test_offered_to_either_player_independent_of_caller_role():
     assert {o.choice.value for o in p2_options} == {"scalpel_tongue:basic:title:V1"}
 
 
-# --- OQ-38 (resolved): caller-side use is pinned to the acting vampire -----
+# --- RUL-010 (resolved): caller-side use is pinned to the acting vampire -----
 
 
 def test_caller_may_play_through_their_own_locked_acting_vampire():

@@ -9,13 +9,13 @@ damage inherits all of the properties of the base damage. [TOM 19960225]";
 One assertion per clause/qualifier: the `[pot]` basic clause's own
 discipline/hand/blood-cost gates; the `[POT]` superior clause's own
 discipline/hand/blood-cost/"only at long range"/"cannot use a second strike
-card to maneuver again" (OQ-28, `docs/OPEN_QUESTIONS.md`, now resolved)
+card to maneuver again" (ENG-019, now resolved)
 gates; the committed-strike behaviour end to end through `run_combat` (no
 independent strike choice is ever raised for the combatant who maneuvered
 with Slam); the "Hidden Lurker" ruling's current vacuous satisfaction (no
 engine mechanism makes a strike "unusable" today); and that this card's own
 new `commit_strike_for_round` usage does not regress Pursuit's own plain,
-non-strike-bundled `[cel]` maneuver clause (OQ-27) -- a combatant may still
+non-strike-bundled `[cel]` maneuver clause (RUL-008) -- a combatant may still
 use a plain maneuver after committing a strike-bundled one the same round.
 """
 
@@ -238,7 +238,7 @@ def test_superior_maneuver_offered_at_long_range_with_superior_pot_and_enough_bl
 
 
 def test_superior_maneuver_not_offered_twice_in_the_same_round():
-    """OQ-28's own "cannot use a second strike card or weapon to maneuver
+    """ENG-019's own "cannot use a second strike card or weapon to maneuver
     again in the same round" cap: gated via `strike_committed_this_round`,
     consulted fresh on every offer, shared across the round via `round_state`
     (the same object `run_combat` threads through both Determine Range and
@@ -312,10 +312,10 @@ def test_maneuvering_with_slam_commits_the_initial_strike_with_no_separate_choic
 
 def test_committing_a_slam_strike_does_not_block_a_later_plain_pursuit_maneuver():
     """`strike_committed_this_round` only gates a *second strike-bundled*
-    maneuver source (OQ-28's own documented scope) -- a combatant who has
+    maneuver source (ENG-019's own documented scope) -- a combatant who has
     already committed Slam's strike-bundled maneuver this round may still
     use an entirely separate, plain, non-strike-bundled maneuver afterward
-    (Pursuit's own basic `[cel]` clause, OQ-27), since the Rulebook's own
+    (Pursuit's own basic `[cel]` clause, RUL-008), since the Rulebook's own
     restriction only bars a second strike *card or weapon*, not maneuvering
     as such."""
     builder = ScenarioBuilder(seed=1)

@@ -471,7 +471,7 @@ def test_cel_limited_blocks_a_second_copy_in_the_same_round():
     the dodge only if you already played it for a (limited) additional
     strike this round." [ANK 20220204]: once played once, a second physical
     copy is not offered again within the same round. The cap now lives in
-    `engine/combat.py`'s shared, round-scoped `round_state` (OQ-19), so both
+    `engine/combat.py`'s shared, round-scoped `round_state` (ENG-013), so both
     direct `hooks.offer` calls below are threaded through the *same* shared
     dict, exactly as `run_combat` would within one real round (a test that
     omitted `round_state` would see each call treated as an isolated, fresh

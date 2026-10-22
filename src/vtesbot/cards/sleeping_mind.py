@@ -64,16 +64,16 @@ two different locked defending vampires in one action.
 moment the basic clause's own `apply` actually runs; the provider below
 refuses to offer anything once it is set.
 
-Cost paid even if canceled (OQ-38's companion ruling, `voter_captivation.py`'s
+Cost paid even if canceled (RUL-010's companion ruling, `voter_captivation.py`'s
 own precedent): both `play_from_hand` and the printed 1-blood burn are
-`HookOption.cost` (paid unconditionally by `apply_chosen_option`, OQ-32),
+`HookOption.cost` (paid unconditionally by `apply_chosen_option`, ENG-022),
 not inside `apply` -- so a play canceled via `CANCEL_AS_PLAYED_HOOK` still
 discards the physical card and burns the blood, but leaves
 `SLEEPING_MIND_PLAYED_KEY`/the exclusion set untouched (both live only in
 `apply`, which a cancellation suppresses), matching the ruling that a
 canceled attempt does not itself trigger the once-per-action limit. No
 provider in this pool currently cancels this hook; this keeps the same
-landmine `voter_captivation.py`'s own docstring already names (OQ-32) from
+landmine `voter_captivation.py`'s own docstring already names (ENG-022) from
 reopening here.
 """
 

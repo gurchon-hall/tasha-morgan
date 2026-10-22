@@ -19,29 +19,28 @@ the basic (plain text) or the superior (bold) effect ... but not both").
 `clan_requirement == []`, `cost is None`, `burn_option is False`,
 `trifle is False`.
 
-Status: implemented. Textually identical to the already-implemented
-"Enchant Kindred" (krcg id 100640, `enchant_kindred.py`) except for the
-discipline (Dominate instead of Presence) -- same `ACTION_CARD_PLAY_HOOK`
-shape, same two OQs it rides on: OQ-17 (`docs/open_questions_archive/
-002.md`, generic "Action"-typed library card self-contained minion action
-entry point: `engine/phases/minion.py::ACTION_CARD_PLAY_HOOK` /
-`ActionCardSpec` / `_perform_action_card`) and OQ-57
-(`docs/OPEN_QUESTIONS.md`, both clauses `remove_from_hand` + shared
-`ActionCardSpec.name=NAME` so a second physical copy is not offered once
-either clause has been played this turn). The basic clause's bleed is
-tagged `action=ACTION_BLEED` for the same reason as Enchant Kindred's (an
-existing bleed-gated provider sharing the block-attempt/bleed-amount window,
-e.g. Bonding's superior clause, must still fire).
+Status: implemented. Textually identical to the already-implemented "Enchant
+Kindred" (krcg id 100640, `enchant_kindred.py`) except for the discipline
+(Dominate instead of Presence) -- same `ACTION_CARD_PLAY_HOOK` shape, same two
+entries it rides on: ENG-011 (generic "Action"-typed library card
+self-contained minion action entry point:
+`engine/phases/minion.py::ACTION_CARD_PLAY_HOOK` / `ActionCardSpec` /
+`_perform_action_card`) and ENG-037 (both clauses `remove_from_hand` + shared
+`ActionCardSpec.name=NAME` so a second physical copy is not offered once either
+clause has been played this turn). The basic clause's bleed is tagged
+`action=ACTION_BLEED` for the same reason as Enchant Kindred's (an existing
+bleed-gated provider sharing the block-attempt/bleed-amount window, e.g.
+Bonding's superior clause, must still fire).
 
-"a younger vampire" (superior clause): per OQ-17's own resolution, confirmed
-by the project owner and already applied to Enchant Kindred's identical
-wording -- strictly lower *printed* capacity (`vampire.card.capacity`) than
-the acting vampire, not `effective_capacity` (used here, as there, only for
-the destination's own blood-capacity room check, per OQ-8). OQ-21
-(`docs/open_questions_archive/002.md`): the target is chosen at `apply()`
-time (announce), `resolve()` only re-validates it, never re-chooses --
-fizzles if no longer eligible. Target region "in your uncontrolled region":
-own uncontrolled region only, and not already at (effective) capacity.
+"a younger vampire" (superior clause): per ENG-011's own resolution, confirmed
+by the project owner and already applied to Enchant Kindred's identical wording
+-- strictly lower *printed* capacity (`vampire.card.capacity`) than the acting
+vampire, not `effective_capacity` (used here, as there, only for the
+destination's own blood-capacity room check, per ENG-002). RUL-007: the target
+is chosen at `apply()` time (announce), `resolve()` only re-validates it, never
+re-chooses -- fizzles if no longer eligible. Target region "in your
+uncontrolled region": own uncontrolled region only, and not already at
+(effective) capacity.
 
 Both clauses collapse to the engine's existing single-opponent block-attempt
 model for a 2P duel (`engine/action.py`'s own module docstring), so neither
@@ -71,10 +70,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 101698
 NAME = "Scouting Mission"
-"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
-OPEN_QUESTIONS.md`): the generic "same named action card at most once per
-turn" cap is keyed by this exact string for both clauses -- they are the
-same physical card."""
+"""`ActionCardSpec.name`/`CardRegistration.name` (ENG-037): the generic "same
+named action card at most once per turn" cap is keyed by this exact string for
+both clauses -- they are the same physical card."""
 BASIC = "dom"
 SUPERIOR = "DOM"
 BASIC_BLEED_BASE_AMOUNT = 2
@@ -87,9 +85,8 @@ SUPERIOR_STEALTH = 1
 not a modifier layered on top of a 0 baseline."""
 ADD_BLOOD_AMOUNT = 2
 CARD_TYPE = "Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/open_questions_archive/
-002.md`): matches this module's own "Card type: Action" docstring fact
-above."""
+"""`HookOption.played_card_type` (ENG-023): matches this module's own "Card
+type: Action" docstring fact above."""
 
 
 def _eligible_targets(
@@ -121,7 +118,7 @@ def _provide_scouting_mission_basic(
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
         return []
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
@@ -190,12 +187,12 @@ def _provide_scouting_mission_superior(
     if not _eligible_targets(state, player, acting_vampire):
         return []  # no legal target: do not offer a card play that cannot resolve.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
 
-        # Target fixed at announce time, not deferred to resolve() -- OQ-21,
+        # Target fixed at announce time, not deferred to resolve() -- RUL-007,
         # see module docstring.
         targets = _eligible_targets(s, player, acting_vampire)
         if len(targets) == 1:
@@ -216,7 +213,7 @@ def _provide_scouting_mission_superior(
             del pending  # no later window of its own to feed.
             target = s.players[player].vampires.get(target_id)
             if target is None or target not in _eligible_targets(s, player, acting_vampire):
-                return  # fizzles (OQ-21); not reachable today, but correct either way.
+                return  # fizzles (RUL-007); not reachable today, but correct either way.
             add_blood(s, target, ADD_BLOOD_AMOUNT)
 
         return ActionCardSpec(

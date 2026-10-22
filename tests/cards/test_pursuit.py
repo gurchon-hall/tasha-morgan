@@ -10,7 +10,7 @@ clause's own basic-or-superior discipline gate and "card in hand" gate; the
 "card in hand" gate; the two clauses' independence; the additional strike's
 grant claimed through the engine's own full strike-choice machinery; and the
 "(limited)" restriction on the additional-strike clause only. Plus two
-integration tests specific to this card's own `docs/OPEN_QUESTIONS.md` OQ-27
+integration tests specific to this card's own RUL-008
 resolution: the basic maneuver clause is *not* "a maneuver from a strike"
 (Rulebook §4 Combat > Strike > Choose Strike), so it does not lock the
 strike choice, and a second physical copy can maneuver again later in the
@@ -287,14 +287,14 @@ def test_limited_does_not_restrict_the_maneuver_clause():
     assert {o.choice.value for o in maneuver} == {"pursuit:maneuver"}
 
 
-# --- OQ-27 resolution: a plain maneuver, not "a maneuver from a strike" -----
+# --- RUL-008 resolution: a plain maneuver, not "a maneuver from a strike" -----
 
 
 def test_maneuvering_with_pursuit_does_not_lock_the_strike_choice():
     """Rulebook §4 Combat > Strike > Choose Strike: the "cannot choose any
     other strike" lock applies only to "a maneuver from a strike (either a
     strike card or a weapon)" -- Pursuit's bare "[cel] Maneuver." clause is
-    not one (module docstring, OQ-27). After maneuvering with it, the acting
+    not one (module docstring, RUL-008). After maneuvering with it, the acting
     vampire is still offered, and can use, an ordinary hand strike the same
     round."""
     builder = ScenarioBuilder(seed=1)

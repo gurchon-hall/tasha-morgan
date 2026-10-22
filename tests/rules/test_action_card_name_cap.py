@@ -1,5 +1,5 @@
-"""Generic "same named action card at most once per turn" cap (OQ-57
-Finding 2, `docs/OPEN_QUESTIONS.md`). Rulebook §4 Detailed Turn Sequence
+"""Generic "same named action card at most once per turn" cap (ENG-037
+Finding 2). Rulebook §4 Detailed Turn Sequence
 (`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:188-191`,
 verbatim): "A minion cannot play (unless cancelled) the same named action
 card more than once each turn, even if they unlock." -- scoped to one

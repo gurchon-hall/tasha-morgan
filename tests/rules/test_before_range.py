@@ -1,7 +1,7 @@
 """Before Range (`engine/combat.py`, Rulebook §4 Combat > Combat Sequence,
 step 1, "Before Range: Play cards before range is chosen") -- resolves
-`docs/OPEN_QUESTIONS.md` OQ-47 (Weighted Walking Stick, krcg id 102169).
-No combat card registers against `BEFORE_RANGE_HOOK` yet (OQ-47's own card
+ENG-029 (Weighted Walking Stick, krcg id 102169).
+No combat card registers against `BEFORE_RANGE_HOOK` yet (ENG-029's own card
 module is `card-implementer`'s job once this capability exists) -- these are
 scenario tests for the generic mechanism only, using fake providers to prove
 the shape rather than any one card's wording.
@@ -39,7 +39,7 @@ def _register_logging_provider(calls: list[str]) -> None:
 
 def test_no_before_range_decision_without_a_registered_provider():
     """Regression guard: with no `BEFORE_RANGE_HOOK` provider registered, no
-    `before_range` decision is ever raised -- byte-for-byte the pre-OQ-47
+    `before_range` decision is ever raised -- byte-for-byte the pre-ENG-029
     result, mirroring `test_combat.py`'s own baseline normal-round shape."""
     game = _combat_game(acting_blood=2, blocking_blood=0)
 
@@ -89,7 +89,7 @@ def test_before_range_offered_exactly_once_per_combat_even_across_two_rounds():
 
 
 def test_before_range_offers_the_acting_combatants_controller_first():
-    """Same ordering precedent as Press/End of Round/Determine Range (OQ-3,
+    """Same ordering precedent as Press/End of Round/Determine Range (RUL-002,
     module docstring): the acting combatant's controller (P1) is asked --
     and decides -- first."""
     acting_used = {"value": False}
@@ -289,21 +289,20 @@ def test_weighted_walking_stick_shaped_stand_in_burns_a_counter_per_damage_infli
     defender.assert_exhausted()
 
 
-# --- Interaction with OQ-46's `woken` eligibility override ------------------
+# --- Interaction with ENG-028's `woken` eligibility override ------------------
 
 
 def test_a_woken_successful_blocker_is_still_is_ready_unlocked_during_before_range():
-    """Combines OQ-46 (`VampireInPlay.woken`/`is_ready_unlocked`, `docs/
-    OPEN_QUESTIONS.md`) and OQ-47 (this hook): a vampire woken by a reaction
-    card during the block-attempt phase, and then the (successful) blocker,
-    stays `is_ready_unlocked` for the whole combat that follows -- `engine/
-    action.py::perform_minion_action`'s blocked branch only calls
-    `clear_woken_vampires` once its own `run_combat` call *returns*, strictly
-    after `BEFORE_RANGE_HOOK`'s own round-1-only window. Per On the Qui
-    Vive's own "...until the end of the action" (combat is part of the same
-    action), a provider gated on `is_ready_unlocked` during this window must
-    still see this vampire as eligible -- confirmed here with no change to
-    either mechanism."""
+    """Combines ENG-028 (`VampireInPlay.woken`/`is_ready_unlocked`) and ENG-029
+    (this hook): a vampire woken by a reaction card during the block-attempt
+    phase, and then the (successful) blocker, stays `is_ready_unlocked` for the
+    whole combat that follows -- `engine/action.py::perform_minion_action`'s
+    blocked branch only calls `clear_woken_vampires` once its own `run_combat`
+    call *returns*, strictly after `BEFORE_RANGE_HOOK`'s own round-1-only
+    window. Per On the Qui Vive's own "...until the end of the action" (combat
+    is part of the same action), a provider gated on `is_ready_unlocked` during
+    this window must still see this vampire as eligible -- confirmed here with
+    no change to either mechanism."""
     seen_eligible: list[bool] = []
 
     def provider(state, context):

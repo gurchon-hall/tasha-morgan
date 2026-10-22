@@ -1,4 +1,4 @@
-"""`REFERENDUM_RESOLVED_HOOK` dispatch (OQ-36, `docs/OPEN_QUESTIONS.md`):
+"""`REFERENDUM_RESOLVED_HOOK` dispatch (ENG-026):
 `engine/action.py::perform_minion_action` fires it only once a political
 action's own `resolve()` closure (which itself calls `engine/politics.py::
 resolve_referendum`, passing it `action_pending=pending`, and then runs its
@@ -135,7 +135,7 @@ def test_referendum_resolved_hook_does_not_fire_when_the_referendum_fails():
 
 
 def test_referendum_resolved_hook_does_not_fire_when_the_action_is_blocked():
-    """A blocked political action never calls a referendum at all (OQ-5):
+    """A blocked political action never calls a referendum at all (RUL-004):
     nothing is ever written to `pending[PENDING_REFERENDUM_RESULT_KEY]`.
 
     Political action's own +1 baseline stealth always evades a bare block

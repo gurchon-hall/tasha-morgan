@@ -57,7 +57,7 @@ additional strike.
 effect to gain additional strikes per round of combat"): tracked via
 `engine/combat.py`'s shared, round-scoped
 `additional_strike_limit_used`/`mark_additional_strike_limit_used` helpers
-(OQ-19), the same mechanism `dust_up.py`'s `[cel]` clause uses. Because the
+(ENG-013), the same mechanism `dust_up.py`'s `[cel]` clause uses. Because the
 flag lives in the shared, round-scoped `round_state` dict `run_combat`
 threads into both hooks' context (reset fresh every round, not per-card),
 this correctly pools *across* different cards -- a vampire holding both
@@ -86,7 +86,7 @@ KRCG_ID = 101778
 CEL_BASIC = "cel"
 CEL_SUPERIOR = "CEL"
 CARD_TYPE = "Combat"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Combat" docstring fact above."""
 
 

@@ -18,7 +18,7 @@ Playing Cards"); `discipline_requirement == {"type": "Mono", "disciplines":
 allowed list (`data/formats/2p/2026-10-03.json`) and in the suggested 2P
 decklist `data/decks/vekn-2p/salubri.json` (2 copies).
 
-Status: implemented (OQ-65, `docs/OPEN_QUESTIONS.md`, resolved -- the
+Status: implemented (ENG-045, resolved -- the
 engine gap this card's superior clause was blocked on,
 `engine/action.py::FORCE_BLOCK_ATTEMPT_FAILURE_HOOK`, was built this pass).
 Both clauses are played by the *acting* minion, against the *defender's*
@@ -36,7 +36,7 @@ guess (same convention `cards/organized_resistance.py`'s own docstring
 documents for an identical "blocking_vampire" read).
 
 "[dom] The blocking minion gets -1 intercept.": wired against the
-pre-existing `INTERCEPT_DECREASE_HOOK` (OQ-30/31), only ever offered in
+pre-existing `INTERCEPT_DECREASE_HOOK` (ENG-021/RUL-009), only ever offered in
 `_duel_stealth_intercept`'s own "block currently succeeds" branch (the only
 moment a numeric intercept penalty has any observable effect -- "only when
 needed", same scoping as `bonding.py`'s own superior clause), merged into
@@ -52,7 +52,7 @@ the same action.
 
 "[DOM] That attempt fails and the blocking minion cannot attempt to block
 this action again.": wired against the new `FORCE_BLOCK_ATTEMPT_FAILURE_
-HOOK` (OQ-65). `apply()` adds the fixed blocking vampire's own `instance_id`
+HOOK` (ENG-045). `apply()` adds the fixed blocking vampire's own `instance_id`
 to `pending[PENDING_BLOCK_CANDIDATE_EXCLUSION_KEY]` directly (same
 convention `cards/seduction.py`/`cards/sleeping_mind.py` use from
 `BLOCK_CANDIDATE_EXCLUSION_HOOK`'s own proactive offer point) for the
@@ -114,7 +114,7 @@ SUPERIOR = "DOM"
 INTERCEPT_DELTA = -1
 """Verbatim "The blocking minion gets -1 intercept."."""
 CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action Modifier" docstring fact above."""
 
 

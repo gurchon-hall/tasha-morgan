@@ -118,7 +118,7 @@ def test_choosing_to_exclude_a_candidate_removes_it_from_the_block_candidate_lis
 
 
 def test_exclusion_persists_across_a_retried_failed_attempt():
-    """Mirrors OQ-11's precedent for `INTERCEPT_DECREASE_HOOK`: a failed
+    """Mirrors ENG-005's precedent for `INTERCEPT_DECREASE_HOOK`: a failed
     block attempt loops `attempt_block` back to the top of its retry loop,
     where the exclusion filter is recomputed fresh -- the excluded vampire
     must never reappear as a candidate on the retry either."""
@@ -157,7 +157,7 @@ def test_exclusion_persists_across_a_retried_failed_attempt():
 
 def test_exclusion_survives_a_later_wake_locked_minion_hook_making_the_same_vampire_eligible():
     """`cards/sleeping_mind.py`'s own docstring: the exclusion is checked
-    *after* `WAKE_LOCKED_MINION_HOOK` (OQ-48) has had its chance to set
+    *after* `WAKE_LOCKED_MINION_HOOK` (ENG-030) has had its chance to set
     `woken` -- naming a locked vampire here specifically vetoes any such
     wake-based attempt for that one vampire, for the rest of the action."""
     builder = ScenarioBuilder(seed=1)
@@ -239,7 +239,7 @@ def _injection_provider_for(target_instance_id: str):
 
 def test_zero_regression_coexists_with_block_candidate_injection_hook():
     """Zero-interaction check: an unrelated `BLOCK_CANDIDATE_INJECTION_HOOK`
-    provider (OQ-26) is unaffected by, and does not interact with, the
+    provider (ENG-018) is unaffected by, and does not interact with, the
     exclusion set -- the two hooks pull from disjoint candidate pools
     (ready-unlocked filtered-out vs. injected-from-locked)."""
     builder = ScenarioBuilder(seed=1)

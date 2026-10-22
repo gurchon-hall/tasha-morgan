@@ -1,15 +1,14 @@
-"""The per-minion-action `pending` scratch container (OQ-11,
-`docs/OPEN_QUESTIONS.md`): `engine/action.py::perform_minion_action`
-constructs one shared, mutable `pending: dict[str, Any]` *before*
-`attempt_block` runs, threads it into the `"stealth_modifier"`/
-`"intercept_modifier"` hook context of the block-attempt phase, and passes
-the same object into `resolve` once the action goes unblocked -- so a
-single card play offered during the earlier phase can stash something for
-its own later provider call (e.g. `_perform_bleed`'s
-`"bleed_amount_modifier"` window, `engine/phases/minion.py`) to read back
-and fold into that window's own clamped computation, rather than applying
-it immediately and desynchronizing from that computation's floor-at-0 clamp
-and Edge-holder check (OQ-11's rejected "immediate separate pool loss"
+"""The per-minion-action `pending` scratch container (ENG-005):
+`engine/action.py::perform_minion_action` constructs one shared, mutable
+`pending: dict[str, Any]` *before* `attempt_block` runs, threads it into the
+`"stealth_modifier"`/`"intercept_modifier"` hook context of the block-attempt
+phase, and passes the same object into `resolve` once the action goes unblocked
+-- so a single card play offered during the earlier phase can stash something
+for its own later provider call (e.g. `_perform_bleed`'s
+`"bleed_amount_modifier"` window, `engine/phases/minion.py`) to read back and
+fold into that window's own clamped computation, rather than applying it
+immediately and desynchronizing from that computation's floor-at-0 clamp and
+Edge-holder check (ENG-005's rejected "immediate separate pool loss"
 alternative, which overcharges the defender in exactly the worked example
 `test_pending_bleed_bonus_and_a_later_amount_window_reduction_share_one_clamp`
 below reproduces).
@@ -97,7 +96,7 @@ def test_perform_minion_action_threads_one_shared_pending_dict_into_attempt_bloc
 def test_resolve_receives_an_empty_pending_dict_when_no_providers_are_registered():
     """Zero-regression / scaffolding check: with nothing registered against
     any hook, `_perform_bleed`'s `resolve` still receives a `pending` dict
-    (empty), and folds in nothing -- byte-for-byte the pre-OQ-11 result."""
+    (empty), and folds in nothing -- byte-for-byte the pre-ENG-005 result."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)
     builder.player("P2", pool=30)  # no ready vampire: no block_attempt decision at all
@@ -121,8 +120,8 @@ def test_pending_bleed_amount_bonus_is_folded_into_the_bleed_before_the_amount_w
     """End-to-end via the real `_perform_bleed`/`minion_phase` call site: a
     fake stand-in for a card whose single play ("[DOM] +1 stealth and +1
     bleed") must deliver both effects from one `"stealth_modifier"` option,
-    gated on `action == ACTION_BLEED` (OQ-9) and stashing its bleed
-    contribution under `PENDING_BLEED_AMOUNT_KEY` (OQ-11) for
+    gated on `action == ACTION_BLEED` (ENG-003) and stashing its bleed
+    contribution under `PENDING_BLEED_AMOUNT_KEY` (ENG-005) for
     `_perform_bleed`'s `resolve` to fold in."""
 
     def stealth_and_stash_provider(state, context):
@@ -160,12 +159,12 @@ def test_pending_bleed_amount_bonus_is_folded_into_the_bleed_before_the_amount_w
 
 
 def test_pending_bleed_bonus_and_a_later_amount_window_reduction_share_one_clamp():
-    """Reproduces OQ-11's own worked example: a stashed +1 (from the earlier
+    """Reproduces ENG-005's own worked example: a stashed +1 (from the earlier
     stealth window) and a later -2 reduction (offered in the
     `"bleed_amount_modifier"` window) must fold into *one* clamped
     computation -- `max(0, 1 + 1 - 2) == 0` lost, no Edge transfer -- not two
     separately-clamped pool losses (which would overcharge the defender by 1,
-    the exact failure mode OQ-11's rejected "apply immediately" alternative
+    the exact failure mode ENG-005's rejected "apply immediately" alternative
     produced). Also confirms `pending` is threaded into the
     `"bleed_amount_modifier"` hook's own context, not just the earlier
     stealth window's."""
@@ -266,7 +265,7 @@ def test_bleed_bookkeeping_lets_an_exempt_provider_skip_the_shared_limited_flag(
     provider opts into, not something `bleed_bookkeeping` itself enforces --
     mirrors `engine/combat.py`'s `additional_strike_limit_used`/`mark_
     additional_strike_limit_used` convention built for the combat-side
-    "(limited)" cap (`docs/OPEN_QUESTIONS.md` OQ-19). A future card whose own
+    "(limited)" cap (ENG-013). A future card whose own
     printed text exempts its bleed bonus from the cap (e.g. Command of the
     Beast 100381, Power of One 101429, Leverage 101098 -- none implemented
     yet) would simply never check or set the flag for that clause. Proven

@@ -181,13 +181,13 @@ NON_SPENDING_CHOICES = frozenset(
     {"yield", "pass", "decline", "end_phase", "end_minion_phase", "done"}
 )
 """Choices of a voluntary-pool decision kind that spend no pool, so a later
-forced loss (Fame, OQ-43) is not attributable to them."""
+forced loss (Fame, DES-009) is not attributable to them."""
 
 
 def is_self_oust(log: ReplayLog) -> bool:
     """True if the ousted player's last pool loss traces to their own
-    voluntary, pool-spending decision (OQ-41/42). Forced own-pool ousts
-    are legal (OQ-43), not flagged."""
+    voluntary, pool-spending decision (DES-009). Forced own-pool ousts
+    are legal (DES-009), not flagged."""
     entries = log.entries
     for i, e in enumerate(entries):
         if e.kind != "event" or not (m := _OUST.match(e.data["description"])):

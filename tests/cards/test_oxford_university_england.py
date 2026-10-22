@@ -5,8 +5,8 @@ Card text: "Unique location.\nYou can lock this card and burn X pool
 during the polling step of a political action to get +2X votes." No
 rulings on file.
 
-Was `blocked` with a stale `blocked_reason="OQ-6"`; the real remaining
-blocker, OQ-23 ("No standalone master-card entity"), is now resolved and
+Was `blocked` with a stale `blocked_reason="RUL-005"`; the real remaining
+blocker, ENG-015 ("No standalone master-card entity"), is now resolved and
 independently `rules-auditor`-reviewed clean.
 
 One assertion per clause/behaviour: the clan-gated master-phase play
@@ -205,7 +205,7 @@ def test_is_not_a_trifle_no_bonus_master_phase_action():
 
 def test_a_second_independently_played_copy_triggers_a_contest_with_no_oxford_specific_code():
     """ "Unique" governs contest, not initial legality to play -- built
-    entirely on the generic OQ-23 Contested-Cards machinery with no
+    entirely on the generic ENG-015 Contested-Cards machinery with no
     Oxford-specific contest code, mirroring `tests/cards/test_fame.py`'s
     own analogous test."""
     builder = ScenarioBuilder(seed=1)

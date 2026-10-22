@@ -13,7 +13,7 @@ Legal since 2024-01-31; confirmed on the active 2P allowed list
 (`data/formats/2p/2026-10-03.json`) and in the suggested 2P decklist
 `data/decks/vekn-2p/salubri.json` (3 copies).
 
-Status: implemented (OQ-61 resolved). Wired against `engine/phases/
+Status: implemented (ENG-041 resolved). Wired against `engine/phases/
 minion.py::ACTION_CARD_PLAY_HOOK`, the same shape Sakhar (`cards/sakhar.py`)
 uses for an own-printed-ability minion action: one `HookOption` per eligible
 "minion you control" target, the specific amount/resource bound at `apply()`
@@ -29,8 +29,7 @@ Seraphina herself, who must already be the ready/unlocked vampire performing
 this minion action per the generic `_choose_and_perform_action` gate), and
 `zone == "ready"` for an ally -- unlike a contested *crypt* card, a
 contested ally is not "in play, usable": the 2P variant's "stays in play,
-usable" override is scoped to crypt cards only (OQ-10, `docs/
-open_questions_archive/001.md`), so a contested ally follows the
+usable" override is scoped to crypt cards only (ENG-004), so a contested ally follows the
 unmodified rulebook rule and sits out of play until its own controller's
 next unlock phase restores it (`engine/allies.py::resolve_one_ally_contest`,
 `engine/phases/unlock.py::_unlock_own_allies`).
@@ -48,10 +47,10 @@ target, naming the resource implicitly via the target's type.
 
 "not to exceed starting life": the vampire-target (blood) half needs no
 extra cap beyond `engine/damage.py::add_blood`'s existing effective-capacity
-clamp (OQ-8) -- a vampire has no separate "starting life" concept, and nothing
+clamp (ENG-002) -- a vampire has no separate "starting life" concept, and nothing
 in the printed text suggests blood should be capped at anything other than
 capacity. The ally-target (life) half is capped at `AllyInPlay.
-starting_life` via the new `engine/allies.py::add_life` helper (OQ-61).
+starting_life` via the new `engine/allies.py::add_life` helper (ENG-041).
 
 A target already at its own cap is never offered (never offer a play that
 cannot resolve, `cards/line_brawl.py`'s own precedent; mirrors `cards/
@@ -124,9 +123,9 @@ def _ally_option(ally: AllyInPlay) -> HookOption:
     def _apply(s: GameState) -> ActionCardSpec:
         def resolve(pending: dict[str, Any]) -> None:
             del pending
-            # `add_life` needs no `state` (OQ-61): no engine mechanism
+            # `add_life` needs no `state` (ENG-041): no engine mechanism
             # modifies an ally's own starting life, unlike a vampire's
-            # effective capacity (OQ-8).
+            # effective capacity (ENG-002).
             added = add_life(ally, ADD_AMOUNT)
             s.log.record_event(f"Seraphina adds {added} life to {name}")
 

@@ -56,9 +56,9 @@ Prey/predator wording check (per the `implement-card` skill, step 3): both
 clauses carry the "Ⓓ" marker, Rulebook glossary "Directed Action" (targets
 one other Methuselah). In a 2P duel this collapses to the single-opponent
 block-attempt model (CLAUDE.md §3; same reading as `enchant_kindred.py`'s
-basic clause). Not OQ-1.
+basic clause). Not RUL-001.
 
-Status: implemented. Previously `blocked` (OQ-25, resolved) for want of a
+Status: implemented. Previously `blocked` (ENG-017, resolved) for want of a
 way to pre-grant a one-shot, this-combat-only optional maneuver at announce
 time, before the block-attempt window opens. `rules-engineer`'s fix:
 `engine/combat.py::run_combat` gained an optional `initial_combat_state`
@@ -69,7 +69,7 @@ ActionCardSpec` gained a `maneuver_grant` field, threaded by `engine/
 action.py::perform_minion_action`'s own `maneuver_grant` parameter into its
 internal `run_combat` call on the blocked branch -- see those modules' own
 docstrings for the mechanism, proven generically by `tests/rules/
-test_pre_combat_maneuver_grant.py`. OQ-57 (`docs/OPEN_QUESTIONS.md`): both
+test_pre_combat_maneuver_grant.py`. ENG-037: both
 clauses call `remove_from_hand` (not `play_from_hand`) and set `ActionCard
 Spec.name=NAME`, so `engine/phases/minion.py::_perform_action_card` can
 interleave a future Reflex card's own cancel-as-played window before
@@ -84,7 +84,7 @@ below carry `base_stealth=1`. The basic clause is a plain directed,
 default-amount (1) bleed -- no "+1 bleed" bonus printed here, unlike
 Enchant Kindred's/Line Brawl's `[pre]` clauses -- mirroring
 `_perform_bleed`'s own `resolve` closure so other bleed-amount cards still
-compose on top. `ActionCardSpec.action` is declared `ACTION_BLEED` (OQ-17
+compose on top. `ActionCardSpec.action` is declared `ACTION_BLEED` (ENG-011
 follow-up requirement) so a bleed-gated provider sharing the same hook
 windows (e.g. `bonding.py`'s superior clause) isn't silently suppressed.
 The printed 1-blood cost is burned from the acting vampire at the start of
@@ -100,10 +100,10 @@ opponent's `zone == "ready"` *and* `locked == True` vampires (the Ⓓ marker
 ties block eligibility to the targeted Methuselah, not the named minion,
 and a locked vampire is never itself a legal blocker,
 `attempt_block`'s own `ready_unlocked_vampires` list). The on-file ruling
-("unblocked ... target is unlocked ... fizzles") is the OQ-21 fizzle
+("unblocked ... target is unlocked ... fizzles") is the RUL-007 fizzle
 convention: `resolve()` re-validates the target is still ready-and-locked
 before acting, doing nothing further otherwise. "Gets 1 optional maneuver
-during that combat" is the OQ-25 pre-combat grant:
+during that combat" is the ENG-017 pre-combat grant:
 `ActionCardSpec.maneuver_grant=acting_vampire.instance_id` (blocked branch,
 threaded by `perform_minion_action`) and `resolve()`'s own direct
 `run_combat` call (unblocked branch) both seed
@@ -115,14 +115,14 @@ the seeded grant via `pre_combat_maneuver_available`/
 
 The target is chosen inside `apply()`, at announce time (Rulebook §4
 "Announce the Action" + `ActionCardSpec` contract; same timing as
-`line_brawl.py`'s `[pot]` clause, OQ-21). With exactly one eligible locked
+`line_brawl.py`'s `[pot]` clause, RUL-007). With exactly one eligible locked
 target it is bound directly with no decision raised; with none, the clause
 is not offered at all; with more than one, a `Decision`
 (`"fleetness_combat_target"`) offers one choice per target.
 
 Basic vs superior discipline gating mirrors `enchant_kindred.py`'s/
 `line_brawl.py`'s convention: reads `card.disciplines` (plain printed stat,
-not attachment-aware `effective_disciplines` -- OQ-8 noted, not acted on
+not attachment-aware `effective_disciplines` -- ENG-002 noted, not acted on
 here, matching those precedents). The basic `[cel]` clause is offered
 whenever the acting vampire has either `"cel"` or `"CEL"` (superior unlocks
 either effect, Rulebook §3); the superior `[CEL]` clause only with `"CEL"`.
@@ -158,10 +158,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 100747
 NAME = "Fleetness"
-"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
-OPEN_QUESTIONS.md`): the generic "same named action card at most once per
-turn" cap is keyed by this exact string for both clauses -- they are the
-same physical card."""
+"""`ActionCardSpec.name`/`CardRegistration.name` (ENG-037): the generic "same
+named action card at most once per turn" cap is keyed by this exact string for
+both clauses -- they are the same physical card."""
 BASIC = "cel"
 SUPERIOR = "CEL"
 STEALTH = 1
@@ -171,7 +170,7 @@ BLOOD_COST = 1
 """Printed blood-cost box: burned from the acting vampire, only on the
 unblocked branch, independent of which clause is used (module docstring)."""
 CARD_TYPE = "Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action" docstring fact above -- set on both
 `ACTION_CARD_PLAY_HOOK` options (the card actually being played); the
 `MANEUVER_HOOK` provider (`_provide_fleetness_maneuver`) only claims an
@@ -215,7 +214,7 @@ def _provide_fleetness_basic(state: GameState, context: Mapping[str, Any]) -> li
     if acting_vampire.blood < BLOOD_COST:
         return []  # printed blood cost: must have enough blood to play at all.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
@@ -270,8 +269,8 @@ def _provide_fleetness_basic(state: GameState, context: Mapping[str, Any]) -> li
 def _provide_fleetness_superior(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
     """ "+1 stealth action. [CEL] Ⓓ Enter combat with a locked minion. This
     acting vampire gets 1 optional maneuver during that combat." -- see
-    module docstring for the target-choice decision, the OQ-21 fizzle
-    convention, and the OQ-25 pre-combat maneuver grant."""
+    module docstring for the target-choice decision, the RUL-007 fizzle
+    convention, and the ENG-017 pre-combat maneuver grant."""
     player = context["player"]
     acting_vampire = _controllers_vampire(state, context)
     if acting_vampire is None:
@@ -285,13 +284,13 @@ def _provide_fleetness_superior(state: GameState, context: Mapping[str, Any]) ->
     if not _eligible_locked_targets(state, player):
         return []  # no legal target: do not offer a card play that cannot resolve.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
         opponent = s.other_player(player)
 
-        # Target fixed at announce time, not deferred to resolve() -- OQ-21,
+        # Target fixed at announce time, not deferred to resolve() -- RUL-007,
         # see module docstring.
         targets = _eligible_locked_targets(s, player)
         if len(targets) == 1:
@@ -316,7 +315,7 @@ def _provide_fleetness_superior(state: GameState, context: Mapping[str, Any]) ->
             acting_vampire.blood -= BLOOD_COST
             target = s.players[opponent].vampires.get(target_id)
             if target is None or target.zone != "ready" or not target.locked:
-                return  # fizzles (ruling + OQ-21 convention): no further effect.
+                return  # fizzles (ruling + RUL-007 convention): no further effect.
             run_combat(
                 s,
                 player,
@@ -349,7 +348,7 @@ def _provide_fleetness_superior(state: GameState, context: Mapping[str, Any]) ->
 
 def _provide_fleetness_maneuver(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
     """Generic `"maneuver"` hook provider recognizing a seeded pre-combat
-    grant (module docstring's OQ-25 paragraph) -- offers exactly when
+    grant (module docstring's ENG-017 paragraph) -- offers exactly when
     `context["vampire"]` currently has an unclaimed pre-combat grant, via the
     shared `pre_combat_maneuver_available`/`consume_pre_combat_maneuver_
     grant` helpers (never reading/writing `combat_state` directly), mirroring

@@ -10,7 +10,7 @@ Clan Toreador (`clans == ["Toreador"]`); no discipline requirement, no cost.
 Rulings:
     - "Can be used even if the stealth is not currently needed."
       [LSJ 20011214-2].
-    - OQ-40 (`docs/OPEN_QUESTIONS.md`, resolved -- ruling via a trusted VEKN
+    - RUL-012 (resolved -- ruling via a trusted VEKN
       judge on the international rulings forum, pending official
       publication; posed scenario: a Loup in play with its controller's own
       Toreador vampires all failing to act, a second Methuselah's Masika
@@ -23,10 +23,10 @@ Rulings:
       successful action burns *every* in-play Loup, regardless of who
       controls the vampire or the card.
 
-Built on OQ-34's own primitives (`docs/OPEN_QUESTIONS.md`, resolved):
+Built on ENG-024's own primitives (resolved):
 `engine/turn_cards.py` (`TurnCardInPlay`/`bring_turn_card_into_play`/
 `burn_turn_card`/`active_turn_cards`) and `engine/action.py::
-ACTION_SUCCEEDED_HOOK`. OQ-40's own resolution (above) means neither clause
+ACTION_SUCCEEDED_HOOK`. RUL-012's own resolution (above) means neither clause
 is scoped to a single controller: `_provide_loup` below checks every
 player's own `turn_cards` for an active Loup (not only `context["player"]`'s
 own), and `_provide_loup_burn` burns every in-play Loup across every player.
@@ -34,13 +34,13 @@ Only *playing* a copy from hand stays controller-bound, by construction --
 a Methuselah can only ever play a card from their own hand.
 
 One provider, registered against `STEALTH_INCREASE_HOOK` (`engine/
-action.py`, OQ-39, resolved -- see below), does double duty, gated
+action.py`, RUL-011, resolved -- see below), does double duty, gated
 throughout on the acting vampire (`context["acting_vampire"]`, re-resolved
 fresh every call -- same "bind to the specific acting minion" precedent as
-`forty_seventh_street_royals.py::_provide_recruit`, OQ-13) being Toreador --
+`forty_seventh_street_royals.py::_provide_recruit`, ENG-007) being Toreador --
 Rulebook §2 "Requirements for Playing Cards": "Only a minion who meets the
 requirements given on a minion card can play it". Both halves below are
-offered together, not as an either/or branch (OQ-40's table-wide reading
+offered together, not as an either/or branch (RUL-012's table-wide reading
 means they are independent, additive opportunities -- e.g. the acting
 player may activate the *other* Methuselah's already-in-play Loup *and*
 play their own fresh copy from hand, for two separately-tracked grants):
@@ -56,9 +56,9 @@ play their own fresh copy from hand, for two separately-tracked grants):
     `VampireInPlay.ability_used_turn`'s own shape but scoped to the
     controller, since this cap is a plain card-play restriction, not a
     specific minion's ability) -- this stays bound to the acting player's
-    own hand regardless of OQ-40, since nothing lets a Methuselah play a
+    own hand regardless of RUL-012, since nothing lets a Methuselah play a
     card from someone else's hand. Deliberately kept on `card_played_turn`,
-    not folded into OQ-57's (`docs/OPEN_QUESTIONS.md`) generic `PlayerState.
+    not folded into ENG-037's generic `PlayerState.
     action_card_played_turn` "same named action card" cap: Loup is itself
     Action Modifier, not Action, so the generic rule's own text ("the same
     named action card") never reaches it in the first place -- this is a
@@ -70,7 +70,7 @@ into `pending[PENDING_STEALTH_INCREASE_KEY]` rather than returning a
 one-shot numeric delta (`STEALTH_INCREASE_HOOK`'s own contract, `engine/
 action.py`), capped per Loup *instance* at most once per *action* via
 `LOUP_STEALTH_GRANTED_KEY` (a `set[str]` of already-granted `instance_id`s,
-not a flat flag -- OQ-40 means more than one distinct Loup, each its own
+not a flat flag -- RUL-012 means more than one distinct Loup, each its own
 independent source, can legally be in play across two controllers at once,
 and each should be able to contribute its own +1 once, not be collapsed
 into a single global cap). Without a per-instance cap at all, offering the
@@ -82,7 +82,7 @@ migrating off the old `STEALTH_MODIFIER_HOOK`-only wiring below, which had
 no such cap and could have been exploited the same way, though no
 registered test ever did).
 
-OQ-39 (`docs/OPEN_QUESTIONS.md`, resolved -- previously the known gap this
+RUL-011 (resolved -- previously the known gap this
 module shipped `Status.IMPLEMENTED` with): the on-file ruling's full
 generality ("even if the stealth is not currently needed") exempts Loup
 from the Rulebook's general default stealth-timing rule ("Stealth can be
@@ -95,7 +95,7 @@ already strictly exceeds intercept pre-modifier. This module now registers
 against `STEALTH_INCREASE_HOOK` instead -- `engine/action.py::attempt_block`
 offers it to the acting player proactively, at the very top of its retry
 loop, before `defender`'s own candidate pool is even computed (mirroring
-`INTERCEPT_DECREASE_HOOK`'s own OQ-30 shape) -- so Loup can now be played,
+`INTERCEPT_DECREASE_HOOK`'s own ENG-021 shape) -- so Loup can now be played,
 and its ongoing bonus activated, even against a fully unblockable action.
 `tests/cards/test_loup.py::
 test_can_be_played_proactively_even_when_the_action_is_unblockable` proves
@@ -123,7 +123,7 @@ KRCG_ID = 102273
 NAME = "Loup"
 CLAN_REQUIREMENT = "Toreador"
 CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action Modifier" docstring fact -- set only on
 the play-from-hand option (the card actually leaving hand); the ongoing
 "+1 stealth" grant leaves it at its default `None` (module docstring)."""
@@ -154,7 +154,7 @@ def _provide_loup(state: GameState, context: Mapping[str, Any]) -> list[HookOpti
     granted: set[str] = pending.setdefault(LOUP_STEALTH_GRANTED_KEY, set())
     options: list[HookOption] = []
 
-    # OQ-40: any in-play Loup, any controller, may be activated for the
+    # RUL-012: any in-play Loup, any controller, may be activated for the
     # acting Toreador vampire's own benefit.
     for owner in state.players:
         for card in active_turn_cards(state, owner, KRCG_ID):
@@ -206,7 +206,7 @@ def _provide_loup_burn(state: GameState, context: Mapping[str, Any]) -> None:
     vampire: VampireInPlay = context["vampire"]
     if vampire.card.clan != CLAN_REQUIREMENT:
         return
-    # OQ-40: any Toreador's successful action burns every in-play Loup,
+    # RUL-012: any Toreador's successful action burns every in-play Loup,
     # regardless of who controls the card or the acting vampire.
     for owner in state.players:
         for card in active_turn_cards(state, owner, KRCG_ID):

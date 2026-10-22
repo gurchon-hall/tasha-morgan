@@ -7,7 +7,7 @@ a reaction card as it is played (cost is still paid). +1 bleed." Toreador,
 Justicar, group 7, capacity 9.
 
 Clause 1: built against `CANCEL_AS_PLAYED_HOOK`/`played_card_type`
-(`docs/OPEN_QUESTIONS.md` OQ-32/OQ-33, both resolved), gated to the side
+(ENG-022/ENG-023, both resolved), gated to the side
 holding a Diana her controller actually called the referendum with
 (`context["caller_vampire_id"]` resolved against `context["player"]`'s own
 vampires, `card.krcg_id == KRCG_ID`) and to a canceled option whose
@@ -16,11 +16,11 @@ England's own non-Reaction options reachable in the same polling-step
 window. Capped at once per referendum: Rulebook §3 "Wording templates" >
 "During X, do Y", verbatim, "only one Y can be done per X with this card"
 (`data/sources/rulebook/2026-10-09/3-playing-the-game.md` lines 86-91) --
-a separate fact from OQ-33's own "ruling check," which found the 5
+a separate fact from ENG-023's own "ruling check," which found the 5
 on-file rulings for the generic "cancel as played" mechanic say nothing
 about a referendum-level cap (they govern the mechanic itself: cost still
 paid, immediate, no other effects -- already proven generically by
-`tests/rules/test_hooks.py`/OQ-32). Tracked in `context["pending"]
+`tests/rules/test_hooks.py`/ENG-022). Tracked in `context["pending"]
 ["diana_iadanza_canceled"]`, naturally scoped to one `resolve_referendum`
 call (a fresh `pending` dict per call, `engine/politics.py`).
 
@@ -30,7 +30,7 @@ Clause 2 ("+1 bleed"): flat, unconditional; built against
 No `POLLING_STEP_HOOK` provider in the pool offers a
 `played_card_type="Reaction"` option today, so clause 1 is dormant in real
 games (CLAUDE.md "only when needed"); tests exercise it with a temporary
-fake provider, mirroring `tests/rules/test_hooks.py`'s own OQ-33 proof.
+fake provider, mirroring `tests/rules/test_hooks.py`'s own ENG-023 proof.
 """
 
 from collections.abc import Mapping

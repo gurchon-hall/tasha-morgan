@@ -26,18 +26,18 @@ Playing Cards" (quoted in full in `oxford_university_england.py`'s
 docstring): "Only a Methuselah with enough pool can play a card with a pool
 cost." So playing Wider View burns 1 pool -- implemented via `lose_pool` in the
 master-phase-play `apply`, gated by `can_afford_without_ousting` in the
-provider (OQ-42: the card needs pool >= 2).
+provider (DES-009: the card needs pool >= 2).
 
 Three independent clauses, matching `data/cards/102180.json`'s own `text`
 field split at each sentence:
 
 1. "Trifle.\nPut this card in play." -- same shape as Oxford University,
-   England (OQ-23): registers a `"master_phase_play"` provider that pays
+   England (ENG-015): registers a `"master_phase_play"` provider that pays
    the pool cost, then calls `play_from_hand` then
    `bring_master_card_into_play`. Unlike Oxford, this card is printed
    "Trifle." (not "Unique."), so: (a) `detect_contest_on_bring_into_play`
    is never called -- only correct for a card printed "Unique"
-   (`engine/master_cards.py`; OQ-23's own sweep names Wider View as the
+   (`engine/master_cards.py`; ENG-015's own sweep names Wider View as the
    non-unique counter-example motivating `MasterCardInPlay`'s generic
    shape); (b) `apply(state)` returns `True` (Rulebook §4 Master Phase:
    "trifles grant one extra master phase action"), unlike Oxford's
@@ -46,7 +46,7 @@ field split at each sentence:
 
 2. "You can use 1 transfer to draw 1 card from your crypt and then remove a
    crypt card in your uncontrolled region from the game." -- registered
-   against `INFLUENCE_PHASE_ACTION_HOOK` (OQ-24). `apply(state)` returns
+   against `INFLUENCE_PHASE_ACTION_HOOK` (ENG-016). `apply(state)` returns
    `1` (transfers consumed), per that hook's contract.
 
    Sequencing ("draw... and then remove"): §8 Glossary "Draw": "Crypt
@@ -78,7 +78,7 @@ field split at each sentence:
    `zone == "in_play"` (a burned copy cannot be burned again; a contested
    one is out of play and inert, same as clause 2's in-play gate).
 
-Choice-value namespacing (OQ-24 addendum, `hooks.ensure_unique_choice_
+Choice-value namespacing (ENG-016 addendum, `hooks.ensure_unique_choice_
 values`): every `Choice.value` here is prefixed `"wider_view_"`.
 """
 
@@ -103,7 +103,7 @@ POOL_COST = 1
 BURN_TRANSFER_COST = 4
 BURN_POOL_GAIN = 2
 CARD_TYPE = "Master"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Master" docstring fact above -- set only on
 clause 1's own play (`_provide_wider_view_master_phase_play`); clauses 2/3
 are this already-in-play card's own standing abilities, not a fresh card

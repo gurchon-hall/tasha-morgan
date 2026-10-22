@@ -23,7 +23,7 @@ clause, superior for `[AUS]`. `clan_requirement == []`, `cost is None`
 confirmed on the active 2P allowed list (`data/formats/2p/
 2026-10-03.json`).
 
-Status: implemented. Previously `blocked` (OQ-60, `docs/OPEN_QUESTIONS.md`,
+Status: implemented. Previously `blocked` (ENG-040,
 resolved): the superior clause's damage prevention needed (1) a way for a
 reaction played during the block attempt's own stealth/intercept
 resolution to hand a grant forward into the specific, later `run_combat`
@@ -87,7 +87,7 @@ loudly rather than silently resolved.
 Eligibility mirrors `second_tradition_domain.py`'s own `_eligible_unlocked`
 shape: `player`'s own ready, unlocked vampires with `"aus"` or `"AUS"` in
 `card.disciplines` (plain printed stat, not attachment-aware `effective_
-disciplines` -- OQ-8 noted, not acted on here, matching every other
+disciplines` -- ENG-002 noted, not acted on here, matching every other
 discipline-gated card in this project) that have not already played this
 exact card this action.
 """
@@ -123,7 +123,7 @@ USED_BY_KEY = "precognition_used_by"
 during a single action" -- shared between both clauses (same physical
 card), mirrors `cards/second_tradition_domain.py`'s own `USED_BY_KEY`."""
 CARD_TYPE = "Reaction"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Reaction" docstring fact above. The later
 `DAMAGE_PREVENTION_HOOK` option (claiming an already-earned grant, not
 playing a card) leaves this at its default `None`, mirroring `cards/

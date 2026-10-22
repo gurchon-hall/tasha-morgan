@@ -12,7 +12,7 @@ pool burn resolves correctly alongside another, genuinely optional,
 unlock-phase effect (the Edge gain) in the very same `unlock_phase` call.
 
 One assertion per clause/behaviour: "Unique" (a contest between two
-independently-played copies, built entirely on the generic OQ-22
+independently-played copies, built entirely on the generic ENG-014
 Contested-Cards machinery with no Fame-specific contest code), "a ready
 vampire" (either player's, strictly `zone == "ready"` -- a torpid vampire
 is excluded, unlike Celerity's own looser targeting), "their controller
@@ -147,13 +147,13 @@ def test_cannot_target_a_torpid_vampire_even_when_a_ready_one_is_also_available(
     agent.assert_exhausted()
 
 
-# --- Clause: "Unique." (contest, OQ-22) ---------------------------------
+# --- Clause: "Unique." (contest, ENG-014) ---------------------------------
 
 
 def test_a_second_independently_played_copy_triggers_a_contest_with_no_fame_specific_code():
     """ "Unique" governs contest, not initial legality to play -- nothing
     stops a second, independently-played copy; that is exactly what
-    triggers a contest. Built entirely on the generic OQ-22 machinery
+    triggers a contest. Built entirely on the generic ENG-014 machinery
     (`attach_card`/`detect_contest_on_attach`), already proven in
     `tests/rules/test_attachment_contests.py`."""
     builder = ScenarioBuilder(seed=1)
@@ -226,7 +226,7 @@ def test_no_pool_loss_when_a_vampire_without_fame_goes_to_torpor():
 
 
 def test_no_pool_loss_while_fames_own_attachment_is_contested():
-    """A contested copy is face down and out of play (OQ-22): it must not
+    """A contested copy is face down and out of play (ENG-014): it must not
     react to its host vampire going to torpor."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)
@@ -317,7 +317,7 @@ def test_no_unlock_phase_pool_loss_while_fames_own_attachment_is_contested():
     assert mine.zone == "contested"
     game.vampire("V1").zone = "torpor"
     # P1 still owes the ordinary, Fame-unrelated attachment-contest pay/
-    # yield decision (OQ-22's own generic mechanism, already proven in
+    # yield decision (ENG-014's own generic mechanism, already proven in
     # `tests/rules/test_attachment_contest_resolution.py`) -- scripted here
     # only so this test can isolate and assert Fame's *own* unlock hook
     # specifically stays silent while contested.
@@ -362,7 +362,7 @@ def test_mandatory_pool_burn_is_orderable_after_a_contested_cards_own_pay_decisi
     unlock-phase effect. At pool 2, with a separate contested vampire whose
     own pay-or-yield decision costs 1 pool, running the mandatory burn
     first dropped pool to 1 before that contest's own affordability gate
-    (`can_afford_without_ousting`, OQ-42) was ever checked, silently
+    (`can_afford_without_ousting`, DES-009) was ever checked, silently
     removing "pay" from its offered choices even though the ruling
     entitles the acting Methuselah to resolve the contest's own pay first
     and the mandatory burn after. Proven here by scripting exactly that
@@ -395,7 +395,7 @@ def test_mandatory_pool_burn_is_orderable_after_a_contested_cards_own_pay_decisi
 
 def test_fame_oust_mid_combat_resolves_the_simultaneous_second_damage_first(monkeypatch):
     """Fame's torpor pool burn queues P1's oust, but both strikes' damage is
-    one simultaneous event (OQ-44): P2's damage (mend decision included) is
+    one simultaneous event (DES-010): P2's damage (mend decision included) is
     still resolved, then the oust is decided once. Only P1 is at 0: ordinary
     oust. Nothing is asked after the game ends (sim seeds 270/942)."""
     from vtesbot.engine import combat
@@ -425,7 +425,7 @@ def test_fame_oust_mid_combat_resolves_the_simultaneous_second_damage_first(monk
 def test_fame_double_torpor_in_one_strike_pair_is_a_tie(monkeypatch):
     """Both vampires carry Fame and go to torpor from the same simultaneous
     strike pair, each controller burning 3 from 3 pool: both reach 0 in the
-    same event, a tie (OQ-44)."""
+    same event, a tie (DES-010)."""
     from vtesbot.engine import combat
 
     builder = ScenarioBuilder(seed=1)
@@ -453,7 +453,7 @@ def test_fame_double_torpor_with_the_other_side_above_three_pool_is_an_ordinary_
 ):
     """Same strike pair as the tie test, but P2 has 4 pool: 4 - 3 = 1 survives,
     so only P1 is ousted and P2 wins (the second side's Fame burn is still
-    applied inside the deferral window, OQ-44)."""
+    applied inside the deferral window, DES-010)."""
     from vtesbot.engine import combat
 
     builder = ScenarioBuilder(seed=1)

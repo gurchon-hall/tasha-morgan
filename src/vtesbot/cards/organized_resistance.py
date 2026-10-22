@@ -35,7 +35,7 @@ sentence plus the "Usable by a locked baron" relaxation. `cost is None`
 (free). Legal since 2021-12-31; confirmed on the active 2P allowed list
 (`data/formats/2p/2026-10-03.json`).
 
-Status: implemented (OQ-26, `docs/OPEN_QUESTIONS.md`, resolved -- the
+Status: implemented (ENG-018, resolved -- the
 engine gap this card was blocked on, `Hook.BLOCK_CANDIDATE_INJECTION` /
 `engine/action.py::BLOCK_CANDIDATE_INJECTION_HOOK`, was built and
 independently audited by `rules-auditor` with no blocking findings; this
@@ -103,7 +103,7 @@ test_can_be_used_after_an_earlier_ordinary_block_attempt_already_failed_this_act
 blocked, so neither hook is offered. Daring the Dawn itself is not
 implemented in this project, so the scenario this ruling guards against is
 not constructible with the current card pool (not reachable today, but
-correctly modeled either way, per `dust_up.py`'s OQ-21 citation).
+correctly modeled either way, per `dust_up.py`'s RUL-007 citation).
 
 "Counts as requiring an Anarch (for eg. {Powerbase: Los Angeles})." [LSJ
 20080603] [LSJ 20050128]: a rule for *other* cards checking "was this
@@ -122,7 +122,7 @@ Read as keying the restriction on the *physical card use by one minion*,
 not on which of the card's alternative effects that minion chose -- this
 card's two clauses are two such alternative effects. Both providers share
 one `USED_BY_KEY` scratch set, keyed on the *Baron's* own instance id, in
-the shared per-action `pending` dict (OQ-11): a Baron that already played
+the shared per-action `pending` dict (ENG-005): a Baron that already played
 clause 1 this action is excluded from `_eligible_barons` for clause 2, and
 vice versa; a *different* eligible Baron is unaffected (mirrors
 `protection_racket.py`'s "restricts the same minion, not the whole
@@ -144,7 +144,7 @@ from vtesbot.engine.state import GameState, VampireInPlay
 KRCG_ID = 102230
 USED_BY_KEY = "organized_resistance_used_by"
 CARD_TYPE = "Reaction"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Reaction" docstring fact above."""
 
 

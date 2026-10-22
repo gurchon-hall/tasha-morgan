@@ -75,7 +75,7 @@ def test_second_contribution_burns_the_attachment():
 
 
 def test_resolve_fizzles_once_the_attachment_has_already_been_removed():
-    """OQ-21 convention: a contribution that resolves after the attachment
+    """RUL-007 convention: a contribution that resolves after the attachment
     is already gone (e.g. a different, earlier-resolving contribution
     already burned it this same round) is simply a no-op, not an error and
     not an over-count."""

@@ -33,7 +33,7 @@ Rulings (via krcg; citations only):
 Card type: Combat (`types == ["Combat"]`). No discipline/clan requirement,
 `cost is None`. Legal since 1994-09-15; on the active 2P allowed list
 (`data/formats/2p/2026-10-03.json`). No Ⓓ/prey/predator/vote wording
-(scoped to the current combat's own two combatants); not OQ-1.
+(scoped to the current combat's own two combatants); not RUL-001.
 
 Status: implemented, against three primitives built this session:
 `engine/damage.py::DAMAGE_SUCCESSFULLY_INFLICTED_KEY`/`damage_
@@ -111,7 +111,7 @@ CONTRIBUTIONS_REQUIRED = 2
 """Verbatim "burn this card with two +1 stealth actions."."""
 _EXCLUDED_ZONES = ("burned", "torpor")
 CARD_TYPE = "Combat"
-"""`HookOption.played_card_type` (OQ-33): matches this module's own "Card
+"""`HookOption.played_card_type` (ENG-023): matches this module's own "Card
 type: Combat" docstring fact above."""
 
 
@@ -161,7 +161,7 @@ def _provide_pulled_fangs(state: GameState, context: Mapping[str, Any]) -> list[
         play_from_hand(s, player, KRCG_ID)  # no block window: straight to the ash heap.
         live_opponent = s.players[opponent_player].vampires.get(opponent_id)
         if live_opponent is None:
-            return  # fizzles (OQ-21 convention): the opposing vampire left play since offer.
+            return  # fizzles (RUL-007 convention): the opposing vampire left play since offer.
         attach_card(s, live_opponent, controller=player, krcg_id=KRCG_ID, name=NAME)
         apply_damage(
             s,

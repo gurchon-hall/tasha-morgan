@@ -1,9 +1,9 @@
 """End of Round (`engine/combat.py`, Rulebook §4 Combat > Combat Sequence,
 step 7, "End of Round: End of round cards and effects are played here") and
 the round-scoped "blood lost to damage" tracking (`engine/damage.py`) it was
-built alongside -- both resolve `docs/OPEN_QUESTIONS.md` OQ-29 (Taste of
+built alongside -- both resolve ENG-020 (Taste of
 Vitae, krcg id 101945). No combat card registers against either mechanism
-yet (OQ-29 is still open, left for a future `card-implementer` pass) -- these
+yet (ENG-020 is still open, left for a future `card-implementer` pass) -- these
 are scenario tests for the generic mechanisms only, using fake providers and
 direct calls to prove the shape rather than any one card's wording.
 """
@@ -134,7 +134,7 @@ def test_end_of_round_fires_each_round_when_someone_presses():
 def test_end_of_round_offers_the_acting_combatants_controller_first():
     """Both sides have a real, one-shot option available; the acting
     combatant's controller (P1) must be asked -- and decide -- first, per the
-    Press-step ordering precedent this mechanism shares (OQ-3, module
+    Press-step ordering precedent this mechanism shares (RUL-002, module
     docstring): P1's option is claimed (and exhausted) before P2 is ever
     offered theirs. Each provider is one-shot (consumes itself once used),
     so only one `end_of_round` decision is ever raised per side -- proving
@@ -189,7 +189,7 @@ def test_end_of_round_offers_the_acting_combatants_controller_first():
 def test_no_end_of_round_decision_without_a_registered_provider():
     """Regression guard: with no `END_OF_ROUND_HOOK` provider registered, no
     `end_of_round` decision is ever raised (CLAUDE.md "only when needed") --
-    byte-for-byte the pre-OQ-29 result."""
+    byte-for-byte the pre-ENG-020 result."""
     game = _combat_game(acting_blood=2, blocking_blood=0)
 
     actor = ScriptedAgent("P1")
@@ -316,7 +316,7 @@ def test_blood_lost_to_damage_unaffected_by_unrelated_blood_changes():
 
 
 def test_blood_lost_to_damage_remains_readable_after_the_vampire_is_burned():
-    """OQ-29: "Can be played if the opponent was burned" [LSJ 20031201-2] --
+    """ENG-020: "Can be played if the opponent was burned" [LSJ 20031201-2] --
     the record must survive the tracked vampire's own zone transition to
     `"burned"`, which only flips `zone`/`locked` and never touches this
     separate dict."""

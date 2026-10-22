@@ -23,7 +23,7 @@ confirmed on the active 2P allowed list (`data/formats/2p/
 2026-10-03.json`, krcg id 101649) and in `data/decks/vekn-2p/
 ventrue.json`.
 
-Status: implemented (OQ-55, `docs/OPEN_QUESTIONS.md`, resolved). Both
+Status: implemented (ENG-036, resolved). Both
 clauses are wired against the already-wired `DAMAGE_PREVENTION_HOOK`
 (`engine/damage.py::apply_damage`'s "Prevent step"), offered together
 whenever eligible (Rulebook §3 "may opt to use either effect"):
@@ -50,7 +50,7 @@ whenever eligible (Rulebook §3 "may opt to use either effect"):
   `engine/damage.py::mark_mandatory_full_prevention_active` so every
   later `apply_damage` call this round against this vampire is
   automatically and fully prevented with no further decision asked
-  (`MANDATORY_FULL_PREVENTION_KEY`, the primitive OQ-55 added to resolve
+  (`MANDATORY_FULL_PREVENTION_KEY`, the primitive ENG-036 added to resolve
   this card's own remaining gap). `round_state` is read from
   `DAMAGE_PREVENTION_HOOK`'s own context (`ROUND_STATE_CONTEXT_KEY`),
   which also implicitly identifies "the opposing minion" -- one
@@ -77,7 +77,7 @@ NAME = "Rolling with the Punches"
 BASIC = "for"
 SUPERIOR = "FOR"
 CARD_TYPE = "Combat"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Combat" docstring fact above."""
 
 

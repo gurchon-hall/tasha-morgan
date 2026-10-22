@@ -15,7 +15,7 @@ One assertion per clause/gate: the basic clause's own discipline/hand/
 `apply_damage`, the mixed-normal-and-aggravated engine-invariant guard,
 and the superior clause's own discipline/blood gates, blood burn, current-
 strike zeroing, and round-scoped mandatory-automatic-prevention activation
-(OQ-55, `docs/OPEN_QUESTIONS.md`, resolved).
+(ENG-036, resolved).
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -163,7 +163,7 @@ def test_declining_it_leaves_damage_unchanged():
     agent.assert_exhausted()
 
 
-# --- "[FOR] Burn 1 blood to prevent all damage ... this round." (OQ-55) ----
+# --- "[FOR] Burn 1 blood to prevent all damage ... this round." (ENG-036) ----
 
 
 def _offer_both(game, damage: dict[str, int], round_state: dict | None = None):
@@ -271,7 +271,7 @@ def test_superior_cap_is_unenforced_without_a_round_state():
 
 
 def test_superior_prevents_every_later_strike_this_round_automatically_end_to_end():
-    """OQ-55's resolved gap: once chosen, every later `apply_damage` call
+    """ENG-036's resolved gap: once chosen, every later `apply_damage` call
     this round against the same vampire is fully prevented with no further
     `DAMAGE_PREVENTION_HOOK` decision asked at all -- an exhausted
     `ScriptedAgent` with no further expectations would raise if one were.

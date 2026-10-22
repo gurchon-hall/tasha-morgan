@@ -42,7 +42,7 @@ one; no decline is offered per bracket (each is a flat bonus, no "may").
 "[obf]"/"[pre]": `base_stealth`/bleed amount from which disciplines are
 held, composed via the same `BLEED_AMOUNT_FIXED_MODIFIER_HOOK`/
 `BLEED_AMOUNT_MODIFIER_HOOK`/`PENDING_BLEED_AMOUNT_KEY` chain as
-`enchant_kindred.py`/`line_brawl.py`, `action=ACTION_BLEED` likewise (OQ-17).
+`enchant_kindred.py`/`line_brawl.py`, `action=ACTION_BLEED` likewise (ENG-011).
 
 "[pro]": gated on `amount >= 1` ("(for 1 or more)"), same threshold
 `enchant_kindred.py`/`line_brawl.py` use for their own Edge-holder check.
@@ -52,11 +52,11 @@ own docstring; no legal-2P card places it on an ally), and torpor still
 counts as "controlled" (Sergio Bueno's own on-file ruling that an identical
 keyword "applies even if the vampire is in torpor"). Chosen at *resolution*,
 not declaration (first ruling above) -- raised inside `resolve()`, after
-`lose_pool`, contrary to every other OQ-21 "bind at announce" case in this
+`lose_pool`, contrary to every other RUL-007 "bind at announce" case in this
 pool, since this card's own ruling explicitly overrides that default.
 Chosen by this card's own controller (mirrors `aniel.py`'s identical
 convention); fizzles with no counter placed if no eligible target exists at
-resolution, or `amount` never reached 1 (OQ-21 fizzle convention).
+resolution, or `amount` never reached 1 (RUL-007 fizzle convention).
 """
 
 from collections.abc import Mapping
@@ -92,7 +92,7 @@ STEALTH_BONUS = 1
 PRE_BLEED_BONUS = 1
 """Printed "[pre] The bleed is with +1 bleed."."""
 CARD_TYPE = "Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action" docstring fact above."""
 
 
@@ -137,7 +137,7 @@ def _provide_the_platinum_protocol(
     if not _has_card_in_hand(state, player):
         return []
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)

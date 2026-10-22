@@ -1,4 +1,4 @@
-"""Allies in play (OQ-7, `docs/OPEN_QUESTIONS.md`): `engine/state.py::
+"""Allies in play (ENG-001): `engine/state.py::
 AllyInPlay` / `PlayerState.allies`, and `engine/allies.py::recruit_ally` /
 `burn_ally` -- the minimum representation a currently-blocked card (47th
 Street Royals) needs: an ally existing in play, and being burned as a

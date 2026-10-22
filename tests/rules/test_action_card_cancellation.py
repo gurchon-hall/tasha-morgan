@@ -1,4 +1,4 @@
-"""Action-card cancel-as-played (OQ-57, `docs/OPEN_QUESTIONS.md`):
+"""Action-card cancel-as-played (ENG-037):
 `engine/phases/minion.py::_perform_action_card` offers `hooks.
 CANCEL_AS_PLAYED_HOOK` to the other Methuselah, via `hooks.
 offer_cancel_as_played`, strictly before `perform_minion_action` would
@@ -9,12 +9,12 @@ as it is played") and "Cancel a card" (`3-playing-the-game.md:103-108`):
 "If an action card is cancelled, the minion does not lock (they do not pay
 for the action card), and they can play the same action card again."
 
-Distinct from `hooks.apply_chosen_option` (OQ-32, built for a Reaction/
+Distinct from `hooks.apply_chosen_option` (ENG-022, built for a Reaction/
 Action-Modifier/political-referendum `HookOption`, whose own `cost` is
 paid unconditionally even when canceled): an Action card's `HookOption` has
 no `cost` field in play at all here, by construction.
 
-Finding 1 (`docs/OPEN_QUESTIONS.md`, `rules-auditor`): the replacement
+Finding 1 (`rules-auditor`): the replacement
 card must be drawn strictly *after* this cancel window closes, win or
 lose -- Rulebook §2 Card Types `2-card-types.md:124-126`, "Even drawing
 to replace cards, comes after this time period."
@@ -29,7 +29,7 @@ Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism*, using a trivial fake `"action_card_play"` provider and a
 trivial fake `CANCEL_AS_PLAYED_HOOK` provider standing in for a future
 Reflex-type card's own module -- no Reflex-type card is implemented in
-this project yet (module/OQ docstring)."""
+this project yet (module/ENG-037 docstring)."""
 
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards._shared import play_from_hand, remove_from_hand
@@ -55,7 +55,7 @@ def _fake_action_card_provider(state, context):
     provider (mirrors `tests/rules/test_action_card_play.py`'s own fake):
     one option, offered only while its own card is in hand; consumes its
     card immediately and resolves as a fixed directed bleed. Carries
-    `played_card_type="Action"` (OQ-33's own convention, matching every
+    `played_card_type="Action"` (ENG-023's own convention, matching every
     real `ACTION_CARD_PLAY_HOOK` provider in this pool, e.g. `cards/
     dominate_kine.py`) so a `CANCEL_AS_PLAYED_HOOK` provider can gate on
     "only cancel an Action card"."""
@@ -200,7 +200,7 @@ def _fake_named_action_card() -> LibraryCard:
 
 
 def _fake_named_action_card_provider(state, context):
-    """Mirrors a real `ACTION_CARD_PLAY_HOOK` provider post-OQ-57 Finding 1
+    """Mirrors a real `ACTION_CARD_PLAY_HOOK` provider post-ENG-037 Finding 1
     fix (e.g. `cards/dominate_kine.py`): calls `remove_from_hand` (not
     `play_from_hand`) inside `apply()`, and sets `ActionCardSpec.name` so
     `_perform_action_card` itself draws the replacement once its own cancel
@@ -231,7 +231,7 @@ def _fake_named_action_card_provider(state, context):
 
 
 def test_replacement_card_is_drawn_after_the_cancel_window_closes_not_before():
-    """OQ-57 Finding 1 (`docs/OPEN_QUESTIONS.md`): Rulebook §3 "Playing a
+    """ENG-037 Finding 1: Rulebook §3 "Playing a
     Card" (`data/sources/rulebook/2026-10-09/3-playing-the-game.md:
     124-126`), "Even drawing to replace cards, comes after this [cancel-
     as-played] time period." -- proven by having the cancel provider's own

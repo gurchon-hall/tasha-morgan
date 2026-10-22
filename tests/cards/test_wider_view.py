@@ -123,7 +123,7 @@ def test_is_a_trifle_grants_an_extra_master_phase_action():
 
 def test_not_a_unique_card_two_independently_played_copies_never_contest():
     """Printed "Trifle.", not "Unique.": two players' own copies never
-    contest (OQ-23's own motivating non-unique counter-example, named by
+    contest (ENG-015's own motivating non-unique counter-example, named by
     id)."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)
@@ -380,7 +380,7 @@ def test_burn_for_pool_not_offered_during_the_three_transfer_first_influence_pha
 
 
 def test_not_offered_when_paying_would_leave_zero_pool():
-    """OQ-42 (user ruling): a voluntary 1-pool card cost may not zero the payer."""
+    """DES-009 (user ruling): a voluntary 1-pool card cost may not zero the payer."""
     for pool, expect_offer in ((1, False), (2, True)):
         builder = ScenarioBuilder(seed=1)
         p1 = builder.player("P1", pool=pool)

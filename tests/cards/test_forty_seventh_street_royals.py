@@ -6,7 +6,7 @@ Card text: "Unique mortal with 2 life. 1 strength, 0 bleed.\nYou can burn
 
 Two clauses, each with its own assertions: the recruit side (clan-gated
 eligibility, the full `minion_phase` action -- success and blocked -- and the
-contest it triggers against the engine's now-resolved OQ-10/OQ-15 ally-contest
+contest it triggers against the engine's now-resolved ENG-004/ENG-009 ally-contest
 machinery), and the reaction side (burn-to-reduce-bleed, clamped at 0, not
 offered while contested).
 """
@@ -58,7 +58,7 @@ def test_registered_as_implemented_against_its_hooks():
 
 
 def test_recruit_offered_only_when_the_acting_vampire_is_brujah():
-    """Mirrors OQ-13's own test pattern (`tests/rules/
+    """Mirrors ENG-007's own test pattern (`tests/rules/
     test_recruit_ally_action.py::
     test_recruit_ally_play_hook_context_carries_the_acting_vampires_
     identity`): acting with a non-Brujah ready-unlocked vampire must not see
@@ -209,7 +209,7 @@ def test_both_players_recruiting_their_own_copy_triggers_a_real_contest():
     directly via `recruit_ally(...)` below rather than through its own
     recruit action, since the point under test is only that P1's real
     recruit, once it succeeds, triggers `detect_contest_on_recruit` via
-    `_perform_recruit_ally`'s own production call site (OQ-10/OQ-14)
+    `_perform_recruit_ally`'s own production call site (ENG-004/ENG-008)
     against a pre-existing opposing ally -- same bar as
     `tests/rules/test_ally_contests.py::
     test_recruit_ally_action_end_to_end_detects_the_contest`."""
@@ -345,7 +345,7 @@ def test_burn_reaction_not_offered_while_the_ally_is_contested():
 
 
 def test_zero_regression_contested_ally_is_restored_and_can_react_after_resolution():
-    """Sanity companion to the contested-gate test above: once OQ-15's own
+    """Sanity companion to the contested-gate test above: once ENG-009's own
     resolution loop ends the contest and restores the surviving ally's
     `zone` to `"ready"` on its controller's next unlock phase, the reaction
     is offered again -- confirming the gate above really is `zone`-based,

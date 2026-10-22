@@ -117,7 +117,7 @@ def test_no_mend_decision_when_vampire_has_no_blood():
     assert game.vampire("V1").wounded is True
 
 
-# --- OQ-24 addendum (`rules-auditor` finding): remove_vampire_from_game ----
+# --- ENG-016 addendum (`rules-auditor` finding): remove_vampire_from_game ----
 
 
 def test_remove_vampire_from_game_moves_zone_and_unlocks():
@@ -133,7 +133,7 @@ def test_remove_vampire_from_game_moves_zone_and_unlocks():
 
 
 def test_remove_vampire_from_game_rejects_a_contested_vampire():
-    """`rules-auditor` finding (OQ-24 addendum, `docs/OPEN_QUESTIONS.md`):
+    """`rules-auditor` finding (ENG-016 addendum):
     confirmed by tracing every code path that nothing today can set
     `contested_with` on a still-`"uncontrolled"` vampire (the only zone
     this function is ever called from), so this guard is currently

@@ -8,14 +8,14 @@ uncontrolled vampire -> pool; 4 transfers + burn 1 pool = move a crypt card
 to the uncontrolled region. A vampire with blood >= capacity may be revealed
 into the ready region, unlocked, any time in this phase."
 
-The `test_*influence_phase_action_hook*` tests below prove OQ-24's own new
-`INFLUENCE_PHASE_ACTION_HOOK` (`docs/OPEN_QUESTIONS.md`), added to unblock
+The `test_*influence_phase_action_hook*` tests below prove ENG-016's own new
+`INFLUENCE_PHASE_ACTION_HOOK`, added to unblock
 Wider View (krcg id 102180): fake providers standing in for its own two
 transfer-costed clauses ("You can use 1 transfer to draw 1 card from your
 crypt and then remove a crypt card in your uncontrolled region from the
 game. You can use 4 transfers to burn this card and gain 2 pool."),
 exercised through the real, production `influence_phase` call site (not
-just a lower-level helper -- same bar OQ-7/OQ-13/OQ-23's own resolutions
+just a lower-level helper -- same bar ENG-001/ENG-007/ENG-015's own resolutions
 set), per the `rules-scenario-test` skill. Per the `implement-card`
 skill/CLAUDE.md §6, Wider View itself is not implemented here -- these are
 engine-mechanism scenario tests using trivial fake providers, not the real
@@ -178,7 +178,7 @@ def test_can_end_the_phase_early_while_legal_actions_remain():
 
 def test_revealing_a_duplicate_name_flags_a_2p_contest():
     """2P variant: contested crypt cards stay in play and usable; this test
-    exercises the (OQ-4) reveal-triggers-the-contest reading."""
+    exercises the (RUL-003) reveal-triggers-the-contest reading."""
     builder = ScenarioBuilder(seed=1, first_influence_phase_used=True)
     builder.player("P1", pool=30).uncontrolled_vampire(
         "V1", capacity=1, blood=1, name="Shared Name"
@@ -197,7 +197,7 @@ def test_revealing_a_duplicate_name_flags_a_2p_contest():
 
 
 def test_revealing_a_second_copy_of_ones_own_vampire_burns_it_instead_of_contesting():
-    """OQ-16 (resolved), Rulebook §4 Advanced Rules > Contested Cards caution
+    """ENG-010 (resolved), Rulebook §4 Advanced Rules > Contested Cards caution
     box, quoted verbatim in `engine/contests.py::detect_contest_on_reveal`:
     "You cannot control more than one of the same unique card at a time, and
     you cannot voluntarily contest cards with yourself (if some effect would
@@ -225,7 +225,7 @@ def test_revealing_a_second_copy_of_ones_own_vampire_burns_it_instead_of_contest
     agent.assert_exhausted()
 
 
-# --- OQ-24: INFLUENCE_PHASE_ACTION_HOOK (Wider View's own fake stand-ins) ----
+# --- ENG-016: INFLUENCE_PHASE_ACTION_HOOK (Wider View's own fake stand-ins) ----
 
 
 def _wider_view_draw_and_remove_provider(state, context):
@@ -401,7 +401,7 @@ def test_zero_regression_standard_transfer_types_unaffected_by_a_registered_hook
     agent.assert_exhausted()
 
 
-# --- `rules-auditor` finding (OQ-24 addendum): colliding choice values ------
+# --- `rules-auditor` finding (ENG-016 addendum): colliding choice values ------
 
 
 def test_a_colliding_hook_choice_value_raises_instead_of_silently_misrouting():

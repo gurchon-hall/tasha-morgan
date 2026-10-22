@@ -1,4 +1,4 @@
-"""`CardAttachment.requires_discipline` (OQ-62, `docs/OPEN_QUESTIONS.md`):
+"""`CardAttachment.requires_discipline` (ENG-042):
 a per-attachment marker, set by the attaching card module itself at
 construction time, mirroring `is_equipment`'s own precedent (e.g. Aniel,
 krcg 201666: "...a card requiring a Discipline from another ready

@@ -12,8 +12,8 @@ restriction; the superior clause (`"stealth_modifier"` hook) and its explicit
 `action` gate (the ruling about non-bleed actions) plus the engine's own
 structural "only when needed" ping-pong (the ruling about not needing the
 stealth); the single-play "+1 stealth and +1 bleed" delivered together via
-the `pending` scratch container (OQ-11), proven end-to-end through
-`_perform_bleed`'s own clamp, reproducing OQ-11's own worked example; the
+the `pending` scratch container (ENG-005), proven end-to-end through
+`_perform_bleed`'s own clamp, reproducing ENG-005's own worked example; the
 Rulebook §3 "may opt to use either effect" interplay between the two
 clauses; the "(limited)" keyword, both as Bonding's own self-exclusion across
 the two hook windows and as a cross-card exclusion against Threats (the
@@ -264,13 +264,13 @@ def test_superior_requires_superior_dominate_not_just_basic():
 
 
 def test_superior_adds_stealth_and_stashes_bleed_reproducing_oq11_worked_example():
-    """Reproduces OQ-11's own worked example end-to-end through the real
+    """Reproduces ENG-005's own worked example end-to-end through the real
     `minion_phase`/`_perform_bleed` call site: base bleed 1, Bonding superior
     +1 stealth/+1 bleed (stashed via `pending`), a block attempt that fails
     because of the stealth bump, then Telepathic Counter's superior -2 in the
     later `"bleed_amount_modifier"` window -- `max(0, 1 + 1 - 2) == 0` lost,
     no Edge transfer (not the 1-pool overcharge the rejected "apply
-    immediately" alternative OQ-11 describes would have produced)."""
+    immediately" alternative ENG-005 describes would have produced)."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(
         "V1", capacity=3, blood=1, disciplines=("DOM",)

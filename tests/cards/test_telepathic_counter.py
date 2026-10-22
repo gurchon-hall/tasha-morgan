@@ -206,7 +206,7 @@ def test_a_minion_cannot_play_the_same_reaction_card_twice_in_one_action():
 
 
 def test_a_cancellation_still_pays_cost_but_suppresses_the_bleed_reduction():
-    """`docs/OPEN_QUESTIONS.md` OQ-32, resolved -- `rules-auditor` finding on
+    """ENG-022, resolved -- `rules-auditor` finding on
     that entry's own review: this card's `"bleed_amount_modifier"` hook is
     dispatched through `engine/phases/minion.py::_perform_bleed` ->
     `hooks.resolve_impulse_window`, which resolves a chosen option via

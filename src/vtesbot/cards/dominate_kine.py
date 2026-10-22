@@ -36,7 +36,7 @@ convention). `burn_option is False`, `trifle is False`. Legal since
 Prey/predator check (`implement-card` skill step 3): both clauses carry
 "Ⓓ" (Rulebook glossary "Directed Action"), collapsing to the single 2P
 opponent (CLAUDE.md §3), same reading already used by `enchant_kindred.py`/
-`fleetness.py`. Not OQ-1.
+`fleetness.py`. Not RUL-001.
 
 "+1 stealth action." (basic clause only): printed on the same line as
 "[dom]", unlike `fleetness.py`'s shared pre-bracket baseline -- so
@@ -45,7 +45,7 @@ superior clause's steal (which carries no stealth baseline of its own,
 `base_stealth=0`). Bleed amount is the default (1) + this card's own
 printed "+1 bleed" = 2, mirroring `enchant_kindred.py`'s
 `BASIC_BLEED_BASE_AMOUNT` convention (composable with any other
-bleed-amount hook, since `ActionCardSpec.action=ACTION_BLEED` is set, OQ-17
+bleed-amount hook, since `ActionCardSpec.action=ACTION_BLEED` is set, ENG-011
 follow-up requirement).
 
 "Ⓓ Steal a location." (superior clause): reuses `disputed_territory.py`'s
@@ -54,13 +54,13 @@ transfer_master_card_control` -- the directed target is always the single
 2P opponent, so eligible locations are exactly the opponent's own
 `zone == "in_play"` `LOCATION_KRCG_IDS` cards; none offered (not "steal a
 location that cannot resolve") if the opponent controls none. Target is
-bound at announce time (`apply()`), not deferred to `resolve()` -- OQ-21
+bound at announce time (`apply()`), not deferred to `resolve()` -- RUL-007
 "all terms fixed at announce, re-validated at resolve" convention, same as
 `enchant_kindred.py`'s target decision; `resolve()` treats a target that
 left `zone == "in_play"` under the opponent's control between announce and
 resolve as a fizzle (no effect).
 
-OQ-57 (`docs/OPEN_QUESTIONS.md`): both clauses call `remove_from_hand`
+ENG-037: both clauses call `remove_from_hand`
 (not `play_from_hand`) and set `ActionCardSpec.name=NAME`, so `engine/
 phases/minion.py::_perform_action_card` can interleave a future Reflex
 card's own cancel-as-played window before drawing the replacement
@@ -93,10 +93,9 @@ from vtesbot.engine.state import GameState, MasterCardInPlay, VampireInPlay
 
 KRCG_ID = 100573
 NAME = "Dominate Kine"
-"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
-OPEN_QUESTIONS.md`): the generic "same named action card at most once per
-turn" cap is keyed by this exact string for both clauses -- they are the
-same physical card."""
+"""`ActionCardSpec.name`/`CardRegistration.name` (ENG-037): the generic "same
+named action card at most once per turn" cap is keyed by this exact string for
+both clauses -- they are the same physical card."""
 BASIC = "dom"
 SUPERIOR = "DOM"
 BASIC_STEALTH = 1
@@ -109,7 +108,7 @@ BLOOD_COST = 2
 """Printed blood-cost box: burned from the acting vampire, only on the
 unblocked branch, independent of which clause is used (module docstring)."""
 CARD_TYPE = "Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action" docstring fact above."""
 
 
@@ -147,7 +146,7 @@ def _provide_dominate_kine_basic(state: GameState, context: Mapping[str, Any]) -
     if acting_vampire.blood < BLOOD_COST:
         return []  # printed blood cost: must have enough blood to play at all.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
@@ -219,12 +218,12 @@ def _provide_dominate_kine_superior(
     if not _opponent_in_play_locations(state, opponent):
         return []  # no legal target: do not offer a card play that cannot resolve.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
 
-        # Target fixed at announce time, not deferred to resolve() -- OQ-21,
+        # Target fixed at announce time, not deferred to resolve() -- RUL-007,
         # see module docstring.
         locations = _opponent_in_play_locations(s, opponent)
         if len(locations) == 1:
@@ -248,7 +247,7 @@ def _provide_dominate_kine_superior(
                 or location.zone != "in_play"
                 or location.krcg_id not in LOCATION_KRCG_IDS
             ):
-                return  # fizzles (OQ-21 convention): no longer a legal target.
+                return  # fizzles (RUL-007 convention): no longer a legal target.
             transfer_master_card_control(s, location, player)
 
         return ActionCardSpec(

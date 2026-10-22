@@ -114,7 +114,7 @@ def _offered_on_first_influence_decision(pool: int, *, crypt: bool = False) -> l
 
 
 def test_transfer_that_would_zero_own_pool_is_not_offered_at_pool_1():
-    """OQ-41 (user ruling): 2P format blocks a self-ousting transfer."""
+    """DES-009 (user ruling): 2P format blocks a self-ousting transfer."""
     offered = _offered_on_first_influence_decision(1, crypt=True)
     assert "add_blood:U1" not in offered
     assert "bring_crypt" not in offered
@@ -127,7 +127,7 @@ def test_transfer_leaving_pool_1_is_offered_at_pool_2():
 
 
 def test_pool_1_still_offers_pool_free_influence_actions():
-    """OQ-41: only pool-paying transfers are blocked; remove_blood (gains pool)
+    """DES-009: only pool-paying transfers are blocked; remove_blood (gains pool)
     and reveal (free) stay."""
     builder = ScenarioBuilder(seed=1, first_influence_phase_used=True)
     p2 = builder.player("P2", pool=1)
@@ -204,7 +204,7 @@ def test_master_phase_stops_after_a_trifle_ousts_the_actor():
 
 
 def test_unlock_phase_does_not_offer_a_contest_payment_that_would_oust_the_payer():
-    """OQ-42 (user ruling, central rule): the pay option is dropped at pool 1;
+    """DES-009 (user ruling, central rule): the pay option is dropped at pool 1;
     the remaining lone `yield` is auto-resolved (no vacuous Decision)."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=1).ready_vampire("P1-V1", blood=1)

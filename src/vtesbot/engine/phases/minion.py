@@ -1,6 +1,6 @@
 """Minion phase: default actions (bleed, hunt, recruit ally, action cards),
 Rulebook §4. Mandatory hunt first; lock enforces one action per vampire
-per turn. See OQ-9/11/12/17/21/25 below.
+per turn. See ENG-003/ENG-005/ENG-006/ENG-011/RUL-007/ENG-017 below.
 
 `build_enter_combat_action_spec`/`EnterCombatGrant`/
 `grant_enter_combat_this_turn`/`active_enter_combat_grants` generalize
@@ -58,9 +58,9 @@ RECRUIT_ALLY_STEALTH = 1
 RECRUIT_ALLY_PLAY_HOOK = "recruit_ally_play"
 """`HookOption` hook (mirrors `master.py`'s `master_phase_play`): offers one
 option per playable Ally card in hand; `apply(state)` returns a
-`RecruitAllySpec` (OQ-12)."""
+`RecruitAllySpec` (ENG-006)."""
 ACTION_CARD_PLAY_HOOK = "action_card_play"
-"""`HookOption` hook (OQ-17): generalizes `RECRUIT_ALLY_PLAY_HOOK` to
+"""`HookOption` hook (ENG-011): generalizes `RECRUIT_ALLY_PLAY_HOOK` to
 Action-type library cards; offers one option per playable Action card in
 hand; `apply(state)` returns an `ActionCardSpec` below."""
 BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
@@ -69,7 +69,7 @@ BLEED_AMOUNT_FIXED_MODIFIER_HOOK = "bleed_amount_fixed_modifier"
 unconditional printed bleed bonus, applied before the optional
 `bleed_amount_modifier` window opens."""
 PENDING_BLEED_AMOUNT_KEY = "bleed_amount_bonus"
-"""Scratch-dict key (OQ-11): an earlier stealth/intercept provider in this
+"""Scratch-dict key (ENG-005): an earlier stealth/intercept provider in this
 same bleed action stores a running bonus here; `_perform_bleed`'s `resolve`
 folds it into `base_amount`."""
 
@@ -77,8 +77,8 @@ folds it into `base_amount`."""
 @dataclass(frozen=True)
 class ActionCardSpec:
     """What an `action_card_play` hook option's `apply(state)` returns
-    (OQ-17): base_stealth/directed, `resolve`/`on_blocked` callbacks,
-    `action` discriminator (OQ-9), `maneuver_grant` (OQ-25),
+    (ENG-011): base_stealth/directed, `resolve`/`on_blocked` callbacks,
+    `action` discriminator (ENG-003), `maneuver_grant` (ENG-017),
     `block_candidate_predicate` (see below)."""
 
     base_stealth: int
@@ -101,16 +101,16 @@ class ActionCardSpec:
     docstring for how both are applied together."""
     name: str | None = None
     """The printed name of the library card this spec plays from hand, or
-    `None` when nothing was actually played from hand (e.g. `build_
-    enter_combat_action_spec`'s own default, used both by `cards/
-    line_brawl.py`'s `[pot]` clause -- itself a real card play, which sets
-    this explicitly -- and by `cards/lucinde_alastor.py`'s crypt-text grant
-    consumer, which never plays a card at all and leaves it `None`).
-    `_perform_action_card` uses this to drive two OQ-57 (`docs/
-    OPEN_QUESTIONS.md`) mechanisms, both gated on `name is not None`: the
-    replacement-card draw (Finding 1) and the generic "same named action
-    card at most once per turn" cap (Finding 2, `action_card_already_
-    played_this_turn`/`mark_action_card_played_this_turn` below)."""
+    `None` when nothing was actually played from hand (e.g.
+    `build_enter_combat_action_spec`'s own default, used both by
+    `cards/line_brawl.py`'s `[pot]` clause -- itself a real card play, which
+    sets this explicitly -- and by `cards/lucinde_alastor.py`'s crypt-text
+    grant consumer, which never plays a card at all and leaves it `None`).
+    `_perform_action_card` uses this to drive two ENG-037 mechanisms, both
+    gated on `name is not None`: the replacement-card draw (Finding 1) and the
+    generic "same named action card at most once per turn" cap (Finding 2,
+    `action_card_already_played_this_turn`/`mark_action_card_played_this_turn`
+    below)."""
 
 
 def build_enter_combat_action_spec(
@@ -125,10 +125,10 @@ def build_enter_combat_action_spec(
     """Shared "Ⓓ Enter combat with a minion" resolution shape: the target is
     bound now (at `apply()` time, not deferred to `resolve()`), and
     `run_combat` runs against it only if the action goes unblocked -- see
-    `cards/line_brawl.py`'s own `[pot]` clause docstring (OQ-21, resolved)
+    `cards/line_brawl.py`'s own `[pot]` clause docstring (RUL-007, resolved)
     for the full reasoning, worked out there first. `resolve()` treats a
     target that has left `zone == "ready"` between binding and resolve as
-    "nothing to do" (fizzles), the same convention OQ-21 settled.
+    "nothing to do" (fizzles), the same convention RUL-007 settled.
 
     Reused by any `ACTION_CARD_PLAY_HOOK` provider offering an equivalent
     "enter combat with this specific, already-bound target" option,
@@ -137,8 +137,8 @@ def build_enter_combat_action_spec(
     onto this shared helper -- passes its own card's printed `name`) or a
     crypt text's own ability grant (`EnterCombatGrant`/`active_enter_combat_
     grants` below, e.g. `cards/lucinde_alastor.py`'s own consumer, which
-    plays no card and leaves `name` at its default `None` -- OQ-57's
-    `ActionCardSpec.name` contract, `docs/OPEN_QUESTIONS.md`). Callers
+    plays no card and leaves `name` at its default `None` -- ENG-037's
+    `ActionCardSpec.name` contract). Callers
     remain responsible for their own eligibility gate on which vampire may
     use the option at all (mirrors `line_brawl.py`'s "Requires an Anarch"
     gate) -- this helper only builds the `ActionCardSpec` for a target
@@ -148,7 +148,7 @@ def build_enter_combat_action_spec(
         del pending  # no later hook window of its own to feed.
         target = state.players[opponent].vampires.get(target_vampire_id)
         if target is None or target.zone != "ready":
-            return  # fizzles (OQ-21); the target left "ready" since binding.
+            return  # fizzles (RUL-007); the target left "ready" since binding.
         run_combat(state, player, acting_vampire, opponent, target)
 
     return ActionCardSpec(base_stealth=0, directed=True, resolve=resolve, name=name)
@@ -204,14 +204,14 @@ def build_attachment_removal_action_spec(
     is the calling card's own fact, not a rule of this mechanism).
 
     `resolve()` fizzles (no-op) if `attachment.zone != "attached"` by
-    resolve time (OQ-21 convention: the attachment may have already been
+    resolve time (RUL-007 convention: the attachment may have already been
     removed by a different, earlier-resolving contribution this same
     action-choice round)."""
 
     def resolve(pending: dict[str, Any]) -> None:
         del pending  # no later hook window of its own to feed.
         if attachment.zone != "attached":
-            return  # fizzles (OQ-21 convention): already removed since binding.
+            return  # fizzles (RUL-007 convention): already removed since binding.
         attachment.counters = (attachment.counters or 0) + 1
         if attachment.counters >= contributions_required:
             attachment.zone = "burned"
@@ -321,8 +321,8 @@ def _choose_and_perform_action(
     state: GameState, player: str, other: str, vampire: VampireInPlay
 ) -> None:
     """Rulebook §4: offers default actions plus one choice per
-    `recruit_ally_play` (OQ-12)/`action_card_play` (OQ-17) option; degrades
-    to bleed/hunt alone when none offered (OQ-13 context). "Diablerise a
+    `recruit_ally_play` (ENG-006)/`action_card_play` (ENG-011) option; degrades
+    to bleed/hunt alone when none offered (ENG-007 context). "Diablerise a
     Vampire in Torpor" is only offered while at least one legal target
     exists (never offer a play that cannot resolve -- `cards/line_brawl.py`'s
     `_eligible_combat_targets` precedent)."""
@@ -410,7 +410,7 @@ def _perform_hunt(state: GameState, player: str, other: str, vampire: VampireInP
 
     def resolve(pending: dict[str, Any]) -> None:
         # Hunt has no later hook window for an earlier stealth/intercept
-        # provider to feed (OQ-11 is specific to bleed's later
+        # provider to feed (ENG-005 is specific to bleed's later
         # "bleed_amount_modifier" window); `pending` is accepted only to
         # match `perform_minion_action`'s shared `resolve` call-site
         # signature, and is otherwise unused here.
@@ -427,7 +427,7 @@ def _perform_diablerise(state: GameState, player: str, other: str, vampire: Vamp
     `data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md`):
     undirected +1 stealth against the acting player's own torpid vampire,
     directed 0 stealth against the opponent's. The target is bound now, at
-    announce time -- same "all terms fixed now" convention OQ-21 settled
+    announce time -- same "all terms fixed now" convention RUL-007 settled
     for `cards/line_brawl.py`'s `[pot]` clause -- so `resolve` below
     fizzles if the bound target has somehow left torpor by resolve time
     (no path to do so exists in this project yet, but the check is free
@@ -462,7 +462,7 @@ def _perform_diablerise(state: GameState, player: str, other: str, vampire: Vamp
         del pending  # no later hook window of its own to feed.
         victim = state.players[target_player].vampires.get(target_id)
         if victim is None or victim.zone != "torpor":
-            return  # fizzles (OQ-21 convention): target left torpor since binding.
+            return  # fizzles (RUL-007 convention): target left torpor since binding.
         resolve_diablerie(state, player, vampire, target_player, victim)
 
     perform_minion_action(
@@ -478,7 +478,7 @@ def _perform_recruit_ally(
     option: HookOption,
 ) -> None:
     """Rulebook §4 Recruit Ally: undirected, +1 stealth, ally's cost paid
-    only on success, can't act this turn (OQ-12). Chosen hook option's ally
+    only on success, can't act this turn (ENG-006). Chosen hook option's ally
     placed via `recruit_ally` if unblocked, else burned."""
     spec: RecruitAllySpec = option.apply(state)
 
@@ -495,7 +495,7 @@ def _perform_recruit_ally(
             strength=spec.strength,
             bleed=spec.bleed,
         )
-        # OQ-10 (`docs/OPEN_QUESTIONS.md`, resolved): a unique ally (printed
+        # ENG-004 (resolved): a unique ally (printed
         # "Unique", e.g. 47th Street Royals) can collide with an opposing
         # same-named ally already in play -- mirrors `engine/phases/
         # influence.py`'s own `detect_contest_on_reveal` call after a
@@ -522,7 +522,7 @@ def _perform_recruit_ally(
 def action_card_already_played_this_turn(
     state: GameState, vampire: VampireInPlay, name: str
 ) -> bool:
-    """OQ-57 Finding 2 (`docs/OPEN_QUESTIONS.md`): Rulebook §4 Detailed Turn
+    """ENG-037 Finding 2: Rulebook §4 Detailed Turn
     Sequence (`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:
     188-191`), "A minion cannot play (unless cancelled) the same named
     action card more than once each turn, even if they unlock." -- scoped
@@ -539,7 +539,7 @@ def action_card_already_played_this_turn(
 
 def mark_action_card_played_this_turn(state: GameState, vampire: VampireInPlay, name: str) -> None:
     """Records `name` as played this turn for `vampire` -- call only once a
-    play is confirmed *not* canceled (OQ-57 Finding 2: "unless cancelled",
+    play is confirmed *not* canceled (ENG-037 Finding 2: "unless cancelled",
     a canceled attempt must not count against the cap). The sole caller is
     `_perform_action_card`, after its own cancel-as-played window closes
     with no cancellation."""
@@ -553,15 +553,15 @@ def _perform_action_card(
     vampire: VampireInPlay,
     option: HookOption,
 ) -> None:
-    """Rulebook §2+§4 (OQ-17): a printed Action-type card is itself the
+    """Rulebook §2+§4 (ENG-011): a printed Action-type card is itself the
     vampire's whole minion action. `option.apply(state)` removes the
     physical card from hand to the ash heap (`engine/hand.py::
     remove_from_hand`, re-exported from `cards/_shared.py` for card-module
     callers -- every real `ACTION_CARD_PLAY_HOOK` provider's own
-    convention, OQ-57 Finding 1 below) and returns the `ActionCardSpec`
+    convention, ENG-037 Finding 1 below) and returns the `ActionCardSpec`
     forwarded to `perform_minion_action` unchanged, unless canceled first.
 
-    OQ-57 Finding 1 (`docs/OPEN_QUESTIONS.md`): between `option.apply`
+    ENG-037 Finding 1: between `option.apply`
     returning and `perform_minion_action` running -- i.e. strictly before
     `vampire.locked` is ever set for this action, the only "announce"
     commitment this action makes -- `other` is offered `hooks.CANCEL_
@@ -589,14 +589,14 @@ def _perform_action_card(
     producing module pays only inside its own `resolve()` on the unblocked
     branch, is simply never reached.
 
-    OQ-57 Finding 2: the per-turn-per-named-action-card cap above
+    ENG-037 Finding 2: the per-turn-per-named-action-card cap above
     (`mark_action_card_played_this_turn`) is marked here, centrally, only
     once the cancel window has closed *without* a cancellation -- "unless
     cancelled" means a canceled attempt must not count against it, matching
     the rule's own carve-out and this function's own "they can play the
     same action card again" branch just above.
 
-    This is a distinct mechanism from `hooks.apply_chosen_option` (OQ-32,
+    This is a distinct mechanism from `hooks.apply_chosen_option` (ENG-022,
     built for a Reaction/Action-Modifier/political-referendum `HookOption`,
     whose own `cost` is paid unconditionally even if canceled): an Action
     card's `HookOption` has no `cost` field in play at all (`option.cost` is

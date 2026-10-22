@@ -1,27 +1,26 @@
-"""Acting-side intercept-decrease Action Modifiers (OQ-30,
-`docs/OPEN_QUESTIONS.md`, resolved): `engine/action.py::attempt_block`
-offers `INTERCEPT_DECREASE_HOOK` to the *actor* (never the defender), at the
-top of its own retry loop -- before any blocking candidate is even chosen,
-and again on every retry (OQ-11) -- independent of the `"stealth_modifier"`/
-`"intercept_modifier"` "only when needed" ping-pong. A provider's `apply`
-appends a persistent, action-scoped `ActiveInterceptDecrease` (a `delta`
-plus a blocking-candidate `qualifies` predicate) to
-`pending[PENDING_INTERCEPT_DECREASE_KEY]`; `_duel_stealth_intercept`
-re-evaluates every recorded modifier against *whichever* candidate is
-currently fixed, every time it runs.
+"""Acting-side intercept-decrease Action Modifiers (ENG-021, resolved):
+`engine/action.py::attempt_block` offers `INTERCEPT_DECREASE_HOOK` to the
+*actor* (never the defender), at the top of its own retry loop -- before any
+blocking candidate is even chosen, and again on every retry (ENG-005) --
+independent of the `"stealth_modifier"`/`"intercept_modifier"` "only when
+needed" ping-pong. A provider's `apply` appends a persistent, action-scoped
+`ActiveInterceptDecrease` (a `delta` plus a blocking-candidate `qualifies`
+predicate) to `pending[PENDING_INTERCEPT_DECREASE_KEY]`;
+`_duel_stealth_intercept` re-evaluates every recorded modifier against
+*whichever* candidate is currently fixed, every time it runs.
 
-OQ-31 (resolved -- Reading B, the project owner's own ruling): the same
+RUL-009 (resolved -- Reading B, the project owner's own ruling): the same
 hook is *also* offered reactively, inside `_duel_stealth_intercept`'s own
 `else` branch, merged into the same `Decision` as `STEALTH_MODIFIER_HOOK`'s
 own choices (`_ask_stealth_or_decrease`) -- a second opportunity, once a
 specific blocking candidate is already fixed, alongside (not instead of)
-OQ-30's own proactive one.
+ENG-021's own proactive one.
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism*, using a trivial fake `INTERCEPT_DECREASE_HOOK` provider (not
-Perfect Paragon, krcg 101387, or any of the other cards OQ-30 names --
+Perfect Paragon, krcg 101387, or any of the other cards ENG-021 names --
 those remain `card-implementer`'s job once this capability exists; Perfect
-Paragon stays registered `blocked`/`OQ-30` until then).
+Paragon stays registered `blocked`/`ENG-021` until then).
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -37,7 +36,7 @@ from vtesbot.engine.decision import Choice
 
 
 def _fake_decrease_provider_factory(*, delta: int = -1, qualifies_capacity_below: int = 2):
-    """Generic stand-in for the OQ-30 card family's shared shape ("Allies and
+    """Generic stand-in for the ENG-021 card family's shared shape ("Allies and
     younger vampires get -1 intercept"): a one-shot play (mirrors a real
     card going to the ash heap once played) offered to the actor, whose
     `apply` stashes a persistent `ActiveInterceptDecrease` into `pending`
@@ -76,7 +75,7 @@ def test_zero_regression_no_provider_registered_asks_no_extra_decision():
     """With nothing registered against `INTERCEPT_DECREASE_HOOK` (every
     existing test and every other card today), `attempt_block`'s new
     top-of-loop `offer_until_pass` call returns instantly with no decision
-    raised -- byte-for-byte the pre-OQ-30 behaviour."""
+    raised -- byte-for-byte the pre-ENG-021 behaviour."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30)
     builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=1)
@@ -142,7 +141,7 @@ def test_decrease_only_applies_to_a_qualifying_candidate():
 
 
 def test_persistent_modifier_re_evaluates_against_a_retried_blocks_different_candidate():
-    """OQ-11: a modifier activated once, before any candidate exists, must
+    """ENG-005: a modifier activated once, before any candidate exists, must
     keep re-applying correctly across a retried block attempt with a
     *different* candidate within the same action -- not just the candidate
     that happened to be fixed when it was activated. B1 qualifies (capacity
@@ -336,7 +335,7 @@ def test_the_defender_never_sees_the_activated_modifiers_qualifies_predicate():
 
 
 def test_actor_may_decline_proactively_and_still_play_the_modifier_reactively():
-    """OQ-31 (resolved -- Reading B): the proactive, top-of-retry-loop
+    """RUL-009 (resolved -- Reading B): the proactive, top-of-retry-loop
     offer is not the actor's only chance. The actor explicitly declines it
     before any candidate is even chosen, the defender's first (and only)
     candidate would otherwise succeed outright (base_stealth=0, default
@@ -411,8 +410,8 @@ def test_reactive_offer_is_merged_with_stealth_modifier_into_one_decision():
 
 def test_zero_regression_reactive_point_unaffected_when_no_decrease_provider_registered():
     """With no `INTERCEPT_DECREASE_HOOK` provider registered (every card and
-    test before OQ-31), the reactive point's `Decision` is byte-for-byte the
-    pre-OQ-31 `"stealth_modifier"` one: same kind, same single option, same
+    test before RUL-009), the reactive point's `Decision` is byte-for-byte the
+    pre-RUL-009 `"stealth_modifier"` one: same kind, same single option, same
     outcome."""
 
     def stealth_provider(state, context):

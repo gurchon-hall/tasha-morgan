@@ -41,17 +41,17 @@ both choices are the referendum's own terms, picked by the caller only once
 `Decision` raised inside `resolve()` (mirrors Kine Resources Contested's
 allocation decision, not Parity Shift's announce-time target).
 
-OQ-57 (`docs/OPEN_QUESTIONS.md`): calls `remove_from_hand` (not
+ENG-037: calls `remove_from_hand` (not
 `play_from_hand`) and sets `ActionCardSpec.name=NAME`, so `_perform_
 action_card` can interleave a future Reflex card's own cancel-as-played
 window before drawing the replacement (Finding 1), and so a second
 physical copy is not offered once this card has already been played this
 turn (Finding 2).
 
-"A location": OQ-23 already found this is free text on a card, not a krcg
+"A location": ENG-015 already found this is free text on a card, not a krcg
 type. A krcg sweep (re-verified live 2026-10-14, every active-2P-list id
 whose `card_text` starts with "Unique location.") found the shape splits
-into two kinds of in-play entity (OQ-35's own two primitives), but only one
+into two kinds of in-play entity (ENG-025's own two primitives), but only one
 is reachable in the active 2P pool (`data/formats/2p/2026-10-03.json`,
 re-checked directly): 14 standalone "Unique location." Master cards
 (`LOCATION_KRCG_IDS` below -- `rules-auditor` finding: an earlier draft of
@@ -109,7 +109,7 @@ from vtesbot.engine.state import GameState, MasterCardInPlay
 KRCG_ID = 100557
 NAME = "Disputed Territory"
 CARD_TYPE = "Political Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Political Action" docstring fact above."""
 
 LOCATION_KRCG_IDS = frozenset(
@@ -161,7 +161,7 @@ def _provide_disputed_territory(state: GameState, context: Mapping[str, Any]) ->
         # at all is currently in play, on either side.
         return []
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     other = state.other_player(player)
 

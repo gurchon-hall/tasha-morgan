@@ -13,7 +13,7 @@ in the pool yet (module docstring), so its tests drive a real
 as `tests/rules/test_politics.py::
 test_a_forced_abstain_source_is_excluded_from_casting_end_to_end`) with a
 temporary fake `POLLING_STEP_HOOK` provider standing in for a genuine
-Reaction card, mirroring `tests/rules/test_hooks.py`'s own OQ-33 proof
+Reaction card, mirroring `tests/rules/test_hooks.py`'s own ENG-023 proof
 (`test_cancel_context_carries_the_canceled_options_played_card_type`/
 `test_a_reaction_only_canceler_cannot_reach_a_non_card_play_option`).
 
@@ -169,7 +169,7 @@ def _one_shot_card_play_provider(
 def test_cancels_a_reaction_card_played_in_the_polling_step_window():
     """A genuine Reaction-card play (`played_card_type == "Reaction"`)
     reachable in Diana's own referendum's pre-cast polling-step window is
-    canceled: its own effect never runs (`apply_chosen_option`, OQ-32),
+    canceled: its own effect never runs (`apply_chosen_option`, ENG-022),
     and Diana burns exactly 1 blood."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)

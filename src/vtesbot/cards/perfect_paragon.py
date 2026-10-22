@@ -16,10 +16,10 @@ Rulings (verbatim, via krcg):
 each clause's `apply()` -- an Action Modifier has no block-attempt window
 of its own to defer payment to (same timing as `slam.py`'s 1-blood cost).
 
-Status: implemented. Previously `blocked` on OQ-30/OQ-31 (`docs/
-OPEN_QUESTIONS.md`, both resolved), which built `engine/action.py::
-INTERCEPT_DECREASE_HOOK` for the superior clause; the basic clause uses the
-pre-existing `engine/politics.py::POLLING_STEP_HOOK`.
+Status: implemented. Previously `blocked` on ENG-021/RUL-009 (both resolved),
+which built `engine/action.py::INTERCEPT_DECREASE_HOOK` for the superior
+clause; the basic clause uses the pre-existing
+`engine/politics.py::POLLING_STEP_HOOK`.
 
 Basic clause ("This vampire gets +3 votes"): per the Rulebook glossary's
 Action Modifier definition ("a card the acting minion can play"), only the
@@ -35,14 +35,14 @@ Superior clause ("Allies and younger vampires get -1 intercept"): not
 polling-step-gated -- a generic Action Modifier matching its own "any time
 before resolution" ruling. Built against `INTERCEPT_DECREASE_HOOK`, offered
 to the vampire performing the modified action (`context["acting_vampire"]`)
-at both of that hook's offer points (OQ-30/31). "Younger" uses the
-`enchant_kindred.py`/OQ-17 convention: strictly lower printed `capacity`
+at both of that hook's offer points (ENG-021/RUL-009). "Younger" uses the
+`enchant_kindred.py`/ENG-011 convention: strictly lower printed `capacity`
 than the acting vampire. "Allies" is currently vacuous: `attempt_block`'s
 candidate pool is built only from `PlayerState.vampires`, never
 `PlayerState.allies` (`engine/allies.py`: allies cannot block) -- same
 "unreachable today" status as the automatically-passing ruling above.
 
-Double-spend self-gating across the hook's two offer points (OQ-31): no
+Double-spend self-gating across the hook's two offer points (RUL-009): no
 separate "used" flag is needed -- `apply()`'s `play_from_hand` actually
 removes the one physical card from hand, and both providers re-check hand
 membership fresh on every `offer()` call, so a card played at one point is
@@ -74,7 +74,7 @@ clause's own `apply()`, independent of which clause is used."""
 BASIC_VOTES = 3
 SUPERIOR_INTERCEPT_DELTA = -1
 CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own title "Perfect Paragon (Action Modifier)" above."""
 
 

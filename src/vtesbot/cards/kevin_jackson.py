@@ -49,8 +49,8 @@ hook wiring is needed: `_strike_strength`'s existing call already passes
 previously-implemented `combat_strength_modifier` provider has read before.
 
 Target/scope: looked up via `state.other_player(context["player"])` to find
-the opponent's own `VampireInPlay` -- justified by OQ-1's own settled
-reading (`docs/OPEN_QUESTIONS.md` archive, `001.md`): with exactly two
+the opponent's own `VampireInPlay` -- justified by RUL-001's own settled
+reading: with exactly two
 Methuselahs, combat is always strictly between the two players' own
 vampires, so the strike's `context["opponent"]` always belongs to whichever
 player is not `context["player"]`. Clause 1 is gated on `vampire.card.
@@ -87,7 +87,7 @@ def _combatants(
 ) -> tuple[VampireInPlay | None, VampireInPlay | None]:
     """The striking vampire and its opponent for this `combat_strength_modifier`
     offer -- `context["opponent"]` always belongs to `state.other_player
-    (context["player"])` (see module docstring, OQ-1)."""
+    (context["player"])` (see module docstring, RUL-001)."""
     player = context.get("player")
     vampire_id = context.get("vampire")
     opponent_id = context.get("opponent")

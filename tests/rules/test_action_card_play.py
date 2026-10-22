@@ -1,4 +1,4 @@
-"""The "action_card_play" hook/call site (OQ-17, `docs/OPEN_QUESTIONS.md`,
+"""The "action_card_play" hook/call site (ENG-011,
 resolved by this pass): the engine entry point for a library card of printed
 `types == ["Action"]` (Rulebook §2 Card Types) that is itself the acting
 vampire's entire minion action for the turn, rather than a decoration of an
@@ -8,7 +8,7 @@ Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism*, using trivial fake `"action_card_play"` providers (standing in
 for Enchant Kindred's own future card module, which remains
 `card-implementer`'s job once this hook exists) -- mirrors
-`tests/rules/test_recruit_ally_action.py`'s own disclaimer for OQ-12, and
+`tests/rules/test_recruit_ally_action.py`'s own disclaimer for ENG-006, and
 generalizes its coverage beyond Allies.
 """
 
@@ -42,7 +42,7 @@ def _fake_action_card_provider(state, context):
     provider: one option, offered only while its own card is in hand;
     consumes its card immediately (announce time), mirroring a plain
     one-shot Action card's own placement, which does not depend on the
-    later block outcome (OQ-17, `ActionCardSpec`'s own docstring). Its
+    later block outcome (ENG-011, `ActionCardSpec`'s own docstring). Its
     `resolve` is mechanically a directed bleed for a fixed amount, standing
     in for Enchant Kindred's own basic clause."""
     player = context["player"]
@@ -72,8 +72,8 @@ def _fake_action_card_provider(state, context):
 
 
 def test_action_card_play_is_not_offered_without_a_registered_provider():
-    """Zero-regression check (OQ-17): with no `"action_card_play"` provider
-    registered at all, `action_choice` degrades to exactly the pre-OQ-17
+    """Zero-regression check (ENG-011): with no `"action_card_play"` provider
+    registered at all, `action_choice` degrades to exactly the pre-ENG-011
     bleed/hunt pair."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)
@@ -132,7 +132,7 @@ def test_action_card_play_is_offered_and_succeeds_resolving_its_own_effect():
     bleed/hunt, chosen, the card leaves hand immediately (announce time,
     straight to the ash heap -- Rulebook §4 "Resolve the Action": a plain
     one-shot Action card's own placement does not depend on the later block
-    outcome, OQ-17), and once unblocked `resolve` performs the card's own
+    outcome, ENG-011), and once unblocked `resolve` performs the card's own
     effect (here, a directed bleed stand-in)."""
     hooks.register(ACTION_CARD_PLAY_HOOK, _fake_action_card_provider)
     builder = ScenarioBuilder(seed=1)
@@ -210,7 +210,7 @@ def test_action_card_play_blocked_does_not_resolve_but_still_consumed_the_card()
 
 
 def test_action_card_play_threads_the_action_discriminator_and_directed_flag():
-    """OQ-9 (`action=`) and OQ-17 (`directed=`): `_perform_action_card` must
+    """ENG-003 (`action=`) and ENG-011 (`directed=`): `_perform_action_card` must
     forward both the fixed `ACTION_ACTION_CARD` discriminator and the
     provider's own `directed` flag into the block-attempt phase's hook
     context, exactly like `_perform_bleed`/`_perform_hunt`/`_perform_
@@ -257,11 +257,11 @@ def test_action_card_play_threads_the_action_discriminator_and_directed_flag():
 
 
 def test_action_card_play_hook_context_carries_the_acting_vampires_identity():
-    """OQ-13's own binding (`docs/OPEN_QUESTIONS.md`, resolved -- re-proven
+    """ENG-007's own binding (resolved -- re-proven
     here for the generalized hook): `_choose_and_perform_action` threads the
     acting vampire's own identity (`vampire=vampire.instance_id`) into the
     `"action_card_play"` hook context too, mirroring `"recruit_ally_play"`'s
-    own OQ-13 wiring, so a provider can gate on *which* ready-unlocked
+    own ENG-007 wiring, so a provider can gate on *which* ready-unlocked
     vampire is actually attempting to play the card."""
     target_instance_id = "V1"
 
@@ -309,7 +309,7 @@ def test_action_card_play_hook_context_carries_the_acting_vampires_identity():
 
 
 def test_action_card_play_supports_the_two_destination_dance_generically():
-    """OQ-17's own generality requirement: the hook's contract must not
+    """ENG-011's own generality requirement: the hook's contract must not
     hard-code the immediate-consumption assumption -- a future Action card
     whose own placement depends on the later block outcome (mirroring
     Recruit Ally's Ally card) must be able to use `vtesbot.cards._shared.
@@ -545,7 +545,7 @@ def _run_bonding_integration_scenario(declared_action: str | None) -> list[str]:
 
 
 def test_action_card_play_can_declare_itself_a_real_bleed_so_bonding_still_fires():
-    """Rules-auditor finding (OQ-17 follow-up): `ActionCardSpec.action` lets
+    """Rules-auditor finding (ENG-011 follow-up): `ActionCardSpec.action` lets
     a provider declare the real mechanical action identity its own clause's
     card text matches (CLAUDE.md §2 card-text precedence over rulings --
     settled directly by the text itself, no judgment call needed, when a

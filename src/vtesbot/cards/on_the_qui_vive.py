@@ -29,16 +29,15 @@ relaxation of the normal Reaction-card eligibility rule. `blood_cost`/
 (`data/formats/2p/2026-10-03.json`) and in
 `data/decks/vekn-2p/toreador.json`.
 
-Status: implemented, against `WAKE_LOCKED_MINION_HOOK` only (OQ-48,
-`docs/OPEN_QUESTIONS.md`, resolved) -- the one timing window
-`engine/action.py::attempt_block`'s retry loop offers the defender, before
-its own block-candidate list is (re)computed. A chosen option's `apply`
-sets `VampireInPlay.woken = True` on the playing vampire (`engine/
-state.py`), which `ready_unlocked_vampires`/`attempt_block` and every
+Status: implemented, against `WAKE_LOCKED_MINION_HOOK` only (ENG-030, resolved)
+-- the one timing window `engine/action.py::attempt_block`'s retry loop offers
+the defender, before its own block-candidate list is (re)computed. A chosen
+option's `apply` sets `VampireInPlay.woken = True` on the playing vampire
+(`engine/state.py`), which `ready_unlocked_vampires`/`attempt_block` and every
 other registered Reaction card's own `is_ready_unlocked` eligibility check
-already honor with no further change -- covering both halves of the
-primary clause (attempting to block; playing further reaction cards) for
-the rest of the action, "while remaining structurally locked."
+already honor with no further change -- covering both halves of the primary
+clause (attempting to block; playing further reaction cards) for the rest of
+the action, "while remaining structurally locked."
 
 Scope decision on [LSJ 20091123]/[ANK 20210819]: those rulings describe
 *additional* play windows for the card itself (after action resolution;
@@ -55,9 +54,9 @@ so the one implemented window is what this deck's bot can actually use.
 Noted here, not silently dropped.
 
 Ally footnote ("If this minion is an ally, they do not unlock as normal
-during their next unlock phase"): `AllyInPlay.skip_next_unlock` (OQ-46)
+during their next unlock phase"): `AllyInPlay.skip_next_unlock` (ENG-028)
 exists for this, but this module's own provider never targets an ally.
-Allies never attempt to block (out of this engine's scope, OQ-46's own
+Allies never attempt to block (out of this engine's scope, ENG-028's own
 solution note) and never play reaction cards at all, so there is no
 decision point at which playing this card on a locked ally would do
 anything but discard a card for a pure downside -- not a candidate option
@@ -73,7 +72,7 @@ rather than `ability_used_turn`'s "store the turn number" convention (see
 that field's own docstring for why). Also independently excludes a
 candidate already `woken` this action (the engine does nothing to stop
 `WAKE_LOCKED_MINION_HOOK` being re-offered for one on a block-attempt
-retry, OQ-48's own note) -- re-waking an already-woken vampire would be a
+retry, ENG-030's own note) -- re-waking an already-woken vampire would be a
 redundant, no-op choice, not a second use of the card.
 """
 
@@ -90,7 +89,7 @@ from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 101321
 CARD_TYPE = "Reaction"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Reaction" docstring fact above."""
 
 

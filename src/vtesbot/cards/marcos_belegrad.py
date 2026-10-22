@@ -51,7 +51,7 @@ Cards"), there being no ruling on file either way.
 
 Effect: `lose_pool_simultaneously` (`engine/pool.py`), 1 pool for each such
 Methuselah as one event -- floors at 0; a lone Methuselah reduced to 0 is
-ousted like any other pool loss, both reduced to 0 tie (OQ-44, Rulebook §5).
+ousted like any other pool loss, both reduced to 0 tie (DES-010, Rulebook §5).
 
 Fires regardless of the referendum's own eventual pass/fail outcome (the
 card's own trigger is "once results are tallied", a moment strictly before
@@ -89,7 +89,7 @@ def _provide_marcos_belegrad(state: GameState, context: Mapping[str, Any]) -> No
 
 
 def _marcos_against_cost(state: GameState, context: Mapping[str, Any]) -> int:
-    """OQ-43 (user ruling 2026-10-13): casting against must not be offered
+    """DES-009 (user ruling 2026-10-13): casting against must not be offered
     if the tally burn would take the caster to 0 pool. One burn per
     Methuselah, so a second against-cast costs nothing more."""
     caller_vampire = context["caller_vampire"]

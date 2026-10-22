@@ -15,7 +15,7 @@ clause's directed +1-bleed bleed with its own +1 stealth baseline, tagged
 fires; the superior clause's "steal a location" (no opponent location in
 play -> not offered; single eligible location -> applied directly;
 multiple -> a `Decision`; "changing the controller has no other effect" --
-locked/zone untouched); and the OQ-21 fizzle convention (cost still paid,
+locked/zone untouched); and the RUL-007 fizzle convention (cost still paid,
 no further effect) when the announced location stops qualifying before
 `resolve()` runs.
 """
@@ -428,7 +428,7 @@ def test_superior_blocked_cost_is_not_paid_and_location_is_unchanged():
 
 
 def test_superior_resolve_fizzles_if_the_location_stops_qualifying_but_cost_is_still_paid():
-    """OQ-21 convention: the target is chosen at `apply()` time (announce),
+    """RUL-007 convention: the target is chosen at `apply()` time (announce),
     with `resolve()` only ever re-validating -- never re-choosing -- that
     same target. Not reachable through ordinary play today, so exercised
     directly against the hook machinery, bypassing `minion_phase`."""

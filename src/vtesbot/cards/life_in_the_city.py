@@ -29,7 +29,7 @@ Methuselah's minions that are not in torpor" -- i.e. any vampire with
 only governs whether *that* vampire may currently act or block, not whether
 it is in the ready region). Effect: `add_blood(state, vampire, 1)`
 (`engine/damage.py`), which already caps at the target's effective capacity
-(Rulebook §1 Vampires; OQ-8, `docs/OPEN_QUESTIONS.md`) -- so targeting an
+(Rulebook §1 Vampires; ENG-002) -- so targeting an
 already-full vampire is a legal but effect-less play (the card is still
 spent; this mirrors the engine's own
 `add_blood` contract and the general "play = announce, show, resolve" rule,
@@ -56,7 +56,7 @@ from vtesbot.engine.state import GameState, VampireInPlay
 KRCG_ID = 101104
 MASTER_PHASE_PLAY_HOOK = "master_phase_play"
 CARD_TYPE = "Master"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Master" docstring fact above."""
 
 

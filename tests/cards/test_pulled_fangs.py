@@ -219,7 +219,7 @@ def test_apply_attaches_to_the_opponent_controlled_by_the_playing_methuselah_and
 
 
 def test_apply_fizzles_if_the_opponent_left_play_since_offer():
-    """OQ-21 convention: the opponent is re-validated, not re-chosen, at
+    """RUL-007 convention: the opponent is re-validated, not re-chosen, at
     apply time."""
     game = _base_game()
     round_state: dict = {}

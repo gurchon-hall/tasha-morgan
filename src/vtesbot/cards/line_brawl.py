@@ -28,7 +28,7 @@ Status: implemented.
 
 "Requires an Anarch": a card-level legality gate independent of which
 discipline clause is used (Rulebook §6 Vampire Sects), same shape as
-`dust_up.py`'s gate (OQ-18, resolved). Every provider below checks
+`dust_up.py`'s gate (ENG-012, resolved). Every provider below checks
 `vampire.card.sect is Sect.ANARCH` on the acting vampire and offers nothing
 otherwise, including when `sect is None` (`CryptCard`'s own docstring:
 `None` means "does not qualify", never a guessed default sect).
@@ -56,7 +56,7 @@ amount actually lost, so stealing from a Methuselah with 0 pool steals 0;
 the stolen amount is credited via `gain_pool`. This is a pool transfer, not
 a bleed, and sets no Edge (Rulebook §2 "2P Variant" Edge rules tie Edge to
 a successful *bleed* specifically). `ActionCardSpec.action` is left at the
-generic `ACTION_ACTION_CARD` default (OQ-9): this clause is textually
+generic `ACTION_ACTION_CARD` default (ENG-003): this clause is textually
 neither a Bleed nor any other existing default action.
 
 "[pot] Ⓓ Enter combat with a minion.": this clause's resolution *is*
@@ -82,7 +82,7 @@ initiating combat, with no pool/blood payload of its own.
     opponent-controlled.
 
   The target vampire is chosen inside `apply()`, at announce time, before
-  the block-attempt window opens -- not deferred to `resolve()` (OQ-21,
+  the block-attempt window opens -- not deferred to `resolve()` (RUL-007,
   resolved: Rulebook §4 "Announce the Action" plus this engine's own
   `ActionCardSpec` contract both fix every detail, including the target,
   at announce; a krcg ruling survey further confirms an unblocked action
@@ -94,7 +94,7 @@ initiating combat, with no pool/blood payload of its own.
   already being played, only *which* target remains open). Once the target
   is bound, `vtesbot.engine.phases.minion.build_enter_combat_action_spec`
   builds the resulting `ActionCardSpec` -- the "look up the target, fizzle
-  per OQ-21 if it's left `zone == 'ready'`, else `run_combat`" shape this
+  per RUL-007 if it's left `zone == 'ready'`, else `run_combat`" shape this
   docstring describes is now that shared helper's own, factored out so a
   non-card source (a crypt text's own master-phase ability grant; see that
   module's own docstring) can produce an equivalent option.
@@ -108,9 +108,9 @@ modifier). `ActionCardSpec.action` is declared `ACTION_BLEED` (not the
 generic default) so an existing bleed-gated provider sharing the same hook
 windows (e.g. `bonding.py`'s superior clause, gated on
 `context.get("action") == ACTION_BLEED`) isn't silently suppressed when
-both cards are in the same hand (OQ-17 follow-up).
+both cards are in the same hand (ENG-011 follow-up).
 
-OQ-57 (`docs/OPEN_QUESTIONS.md`): all three clauses call `remove_from_hand`
+ENG-037: all three clauses call `remove_from_hand`
 (not `play_from_hand`) and set `ActionCardSpec.name=NAME`, so `_perform_
 action_card` can interleave a future Reflex card's own cancel-as-played
 window before drawing the replacement (Finding 1), and so a second
@@ -143,10 +143,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 102229
 NAME = "Line Brawl"
-"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
-OPEN_QUESTIONS.md`): the generic "same named action card at most once per
-turn" cap is keyed by this exact string across all three clauses -- they
-are the same physical card."""
+"""`ActionCardSpec.name`/`CardRegistration.name` (ENG-037): the generic "same
+named action card at most once per turn" cap is keyed by this exact string
+across all three clauses -- they are the same physical card."""
 CEL = "cel"
 POT = "pot"
 PRE = "pre"
@@ -157,7 +156,7 @@ PRE_BLEED_BASE_AMOUNT = 2
 the baseline the same way `enchant_kindred.py`'s own `BASIC_BLEED_BASE_AMOUNT`
 is -- not a separately-offered, declinable modifier."""
 CARD_TYPE = "Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action" docstring fact above."""
 
 
@@ -199,7 +198,7 @@ def _provide_line_brawl_cel(state: GameState, context: Mapping[str, Any]) -> lis
     if not _has_card_in_hand(state, player):
         return []
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
@@ -238,12 +237,12 @@ def _provide_line_brawl_pot(state: GameState, context: Mapping[str, Any]) -> lis
     if not _eligible_combat_targets(state, player):
         return []  # no legal target at all: never offer a play that cannot resolve.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
 
-        # Target fixed at announce time, not deferred to resolve() -- OQ-21,
+        # Target fixed at announce time, not deferred to resolve() -- RUL-007,
         # see module docstring.
         targets = _eligible_combat_targets(s, player)
         if len(targets) == 1:
@@ -286,7 +285,7 @@ def _provide_line_brawl_pre(state: GameState, context: Mapping[str, Any]) -> lis
     if not _has_card_in_hand(state, player):
         return []
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)

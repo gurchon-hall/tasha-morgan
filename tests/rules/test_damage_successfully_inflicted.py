@@ -2,7 +2,7 @@
 ::DAMAGE_SUCCESSFULLY_INFLICTED_KEY`/`record_damage_successfully_inflicted`/
 `damage_successfully_inflicted_this_round`), keyed by the *inflicting*
 vampire's own instance id -- distinct from, and in addition to, the
-existing `BLOOD_LOST_TO_DAMAGE_KEY` (OQ-29), which is keyed by the
+existing `BLOOD_LOST_TO_DAMAGE_KEY` (ENG-020), which is keyed by the
 *damaged* vampire and only totals blood actually spent to mend/burn.
 Sourced from "Counts up damage successfully inflicted during the round ...
 retainers and environmental damage do not count." [TOM 19950304]

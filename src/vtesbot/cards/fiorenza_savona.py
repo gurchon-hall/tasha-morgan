@@ -6,11 +6,11 @@ the Edge for a vote, you get +1 vote. If you burn a political action card
 for a vote, you get +1 vote." No rulings on file (`krcg.vtes.VTES
 [201616].rulings == []`). Clan Ventrue, no title, group 6, capacity 7.
 
-OQ-49 (`docs/OPEN_QUESTIONS.md`, resolved): both sentences modify a
+ENG-031 (resolved): both sentences modify a
 referendum's vote tally conditioned on a *specific other* `VoteSource`
 actually being cast by Fiorenza's own controller -- the Edge-burn source
 (`VoteSource.burns_edge`) for clause 1, and (2026-10-14 user ruling,
-settling OQ-49's own scope sub-question) specifically the non-caller's
+settling ENG-031's own scope sub-question) specifically the non-caller's
 political-action-card-from-hand burn (`VoteSource.burns_pac_from_hand`) for
 clause 2, never the caller's own political-action-card source (which is
 played/shown, not burned). `engine/politics.py::_cast_votes` now dispatches

@@ -1,5 +1,5 @@
 """The `"stealth_modifier"`/`"intercept_modifier"` hook context's `action`
-discriminator (OQ-9, `docs/OPEN_QUESTIONS.md`): `engine/action.py::
+discriminator (ENG-003): `engine/action.py::
 perform_minion_action`/`attempt_block`/`_duel_stealth_intercept` thread an
 explicit `action` name (e.g. `"bleed"`, `"hunt"`, `"political_action"`)
 through to both hooks' context, and into the `"block_attempt"` decision's
@@ -111,7 +111,7 @@ def test_intercept_modifier_hook_context_carries_the_action_name():
 def test_a_bleed_only_provider_fires_during_a_bleed_action_not_a_hunt():
     """A fake stand-in for Bonding's superior clause ("[DOM] Cannot be used
     to increase the stealth of a non-bleed action"): gates itself on
-    `context["action"] == "bleed"`, exactly the restriction OQ-9 was blocked
+    `context["action"] == "bleed"`, exactly the restriction ENG-003 was blocked
     on being unable to express."""
 
     def bleed_only_stealth(state, context):

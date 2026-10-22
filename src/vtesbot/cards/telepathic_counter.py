@@ -49,7 +49,7 @@ window with no observable difference for this specific card.
 `amount = max(0, amount_box[0])`, already covering the case where the total
 reduction exceeds the (possibly further-increased) bleed amount.
 
-`cost`/`apply` split (`docs/OPEN_QUESTIONS.md` OQ-32, resolved;
+`cost`/`apply` split (ENG-022, resolved;
 `rules-auditor` finding on that entry's own review): this hook is dispatched
 through `engine/phases/minion.py::_perform_bleed` -> `hooks.
 resolve_impulse_window`, which now resolves every chosen option via
@@ -79,7 +79,7 @@ KRCG_ID = 101948
 BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
 USED_BY_KEY = "telepathic_counter_used_by"
 CARD_TYPE = "Reaction"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Reaction" docstring fact above."""
 
 

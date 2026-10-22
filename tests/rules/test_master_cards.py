@@ -1,15 +1,15 @@
-"""Standalone Master cards in play (OQ-23, `docs/OPEN_QUESTIONS.md`):
+"""Standalone Master cards in play (ENG-015):
 `engine/state.py::MasterCardInPlay` / `PlayerState.master_cards`,
 `engine/master_cards.py::bring_master_card_into_play` /
 `detect_contest_on_bring_into_play` / `resolve_one_master_card_contest`, and
 `engine/phases/unlock.py::_unlock_own_master_cards` -- the minimal
 representation this entity needs, mirroring `engine/allies.py`'s own
 ally-side mechanism (itself generalized a third time by `engine/
-attachments.py` for OQ-22) a fourth time, for a standalone (not
+attachments.py` for ENG-014) a fourth time, for a standalone (not
 attached-to-a-vampire) Master card.
 
 Built for, and generic enough to cover, every standalone Master card found
-in OQ-23's own sweep of the active 2P pool -- both "Unique" ones that need
+in ENG-015's own sweep of the active 2P pool -- both "Unique" ones that need
 Contested Cards tracking (Oxford University, England, used throughout as
 the motivating example; also The Barrens, Chantry, Cursed Abattoir) and
 non-unique ones that never contest at all (Wider View, krcg id 102180,
@@ -174,7 +174,7 @@ def test_differently_named_cards_are_not_contested():
 
 
 def test_a_players_own_two_cards_of_the_same_name_burn_the_incoming_copy_instead_of_contesting():
-    """OQ-16 (resolved), rulebook caution box quoted verbatim in
+    """ENG-010 (resolved), rulebook caution box quoted verbatim in
     `engine/contests.py::detect_contest_on_reveal`: "you cannot voluntarily
     contest cards with yourself (if some effect would force you to contest a
     card with yourself, then you simply burn the incoming copy of the unique
@@ -395,7 +395,7 @@ def _fake_card() -> LibraryCard:
 
 def test_master_phase_play_end_to_end_brings_a_card_into_play_and_detects_contest():
     """Production call site, not just the lower-level helper (same bar
-    OQ-7/OQ-13's own resolutions set): a fake `"master_phase_play"` provider,
+    ENG-001/ENG-007's own resolutions set): a fake `"master_phase_play"` provider,
     mirroring the generic Life in the City pattern (`engine/phases/
     master.py`, no engine change needed there), plays a standalone master
     card from hand and brings it into play, correctly detecting a contest

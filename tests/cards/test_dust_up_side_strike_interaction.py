@@ -1,6 +1,6 @@
 """Cross-card "(limited)" additional-strike cap -- Dust Up (100597) + Side
 Strike (101778), two real, already-implemented cards (resolves
-`docs/OPEN_QUESTIONS.md` OQ-19).
+ENG-013).
 
 §8 glossary / `engine/combat.py` module docstring: "A minion cannot use
 more than one card or effect to gain additional strikes per round of
@@ -117,7 +117,7 @@ def test_dust_up_cel_grant_blocks_side_strike_cel_additional_strike_in_the_same_
 
 def test_side_strike_cel_grant_blocks_dust_up_cel_grant_in_the_same_round():
     """Reverse order of the test above (`rules-auditor`-flagged minor gap,
-    same OQ-19 pass): the cap must gate symmetrically, regardless of which
+    same ENG-013 pass): the cap must gate symmetrically, regardless of which
     card is played first -- Side Strike's own `[CEL]` grant, played first,
     must block Dust Up's own dodge-bundled `[cel]` grant for the rest of the
     round too."""

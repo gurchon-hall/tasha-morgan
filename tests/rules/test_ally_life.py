@@ -1,7 +1,7 @@
-"""`AllyInPlay.starting_life` / `engine/allies.py::add_life` (OQ-61,
-`docs/OPEN_QUESTIONS.md`): recruiting an ally fixes its own printed starting
-life once, and `add_life` mirrors `engine/damage.py::add_blood`'s capped
-shape (e.g. Seraphina, krcg 201686: "...not to exceed starting life.").
+"""`AllyInPlay.starting_life` / `engine/allies.py::add_life` (ENG-041):
+recruiting an ally fixes its own printed starting life once, and `add_life`
+mirrors `engine/damage.py::add_blood`'s capped shape (e.g. Seraphina, krcg
+201686: "...not to exceed starting life.").
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism* via `engine/allies.py` directly, not through any one card."""

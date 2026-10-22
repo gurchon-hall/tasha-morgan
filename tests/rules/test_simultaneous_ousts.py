@@ -1,4 +1,4 @@
-"""Simultaneous ousts (OQ-44, user ruling 2026-10-13: both Methuselahs reaching
+"""Simultaneous ousts (DES-010, user ruling 2026-10-13: both Methuselahs reaching
 0 pool from the same event is a tie, no winner).
 
 Rulebook §5 Ending the Game: "In the case of a tie there is no winner of the

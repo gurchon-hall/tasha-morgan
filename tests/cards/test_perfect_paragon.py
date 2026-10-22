@@ -10,7 +10,7 @@ wiring (both the "younger vampire" qualifying case and the non-qualifying
 case) through a real `attempt_block` call; the currently-unreachable
 "Allies" half of the superior clause; and the hand-membership self-gating
 that prevents one physical card from being spent twice across
-`INTERCEPT_DECREASE_HOOK`'s two offer points (OQ-31).
+`INTERCEPT_DECREASE_HOOK`'s two offer points (RUL-009).
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -246,7 +246,7 @@ def test_superior_not_offered_without_enough_blood():
 
 
 def test_superior_clause_end_to_end_decreases_a_younger_blockers_intercept():
-    """Proactively activated, before any candidate is chosen (OQ-30): the
+    """Proactively activated, before any candidate is chosen (ENG-021): the
     acting vampire's own capacity (3) makes the younger candidate (capacity
     1) qualify for -1 intercept, flipping a would-have-succeeded block
     (intercept 0 >= stealth 0) into a failure."""
@@ -303,7 +303,7 @@ def test_superior_clause_does_not_affect_a_blocker_who_is_not_younger():
 
 
 def test_superior_clause_declined_proactively_can_still_be_played_reactively_once_only():
-    """OQ-31 (resolved -- Reading B): the proactive, top-of-retry-loop offer
+    """RUL-009 (resolved -- Reading B): the proactive, top-of-retry-loop offer
     is not the only chance to play this card -- the actor may decline it and
     still use the exact same physical card reactively, once a specific
     blocking candidate is already fixed (`_duel_stealth_intercept`'s own

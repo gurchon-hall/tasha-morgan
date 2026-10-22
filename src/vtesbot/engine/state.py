@@ -22,7 +22,7 @@ Zone = str  # "uncontrolled" | "ready" | "torpor" | "burned" | "removed_from_gam
 @dataclass
 class VampireInPlay:
     """One controlled vampire instance (a dealt/drawn crypt card in a
-    player's crypt area). `zone='removed_from_game'` (OQ-24) is distinct
+    player's crypt area). `zone='removed_from_game'` (ENG-016) is distinct
     from `'burned'` since it may still be a secret, uncontrolled card."""
 
     instance_id: str
@@ -42,7 +42,7 @@ class VampireInPlay:
     (Rulebook §3 wording templates); keyed by a provider-chosen string,
     storing the turn number the ability was last used on."""
     woken: bool = False
-    """Transient, action-scoped eligibility override (OQ-46): while True,
+    """Transient, action-scoped eligibility override (ENG-028): while True,
     `is_ready_unlocked` reports True even though `locked` stays True.
     Cleared by `clear_woken_vampires` at every action exit."""
 
@@ -69,24 +69,23 @@ class VampireInPlay:
     out of scope."""
 
     action_card_played_turn: dict[str, int] = field(default_factory=dict)
-    """Generic "same named action card at most once per turn" cap (OQ-57,
-    `docs/OPEN_QUESTIONS.md`). Rulebook §4 Detailed Turn Sequence (`data/
-    sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:188-191`,
-    verbatim): "A minion cannot play (unless cancelled) the same named
-    action card more than once each turn, even if they unlock." --
-    "a minion" (this vampire specifically, not every vampire its
-    controller owns) is the scope: a different vampire of the same
-    controller, with its own physical copy, may still play it this same
-    turn. Keyed by the card's own printed `name` (not `krcg_id`: the
-    rule's own wording is name-scoped, and `LibraryCard.name` is this
-    project's canonical identity field for it -- `krcg` assigns one id
-    per unique card name in this project's data, so the two keyings
-    coincide today, but `name` is the one the rule text actually names),
-    storing the turn last played; mirrors `ability_used_turn`'s own
-    "store the turn, let the reader filter" shape -- no explicit
-    end-of-turn clearing needed, and "even if they unlock" needs no
-    special handling, since nothing here is keyed off `locked` at all.
-    See `engine/phases/minion.py::action_card_already_played_this_turn`/
+    """Generic "same named action card at most once per turn" cap (ENG-037).
+    Rulebook §4 Detailed Turn Sequence
+    (`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:188-191`,
+    verbatim): "A minion cannot play (unless cancelled) the same named action
+    card more than once each turn, even if they unlock." -- "a minion" (this
+    vampire specifically, not every vampire its controller owns) is the scope:
+    a different vampire of the same controller, with its own physical copy, may
+    still play it this same turn. Keyed by the card's own printed `name` (not
+    `krcg_id`: the rule's own wording is name-scoped, and `LibraryCard.name` is
+    this project's canonical identity field for it -- `krcg` assigns one id per
+    unique card name in this project's data, so the two keyings coincide today,
+    but `name` is the one the rule text actually names), storing the turn last
+    played; mirrors `ability_used_turn`'s own "store the turn, let the reader
+    filter" shape -- no explicit end-of-turn clearing needed, and "even if they
+    unlock" needs no special handling, since nothing here is keyed off `locked`
+    at all. See
+    `engine/phases/minion.py::action_card_already_played_this_turn`/
     `mark_action_card_played_this_turn`."""
 
     @property
@@ -96,9 +95,9 @@ class VampireInPlay:
 
 @dataclass
 class AllyInPlay:
-    """One controlled ally instance (OQ-7, Rulebook §4 Recruit Ally).
+    """One controlled ally instance (ENG-001, Rulebook §4 Recruit Ally).
     Mirrors `VampireInPlay`'s shape; `zone` takes ready/burned/contested
-    (OQ-10)."""
+    (ENG-004)."""
 
     instance_id: str
     krcg_id: int
@@ -106,7 +105,7 @@ class AllyInPlay:
     controller: str
     life: int
     starting_life: int
-    """Printed starting life (OQ-61), fixed once by `engine/allies.py::
+    """Printed starting life (ENG-041), fixed once by `engine/allies.py::
     recruit_ally` from the `life` it is given at recruitment -- never
     recomputed afterward, same spirit as a vampire's own `CryptCard.capacity`
     being fixed at print. `life` itself stays the live, damage-reducible
@@ -118,7 +117,7 @@ class AllyInPlay:
     locked: bool = False
     contested_with: str | None = None  # instance_id of the opposing copy, if contested
     skip_next_unlock: bool = False
-    """One-shot override consumed by `_unlock_own_allies` (OQ-46): On the
+    """One-shot override consumed by `_unlock_own_allies` (ENG-028): On the
     Qui Vive's ally footnote skips this ally's next unlock phase,
     independent of `woken`."""
 
@@ -129,9 +128,9 @@ class AllyInPlay:
 
 @dataclass
 class MasterCardInPlay:
-    """One controlled standalone Master card in play (OQ-23): kept in a
+    """One controlled standalone Master card in play (ENG-015): kept in a
     play area, not attached/resolved once. Mirrors AllyInPlay minus
-    life/strength/bleed; Unique cards get Contested tracking (OQ-10/22)."""
+    life/strength/bleed; Unique cards get Contested tracking (ENG-004/ENG-014)."""
 
     instance_id: str
     krcg_id: int
@@ -149,7 +148,7 @@ class MasterCardInPlay:
 @dataclass
 class TurnCardInPlay:
     """One non-unique library card put into play until end of turn or
-    burned (OQ-34, e.g. Loup). Distinct from `MasterCardInPlay` (OQ-23):
+    burned (ENG-024, e.g. Loup). Distinct from `MasterCardInPlay` (ENG-015):
     self-destructs by turn end, never Unique, no contest tracking."""
 
     instance_id: str
@@ -181,7 +180,7 @@ class EnterCombatGrant:
     (`engine/phases/minion.py::active_enter_combat_grants`), the same
     "store the turn, let the reader filter" shape `PlayerState.
     card_played_turn` already uses -- no explicit end-of-turn clearing is
-    needed, unlike `TurnCardInPlay`'s zone-based self-destruct (OQ-34),
+    needed, unlike `TurnCardInPlay`'s zone-based self-destruct (ENG-024),
     since this is plain data, not a card occupying a zone."""
 
     target_player: str
@@ -201,19 +200,18 @@ class PlayerState:
     allies: dict[str, AllyInPlay] = field(default_factory=dict)
     master_cards: dict[str, MasterCardInPlay] = field(default_factory=dict)
     turn_cards: dict[str, TurnCardInPlay] = field(default_factory=dict)
-    """OQ-34 (`docs/OPEN_QUESTIONS.md`): every `TurnCardInPlay` this player
+    """ENG-024: every `TurnCardInPlay` this player
     controls, keyed by `instance_id` -- mirrors `master_cards`'s own shape."""
     card_played_turn: dict[int, int] = field(default_factory=dict)
-    """Generic "only one X per turn" scratch keyed by `krcg_id`, storing
-    the turn last played (e.g. Loup's "Only one Loup can be played each
-    turn"); scoped to the controller, not one vampire. Distinct from
-    `VampireInPlay.action_card_played_turn` (OQ-57, `docs/
-    OPEN_QUESTIONS.md`): this field backs a *specific card's own printed*
-    per-turn cap (an Action Modifier, not subject to the generic
-    per-minion Action-card rule, which is scoped to one minion, not the
-    whole controller -- see that field's own docstring), keyed by
-    `krcg_id` since that card's own text never needs the "same named"
-    reach the generic rule does."""
+    """Generic "only one X per turn" scratch keyed by `krcg_id`, storing the
+    turn last played (e.g. Loup's "Only one Loup can be played each turn");
+    scoped to the controller, not one vampire. Distinct from
+    `VampireInPlay.action_card_played_turn` (ENG-037): this field backs a
+    *specific card's own printed* per-turn cap (an Action Modifier, not subject
+    to the generic per-minion Action-card rule, which is scoped to one minion,
+    not the whole controller -- see that field's own docstring), keyed by
+    `krcg_id` since that card's own text never needs the "same named" reach the
+    generic rule does."""
     enter_combat_grants: list[EnterCombatGrant] = field(default_factory=list)
     """Every `EnterCombatGrant` ever made to this player, across the whole
     game; a reader filters by `granted_turn == GameState.turn_number`
@@ -232,27 +230,26 @@ class PlayerState:
 
     def new_ally_instance_id(self) -> str:
         """Mints an ally instance id in its own namespace, distinct from a
-        vampire's `"...-V<n>"` ids (OQ-7, `docs/OPEN_QUESTIONS.md`;
+        vampire's `"...-V<n>"` ids (ENG-001;
         `engine/allies.py::recruit_ally`)."""
         self._next_ally_instance_seq += 1
         return f"{self.player_id}-A{self._next_ally_instance_seq}"
 
     def new_attachment_instance_id(self) -> str:
         """Mints a card-attachment instance id in its own namespace,
-        distinct from a vampire's/ally's ids (OQ-22)."""
+        distinct from a vampire's/ally's ids (ENG-014)."""
         self._next_attachment_instance_seq += 1
         return f"{self.player_id}-AT{self._next_attachment_instance_seq}"
 
     def new_master_card_instance_id(self) -> str:
         """Mints a standalone master-card instance id in its own
-        namespace, distinct from every other card category's (OQ-23)."""
+        namespace, distinct from every other card category's (ENG-015)."""
         self._next_master_card_instance_seq += 1
         return f"{self.player_id}-M{self._next_master_card_instance_seq}"
 
     def new_turn_card_instance_id(self) -> str:
         """Mints a turn-scoped card instance id in its own namespace,
-        distinct from every other card category's own (OQ-34, `docs/
-        OPEN_QUESTIONS.md`; `engine/turn_cards.py::
+        distinct from every other card category's own (ENG-024; `engine/turn_cards.py::
         bring_turn_card_into_play`)."""
         self._next_turn_card_instance_seq += 1
         return f"{self.player_id}-T{self._next_turn_card_instance_seq}"
@@ -277,7 +274,7 @@ class GameState:
     winner: str | None = None
     oust_deferral_depth: int = 0
     pending_ousts: list[str] = field(default_factory=list)
-    """OQ-44: while `oust_deferral_depth > 0` (`engine/pool.py::
+    """DES-010: while `oust_deferral_depth > 0` (`engine/pool.py::
     simultaneous_pool_losses`) `check_oust` only queues the player here; the
     queue is resolved once, together, when the outermost deferral exits."""
     combat_range: str | None = None

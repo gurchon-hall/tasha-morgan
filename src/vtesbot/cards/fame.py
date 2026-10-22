@@ -44,7 +44,7 @@ effects (see that module's own docstring for dispatch).
 
 Clauses:
 1. "Unique." -- governs contest, not initial legality to play (resolved by
-   OQ-22 below): nothing stops either Methuselah from independently playing
+   ENG-014 below): nothing stops either Methuselah from independently playing
    their own separately-decked copy of Fame while another copy is already
    attached and uncontested -- that is exactly the situation that triggers
    a contest between the two copies.
@@ -52,7 +52,7 @@ Clauses:
    (`engine/attachments.py::attach_card`) on a vampire whose `zone ==
    "ready"` *at the moment of play*, either player's (no clan/discipline
    restriction, no "you control" qualifier, mirroring Celerity's own
-   targeting precedent, OQ-8; Rulebook §2 Card Types: "A master card in
+   targeting precedent, ENG-002; Rulebook §2 Card Types: "A master card in
    play is controlled by the Methuselah who played it, even if it is played
    on a card controlled by another Methuselah"). Unlike Celerity (whose
    plain "a vampire" also allows a torpid target per Rulebook §8 glossary
@@ -67,7 +67,7 @@ Clauses:
    `VAMPIRE_ENTERS_TORPOR_HOOK`. Only fires while Fame's attachment is
    `zone == "attached"`: a contested copy is "turned face down and out of
    play" (Rulebook §4 Advanced Rules > Contested Cards) and cannot react
-   (OQ-22's addendum note (c): a future numeric/effect-granting attachment
+   (ENG-014's addendum note (c): a future numeric/effect-granting attachment
    must gate its own contribution on `zone == "attached"`).
 4. "During each Methuselah's unlock phase, if this vampire is in torpor,
    that Methuselah burns 1 pool." -- a second mandatory reaction, checked
@@ -82,7 +82,7 @@ Clauses:
    `UNLOCK_PHASE_MANDATORY_EFFECT_HOOK`, folded into that module's own
    ordering loop rather than run unconditionally first.
 
-Status: IMPLEMENTED. OQ-22 built the Contested Cards machinery for a
+Status: IMPLEMENTED. ENG-014 built the Contested Cards machinery for a
 `CardAttachment` (`engine/attachments.py::attach_card`/
 `detect_contest_on_attach`/`resolve_one_attachment_contest`,
 `engine/phases/unlock.py::_unlock_own_attachments`'s extended pay-or-yield
@@ -94,7 +94,7 @@ module's `"master_phase_play"` provider only needs to call `attach_card` +
 as their stand-in). Clauses 3 and 4 add two new mandatory-effect hook
 dispatch sites (`VAMPIRE_ENTERS_TORPOR_HOOK`,
 `UNLOCK_PHASE_MANDATORY_EFFECT_HOOK`); both call sites had access to
-everything Fame's text needs, so no Open Question was needed for either.
+everything Fame's text needs, so no RUL entry was needed for either.
 """
 
 from collections.abc import Mapping
@@ -115,14 +115,14 @@ MASTER_PHASE_PLAY_HOOK = "master_phase_play"
 VAMPIRE_ENTERS_TORPOR_HOOK = "vampire_enters_torpor"
 UNLOCK_PHASE_MANDATORY_EFFECT_HOOK = "unlock_phase_mandatory_effect"
 CARD_TYPE = "Master"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Master" docstring fact above."""
 
 
 def _active_fame_attachment(vampire: VampireInPlay) -> CardAttachment | None:
     """Fame's own attachment on `vampire`, only while actually in play
     (`zone == "attached"`) -- a contested or burned copy is "turned face
-    down and out of play" and must not react (OQ-22's own addendum note on
+    down and out of play" and must not react (ENG-014's own addendum note on
     a future numeric/effect-granting attachment's own gating
     responsibility)."""
     for attachment in vampire.attachments:
@@ -162,7 +162,7 @@ def _provide_fame_master_phase_play(
             play_from_hand(s, player, KRCG_ID)
             # Rulebook §2 Card Types, "Master Cards": controlled by whoever
             # played it, which may differ from `vampire.controller` -- the
-            # only case `attach_card` has a real caller for today (OQ-22).
+            # only case `attach_card` has a real caller for today (ENG-014).
             attachment = attach_card(s, vampire, controller=player, krcg_id=KRCG_ID, name="Fame")
             detect_contest_on_attach(s, attachment)
             return False  # not a trifle: no extra master phase action.

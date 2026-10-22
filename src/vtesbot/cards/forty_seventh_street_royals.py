@@ -2,7 +2,7 @@
 
 Card text (re-verified live via a fresh `krcg.load()[102217]` fetch,
 2026-10-09, matching the raw snapshot `data/cards/102217.json`, byte-for-byte
-unchanged since OQ-7/OQ-12/OQ-13/OQ-14's own quotes):
+unchanged since ENG-001/ENG-006/ENG-007/ENG-008's own quotes):
     "Unique mortal with 2 life. 1 strength, 0 bleed.
     You can burn 47th Street Royals to reduce a bleed against you by 3."
 
@@ -14,13 +14,13 @@ fields (this card's burn-to-reduce-bleed mechanic is the card's own printed
 text, not the engine's generic `burn_option` flag). Listed in the active 2P
 allowed list (`data/formats/2p/2026-10-03.json`, `krcg_id: 102217`).
 
-Status: implemented. Depends on OQ-12 ("recruit ally" minion action), OQ-13
-(acting-vampire identity in the `"recruit_ally_play"` hook context), OQ-10
+Status: implemented. Depends on ENG-006 ("recruit ally" minion action), ENG-007
+(acting-vampire identity in the `"recruit_ally_play"` hook context), ENG-004
 (ally contest *detection*, `AllyInPlay.contested_with`/`zone ==
-"contested"`, `engine/allies.py::detect_contest_on_recruit`), and OQ-15
+"contested"`, `engine/allies.py::detect_contest_on_recruit`), and ENG-009
 (contest *resolution*: `engine/allies.py::resolve_one_ally_contest` plus
 `engine/phases/unlock.py::_unlock_own_allies`'s pay-1-pool-or-yield
-unlock-phase loop) -- all resolved. OQ-16 ("cannot contest yourself",
+unlock-phase loop) -- all resolved. ENG-010 ("cannot contest yourself",
 resolved) now burns a same-controller second copy of a unique card
 immediately on recruit rather than contesting it; still unreachable here, as
 no deck-legality check yet lets one player hold two copies of the same
@@ -30,9 +30,9 @@ Two independent clauses, matching the registry's established "wire what the
 text says, nothing more" pattern (e.g. `threats.py`):
 
 1. "Unique mortal with 2 life. 1 strength, 0 bleed." -- the Ally's own
-   recruit eligibility, wired against the `"recruit_ally_play"` hook (OQ-12).
+   recruit eligibility, wired against the `"recruit_ally_play"` hook (ENG-006).
    Checked against *this specific* acting vampire (`context["vampire"]`,
-   OQ-13) rather than merely "the player controls a Brujah somewhere"
+   ENG-007) rather than merely "the player controls a Brujah somewhere"
    (Rulebook §2 "Requirements for Playing Cards" binds a minion card's
    requirement to the specific acting minion), via `acting_vampire.card.clan`
    -- a plain printed-stat field. Returns a `RecruitAllySpec(card=..., life=2,
@@ -53,7 +53,7 @@ text says, nothing more" pattern (e.g. `threats.py`):
    the ally itself (`engine/allies.py::burn_ally`), not a card played from
    hand. `_provide_bleed_reduction` offers its option only to this ally's own
    controller, and only while this specific ally (matched by `krcg_id`; at
-   most one live copy per controller since it is Unique, enforced by OQ-16's
+   most one live copy per controller since it is Unique, enforced by ENG-010's
    resolved fix) is `zone == "ready"`: a contested ally is "turned face
    down and out of play" (Rulebook §4 Advanced Rules > Contested Cards) for
    the whole contest and cannot react; a burned one is simply gone.
@@ -86,7 +86,7 @@ BLEED = 0
 BLEED_REDUCTION = 3
 CLAN_REQUIREMENT = ("Brujah",)
 CARD_TYPE = "Ally"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Ally" docstring fact above -- set only on the
 recruit (`_provide_recruit`, the card actually leaving hand); the bleed-
 reduction clause (`_provide_bleed_reduction`) burns an already-recruited,

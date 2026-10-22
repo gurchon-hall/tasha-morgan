@@ -24,11 +24,11 @@ suggested 2P decklists `data/decks/vekn-2p/brujah.json` (3 copies) and
 
 No Ⓓ marker, no prey/predator/"other Methuselahs" wording, no political
 vote -- this is a plain Combat card played during an already-resolving
-combat, so OQ-1 (CLAUDE.md §3) does not apply.
+combat, so RUL-001 (CLAUDE.md §3) does not apply.
 
 Whether Pursuit's basic "Maneuver." clause carries Rulebook §4's "cannot
 use a second strike card or weapon to maneuver again"/"cannot choose any
-other strike" restrictions (OQ-27, resolved): §4 Combat > Choose Strike
+other strike" restrictions (RUL-008, resolved): §4 Combat > Choose Strike
 (`data/sources/rulebook/2026-10-09/4-detailed-turn-sequence.md:824-828`):
 "Each minion chooses their strike. ... If a minion has used a maneuver
 from a strike (either a strike card or a weapon) this round, then they
@@ -66,7 +66,7 @@ not play this card if they do not want its maneuver.
 Side Strike's own superior clause -- a plain `COMBAT_ADDITIONAL_STRIKE_HOOK`
 grant, gated on superior `"CEL"` and the cross-card "(limited)" cap
 (`additional_strike_limit_used`/`mark_additional_strike_limit_used`,
-OQ-19). Entirely independent of the basic clause: a superior-Celerity
+ENG-013). Entirely independent of the basic clause: a superior-Celerity
 vampire holding two physical copies could maneuver with one and claim the
 additional strike with the other in the same round.
 """
@@ -91,7 +91,7 @@ KRCG_ID = 101523
 CEL_BASIC = "cel"
 CEL_SUPERIOR = "CEL"
 CARD_TYPE = "Combat"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Combat" docstring fact above."""
 
 
@@ -110,7 +110,7 @@ def _has_card_in_hand(state: GameState, player: str) -> bool:
 
 def _provide_maneuver(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
     """ "[cel] Maneuver." -- a plain maneuver grant at either Celerity level,
-    not "from a strike" (module docstring's OQ-27 resolution), so it carries
+    not "from a strike" (module docstring's RUL-008 resolution), so it carries
     none of Rulebook §4's strike-lock/"second strike card" restrictions."""
     vampire = _controllers_vampire(state, context)
     if vampire is None:

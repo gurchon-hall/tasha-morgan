@@ -151,10 +151,10 @@ def _provide_modius(state: GameState, context: Mapping[str, Any]) -> list[HookOp
                 "Modius [pre]: discard a master card for +1 vote",
             ),
             apply=_apply,
-            # `played_card_type` stays at its default `None` (OQ-33, `docs/
-            # OPEN_QUESTIONS.md`): this option is Modius's own printed
-            # ability being activated, not a card being played -- the
-            # discarded master card is this ability's *cost*, never played.
+            # `played_card_type` stays at its default `None` (ENG-023): this
+            # option is Modius's own printed ability being activated, not a
+            # card being played -- the discarded master card is this ability's
+            # *cost*, never played.
         )
     ]
 

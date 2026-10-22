@@ -1,8 +1,8 @@
 """Oxford University, England (Master). krcg id 101341.
 
 Card text (verbatim via `krcg.load()[101341].card_text`, re-confirmed live
-2026-10-11, matching the text already quoted throughout OQ-23's own
-engine-side pass, `docs/OPEN_QUESTIONS.md`, and the raw snapshot saved to
+2026-10-11, matching the text already quoted throughout ENG-015's own
+engine-side pass, and the raw snapshot saved to
 `data/cards/101341.json` per the `implement-card` skill):
     "Unique location.
     You can lock this card and burn X pool during the polling step of a
@@ -33,7 +33,7 @@ is made there.
 Two independent clauses:
 
 1. "Unique location." -- a standalone Master card, not an attachment
-   (`engine/state.py::MasterCardInPlay`, OQ-23): wired against the
+   (`engine/state.py::MasterCardInPlay`, ENG-015): wired against the
    `"master_phase_play"` hook exactly like Life in the City, via
    `bring_master_card_into_play` then (since printed "Unique")
    `detect_contest_on_bring_into_play`. Not a trifle (`apply` returns
@@ -41,7 +41,7 @@ Two independent clauses:
 2. "You can lock this card and burn X pool during the polling step of a
    political action to get +2X votes." -- wired against
    `engine/politics.py::POLLING_STEP_HOOK`, built on
-   `variable_pool_burn_vote_options` (OQ-23's reusable "burn X pool for
+   `variable_pool_burn_vote_options` (ENG-015's reusable "burn X pool for
    Y*X votes" primitive; `votes_per_pool=2` per the printed "+2X votes"),
    with `on_burn` locking this specific `MasterCardInPlay` instance as the
    ability's own additional cost ("lock this card *and* burn X pool").
@@ -62,9 +62,9 @@ Two independent clauses:
          (mirrors `tests/rules/test_politics.py::
          test_an_already_locked_location_is_not_offered_the_option_again`).
 
-Status: IMPLEMENTED. The remaining blocker, OQ-23's missing standalone
+Status: IMPLEMENTED. The remaining blocker, ENG-015's missing standalone
 master-card entity, is now resolved. `Hook.LOCATION_ENTITY` is not cited
-here: OQ-23 found "location" is not a distinct krcg card type (free text
+here: ENG-015 found "location" is not a distinct krcg card type (free text
 on an ordinary Master card), so this card needs no entity beyond the
 generic `MasterCardInPlay` -- `Hook.LOCATION_ENTITY` is left unchanged in
 `cards/registry.py` for the other "Unique location." cards still
@@ -92,14 +92,14 @@ MASTER_PHASE_PLAY_HOOK = "master_phase_play"
 CLAN_REQUIREMENT = ("Brujah",)
 VOTES_PER_POOL = 2
 CARD_TYPE = "Master"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Master" docstring fact above -- set only on
 the initial play (`_provide_oxford_master_phase_play`); the polling-step
 clause (`_provide_oxford_polling_step`, via `variable_pool_burn_vote_
 options`) is this already-in-play card's own standing ability, not a fresh
 card play, so it leaves `HookOption.played_card_type` at its default `None`
 (see that field's own docstring; this is the exact non-Reaction-card
-provider OQ-33 names as live-reachable by the side opposing a referendum's
+provider ENG-023 names as live-reachable by the side opposing a referendum's
 caller)."""
 
 

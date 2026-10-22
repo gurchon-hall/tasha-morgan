@@ -6,7 +6,7 @@ Toreador performs a successful action." Ruling: "Can be used even if the
 stealth is not currently needed. [LSJ 20011214-2]."
 
 One assertion per clause/ruling: the clan requirement to play or benefit
-from the card (bound to the specific acting vampire, OQ-13 precedent); "put
+from the card (bound to the specific acting vampire, ENG-007 precedent); "put
 this card in play" and the immediate "+1 stealth" delivered together by the
 same play; the ongoing clan-wide "+1 stealth" grant, proven for a *second*
 Toreador vampire never itself playing a copy; "only one Loup can be played
@@ -14,11 +14,11 @@ each turn"; both burn conditions, each in the scenario that actually
 isolates it from the other (condition 2 fires immediately after the very
 action Loup was played for if that action succeeds, so condition 1 is only
 reachable when Loup was played for a *blocked* action instead); the
-once-per-*instance* cap on the standing grant (module docstring); OQ-39
+once-per-*instance* cap on the standing grant (module docstring); RUL-011
 (resolved): the card can now be played proactively, even against a fully
 unblockable action, via `STEALTH_INCREASE_HOOK`'s own two offer points
 (`engine/action.py`), closing what was previously a documented known gap;
-and OQ-40 (resolved -- ruling via a trusted VEKN judge, see module
+and RUL-012 (resolved -- ruling via a trusted VEKN judge, see module
 docstring): both the standing bonus and the burn trigger are table-wide,
 proven for a Toreador vampire benefiting from, and burning, the *other*
 Methuselah's own in-play Loup.
@@ -171,7 +171,7 @@ def test_ongoing_bonus_capped_at_once_per_action():
     assert _offer(game, pending=pending) == []
 
 
-# --- OQ-40 (resolved): table-wide, not controller-scoped -------------------
+# --- RUL-012 (resolved): table-wide, not controller-scoped -------------------
 
 
 def test_table_wide_benefit_from_the_other_methuselahs_own_loup():
@@ -292,7 +292,7 @@ def test_end_to_end_plays_loup_to_escape_a_block_then_burns_after_the_successful
     actor = ScriptedAgent("P1")
     actor.expect("minion_phase_choice", "act_with:V1")
     actor.expect("action_choice", "bleed")
-    # OQ-39: offered proactively, at the very top of `attempt_block`'s retry
+    # RUL-011: offered proactively, at the very top of `attempt_block`'s retry
     # loop -- before the defender is even asked to pick a blocking candidate.
     actor.expect("stealth_increase", "loup:play")
     game.state.agents["P1"] = actor
@@ -316,7 +316,7 @@ def test_end_to_end_plays_loup_to_escape_a_block_then_burns_after_the_successful
 
 def test_end_to_end_played_for_a_blocked_action_survives_combat_then_burns_at_end_of_turn():
     """Condition 2 does not fire (the action was blocked, not successful),
-    so condition 1 (`clear_turn_cards_at_end_of_turn`, OQ-34, already proven
+    so condition 1 (`clear_turn_cards_at_end_of_turn`, ENG-024, already proven
     generically by `tests/rules/test_turn_cards.py`) is what finally burns
     it -- the one scenario that actually isolates condition 1 from 2. Loup's
     own standing grant is capped at once per action (module docstring), so
@@ -365,7 +365,7 @@ def test_end_to_end_played_for_a_blocked_action_survives_combat_then_burns_at_en
         hooks.unregister("intercept_modifier", extra_intercept)
 
 
-# --- OQ-39 (resolved): proactive offer closes the "unblockable action" gap -
+# --- RUL-011 (resolved): proactive offer closes the "unblockable action" gap -
 
 
 def test_can_be_played_proactively_even_when_the_action_is_unblockable():

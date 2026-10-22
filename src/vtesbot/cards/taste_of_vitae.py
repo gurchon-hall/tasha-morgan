@@ -31,9 +31,9 @@ suggested 2P decklist `data/decks/vekn-2p/brujah.json` (2 copies).
 
 No Ⓓ marker, no prey/predator/"other Methuselahs" wording, no political
 vote -- a plain Combat card scoped to the current combat's own two
-combatants, so OQ-1 (CLAUDE.md §3) does not apply.
+combatants, so RUL-001 (CLAUDE.md §3) does not apply.
 
-Status: implemented. Previously `blocked` (OQ-29, resolved) for want of (1)
+Status: implemented. Previously `blocked` (ENG-020, resolved) for want of (1)
 an "End of Round" timing window and (2) a round-scoped "blood lost to
 damage" tracker. `rules-engineer`'s fix: `engine/combat.py` gained
 `END_OF_ROUND_HOOK`/`_ask_end_of_round`, dispatched once per round via the
@@ -70,7 +70,7 @@ reason.
 "A vampire can play only one Taste of Vitae each round.": a private,
 round-scoped per-vampire cap, genuinely separate from the existing
 cross-card "(limited)" additional-strike cap (`ADDITIONAL_STRIKE_LIMIT_KEY`,
-OQ-19) -- this card's own text never says "(limited)" and has nothing to do
+ENG-013) -- this card's own text never says "(limited)" and has nothing to do
 with additional strikes, so its own `_USED_KEY` is a private key inside the
 same shared `round_state` dict, never the additional-strike one (same
 "private key nested inside the shared dict" convention `dust_up.py`'s own
@@ -86,7 +86,7 @@ playability only on the listed zone/hand/once-per-round gates, not on a
 nonzero amount.
 
 "Cannot be played against an ally." [PIB 20121028]: unreachable today, same
-reason OQ-7/OQ-10 already note for ally combat generally -- no ally can
+reason ENG-001/ENG-004 already note for ally combat generally -- no ally can
 currently be a combat participant at all, so "the opposing vampire" in this
 card's own text is, today, always actually a vampire.
 
@@ -128,7 +128,7 @@ KRCG_ID = 101945
 _USED_KEY = "taste_of_vitae_used"
 _EXCLUDED_ZONES = ("burned", "torpor")
 CARD_TYPE = "Combat"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Combat" docstring fact above."""
 
 

@@ -1,5 +1,5 @@
 """Minimal rule-based agent (milestone 5). Every rule is a design choice,
-not a VtES fact (D-8). Unrecognized decision kinds fall back to a seeded
+not a VtES fact (DES-008). Unrecognized decision kinds fall back to a seeded
 random pick, so it can never raise `IllegalChoiceError`."""
 
 import random
@@ -14,27 +14,27 @@ BLEED_AMOUNT_FLOOR = 1
 """The engine's own unmodified base bleed amount (`engine/phases/minion.py`'s
 `BLEED_AMOUNT`), used here as a conservative lower bound on what a bleed is
 worth: card-sourced bleed bonuses aren't visible generically to the agent
-(D-14), so this floor can only undercount a bleed's true lethality, never
+(DES-014), so this floor can only undercount a bleed's true lethality, never
 overcount it."""
 ADD_BLOOD_BASE_SCORE = 10.0
 """Flat preference for spending a transfer on blood over ending the phase
-(D-14), matching the pre-Phase-B unconditional choice; `_score_add_blood`'s
+(DES-014), matching the pre-Phase-B unconditional choice; `_score_add_blood`'s
 capacity-distance and critical-pool penalty terms are kept small relative to
 this so they only perturb the ranking among `add_blood` targets and against
 the critical-pool penalty, never flip add_blood-vs-end_phase on their own."""
 ADD_BLOOD_CRITICAL_POOL_PENALTY = 1000.0
 """Large enough to push a self-critical `add_blood` (one that would itself
 drop pool to/under `CRITICAL_POOL`) below `end_phase`'s baseline score of 0,
-without making it a hard gate (D-14)."""
+without making it a hard gate (DES-014)."""
 OTHER_ACTION_LOSES_TO_BLEED_SCORE = 0.5
 OTHER_ACTION_BEATS_HUNT_SCORE = 1.5
-"""D-15: scores for any `action_choice` option that is neither `bleed` nor
+"""DES-015: scores for any `action_choice` option that is neither `bleed` nor
 `hunt` (recruit/diablerise/action-card/attachment-removal options --
 whatever the engine's hook providers legally offer alongside them, per
 `engine/phases/minion.py::_choose_and_perform_action`). A flat score above
 `_score_action`'s own `1.0` ceiling (so it always wins, even over a bleed
 with blood to spare) was tried first and reverted: see this module's test
-suite note and D-15's benchmark addendum -- it collapsed aggression
+suite note and DES-015's benchmark addendum -- it collapsed aggression
 (repeatedly spending the minion action on a card play instead of bleeding)
 and produced stuck (max-turns) games. These two scores instead keep
 bleeding-with-blood as the dominant choice (`0.5 < 1.0`) and only let an
@@ -42,7 +42,7 @@ bleeding-with-blood as the dominant choice (`0.5 < 1.0`) and only let an
 just a no-damage fallback for a dry vampire, so taking a concrete
 card-granted option instead is a narrower, cheaper bet than preferring it
 over an available bleed. The agent still has no generic, card-blind way to
-judge whether a specific option is actually worth taking (D-13 P3, deferred
+judge whether a specific option is actually worth taking (DES-013 P3, deferred
 past milestone 6); `inf` (a lethal bleed) always overrides both."""
 
 
@@ -104,7 +104,7 @@ class HeuristicAgent(Agent):
         )
 
     def _master(self, observation: Observation, decision: Decision) -> Choice | None:
-        # Left as "play the first offered card" (D-8/D-14): `decision.choices`
+        # Left as "play the first offered card" (DES-008/DES-014): `decision.choices`
         # is already legality-filtered by the engine's hook providers, and
         # `Observation` carries no effect-preview field, so "skip a useless
         # play" isn't cheaply derivable without card-specific knowledge --

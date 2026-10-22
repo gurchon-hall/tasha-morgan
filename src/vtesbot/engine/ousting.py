@@ -1,6 +1,6 @@
 """Ousting and victory (Rulebook §5). Pool 0 -> ousted; predator gets 1 VP
 + 6 pool, +1 VP if last Methuselah -- both land on one player here (§3).
-Simultaneous ousts (OQ-44) tie: 1 VP each, no pool."""
+Simultaneous ousts (DES-010) tie: 1 VP each, no pool."""
 
 from typing import TYPE_CHECKING
 

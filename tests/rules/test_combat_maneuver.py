@@ -210,7 +210,7 @@ def test_maneuver_grant_is_scoped_to_the_whole_combat_not_reset_each_round():
     defender.assert_exhausted()
 
 
-# --- Maneuver bundled with a strike (OQ-28, `docs/OPEN_QUESTIONS.md`, resolved) ---
+# --- Maneuver bundled with a strike (ENG-019, resolved) ---
 
 
 def test_strike_bundled_maneuver_commits_the_initial_strike_and_skips_the_strike_choice():
@@ -349,7 +349,7 @@ def test_committed_strike_lock_does_not_extend_to_additional_strikes():
 def test_plain_maneuver_does_not_commit_a_strike_and_full_choice_remains():
     """Regression guard: a plain `MANEUVER_HOOK` grant that never calls
     `commit_strike_for_round` -- the same shape Pursuit's own basic "[cel]
-    Maneuver." clause and Saku Pihlajamäki's printed ability use (OQ-27,
+    Maneuver." clause and Saku Pihlajamäki's printed ability use (RUL-008,
     `cards/pursuit.py`) -- must leave the maneuvering combatant's strike step
     completely untouched: a full, independent `strike_choice` decision is
     still raised for them afterward, exactly as before this pass's

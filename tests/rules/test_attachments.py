@@ -1,9 +1,9 @@
-"""Effective capacity / effective discipline levels (OQ-8,
-`docs/OPEN_QUESTIONS.md`): `engine/attachments.py::effective_capacity` /
-`effective_disciplines` fold a vampire's `attachments` into its printed
-`CryptCard` stats via the `"capacity_modifier"` / `"discipline_level_
-modifier"` hooks, and every call site that used to read `vampire.card.
-capacity` / `vampire.card.disciplines` directly now goes through them.
+"""Effective capacity / effective discipline levels (ENG-002):
+`engine/attachments.py::effective_capacity` / `effective_disciplines` fold a
+vampire's `attachments` into its printed `CryptCard` stats via the
+`"capacity_modifier"` / `"discipline_level_modifier"` hooks, and every call
+site that used to read `vampire.card.capacity` / `vampire.card.disciplines`
+directly now goes through them.
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism*, using trivial fake providers standing in for a real attachment
@@ -114,7 +114,7 @@ def test_effective_disciplines_with_no_attachments_equals_printed_disciplines():
 def test_add_blood_caps_at_effective_capacity_not_printed_capacity():
     """Rulebook §1 Vampires: blood may never exceed capacity -- now checked
     against the *effective* capacity, so an attached "+1 capacity" card
-    actually raises the cap (OQ-8's whole point)."""
+    actually raises the cap (ENG-002's whole point)."""
     hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=3)
@@ -133,7 +133,7 @@ def test_influence_phase_add_blood_choice_respects_effective_capacity():
     """`engine/phases/influence.py`'s "add 1 blood" choice must not be
     offered once a vampire is already at its *effective* capacity, and must
     still be offered while under it even though it is already at its
-    printed capacity (OQ-8)."""
+    printed capacity (ENG-002)."""
     hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
     builder = ScenarioBuilder(seed=1, first_influence_phase_used=True)
     builder.player("P1", pool=30).uncontrolled_vampire("V1", capacity=3, blood=3)
@@ -164,7 +164,7 @@ def test_influence_phase_add_blood_choice_respects_effective_capacity():
 def test_influence_phase_reveal_choice_requires_effective_capacity():
     """A vampire at its printed capacity but below its *effective* capacity
     (because of an attachment) must not yet offer the free "reveal" choice
-    (OQ-8): Rulebook §4 Influence Phase, "a vampire with blood >= capacity
+    (ENG-002): Rulebook §4 Influence Phase, "a vampire with blood >= capacity
     may be revealed"."""
     hooks.register("capacity_modifier", _fake_capacity_bonus_provider(krcg_id=999999, bonus=1))
     builder = ScenarioBuilder(seed=1, first_influence_phase_used=True)

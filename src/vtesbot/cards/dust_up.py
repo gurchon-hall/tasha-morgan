@@ -33,7 +33,7 @@ no uppercase/superior variant printed). `clan_requirement == []`,
 allowed list (`data/formats/2p/2026-10-03.json`) and in the suggested 2P
 decklist `data/decks/vekn-2p/brujah.json` (6 copies).
 
-Status: implemented (OQ-18, `docs/OPEN_QUESTIONS.md`, resolved -- both
+Status: implemented (ENG-012, resolved -- both
 engine gaps that previously blocked this card are closed: `Sect`/
 `CryptCard.sect`/`derive_sect` in `engine/cards.py`, and the
 `"combat_dodge_option"`/`"combat_additional_strike"` hooks in
@@ -43,7 +43,7 @@ clause's dodge-proof strike).
 "Requires an Anarch": a card-level legality gate independent of which
 discipline clause is used (Rulebook §6 Vampire Sects: "Some cards can only
 be played by Anarch vampires."). `vampire.card.sect` is the engine's own
-per-vampire sect field (OQ-18 Gap 1); every provider below first checks
+per-vampire sect field (ENG-012 Gap 1); every provider below first checks
 `vampire.card.sect is Sect.ANARCH` and offers nothing at all otherwise --
 including when `sect is None` ("not modeled for this instance": a synthetic
 test vampire that was never run through `derive_sect`, or a real vampire the
@@ -98,7 +98,7 @@ two paired hook registrations:
 the dodge only if you already played it for a (limited) additional strike
 this round" [ANK 20220204]: tracked via `engine/combat.py`'s shared,
 round-scoped `additional_strike_limit_used`/`mark_additional_strike_limit_
-used` helpers (`docs/OPEN_QUESTIONS.md` OQ-19) -- `run_combat` threads one
+used` helpers (ENG-013) -- `run_combat` threads one
 fresh scratch dict per round into both `"combat_dodge_option"`'s and
 `"combat_additional_strike"`'s own hook context, so this flag is correctly
 shared *across* different cards/physical copies (closing the gap this
@@ -141,7 +141,7 @@ ANI = "ani"
 CEL = "cel"
 POT = "pot"
 CARD_TYPE = "Combat"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Combat" docstring fact above -- set on the
 three card-playing providers (`_provide_ani`/`_provide_pot`/
 `_provide_cel_dodge`); `_provide_cel_additional_strike` only claims an
@@ -223,7 +223,7 @@ def _base_hand_strike_damage(state: GameState, context: Mapping[str, Any]) -> in
     combat.py::hand_strike_strength`'s own shared computation, also used by
     `_strike_strength` internally): base strength plus any live
     `"combat_strength_modifier"` contribution, including a whole-combat-
-    duration bonus recorded in `combat_state` (OQ-60; now threaded into
+    duration bonus recorded in `combat_state` (ENG-040; now threaded into
     this hook's own context by `engine/combat.py::_ask_strike` -- see that
     function's own docstring and `hand_strike_strength`'s own "Takes
     instance ids" paragraph for why calling the shared helper here, rather

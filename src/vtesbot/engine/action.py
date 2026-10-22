@@ -1,5 +1,7 @@
 """Minion action: announce, block, resolve/combat (Rulebook §4; 2P collapses
-prey/predator, CLAUDE.md §3). See OQ-9,11,17,25,26,30,31,34,36,39,46,48,60,65."""
+prey/predator, CLAUDE.md §3). See ENG-003, ENG-005, ENG-011, ENG-017, ENG-018,
+ENG-021, RUL-009, ENG-024, ENG-026, RUL-011, ENG-028, ENG-030, ENG-040,
+ENG-045."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -15,7 +17,7 @@ if TYPE_CHECKING:
 STEALTH_MODIFIER_HOOK = "stealth_modifier"
 INTERCEPT_MODIFIER_HOOK = "intercept_modifier"
 BLOCK_CANDIDATE_INJECTION_HOOK = "block_candidate_injection"
-"""OQ-26: mirrors `Hook.BLOCK_CANDIDATE_INJECTION`. `apply()` must unlock
+"""ENG-018: mirrors `Hook.BLOCK_CANDIDATE_INJECTION`. `apply()` must unlock
 the vampire and return it as an unconditional successful block. Every
 option must also set `HookOption.block_candidate_instance_id` to that same
 vampire's own `instance_id` -- `attempt_block` filters injected options
@@ -25,35 +27,35 @@ so a named-and-excluded vampire (e.g. `cards/sleeping_mind.py`) cannot be
 forced back in as an injected candidate (rules-auditor finding)."""
 
 INTERCEPT_DECREASE_HOOK = "intercept_decrease"
-"""OQ-30/31: mirrors `Hook.INTERCEPT_DECREASE`. Offered to `actor`
+"""ENG-021/RUL-009: mirrors `Hook.INTERCEPT_DECREASE`. Offered to `actor`
 proactively and reactively; `apply()` appends an `ActiveInterceptDecrease`
 to `pending`, not a delta."""
 
 PENDING_INTERCEPT_DECREASE_KEY = "intercept_decrease_modifiers"
-"""`pending[...]` key (OQ-30): holds a `list[ActiveInterceptDecrease]`,
+"""`pending[...]` key (ENG-021): holds a `list[ActiveInterceptDecrease]`,
 appended to (never replaced) by each activated `INTERCEPT_DECREASE_HOOK`
 option's own `apply` closure."""
 
 STEALTH_INCREASE_HOOK = "stealth_increase"
-"""OQ-39: `INTERCEPT_DECREASE_HOOK`'s sibling for actor's stealth.
+"""RUL-011: `INTERCEPT_DECREASE_HOOK`'s sibling for actor's stealth.
 `apply()` appends an `ActiveStealthIncrease` to `pending`; no `qualifies`
 predicate needed."""
 
 PENDING_STEALTH_INCREASE_KEY = "stealth_increase_modifiers"
-"""`pending[...]` key (OQ-39): holds a `list[ActiveStealthIncrease]`,
+"""`pending[...]` key (RUL-011): holds a `list[ActiveStealthIncrease]`,
 appended to (never replaced) by each activated `STEALTH_INCREASE_HOOK`
 option's own `apply` closure."""
 
 WAKE_LOCKED_MINION_HOOK = "wake_locked_minion"
-"""OQ-48: defender-side sibling of `INTERCEPT_DECREASE_HOOK`/
+"""ENG-030: defender-side sibling of `INTERCEPT_DECREASE_HOOK`/
 `STEALTH_INCREASE_HOOK`. `apply()` sets `woken = True` on a locked
 vampire; block stays fully contestable."""
 
 FORCE_BLOCK_ATTEMPT_FAILURE_HOOK = "force_block_attempt_failure"
-"""OQ-65: acting-side sibling of `INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_
+"""ENG-045: acting-side sibling of `INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_
 HOOK`, offered reactively at *both* branches of `_duel_stealth_intercept`
 once a specific blocker is fixed -- merged into the same `Decision` as those
-two siblings in the "block currently succeeds" branch (OQ-30/31), and asked
+two siblings in the "block currently succeeds" branch (ENG-021/RUL-009), and asked
 alone, after the defender has declined/exhausted `INTERCEPT_MODIFIER_HOOK`,
 in the "block currently fails on the raw numbers" branch too (added by a
 rules-auditor finding on this hook's first landing). The two offer points
@@ -64,7 +66,7 @@ already failing on the numbers is for its *other*, independent half --
 current numbers, is not itself a stealth/intercept value modifier, and so is
 not covered by the "only when needed" scoping that keeps `STEALTH_MODIFIER_
 HOOK`/`INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_HOOK` out of that branch
-(OQ-31/39). Unlike those two numeric siblings, choosing this option does not
+(RUL-009/RUL-011). Unlike those two numeric siblings, choosing this option does not
 feed back into the stealth/intercept comparison at all: `_duel_stealth_
 intercept` returns `forced_failure=True` only from the "succeeds" branch
 (moot in the "fails" branch, where the numbers already mean failure) --
@@ -112,7 +114,7 @@ finding)."""
 
 
 PENDING_BLOCK_TIME_COMBAT_GRANT_KEY = "block_time_combat_grants"
-"""`pending[...]` key (OQ-60): holds `dict[str, dict[str, int]]`, vampire
+"""`pending[...]` key (ENG-040): holds `dict[str, dict[str, int]]`, vampire
 instance id -> {grant_name: count}, written by `grant_block_time_combat_
 effect` from a reaction's own `apply` closure, played during the block
 attempt's own stealth/intercept resolution (`_duel_stealth_intercept`,
@@ -134,7 +136,7 @@ reaction is played, and this dict written, again each time)."""
 def grant_block_time_combat_effect(
     pending: dict[str, Any] | None, vampire_id: str, grant_name: str, count: int = 1
 ) -> None:
-    """Record a one-shot combat-time effect grant (OQ-60), tied to
+    """Record a one-shot combat-time effect grant (ENG-040), tied to
     `vampire_id` -- the specific vampire whose controller played the
     block-attempt-time reaction, read back by `combat.py::block_time_
     combat_grant_available`/`consume_block_time_combat_grant` once (and
@@ -162,7 +164,7 @@ def _excluded_block_candidates(pending: dict[str, Any] | None) -> set[str]:
 
 @dataclass(frozen=True)
 class ActiveInterceptDecrease:
-    """One Action Modifier's persistent intercept decrease (OQ-30). `delta`
+    """One Action Modifier's persistent intercept decrease (ENG-021). `delta`
     applies while `qualifies(blocker)` matches; never floored at 0
     (Rulebook §4)."""
 
@@ -172,7 +174,7 @@ class ActiveInterceptDecrease:
 
 @dataclass(frozen=True)
 class ActiveStealthIncrease:
-    """One Action Modifier's persistent stealth increase (OQ-39). `delta`
+    """One Action Modifier's persistent stealth increase (RUL-011). `delta`
     adds to `base_stealth` unconditionally; never floored at 0 (Rulebook
     §4)."""
 
@@ -180,7 +182,7 @@ class ActiveStealthIncrease:
 
 
 def _active_stealth_increase(pending: dict[str, Any] | None) -> int:
-    """Sum every `ActiveStealthIncrease` (OQ-39) in `pending`; mirrors
+    """Sum every `ActiveStealthIncrease` (RUL-011) in `pending`; mirrors
     `_active_intercept_decrease` minus the per-candidate `qualifies` filter."""
     if not pending:
         return 0
@@ -195,7 +197,7 @@ ACTION_POLITICAL = "political_action"
 ACTION_ACTION_CARD = "action_card"
 ACTION_DIABLERIE = "diablerise"
 ACTION_ATTACHMENT_REMOVAL = "attachment_removal_action"
-"""Action discriminator constants (OQ-9) for `action=` passed to
+"""Action discriminator constants (ENG-003) for `action=` passed to
 `attempt_block`/`perform_minion_action`. `ACTION_ATTACHMENT_REMOVAL`
 (`engine/phases/minion.py::build_attachment_removal_action_spec`) is kept
 distinct from `ACTION_ACTION_CARD` even though both resolve through the
@@ -208,7 +210,7 @@ or `played_card_type`, per its own card text's unqualified "a successful
 action") must not mistake this for one if it is ever added."""
 
 ACTION_SUCCEEDED_HOOK = "action_succeeded"
-"""OQ-34: mirrors `Hook.ACTION_SUCCEEDED`. Rulebook §4: success means not
+"""ENG-024: mirrors `Hook.ACTION_SUCCEEDED`. Rulebook §4: success means not
 blocked. Dispatched via `run_effects` after `resolve(pending)`; never on
 the blocked branch. Forwards this action's own `pending` dict in context
 so a provider can read anything recorded during the action (e.g.
@@ -220,13 +222,13 @@ PENDING_REFERENDUM_RESULT_KEY = "referendum_result"
 to avoid a circular import). See `REFERENDUM_RESOLVED_HOOK` below."""
 
 REFERENDUM_RESOLVED_HOOK = "referendum_resolved"
-"""OQ-36: mirrors `Hook.REFERENDUM_RESOLVED`, strictly after a political
+"""ENG-026: mirrors `Hook.REFERENDUM_RESOLVED`, strictly after a political
 action's `resolve()` returns, only if it passed; dispatched via
 `resolve_impulse_window`."""
 
 
 def clear_woken_vampires(state: GameState) -> None:
-    """Clear `VampireInPlay.woken` for both players (OQ-46), On the Qui
+    """Clear `VampireInPlay.woken` for both players (ENG-028), On the Qui
     Vive's end-of-action scope. Called from every `perform_minion_action`
     exit."""
     for player_state in state.players.values():
@@ -235,9 +237,9 @@ def clear_woken_vampires(state: GameState) -> None:
 
 
 def _active_intercept_decrease(pending: dict[str, Any] | None, blocker: VampireInPlay) -> int:
-    """Sum every `ActiveInterceptDecrease` (OQ-30) in `pending` whose
+    """Sum every `ActiveInterceptDecrease` (ENG-021) in `pending` whose
     `qualifies` matches `blocker`, right now -- never cached, so a retried
-    attempt (OQ-11) against a different `blocker` is re-checked fresh."""
+    attempt (ENG-005) against a different `blocker` is re-checked fresh."""
     if not pending:
         return 0
     modifiers: list[ActiveInterceptDecrease] = pending.get(PENDING_INTERCEPT_DECREASE_KEY, [])
@@ -257,7 +259,7 @@ def _duel_stealth_intercept(
 ) -> tuple[int, int, bool]:
     """Resolve the stealth/intercept ping-pong for one block attempt.
     Baselines fold active `ActiveInterceptDecrease`/`ActiveStealthIncrease`
-    (OQ-30/39). Third return value (OQ-65): `True` once the actor has
+    (ENG-021/RUL-011). Third return value (ENG-045): `True` once the actor has
     forced this attempt to fail outright via `FORCE_BLOCK_ATTEMPT_FAILURE_
     HOOK` -- `attempt_block` must check this before comparing the returned
     `stealth`/`intercept` at all. That hook is offered to the actor in
@@ -298,8 +300,8 @@ def _duel_stealth_intercept(
                     added = True
             if added:
                 continue
-            # Still failing on the raw numbers (rules-auditor finding, OQ-65):
-            # "only when needed" (OQ-31/39) scopes solely to stealth/intercept
+            # Still failing on the raw numbers (rules-auditor finding, ENG-045):
+            # "only when needed" (RUL-009/RUL-011) scopes solely to stealth/intercept
             # *value* modifiers (never offered here, since nothing is needed
             # from them yet) -- it does not scope FORCE_BLOCK_ATTEMPT_FAILURE_
             # HOOK's own non-numeric "cannot attempt to block this action
@@ -325,9 +327,9 @@ def _duel_stealth_intercept(
             return stealth, intercept, False
         else:
             # Block currently succeeds: stealth may be added, only now
-            # needed (OQ-31/39: actor may also decrease intercept or
+            # needed (RUL-009/RUL-011: actor may also decrease intercept or
             # increase stealth here, reactively, or force the attempt to
-            # fail outright, OQ-65; see _ask_stealth_or_modifier).
+            # fail outright, ENG-045; see _ask_stealth_or_modifier).
             stealth_options = hooks.offer(
                 STEALTH_MODIFIER_HOOK,
                 state,
@@ -387,7 +389,7 @@ def _duel_stealth_intercept(
                 if state.game_over:
                     return stealth, intercept, False
                 # Re-evaluated fresh, same as the baseline at the top of
-                # this function: never cached (OQ-11).
+                # this function: never cached (ENG-005).
                 intercept = _active_intercept_decrease(pending, blocker)
             elif kind == "stealth_increase":
                 option.apply(state)
@@ -406,7 +408,7 @@ def _ask_modifier(
     context: dict,
 ) -> int | None:
     """Offer `options` plus decline; return the applied delta or None.
-    Sanitizes context (OQ-30) since `pending` must never reach an agent."""
+    Sanitizes context (ENG-021) since `pending` must never reach an agent."""
     by_value = {o.choice.value: o for o in options}
     choices = tuple(o.choice for o in options) + (Choice("decline", "Decline"),)
     decision = Decision(
@@ -434,7 +436,7 @@ def _ask_stealth_or_modifier(
 ) -> tuple[hooks.HookOption, str] | None:
     """Merge `STEALTH_MODIFIER_HOOK`/`INTERCEPT_DECREASE_HOOK`/
     `STEALTH_INCREASE_HOOK`/`FORCE_BLOCK_ATTEMPT_FAILURE_HOOK` into one
-    `Decision` (OQ-31/39/65). Returns `(option, kind)` or `None`."""
+    `Decision` (RUL-009/RUL-011/ENG-045). Returns `(option, kind)` or `None`."""
     decrease_values = {o.choice.value for o in decrease_options}
     increase_values = {o.choice.value for o in increase_options}
     force_fail_values = {o.choice.value for o in force_fail_options}
@@ -612,7 +614,7 @@ def attempt_block(
     chosen (`_pay_block_attempt_costs`), before `_duel_stealth_intercept`
     even runs.
 
-    `FORCE_BLOCK_ATTEMPT_FAILURE_HOOK` (OQ-65): a chosen option there makes
+    `FORCE_BLOCK_ATTEMPT_FAILURE_HOOK` (ENG-045): a chosen option there makes
     `_duel_stealth_intercept` return `forced_failure=True`, which this
     function treats as an ordinary failed attempt (loop back, same as any
     other) regardless of the returned `stealth`/`intercept` numbers -- a
@@ -738,7 +740,7 @@ def attempt_block(
             return None
 
         if choice.value in by_injected_value:
-            # OQ-26: an immediate, unconditional successful block -- never
+            # ENG-018: an immediate, unconditional successful block -- never
             # runs the stealth/intercept ping-pong for this candidate.
             injected_option = by_injected_value[choice.value]
             hooks.mark_reaction_played(pending, injected_option)
@@ -771,7 +773,7 @@ def attempt_block(
             return None
         if not forced_failure and intercept >= stealth:
             return blocker
-        # Failed attempt (naturally, or forced outright via OQ-65): does
+        # Failed attempt (naturally, or forced outright via ENG-045): does
         # not lock the blocker, does not end the window -- loop back and
         # re-offer another attempt or decline.
 
@@ -790,10 +792,10 @@ def perform_minion_action(
     block_candidate_predicate: Callable[[VampireInPlay], bool] | None = None,
 ) -> None:
     """Announce, block attempt, resolve or combat (Rulebook §4). Dispatches
-    `ACTION_SUCCEEDED_HOOK` (OQ-34) then `REFERENDUM_RESOLVED_HOOK`
-    (OQ-36). `block_candidate_predicate` is forwarded unchanged to
+    `ACTION_SUCCEEDED_HOOK` (ENG-024) then `REFERENDUM_RESOLVED_HOOK`
+    (ENG-026). `block_candidate_predicate` is forwarded unchanged to
     `attempt_block` -- see that function's own docstring. Also forwards any
-    `PENDING_BLOCK_TIME_COMBAT_GRANT_KEY` entry (OQ-60) recorded for the
+    `PENDING_BLOCK_TIME_COMBAT_GRANT_KEY` entry (ENG-040) recorded for the
     successful blocker into that combat's own `initial_combat_state` -- see
     `grant_block_time_combat_effect`'s own docstring."""
     vampire.locked = True

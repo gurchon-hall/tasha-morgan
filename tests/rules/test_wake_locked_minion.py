@@ -1,17 +1,17 @@
-"""`WAKE_LOCKED_MINION_HOOK` (OQ-48, `docs/OPEN_QUESTIONS.md`, resolved):
+"""`WAKE_LOCKED_MINION_HOOK` (ENG-030, resolved):
 `INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_HOOK`'s defender-side sibling in
 `engine/action.py::attempt_block`'s retry loop, offered to `defender`
 strictly before `state.ready_unlocked_vampires(defender)` is (re)computed
 each time around, so a chosen option's own `apply` setting `VampireInPlay.
 woken = True` on one of the defender's own locked vampires is picked up by
 that very computation -- the moment On the Qui Vive's (krcg id 101321) own
-primary "attempting to block" clause needs, on top of OQ-46's own
+primary "attempting to block" clause needs, on top of ENG-028's own
 `woken`/`is_ready_unlocked` primitive.
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism* only, using a fake stub provider -- On the Qui Vive's own card
 module remains `card-implementer`'s job once this capability exists; it
-stays registered `blocked`/`OQ-48`.
+stays registered `blocked`/`ENG-030`.
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -87,10 +87,10 @@ def test_choosing_to_wake_a_locked_vampire_makes_it_an_ordinary_block_candidate(
 
 def test_apply_can_set_an_allys_skip_next_unlock_reusing_oq46s_own_field():
     """On the Qui Vive's own ally footnote ("If this minion is an ally, they
-    do not unlock as normal during their next unlock phase") reuses OQ-46's
+    do not unlock as normal during their next unlock phase") reuses ENG-028's
     own `AllyInPlay.skip_next_unlock` field rather than a duplicate -- an
     ally is never itself offered as a block candidate in this engine (out of
-    scope, OQ-46's own solution note), so this is exercised directly through
+    scope, ENG-028's own solution note), so this is exercised directly through
     the hook's generic "apply just mutates state" contract, independent of
     `attempt_block`'s own (here empty) vampire candidate list."""
     builder = ScenarioBuilder(seed=1)
@@ -124,7 +124,7 @@ def test_apply_can_set_an_allys_skip_next_unlock_reusing_oq46s_own_field():
 
 
 def test_declining_then_retrying_reoffers_the_hook():
-    """Mirrors OQ-11's precedent for `INTERCEPT_DECREASE_HOOK`/
+    """Mirrors ENG-005's precedent for `INTERCEPT_DECREASE_HOOK`/
     `STEALTH_INCREASE_HOOK`: a failed block attempt loops `attempt_block`
     back to the top of its retry loop, where this hook is offered again --
     the defender declines first, lets B1's own attempt fail, then wakes B2

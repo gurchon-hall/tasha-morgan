@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class AttachmentView:
     """Public view of one live (`zone == "attached"`) `CardAttachment` on a vampire
-    (OQ-58, `docs/OPEN_QUESTIONS.md`): attachments are always shown face up once played
+    (ENG-038): attachments are always shown face up once played
     (Rulebook §3 "Playing a Card": "showing the card"), so this view carries no
     hidden-identity gate of its own -- `VampireView.attachments` below still inherits the
     host's own `visible_identity` gate, defensively: no attach mechanism in this project
@@ -43,7 +43,7 @@ class VampireView:
     zone: str  # "uncontrolled" | "ready" | "torpor" | "burned" | "removed_from_game"
     locked: bool
     is_ready_unlocked: bool
-    """Mirrors `VampireInPlay.is_ready_unlocked` (OQ-46): block/reaction eligibility is
+    """Mirrors `VampireInPlay.is_ready_unlocked` (ENG-028): block/reaction eligibility is
     public, and `locked` alone no longer determines it since a `woken` vampire can be
     `locked=True` yet still eligible."""
     wounded: bool
@@ -53,7 +53,7 @@ class VampireView:
     name: str | None
     capacity: int | None
     attachments: tuple[AttachmentView, ...]
-    """OQ-58 (`docs/OPEN_QUESTIONS.md`): every live `CardAttachment` currently on this
+    """ENG-038: every live `CardAttachment` currently on this
     vampire (`AttachmentView`'s own docstring). Empty, not merely absent, for a face-down
     uncontrolled vampire -- see `visible_identity`'s own gate below."""
     corruption_counters: dict[str, int]
@@ -70,7 +70,7 @@ class VampireView:
 @dataclass(frozen=True)
 class AllyView:
     """Public view of an ally (`AllyInPlay`): recruited face-up (§4), so identity stays
-    visible even while contested (OQ-10) -- a usability marker only, no secret created."""
+    visible even while contested (ENG-004) -- a usability marker only, no secret created."""
 
     instance_id: str
     controller: str
@@ -85,7 +85,7 @@ class AllyView:
 
 @dataclass(frozen=True)
 class MasterCardView:
-    """Public view of a standalone Master card (`MasterCardInPlay`; OQ-23). Mirrors
+    """Public view of a standalone Master card (`MasterCardInPlay`; ENG-015). Mirrors
     `AllyView` minus `life`/`strength`/`bleed`; played face up (§2), identity stays
     visible even while contested."""
 
@@ -133,7 +133,7 @@ def _attachment_view(a: CardAttachment) -> AttachmentView:
 def _live_attachment_counts_by_controller(state: GameState) -> dict[str, Counter[int]]:
     """How many live (`zone == "attached"`) copies of each `krcg_id` each controller
     currently has in play, across every vampire -- feeds `_visible_ash_heap` below
-    (OQ-58): a played attachment card's physical copy already sits in its player's own
+    (ENG-038): a played attachment card's physical copy already sits in its player's own
     `ash_heap` (`cards/_shared.py::play_from_hand`), unconditionally, the instant it is
     played; nothing removes that entry once the same card also becomes a live
     `CardAttachment` (a separate object, built by `engine/attachments.py::attach_card`,
@@ -150,7 +150,7 @@ def _visible_ash_heap(
     state: GameState, player: str, live_attachment_counts: dict[str, Counter[int]]
 ) -> tuple[str, ...]:
     """`player`'s own ash heap, names only, minus up to one entry per currently-live
-    attachment of the same `krcg_id` (OQ-58, `_live_attachment_counts_by_controller`'s
+    attachment of the same `krcg_id` (ENG-038, `_live_attachment_counts_by_controller`'s
     own docstring) -- least-invasive fix: `ash_heap` is display-only (never read for
     rules logic, `build_observation`'s own module docstring), so filtering it here, by
     count rather than by identity (no instance-level link exists between a `LibraryCard`
@@ -168,7 +168,7 @@ def _visible_ash_heap(
 
 def build_observation(state: GameState, viewer: str) -> Observation:
     """CLAUDE.md §5: hides opponent hand, library order, opponent's face-down
-    uncontrolled crypt (counts only). Else (ready/torpor, removed per OQ-24, allies,
+    uncontrolled crypt (counts only). Else (ready/torpor, removed per ENG-016, allies,
     Master cards) known face up."""
     other = [p for p in state.players if p != viewer][0]
     live_attachment_counts = _live_attachment_counts_by_controller(state)
@@ -185,7 +185,7 @@ def build_observation(state: GameState, viewer: str) -> Observation:
             blood=v.blood if visible_identity else 0,
             contested=v.contested_with is not None,
             name=v.card.name if visible_identity else None,
-            # Effective capacity (OQ-8, `docs/OPEN_QUESTIONS.md`): printed
+            # Effective capacity (ENG-002): printed
             # capacity as modified by any attached card's own bonus -- see
             # `engine/attachments.py::effective_capacity`.
             capacity=effective_capacity(state, v) if visible_identity else None,

@@ -9,7 +9,7 @@ Equipment-typed library card, not offered for a different acting vampire,
 one option per eligible card (named individually), the unblocked resolve
 moves the exact named card from library to hand, the "+1 stealth action"
 baseline (defender's default 0 intercept cannot block it), the blocked
-branch never touches the library, and the OQ-21 "bound at apply(), fizzles
+branch never touches the library, and the RUL-007 "bound at apply(), fizzles
 if gone by resolve()" convention.
 """
 
@@ -237,7 +237,7 @@ def test_blocked_does_not_resolve_the_library_stays_untouched():
 
 
 def test_resolve_fizzles_if_the_named_card_left_the_library_by_resolve_time():
-    """OQ-21 convention -- not reachable through ordinary play today (nothing
+    """RUL-007 convention -- not reachable through ordinary play today (nothing
     else in this engine touches another player's own library mid-action),
     exercised directly against the hook machinery."""
     builder = ScenarioBuilder(seed=1)

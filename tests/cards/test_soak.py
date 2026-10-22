@@ -9,7 +9,7 @@ cannot be used with no damage to prevent [LSJ 20001114].
 
 One assertion per clause/ruling: basic/superior prevention math, the
 non-aggravated-only restriction, no-carryover, the "nothing to prevent"
-gate, and the once-per-round cap (OQ-55, now resolved) holding across two
+gate, and the once-per-round cap (ENG-036, now resolved) holding across two
 separate damage instances to the same vampire within one round.
 """
 
@@ -179,7 +179,7 @@ def test_helper_never_touches_aggravated_directly():
     assert damage == {"normal": 0, "aggravated": 3}
 
 
-# --- "A vampire can play only one Soak each round." (OQ-55, resolved) ----
+# --- "A vampire can play only one Soak each round." (ENG-036, resolved) ----
 
 
 def test_once_per_round_cap_blocks_a_second_offer_within_the_same_round():
@@ -206,7 +206,7 @@ def test_cap_is_unenforced_without_a_round_state():
 
 
 def test_once_per_round_cap_survives_two_separate_damage_instances_end_to_end():
-    """OQ-55's own motivating gap: an additional-strike pair can land a
+    """ENG-036's own motivating gap: an additional-strike pair can land a
     second hit on the same vampire within one round. Mirrors
     `tests/rules/test_damage_prevention_hook.py`'s two-call pattern
     directly against `apply_damage`."""

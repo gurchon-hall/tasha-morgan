@@ -1,14 +1,14 @@
-"""Generic "change control of a location" primitives (OQ-35, `docs/
-OPEN_QUESTIONS.md`): `engine/attachments.py::transfer_attachment_control`
-and `engine/master_cards.py::transfer_master_card_control` -- Disputed
-Territory (krcg id 100557, "Successful referendum means the chosen
-Methuselah takes control of the chosen location") needs exactly these two
-primitives, over the two existing shapes a "location" can take (OQ-23
-already found "location" is free text on an ordinary standalone Master
-card or an attached Equipment, not a distinct krcg type).
+"""Generic "change control of a location" primitives (ENG-025):
+`engine/attachments.py::transfer_attachment_control` and
+`engine/master_cards.py::transfer_master_card_control` -- Disputed Territory
+(krcg id 100557, "Successful referendum means the chosen Methuselah takes
+control of the chosen location") needs exactly these two primitives, over the
+two existing shapes a "location" can take (ENG-015 already found "location" is
+free text on an ordinary standalone Master card or an attached Equipment, not a
+distinct krcg type).
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
-*mechanism*; Disputed Territory's own card module stays `blocked`/OQ-6 and
+*mechanism*; Disputed Territory's own card module stays `blocked`/RUL-005 and
 is not touched here (`card-implementer`'s job once this capability exists).
 """
 

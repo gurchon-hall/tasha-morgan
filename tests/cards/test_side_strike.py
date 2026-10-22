@@ -253,7 +253,7 @@ def test_additional_strike_grants_one_additional_strike_via_the_full_strike_mach
 def test_limited_blocks_a_second_copy_in_the_same_round():
     """ "(limited)": once the `[CEL]` clause has been played once, a second
     physical copy is not offered again this round. The cap now lives in
-    `engine/combat.py`'s shared, round-scoped `round_state` (OQ-19), so both
+    `engine/combat.py`'s shared, round-scoped `round_state` (ENG-013), so both
     direct `hooks.offer` calls below are threaded through the *same* shared
     dict, exactly as `run_combat` would within one real round."""
     builder = ScenarioBuilder(seed=1)

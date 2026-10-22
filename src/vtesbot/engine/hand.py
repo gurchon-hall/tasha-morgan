@@ -1,11 +1,10 @@
 """Hand-size enforcement (Rulebook §2). `HAND_SIZE_MODIFIER_HOOK` is the
-passive numeric hook. `reconcile_hand_size` must be called after every
-hand mutation. `remove_from_hand`/`draw_replacement_card` (OQ-57, `docs/
-OPEN_QUESTIONS.md`) are the generic engine-layer primitives behind `cards/
-_shared.py::play_from_hand` -- kept here, not in `cards/`, so engine code
-(`engine/phases/minion.py`) can call `draw_replacement_card` directly
-without importing from the cards layer (CLAUDE.md §6: cards register into
-the engine, never the reverse)."""
+passive numeric hook. `reconcile_hand_size` must be called after every hand
+mutation. `remove_from_hand`/`draw_replacement_card` (ENG-037) are the generic
+engine-layer primitives behind `cards/_shared.py::play_from_hand` -- kept here,
+not in `cards/`, so engine code (`engine/phases/minion.py`) can call
+`draw_replacement_card` directly without importing from the cards layer
+(CLAUDE.md §6: cards register into the engine, never the reverse)."""
 
 from typing import TYPE_CHECKING
 
@@ -52,15 +51,15 @@ def reconcile_hand_size(state: GameState, player: str) -> None:
 
 def remove_from_hand(state: GameState, player: str, krcg_id: int) -> LibraryCard:
     """Remove the first `krcg_id` card from hand straight to the ash heap,
-    without drawing its replacement (OQ-57 Finding 1, `docs/
-    OPEN_QUESTIONS.md`). Rulebook §2 Card Types, "Library Cards" Advanced
-    Rules (`data/sources/rulebook/2026-10-09/2-card-types.md:124-126`):
-    "Some effects can cancel a card 'as it is played.' ... Even drawing to
-    replace cards, comes after this time period." -- so a caller with an "as played"
-    cancel window to offer first (`engine/phases/minion.py::
-    _perform_action_card`, for an Action-type card specifically) calls this
-    instead of `cards/_shared.py::play_from_hand`, then calls
-    `draw_replacement_card` only once that window closes."""
+    without drawing its replacement (ENG-037 Finding 1). Rulebook §2 Card
+    Types, "Library Cards" Advanced Rules
+    (`data/sources/rulebook/2026-10-09/2-card-types.md:124-126`): "Some effects
+    can cancel a card 'as it is played.' ... Even drawing to replace cards,
+    comes after this time period." -- so a caller with an "as played" cancel
+    window to offer first (`engine/phases/minion.py::_perform_action_card`, for
+    an Action-type card specifically) calls this instead of
+    `cards/_shared.py::play_from_hand`, then calls `draw_replacement_card` only
+    once that window closes."""
     p = state.players[player]
     for i, card in enumerate(p.hand):
         if card.krcg_id == krcg_id:

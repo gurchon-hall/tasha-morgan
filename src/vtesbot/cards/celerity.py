@@ -31,14 +31,14 @@ legal target pool is every vampire with `zone in {"ready", "torpor"}`,
 either player's -- never an uncontrolled (face-down) vampire.
 
 "Cannot be put on a vampire with superior Celerity [CEL]": a target-legality
-filter against the vampire's *effective* discipline levels (OQ-8,
-`docs/OPEN_QUESTIONS.md`; `engine/attachments.py::effective_disciplines`),
-not merely its printed ones -- a vampire who reached effective superior
-Celerity via an earlier-attached copy of this same card must be excluded
-exactly like one with printed superior Celerity.
+filter against the vampire's *effective* discipline levels (ENG-002;
+`engine/attachments.py::effective_disciplines`), not merely its printed ones --
+a vampire who reached effective superior Celerity via an earlier-attached copy
+of this same card must be excluded exactly like one with printed superior
+Celerity.
 
 "+1 level of Celerity [cel]" / "+1 capacity": two passive, mandatory,
-attachment-sourced bonuses (OQ-8) -- `"capacity_modifier"`
+attachment-sourced bonuses (ENG-002) -- `"capacity_modifier"`
 (`hooks.sum_modifiers`) and `"discipline_level_modifier"`
 (`hooks.union_modifiers`). Nothing in the printed text marks this card
 "unique", and the restriction clause only excludes a vampire *already at*
@@ -75,7 +75,7 @@ DISCIPLINE_LEVEL_MODIFIER_HOOK = "discipline_level_modifier"
 SUPERIOR = "CEL"
 BASIC = "cel"
 CARD_TYPE = "Master"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Master" docstring fact above (krcg's own
 `types[0].value`; "Discipline" is a subtype, not a distinct krcg card type)."""
 

@@ -15,7 +15,7 @@ clauses; the damage-prevention half's own three gates (round 1 only
 i.e. this vampire ended up the blocker -- proven by the grant simply never
 reaching a different blocker); and a full end-to-end run through
 `perform_minion_action` reproducing the engine's own two new primitives
-(OQ-60, resolved).
+(ENG-040, resolved).
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent

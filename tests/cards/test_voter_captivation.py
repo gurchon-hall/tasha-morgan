@@ -15,14 +15,14 @@ the vote is considered to have passed by 0 votes." [LSJ 19980107]
 
 One assertion per clause/qualifier/ruling: card-in-hand and discipline
 gating for each clause; "ready" eligibility (torpor excluded); the basic
-clause's blood gain (capped at capacity, per `add_blood`/OQ-8); the superior
+clause's blood gain (capped at capacity, per `add_blood`/ENG-002); the superior
 clause's redirect-to-pool choice (bounded at `min(2, margin)`, including the
 `margin < 2` edge case and the no-decision-needed `margin == 0` edge case);
-OQ-38 (resolved, Reading A): the card is never offered to the non-caller
+RUL-010 (resolved, Reading A): the card is never offered to the non-caller
 Methuselah, and is only ever offered through the political action's own
 acting vampire, never a different ready vampire the caller also controls;
 the once-per-action cap (now necessarily per *action*, not per-target, since
-only one vampire is ever eligible), and that `cost` (OQ-32's "cost is still
+only one vampire is ever eligible), and that `cost` (ENG-022's "cost is still
 paid" mechanism) discards the card independently of whether `apply` itself
 ever runs; and an end-to-end pass through a real political action (Kine
 Resources Contested) and `minion_phase`. The "played after resolution ...
@@ -32,7 +32,7 @@ proven generically by `tests/rules/test_referendum_resolved.py`), not
 independently re-tested at the card level; the "ousts the acting
 Methuselah" and "automatically passing, by 0 votes" rulings describe
 timing/engine states this pool cannot yet produce (no automatically-passing
-mechanism exists, `docs/OPEN_QUESTIONS.md` OQ-6) -- the 0-votes edge case is
+mechanism exists RUL-005) -- the 0-votes edge case is
 still covered below directly against the provider.
 """
 
@@ -155,11 +155,11 @@ def test_superior_offered_with_superior_pre():
     assert values == {"voter_captivation:basic:V1", "voter_captivation:superior:V1"}
 
 
-# --- OQ-38 (resolved, Reading A): "this vampire" is the acting vampire -----
+# --- RUL-010 (resolved, Reading A): "this vampire" is the acting vampire -----
 
 
 def test_never_offered_to_the_non_caller_methuselah():
-    """Unlike Scalpel Tongue (OQ-38's other half), this card has no
+    """Unlike Scalpel Tongue (RUL-010's other half), this card has no
     Reaction half to lean on -- the defending Methuselah's own copy is
     simply unplayable, regardless of which vampire they control."""
     builder = ScenarioBuilder(seed=1)
@@ -359,8 +359,8 @@ def test_second_copy_cannot_regrant_the_same_vampire_within_one_window():
 
 
 def test_a_canceled_attempt_does_not_count_against_the_once_per_action_cap():
-    """User ruling (OQ-38's companion ruling, `docs/OPEN_QUESTIONS.md`
-    OQ-36's own addendum): "action modifiers can only be played once; if
+    """User ruling (RUL-010's companion ruling
+    ENG-026's own addendum): "action modifiers can only be played once; if
     [a play is] canceled as played, another copy can be played." `cost`
     alone (standing in for a canceled attempt, where `apply` never runs --
     see `tests/rules/test_hooks.py`'s own generic proof of that mechanism)

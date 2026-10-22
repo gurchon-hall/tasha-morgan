@@ -22,7 +22,7 @@ blood/pool cost. Legal since 2004-05-17; confirmed on the active 2P
 allowed list (`data/formats/2p/2026-10-03.json`) and in
 `data/decks/vekn-2p/ventrue.json`.
 
-Status: implemented. Previously `blocked` (OQ-55, now resolved):
+Status: implemented. Previously `blocked` (ENG-036, now resolved):
 `engine/damage.py::apply_damage`'s Prevent step now threads
 `ROUND_STATE_CONTEXT_KEY: round_state` into `DAMAGE_PREVENTION_HOOK`'s
 context, so a provider can read/write a round-scoped flag the same way
@@ -67,7 +67,7 @@ SUPERIOR = "FOR"
 BASIC_PREVENT = 2
 SUPERIOR_PREVENT = 4
 CARD_TYPE = "Combat"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Combat" docstring fact above."""
 
 _SOAK_USED_KEY = "soak_used"

@@ -15,7 +15,7 @@ effect through the real `attempt_block` call site (an ordinary,
 stealth/intercept-subject block, not an unconditional success, while
 `locked` stays `True`); [TOM 19951129] ("need not attempt to block...
 merely an option" -- declining after waking); an already-`woken`
-candidate is not re-offered (OQ-48's own flagged exclusion); the
+candidate is not re-offered (ENG-030's own flagged exclusion); the
 deliberate scope decision not to target a locked ally (module
 docstring).
 """
@@ -146,7 +146,7 @@ def test_waking_fails_to_block_against_higher_stealth_tom_ruling():
     defender = ScriptedAgent("P2")
     defender.expect("wake_locked_minion", "on_the_qui_vive:D1")
     defender.expect("block_attempt", "block_with:D1")
-    # Retry: D1 is already woken, so the hook offers nothing (OQ-48's own
+    # Retry: D1 is already woken, so the hook offers nothing (ENG-030's own
     # exclusion) and no second "wake_locked_minion" decision is raised.
     defender.expect("block_attempt", "decline")
     game.state.agents["P2"] = defender
@@ -159,7 +159,7 @@ def test_waking_fails_to_block_against_higher_stealth_tom_ruling():
 
 
 def test_an_already_woken_vampire_is_not_reoffered():
-    """OQ-48's own flagged exclusion: the engine does nothing to stop this
+    """ENG-030's own flagged exclusion: the engine does nothing to stop this
     hook being re-offered for an already-`woken` candidate on a retry --
     this module's own provider must guard it."""
     builder = ScenarioBuilder(seed=1)
@@ -261,7 +261,7 @@ def test_a_second_distinct_eligible_vampire_is_unaffected_by_the_cap():
 
 def test_not_offered_for_a_locked_ally():
     """Allies are never offered as block candidates and never play reaction
-    cards in this engine (OQ-46's own out-of-scope note) -- this module's
+    cards in this engine (ENG-028's own out-of-scope note) -- this module's
     own provider never targets one, a deliberate scope decision, not a
     silently dropped clause (see its own module docstring)."""
     builder = ScenarioBuilder(seed=1)

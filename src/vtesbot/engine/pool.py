@@ -37,7 +37,7 @@ def lose_pool(state: GameState, player: str, amount: int) -> int:
 
 @contextmanager
 def simultaneous_pool_losses(state: GameState) -> Iterator[None]:
-    """Defer ousting until every pool loss of one event is applied (OQ-44, D-9): both
+    """Defer ousting until every pool loss of one event is applied (DES-010, DES-009): both
     at 0 pool from the same event is a tie. Nests; an exception discards queued ousts."""
     state.oust_deferral_depth += 1
     try:
@@ -56,7 +56,7 @@ def lose_pool_simultaneously(state: GameState, losses: Mapping[str, int]) -> dic
     """Apply `losses` ({player: amount}) as one event; returns amounts lost.
 
     Application order is by player id, not seat, so the result never depends
-    on `turn_order` (OQ-44).
+    on `turn_order` (DES-010).
     """
     lost: dict[str, int] = {}
     with simultaneous_pool_losses(state):
@@ -66,16 +66,16 @@ def lose_pool_simultaneously(state: GameState, losses: Mapping[str, int]) -> dic
 
 
 MIN_POOL_AFTER_VOLUNTARY_SPEND = 1
-"""OQ-41/OQ-42, D-9 (project simplification, not a rulebook rule): a Methuselah may
+"""DES-009, DES-009 (project simplification, not a rulebook rule): a Methuselah may
 not bring their own pool to 0 via a voluntary choice."""
 
 
 def max_voluntary_spend(state: GameState, player: str) -> int:
-    """Most pool `player` may voluntarily pay/burn (OQ-42): keeps them at 1+."""
+    """Most pool `player` may voluntarily pay/burn (DES-009): keeps them at 1+."""
     return max(0, state.players[player].pool - MIN_POOL_AFTER_VOLUNTARY_SPEND)
 
 
 def can_afford_without_ousting(state: GameState, player: str, amount: int) -> bool:
-    """True if `player` may voluntarily pay/burn `amount` pool (OQ-42). Every
+    """True if `player` may voluntarily pay/burn `amount` pool (DES-009). Every
     self-paid-cost option generator must gate on this; mandatory losses bypass it."""
     return amount <= max_voluntary_spend(state, player)

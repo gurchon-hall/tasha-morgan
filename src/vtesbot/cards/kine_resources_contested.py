@@ -18,7 +18,7 @@ Card type: Political Action (`types == ["Political Action"]`). No clan,
 discipline or title requirement (`clan_requirement == []`,
 `discipline_requirement is None`); `cost is None`.
 
-Status: implemented (OQ-6, `docs/OPEN_QUESTIONS.md`, now resolved by
+Status: implemented (RUL-005, now resolved by
 `engine/politics.py::resolve_referendum`).
 
 Engine wiring: a political action card is the acting vampire's entire
@@ -58,8 +58,8 @@ Allocation: the split is the referendum's own term. Rulebook §4 "The
 Referendum" step 1 "Choose the terms" precedes step 2 "Polling", and terms
 are chosen only once the action succeeds (§4 "The Political Action"), so
 `resolve()` raises the `"kine_resources_contested_allocation"` decision
-first and locks it. User ruling 2026-10-13 (OQ-45, `docs/DECISIONS.md`
-D-9): "la répartition est verrouillée avant le vote puis fenetre d'avant
+first and locks it. User ruling 2026-10-13 (RUL-013
+DES-009): "la répartition est verrouillée avant le vote puis fenetre d'avant
 votes [...] puis le vote a lieu puis fenetre de fin de tally [...] puis
 résolution des effets du vote puis fenetre d'action modifier de fin
 d'action". The locked self share is passed as `pool_reserve`, so the
@@ -81,7 +81,7 @@ yourself", is not a separate restriction to enforce: `(1, 3)`/`(2, 2)`/
 allocated": a pure loss, not a transfer (contrast `parity_shift.py`, whose
 own text has the target's pool "distributed" to a recipient, i.e. actually
 awarded) -- both players' shares are applied as one event via
-`engine.pool.lose_pool_simultaneously` (OQ-44), never `gain_pool`.
+`engine.pool.lose_pool_simultaneously` (DES-010), never `gain_pool`.
 "Can allocate more points than a Methuselah has pool" needs no extra
 code: `lose_pool` already floors the loss at the
 player's current pool and still checks ousting (`engine/pool.py`), so
@@ -97,15 +97,14 @@ game immediately (not a gap this card needs to fill, and not an Open
 Question -- the engine's existing 2P oust model already fully covers the
 only case that can actually arise here).
 
-`resolve_referendum`'s own `action_pending=pending` argument (OQ-36,
-`docs/OPEN_QUESTIONS.md`) is this `resolve()` closure's own `pending`
-argument, forwarded through unchanged -- lets `perform_minion_action`
-dispatch `REFERENDUM_RESOLVED_HOOK` (Voter Captivation's own trigger
-moment) once this whole `resolve()` closure, including the allocation
-above, returns. No provider is registered against that hook by this
-module (Voter Captivation's own card module is a separate pass).
+`resolve_referendum`'s own `action_pending=pending` argument (ENG-026) is this
+`resolve()` closure's own `pending` argument, forwarded through unchanged --
+lets `perform_minion_action` dispatch `REFERENDUM_RESOLVED_HOOK` (Voter
+Captivation's own trigger moment) once this whole `resolve()` closure,
+including the allocation above, returns. No provider is registered against that
+hook by this module (Voter Captivation's own card module is a separate pass).
 
-OQ-57 (`docs/OPEN_QUESTIONS.md`): calls `remove_from_hand` (not
+ENG-037: calls `remove_from_hand` (not
 `play_from_hand`) and sets `ActionCardSpec.name=NAME`, so `_perform_
 action_card` can interleave a future Reflex card's own cancel-as-played
 window before drawing the replacement (Finding 1), and so a second
@@ -134,18 +133,17 @@ from vtesbot.engine.state import GameState
 
 KRCG_ID = 101056
 NAME = "Kine Resources Contested"
-"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
-OPEN_QUESTIONS.md`): backs the generic "same named action card at most
-once per turn" cap."""
+"""`ActionCardSpec.name`/`CardRegistration.name` (ENG-037): backs the generic
+"same named action card at most once per turn" cap."""
 TOTAL_POINTS = 4
 """Printed "Allocate 4 points ..."."""
 CARD_TYPE = "Political Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Political Action" docstring fact above."""
 
 
 def _legal_self_points(state: GameState, player: str) -> range:
-    """OQ-42 (user ruling, `docs/DECISIONS.md` D-9): the caller picks the
+    """DES-009 (user ruling DES-009): the caller picks the
     split, so their own share may not zero their pool. The opponent's share
     is unrestricted (an opponent oust by the card is a normal oust)."""
     return range(1, min(TOTAL_POINTS, max_voluntary_spend(state, player) + 1))
@@ -165,7 +163,7 @@ def _provide_kine_resources_contested(
     if not _legal_self_points(state, player):
         return []
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
     other = state.other_player(player)
 
     def _apply(s: GameState) -> ActionCardSpec:

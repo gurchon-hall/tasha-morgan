@@ -22,7 +22,7 @@ Wired against `engine/damage.py::DAMAGE_PREVENTION_HOOK`, offered to the
 damaged vampire's own controller (`apply_damage`'s own `player` argument) --
 exactly "a vampire you control" already, since Opikun's own controller is
 looked up as the *same* player. 2P combat is always strictly one vampire per
-side (OQ-1, `docs/open_questions_archive/001.md`), so "from the opposing
+side (RUL-001), so "from the opposing
 minion's strike" needs no separate attacker check beyond "this damage comes
 from an active combat's own strike resolution at all": `context[
 COMBAT_STATE_CONTEXT_KEY]` is only non-`None` when `apply_damage` is called
@@ -36,7 +36,7 @@ round-scoped) scratch dict `run_combat` creates once per combat (same
 primitive Saku Pihlajamäki's own once-per-combat maneuver grant already
 uses, `cards/saku_pihlajamaki.py`) -- a fresh `set[str]` of already-used
 Opikun instance ids, so two separate copies of Opikun each get their own
-independent once-per-combat use (mirrors OQ-40's "two independent sources"
+independent once-per-combat use (mirrors RUL-012's "two independent sources"
 reasoning), and the same copy cannot be reoffered in a later round of the
 same combat.
 

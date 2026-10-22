@@ -19,7 +19,7 @@ the basic (plain text) or the superior (bold) effect ... but not both").
 `clan_requirement == []`, `cost is None`, `burn_option is False`,
 `trifle is False`.
 
-Status: implemented. Previously `blocked` (OQ-17, `docs/OPEN_QUESTIONS.md`,
+Status: implemented. Previously `blocked` (ENG-011,
 now resolved) for want of a generic engine entry point letting a library
 card of printed `types == ["Action"]` supply its own self-contained minion
 action; `engine/phases/minion.py::ACTION_CARD_PLAY_HOOK` /
@@ -29,8 +29,7 @@ superior, two different hooks/providers for one physical card" shape already
 used elsewhere (e.g. `bonding.py`)
 (`disciplines` gating: a vampire with only basic `"pre"` unlocks only the
 basic clause; a vampire with superior `"PRE"` is eligible for either, per
-Rulebook §3 "may opt to use either effect"). OQ-57 (`docs/
-OPEN_QUESTIONS.md`): both clauses call `remove_from_hand` (not
+Rulebook §3 "may opt to use either effect"). ENG-037: both clauses call `remove_from_hand` (not
 `play_from_hand`) and set `ActionCardSpec.name=NAME`, so `_perform_
 action_card` can interleave a future Reflex card's own cancel-as-played
 window before drawing the replacement (Finding 1), and so a second
@@ -41,7 +40,7 @@ physical card).
 "Ⓓ" (basic clause): the rulebook glossary's own "Directed Action" entry
 (`data/sources/rulebook/2026-10-09/8-glossaries.md:59`) -- a *directed*
 bleed, amount 2 (the default 1, +1 printed). Its card text literally prints
-the word "Bleed", so (OQ-17's rules-auditor-fixed requirement)
+the word "Bleed", so (ENG-011's rules-auditor-fixed requirement)
 `ActionCardSpec.action` is declared `ACTION_BLEED`, not left at the generic
 `ACTION_ACTION_CARD` default -- this is required, not merely cosmetic, so an
 existing bleed-gated provider sharing the same block-attempt/bleed-amount
@@ -67,22 +66,22 @@ player's own uncontrolled region. Not textually a bleed/hunt/etc., so
 action's equivalent of `HUNT_STEALTH`/`RECRUIT_ALLY_STEALTH`, not a
 declinable modifier layered on top of a 0 baseline). Both clauses already
 collapse to the engine's existing single-opponent block-attempt model for a
-2P duel (`engine/action.py`'s own module docstring; not OQ-1, which is
+2P duel (`engine/action.py`'s own module docstring; not RUL-001, which is
 scoped to unsettled card wording, not this already-settled structural
 collapse), so neither raises a fresh prey/predator question.
 
-"a younger vampire" (superior clause): names no explicit comparison target
-in its own sentence. Per OQ-17's own resolution note (`docs/
-OPEN_QUESTIONS.md`), confirmed directly by the project owner on 2026-10-10:
-read as younger than the acting vampire (the vampire using the [PRE]
-ability) -- consistent with the broader unqualified-comparative convention
-other printed card texts use (e.g. Danny Larkshill, Apolonia Czarnecki, both
-cross-checked live via `krcg.load()`), and with how `grooming_the_protege.py`
-already reads an analogous (but differently worded) "younger vampire"
-clause: strictly lower *printed* capacity (`vampire.card.capacity`, not the
-attachment-aware `effective_capacity` -- OQ-8's `effective_capacity` is used
-below only for the blood-capacity room check on the destination, which is
-the correct use per OQ-8's own resolution) than the acting vampire.
+"a younger vampire" (superior clause): names no explicit comparison target in
+its own sentence. Per ENG-011's own resolution note, confirmed directly by the
+project owner on 2026-10-10: read as younger than the acting vampire (the
+vampire using the [PRE] ability) -- consistent with the broader
+unqualified-comparative convention other printed card texts use (e.g. Danny
+Larkshill, Apolonia Czarnecki, both cross-checked live via `krcg.load()`), and
+with how `grooming_the_protege.py` already reads an analogous (but differently
+worded) "younger vampire" clause: strictly lower *printed* capacity
+(`vampire.card.capacity`, not the attachment-aware `effective_capacity` --
+ENG-002's `effective_capacity` is used below only for the blood-capacity room
+check on the destination, which is the correct use per ENG-002's own
+resolution) than the acting vampire.
 
 Target region: "in your uncontrolled region" -- `zone == "uncontrolled"` and
 `controller == player` (own uncontrolled region only). A target already at
@@ -94,7 +93,7 @@ clamps defensively).
 "enchant_kindred_target") raised inside `apply()`, at announce time, before
 the block-attempt window opens -- not deferred to `resolve()` (Rulebook §4
 "Announce the Action": all action details, including the target, are fixed
-at announce; this engine's own `ActionCardSpec` contract matches. OQ-21,
+at announce; this engine's own `ActionCardSpec` contract matches. RUL-007,
 resolved: VTES never re-chooses a target at resolve time, only re-validates
 it, per the general "fizzles" ruling cross-referenced against 100+ cards;
 `resolve()`'s own "target no longer eligible" branch below matches that
@@ -130,10 +129,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 100640
 NAME = "Enchant Kindred"
-"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
-OPEN_QUESTIONS.md`): the generic "same named action card at most once per
-turn" cap is keyed by this exact string for both clauses -- they are the
-same physical card."""
+"""`ActionCardSpec.name`/`CardRegistration.name` (ENG-037): the generic "same
+named action card at most once per turn" cap is keyed by this exact string for
+both clauses -- they are the same physical card."""
 BASIC = "pre"
 SUPERIOR = "PRE"
 BASIC_BLEED_BASE_AMOUNT = 2
@@ -146,7 +144,7 @@ SUPERIOR_STEALTH = 1
 not a modifier layered on top of a 0 baseline."""
 ADD_BLOOD_AMOUNT = 2
 CARD_TYPE = "Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action" docstring fact above."""
 
 
@@ -179,7 +177,7 @@ def _provide_enchant_kindred_basic(
     if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
         return []
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
@@ -248,12 +246,12 @@ def _provide_enchant_kindred_superior(
     if not _eligible_targets(state, player, acting_vampire):
         return []  # no legal target: do not offer a card play that cannot resolve.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
 
-        # Target fixed at announce time, not deferred to resolve() -- OQ-21,
+        # Target fixed at announce time, not deferred to resolve() -- RUL-007,
         # see module docstring.
         targets = _eligible_targets(s, player, acting_vampire)
         if len(targets) == 1:
@@ -274,7 +272,7 @@ def _provide_enchant_kindred_superior(
             del pending  # no later window of its own to feed.
             target = s.players[player].vampires.get(target_id)
             if target is None or target not in _eligible_targets(s, player, acting_vampire):
-                return  # fizzles (OQ-21); not reachable today, but correct either way.
+                return  # fizzles (RUL-007); not reachable today, but correct either way.
             add_blood(s, target, ADD_BLOOD_AMOUNT)
 
         return ActionCardSpec(

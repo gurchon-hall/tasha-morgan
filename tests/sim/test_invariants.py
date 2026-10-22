@@ -76,7 +76,7 @@ def test_activity_after_a_simultaneous_oust_tie_is_a_violation():
 
 
 def test_forced_fame_burn_after_a_yield_is_not_a_self_oust():
-    """OQ-43: a forced own-pool oust stays legal and must not be flagged; the
+    """DES-009: a forced own-pool oust stays legal and must not be flagged; the
     nearest decision (a contest `yield`) spent nothing."""
     log = ReplayLog(
         [

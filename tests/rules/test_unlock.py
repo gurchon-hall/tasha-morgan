@@ -135,7 +135,7 @@ def test_colliding_mandatory_effect_choice_values_raise_instead_of_dropping_one(
     collision guard -- two providers offering the same raw `Choice.value`
     would silently collapse to one dict entry, permanently discarding the
     first provider's `HookOption` (including its own `apply`) with no error,
-    no log, no `Decision` (mirrors `test_influence.py`'s own OQ-24 addendum
+    no log, no `Decision` (mirrors `test_influence.py`'s own ENG-016 addendum
     repro for the influence-phase equivalent). Repro: two toy providers both
     choosing `Choice("burn_1_pool", ...)`. Before the fix: the second
     provider's option would silently win the dict and the first's `apply`

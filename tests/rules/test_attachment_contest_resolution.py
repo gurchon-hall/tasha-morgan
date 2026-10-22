@@ -1,13 +1,13 @@
-"""Attached-master-card contest *resolution* (OQ-22, `docs/
-OPEN_QUESTIONS.md`): once two same-named unique attachments are flagged as
-contesting each other (`engine/attachments.py::detect_contest_on_attach`),
-each controller must be offered the rulebook's own pay-1-pool-or-yield
-decision during their own unlock phases (Rulebook §4 Advanced Rules >
-Contested Cards), mirroring the ally mechanism OQ-15 already proved
+"""Attached-master-card contest *resolution* (ENG-014): once two same-named
+unique attachments are flagged as contesting each other
+(`engine/attachments.py::detect_contest_on_attach`), each controller must be
+offered the rulebook's own pay-1-pool-or-yield decision during their own unlock
+phases (Rulebook §4 Advanced Rules > Contested Cards), mirroring the ally
+mechanism ENG-009 already proved
 (`tests/rules/test_ally_contest_resolution.py`) -- except, as with an ally,
-there is no 2P "stays usable" override, so the surviving copy's own `zone`
-only flips back to `"attached"` on its controller's own *next* unlock
-phase, not instantaneously with the opponent's yield (see
+there is no 2P "stays usable" override, so the surviving copy's own `zone` only
+flips back to `"attached"` on its controller's own *next* unlock phase, not
+instantaneously with the opponent's yield (see
 `engine/attachments.py::resolve_one_attachment_contest` and
 `engine/phases/unlock.py::_unlock_own_attachments`).
 """

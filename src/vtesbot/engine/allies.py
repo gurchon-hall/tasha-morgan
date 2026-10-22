@@ -1,6 +1,6 @@
-"""Allies in play: bring in (OQ-7), remove one. Recruit action wires via a
-`"recruit_ally_play"` hook (OQ-12). Contested Cards (OQ-10) unmodified §4; pay/yield
-(OQ-15) mirrors `engine/contests.py`."""
+"""Allies in play: bring in (ENG-001), remove one. Recruit action wires via a
+`"recruit_ally_play"` hook (ENG-006). Contested Cards (ENG-004) unmodified §4; pay/yield
+(ENG-009) mirrors `engine/contests.py`."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class RecruitAllySpec:
-    """What a `"recruit_ally_play"` hook's `apply(state)` returns (OQ-12). `card` is the
+    """What a `"recruit_ally_play"` hook's `apply(state)` returns (ENG-006). `card` is the
     already-removed card, kept to burn if blocked (§4). `pay_cost` runs only once the
     action succeeds."""
 
@@ -59,7 +59,7 @@ def recruit_ally(
 
 
 def add_life(ally: AllyInPlay, amount: int) -> int:
-    """Add life to an ally, capped at its own printed `starting_life` (OQ-61;
+    """Add life to an ally, capped at its own printed `starting_life` (ENG-041;
     e.g. Seraphina, krcg 201686: "...can add 2 blood or life to a minion you
     control... not to exceed starting life."). Mirrors `engine/damage.py::
     add_blood`'s capped shape. Returns the amount actually added."""
@@ -72,7 +72,7 @@ def add_life(ally: AllyInPlay, amount: int) -> int:
 
 def detect_contest_on_recruit(state: GameState, recruited: AllyInPlay) -> None:
     """Flags `recruited` + a same-named opposing ally as contested
-    (§4, OQ-10; not 2P-overridden), matched by `name`. OQ-16: a
+    (§4, ENG-004; not 2P-overridden), matched by `name`. ENG-010: a
     same-controller collision burns the incoming copy instead."""
     own = state.players[recruited.controller]
     for mine in own.allies.values():
@@ -93,10 +93,10 @@ def detect_contest_on_recruit(state: GameState, recruited: AllyInPlay) -> None:
 
 
 def resolve_one_ally_contest(state: GameState, player: str, ally: AllyInPlay) -> None:
-    """§4 Unlock + Contested Cards (OQ-15): pay 1 pool to keep contesting, or yield
+    """§4 Unlock + Contested Cards (ENG-009): pay 1 pool to keep contesting, or yield
     (burn own copy). No 2P override: survivor's `zone` restores only on its own
     next unlock phase."""
-    # OQ-42: paying must not leave the payer at 0 pool; yielding stays.
+    # DES-009: paying must not leave the payer at 0 pool; yielding stays.
     pay = (Choice("pay", "Pay 1 pool to keep contesting"),)
     choices = (
         *(pay if can_afford_without_ousting(state, player, 1) else ()),

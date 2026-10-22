@@ -60,29 +60,28 @@ bound directly, no `Decision` raised; with more than one, a `Decision`
 offers one choice per target (same shape as `line_brawl.py`'s `[pot]`
 clause).
 
-"this turn, Camarilla vampires you control can enter combat with the
-chosen vampire as a Ⓓ action": wired against `engine/phases/minion.py`'s
+"this turn, Camarilla vampires you control can enter combat with the chosen
+vampire as a Ⓓ action": wired against `engine/phases/minion.py`'s
 `grant_enter_combat_this_turn`/`active_enter_combat_grants`/
-`build_enter_combat_action_spec` (first production user of these
-primitives, alongside the generic scenario tests in `tests/rules/
-test_enter_combat_grant.py`). "Camarilla vampires you control": a
+`build_enter_combat_action_spec` (first production user of these primitives,
+alongside the generic scenario tests in
+`tests/rules/test_enter_combat_grant.py`). "Camarilla vampires you control": a
 card-level gate on `vampire.card.sect is Sect.CAMARILLA` on the *acting*
-vampire trying to use the grant (same shape as `line_brawl.py`'s own
-"Requires an Anarch" gate), independent of whether that vampire is Lucinde
-herself (nothing excludes her; she is herself Camarilla). Each active
-grant is offered as its own `ACTION_CARD_PLAY_HOOK` option, gated at offer
-time on the grant's target still being `zone == "ready"` (mirrors
-`line_brawl.py`'s own `_eligible_combat_targets` guard) -- a target who
-has since left `torpor` and *entered* `ready` is fine (no printed
-restriction says otherwise), one who is now `torpor`/gone is simply not
-offered. No card is played by this option (`played_card_type` stays at
-its default `None`) -- so it is also out of scope for both of OQ-57's
-(`docs/OPEN_QUESTIONS.md`) fixes: it calls neither `remove_from_hand` nor
+vampire trying to use the grant (same shape as `line_brawl.py`'s own "Requires
+an Anarch" gate), independent of whether that vampire is Lucinde herself
+(nothing excludes her; she is herself Camarilla). Each active grant is offered
+as its own `ACTION_CARD_PLAY_HOOK` option, gated at offer time on the grant's
+target still being `zone == "ready"` (mirrors `line_brawl.py`'s own
+`_eligible_combat_targets` guard) -- a target who has since left `torpor` and
+*entered* `ready` is fine (no printed restriction says otherwise), one who is
+now `torpor`/gone is simply not offered. No card is played by this option
+(`played_card_type` stays at its default `None`) -- so it is also out of scope
+for both of ENG-037's fixes: it calls neither `remove_from_hand` nor
 `play_from_hand`, and leaves `ActionCardSpec.name` at its default `None`
-(`build_enter_combat_action_spec`'s own contract), so `_perform_action_
-card` neither draws it a replacement card nor counts it against the
-generic "same named action card" cap -- correctly, since no card is ever
-played from hand here.
+(`build_enter_combat_action_spec`'s own contract), so `_perform_action_card`
+neither draws it a replacement card nor counts it against the generic "same
+named action card" cap -- correctly, since no card is ever played from hand
+here.
 
 "+1 bleed": flat, unconditional `BLEED_AMOUNT_FIXED_MODIFIER_HOOK`
 contribution, gated only on this vampire being the one bleeding -- mirrors

@@ -6,8 +6,8 @@ file.
 
 One assertion per clause/qualifier: not offered for a different acting
 vampire, one option per eligible controlled-vampire/ally target, a vampire
-target gets blood capped at effective capacity (OQ-8), an ally target gets
-life capped at its own `starting_life` (OQ-61), a target already at its own
+target gets blood capped at effective capacity (ENG-002), an ally target gets
+life capped at its own `starting_life` (ENG-041), a target already at its own
 cap is never offered, the "+1 stealth action" baseline (undirected, beats a
 defender's default 0 intercept), and the blocked branch never adds anything.
 """
@@ -144,7 +144,7 @@ def test_an_ally_already_at_starting_life_is_not_offered():
 
 
 def test_a_contested_ally_is_not_offered():
-    """OQ-10: the 2P variant's "stays in play, usable" override is scoped to
+    """ENG-004: the 2P variant's "stays in play, usable" override is scoped to
     crypt cards only -- a contested *ally* is not "in play, usable", unlike
     a contested vampire, so it must not be targetable."""
     builder = ScenarioBuilder(seed=1)

@@ -1,4 +1,4 @@
-"""Standalone Master cards in play (OQ-23): bring in, detect/resolve a contest. krcg has
+"""Standalone Master cards in play (ENG-015): bring in, detect/resolve a contest. krcg has
 no `Type.LOCATION`; "Unique location." is free text on an ordinary `Master` card.
 Mirrors `allies.py`'s shape."""
 
@@ -34,11 +34,12 @@ def bring_master_card_into_play(
 
 
 def detect_contest_on_bring_into_play(state: GameState, brought_in: MasterCardInPlay) -> None:
-    """Flag `brought_in` and a same-named opposing instance as contested (§4, OQ-10/
-    OQ-23; not 2P-overridden). Only for a "Unique" card; matched by `name`. Checked first
-    (OQ-16, quoted verbatim in `engine/contests.py::detect_contest_on_reveal`):
-    `brought_in`'s own controller's other live same-named instance burns the incoming
-    copy immediately instead of contesting."""
+    """Flag `brought_in` and a same-named opposing instance as contested (§4,
+    ENG-004/ENG-015; not 2P-overridden). Only for a "Unique" card; matched by
+    `name`. Checked first (ENG-010, quoted verbatim in
+    `engine/contests.py::detect_contest_on_reveal`): `brought_in`'s own
+    controller's other live same-named instance burns the incoming copy
+    immediately instead of contesting."""
     own = state.players[brought_in.controller]
     for mine in own.master_cards.values():
         if mine is brought_in:
@@ -60,7 +61,7 @@ def detect_contest_on_bring_into_play(state: GameState, brought_in: MasterCardIn
 def transfer_master_card_control(
     state: GameState, card: MasterCardInPlay, new_controller: str
 ) -> None:
-    """Change controller of a standalone `MasterCardInPlay` (OQ-35; Disputed Territory
+    """Change controller of a standalone `MasterCardInPlay` (ENG-025; Disputed Territory
     [RTR 19980623]). Never "on" anything, so no re-host (contrast `attachments.py`).
     Re-keys into the new controller's dict."""
     old_controller = card.controller
@@ -70,10 +71,10 @@ def transfer_master_card_control(
 
 
 def resolve_one_master_card_contest(state: GameState, player: str, card: MasterCardInPlay) -> None:
-    """§4 Unlock + Contested Cards (OQ-15, generalized by OQ-23): pay 1 pool to keep
+    """§4 Unlock + Contested Cards (ENG-009, generalized by ENG-015): pay 1 pool to keep
     contesting, or yield (burn own copy). No 2P override: survivor's `zone` restores
     only on its next unlock phase."""
-    # OQ-42: paying must not leave the payer at 0 pool; yielding stays.
+    # DES-009: paying must not leave the payer at 0 pool; yielding stays.
     pay = (Choice("pay", "Pay 1 pool to keep contesting"),)
     choices = (
         *(pay if can_afford_without_ousting(state, player, 1) else ()),

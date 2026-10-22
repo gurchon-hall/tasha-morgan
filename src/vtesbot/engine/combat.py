@@ -1,6 +1,6 @@
 """Basic combat: hand strikes, maneuvers/range, dodge, additional strikes,
 before-range and end-of-round windows (Rulebook §4 Combat). See
-OQ-3,18,19,25,27,28,29,47,60."""
+RUL-002, ENG-012, ENG-013, ENG-017, RUL-008, ENG-019, ENG-020, ENG-029, ENG-040."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -32,9 +32,9 @@ COMBAT_ADDITIONAL_STRIKE_HOOK = "combat_additional_strike"
 MANEUVER_HOOK = "maneuver"
 """Matches `Hook.MANEUVER`'s string value."""
 END_OF_ROUND_HOOK = "end_of_round"
-"""Matches `Hook.END_OF_ROUND`'s string value (OQ-29)."""
+"""Matches `Hook.END_OF_ROUND`'s string value (ENG-020)."""
 BEFORE_RANGE_HOOK = "before_range"
-"""Matches `Hook.BEFORE_RANGE`'s string value (OQ-47)."""
+"""Matches `Hook.BEFORE_RANGE`'s string value (ENG-029)."""
 
 CLOSE_RANGE = "close"
 LONG_RANGE = "long"
@@ -62,12 +62,12 @@ Range)."""
 
 PRE_COMBAT_MANEUVER_GRANT_KEY = "pre_combat_maneuver_grants"
 """Key inside `combat_state` for a pre-combat maneuver grant seeded via
-`run_combat`'s `initial_combat_state` (OQ-25); `dict[str, int]` keyed by
+`run_combat`'s `initial_combat_state` (ENG-017); `dict[str, int]` keyed by
 vampire id."""
 
 
 def seed_pre_combat_maneuver_grant(vampire_id: str, count: int = 1) -> dict[str, Any]:
-    """Build an `initial_combat_state` seed (OQ-25) granting `vampire_id`
+    """Build an `initial_combat_state` seed (ENG-017) granting `vampire_id`
     `count` unclaimed pre-combat maneuvers, for `run_combat`/
     `perform_minion_action`."""
     return {PRE_COMBAT_MANEUVER_GRANT_KEY: {vampire_id: count}}
@@ -75,7 +75,7 @@ def seed_pre_combat_maneuver_grant(vampire_id: str, count: int = 1) -> dict[str,
 
 def pre_combat_maneuver_available(context: Mapping[str, Any]) -> bool:
     """Whether `context["vampire"]` has an unclaimed pre-combat maneuver
-    grant (OQ-25); missing `combat_state` degrades to False."""
+    grant (ENG-017); missing `combat_state` degrades to False."""
     combat_state = context.get(COMBAT_STATE_CONTEXT_KEY)
     if combat_state is None:
         return False
@@ -84,7 +84,7 @@ def pre_combat_maneuver_available(context: Mapping[str, Any]) -> bool:
 
 def consume_pre_combat_maneuver_grant(context: Mapping[str, Any]) -> None:
     """Consume one of `context["vampire"]`'s unclaimed pre-combat maneuver
-    grants (OQ-25); missing state or none left is a no-op."""
+    grants (ENG-017); missing state or none left is a no-op."""
     combat_state = context.get(COMBAT_STATE_CONTEXT_KEY)
     if combat_state is None:
         return
@@ -95,7 +95,7 @@ def consume_pre_combat_maneuver_grant(context: Mapping[str, Any]) -> None:
 
 
 BLOCK_TIME_COMBAT_GRANT_KEY = "block_time_combat_grants"
-"""Key inside `combat_state` (OQ-60): `dict[str, dict[str, int]]`, vampire
+"""Key inside `combat_state` (ENG-040): `dict[str, dict[str, int]]`, vampire
 instance id -> {grant_name: count}, for a one-shot combat-time effect grant
 earned by a reaction played during the block attempt's own stealth/
 intercept resolution (before `run_combat` is even called), seeded via
@@ -111,7 +111,7 @@ reactions are not maneuvers."""
 
 
 def seed_block_time_combat_grants(grants: dict[str, dict[str, int]]) -> dict[str, Any]:
-    """Build an `initial_combat_state` seed (OQ-60) from `action.py::
+    """Build an `initial_combat_state` seed (ENG-040) from `action.py::
     perform_minion_action`'s own forwarded `pending[PENDING_BLOCK_TIME_
     COMBAT_GRANT_KEY]` bookkeeping. Used by `perform_minion_action` only;
     merges alongside any `seed_pre_combat_maneuver_grant` seed for the same
@@ -121,7 +121,7 @@ def seed_block_time_combat_grants(grants: dict[str, dict[str, int]]) -> dict[str
 
 def block_time_combat_grant_available(context: Mapping[str, Any], grant_name: str) -> bool:
     """Whether `context["vampire"]` currently has an unclaimed block-time
-    combat grant named `grant_name` (OQ-60); missing `combat_state`
+    combat grant named `grant_name` (ENG-040); missing `combat_state`
     degrades to False, same convention as `pre_combat_maneuver_available`."""
     combat_state = context.get(COMBAT_STATE_CONTEXT_KEY)
     if combat_state is None:
@@ -132,7 +132,7 @@ def block_time_combat_grant_available(context: Mapping[str, Any], grant_name: st
 
 def consume_block_time_combat_grant(context: Mapping[str, Any], grant_name: str) -> None:
     """Consume one of `context["vampire"]`'s unclaimed block-time combat
-    grants named `grant_name` (OQ-60); missing state or none left is a
+    grants named `grant_name` (ENG-040); missing state or none left is a
     no-op, same convention as `consume_pre_combat_maneuver_grant`."""
     combat_state = context.get(COMBAT_STATE_CONTEXT_KEY)
     if combat_state is None:
@@ -179,13 +179,13 @@ class StrikeDamage:
 
 COMMITTED_STRIKE_KEY = "committed_strike"
 """Key inside `round_state` for a strike-bundled `MANEUVER_HOOK` grant
-(OQ-28); popped by `_ask_strike`, also read as this round's "already
+(ENG-019); popped by `_ask_strike`, also read as this round's "already
 committed" flag."""
 
 
 def strike_committed_this_round(context: Mapping[str, Any]) -> bool:
     """Whether `context["vampire"]` has a strike-bundled-maneuver
-    commitment this round (OQ-28). A strike-bundled provider must gate its
+    commitment this round (ENG-019). A strike-bundled provider must gate its
     offer on this; a plain maneuver must never consult it."""
     round_state = context.get(ROUND_STATE_CONTEXT_KEY)
     if round_state is None:
@@ -194,7 +194,7 @@ def strike_committed_this_round(context: Mapping[str, Any]) -> bool:
 
 
 def commit_strike_for_round(context: Mapping[str, Any], strike: hooks.HookOption) -> None:
-    """Pre-commit `context["vampire"]`'s strike to `strike` (OQ-28), from a
+    """Pre-commit `context["vampire"]`'s strike to `strike` (ENG-019), from a
     strike-bundled `MANEUVER_HOOK` grant only. Raises on a second
     commitment or a choice-value collision with a built-in."""
     if strike.choice.value in (HAND_STRIKE_VALUE, NO_STRIKE_VALUE):
@@ -231,7 +231,7 @@ def hand_strike_strength(
 ) -> int:
     """The damage a plain hand strike deals right now (Rulebook §4): base
     strength (`HAND_STRIKE_STRENGTH`) plus any live `COMBAT_STRENGTH_
-    MODIFIER_HOOK` contribution. `combat_state` (OQ-60, same combat-scoped
+    MODIFIER_HOOK` contribution. `combat_state` (ENG-040, same combat-scoped
     scratch dict `MANEUVER_HOOK`/`DAMAGE_PREVENTION_HOOK` already receive)
     is threaded into the hook's context so a provider can read back a
     whole-combat-duration bonus activated earlier in the same combat (e.g.
@@ -286,9 +286,9 @@ def _ask_strike(
     combat_state: dict[str, Any],
 ) -> tuple[str, dict[str, hooks.HookOption], frozenset[str]]:
     """Offer every legal strike: the two built-ins, `combat_strike_option`,
-    `combat_dodge_option`. Pops a maneuver-committed strike first (OQ-28).
+    `combat_dodge_option`. Pops a maneuver-committed strike first (ENG-019).
     Returns `(chosen_value, options_by_value, dodge_values)`. `combat_state`
-    (OQ-60) is threaded into `COMBAT_STRIKE_OPTION_HOOK`'s own context --
+    (ENG-040) is threaded into `COMBAT_STRIKE_OPTION_HOOK`'s own context --
     not just into `_strike_strength`'s separate call below -- so a card-sourced
     strike-substitute provider computing its own "+N damage over a plain
     hand strike" (e.g. `cards/dust_up.py`, `cards/slam.py`, `cards/
@@ -345,7 +345,7 @@ def _resolve_one_strike(
     *,
     participates: bool,
 ) -> tuple[int, bool, bool]:
-    """Resolve one combatant's strike for one strike-pair step (OQ-18/28).
+    """Resolve one combatant's strike for one strike-pair step (ENG-012/ENG-019).
     `participates=False` offers no choice. Returns `(damage, dodges,
     ignore_opponent_dodge)`; dodge zeroes damage unless dodge-proof."""
     if not participates:
@@ -407,9 +407,9 @@ def _resolve_strike_pair(
         damage_to_blocking = 0
 
     # Simultaneous: both strikes resolve in one step (round_state records
-    # blood lost, OQ-29).
+    # blood lost, ENG-020).
 
-    # OQ-44: both sides' damage still resolves deliberately (simultaneous
+    # DES-010: both sides' damage still resolves deliberately (simultaneous
     # torpor pool losses are one event, oust decided only afterwards).
     with simultaneous_pool_losses(state):
         if damage_to_blocking:
@@ -481,7 +481,7 @@ def _ask_maneuver(
     round_state: dict[str, Any],
 ) -> bool:
     """Offer every available `MANEUVER_HOOK` grant for one Determine Range
-    turn (OQ-25/27/28); plain and strike-bundled maneuvers share this hook.
+    turn (ENG-017/RUL-008/ENG-019); plain and strike-bundled maneuvers share this hook.
     Returns whether one was played."""
     options = hooks.offer(
         MANEUVER_HOOK,
@@ -559,7 +559,7 @@ def _resolve_press(
     blocking_player: str,
     blocking_vampire: VampireInPlay,
 ) -> bool:
-    """Rulebook §4 step 6 (Press): alternates acting-first (OQ-3),
+    """Rulebook §4 step 6 (Press): alternates acting-first (RUL-002),
     like `_determine_range`. A press toggles (not sets), making
     two-in-a-row structurally impossible. Returns whether a press
     remains."""
@@ -589,8 +589,8 @@ def _ask_end_of_round(
     blocking_vampire: VampireInPlay,
     round_state: dict[str, Any],
 ) -> None:
-    """Rulebook §4 step 7, End of Round (OQ-29): two-sided impulse window,
-    acting combatant first (OQ-3). Called exactly once per round on every
+    """Rulebook §4 step 7, End of Round (ENG-020): two-sided impulse window,
+    acting combatant first (RUL-002). Called exactly once per round on every
     exit path, even a premature one."""
     hooks.resolve_impulse_window(
         state,
@@ -615,9 +615,9 @@ def _ask_before_range(
     blocking_vampire: VampireInPlay,
     combat_state: dict[str, Any],
 ) -> None:
-    """Rulebook §4 step 1, Before Range (OQ-47): two-sided impulse window,
-    acting combatant first (OQ-3). Dispatched exactly once per combat,
-    before round 1's Determine Range. `combat_state` (OQ-60) is threaded
+    """Rulebook §4 step 1, Before Range (ENG-029): two-sided impulse window,
+    acting combatant first (RUL-002). Dispatched exactly once per combat,
+    before round 1's Determine Range. `combat_state` (ENG-040) is threaded
     into the hook's context -- same combat-scoped scratch dict `MANEUVER_
     HOOK`/`DAMAGE_PREVENTION_HOOK` already receive -- so a provider acting
     here can record a once-per-combat flag and/or a whole-combat-duration
@@ -648,7 +648,7 @@ def run_combat(
     initial_combat_state: dict[str, Any] | None = None,
 ) -> None:
     """Resolve combat between the acting and blocking minion (Rulebook §4
-    Combat). `initial_combat_state` (OQ-25/OQ-60) pre-seeds a grant that must
+    Combat). `initial_combat_state` (ENG-017/ENG-040) pre-seeds a grant that must
     exist before round 1 -- a pre-combat maneuver grant
     (`seed_pre_combat_maneuver_grant`), a block-attempt-time combat grant
     (`seed_block_time_combat_grants`), or both (distinct top-level keys,
@@ -664,7 +664,7 @@ def run_combat(
         if not (_is_ready(acting_vampire) and _is_ready(blocking_vampire)):
             break  # Rulebook §4: combat ends at once if a combatant is no longer ready.
 
-        # --- Before Range step (Rulebook §4 step 1, OQ-47): offered once
+        # --- Before Range step (Rulebook §4 step 1, ENG-029): offered once
         # per combat, before round 1's Determine Range step. ---
         if not before_range_offered:
             _ask_before_range(
@@ -680,9 +680,9 @@ def run_combat(
                 break
 
         round_number += 1
-        # One fresh round-scoped scratch dict per round (OQ-18/28); never
+        # One fresh round-scoped scratch dict per round (ENG-012/ENG-019); never
         # carries a flag into a later round of the same combat. Pre-seeded
-        # with this round's 1-indexed number (OQ-60) so a
+        # with this round's 1-indexed number (ENG-040) so a
         # `DAMAGE_PREVENTION_HOOK` provider can tell "is this round 1"
         # (`damage.py::is_round_one`) without needing `combat_state`'s own
         # cross-round persistence for that part.
@@ -716,7 +716,7 @@ def run_combat(
 
         # still_ready tracks the "combat ends at once if no longer ready"
         # check (Rulebook §4) without an early break, so _ask_end_of_round
-        # (OQ-29) below is still reached on every path, even a premature one.
+        # (ENG-020) below is still reached on every path, even a premature one.
         still_ready = _is_ready(acting_vampire) and _is_ready(blocking_vampire)
 
         # --- Additional strikes (Rulebook §4): repeated choose/resolve
@@ -750,7 +750,7 @@ def run_combat(
             still_ready = _is_ready(acting_vampire) and _is_ready(blocking_vampire)
 
         # --- Press step (Rulebook §4 step 6): alternating press/decline
-        # turns, acting minion's controller first (OQ-3). Skipped if the
+        # turns, acting minion's controller first (RUL-002). Skipped if the
         # round already ended prematurely. ---
         pressed = False
         if still_ready and not state.game_over:
@@ -758,7 +758,7 @@ def run_combat(
                 state, acting_player, acting_vampire, blocking_player, blocking_vampire
             )
 
-        # --- End of Round step (Rulebook §4 step 7, OQ-29): fires exactly
+        # --- End of Round step (Rulebook §4 step 7, ENG-020): fires exactly
         # once per round, on every exit path. ---
         _ask_end_of_round(
             state, acting_player, acting_vampire, blocking_player, blocking_vampire, round_state

@@ -23,10 +23,10 @@ established gating helper to reuse; the two checks below (`_controls_basic_
 vampire`/`_controls_superior_vampire`) are this card's own. `clans == []`
 (no clan requirement).
 
-`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): this card
+`HookOption.played_card_type` (ENG-023): this card
 prints two types, `["Action Modifier", "Reaction"]` with `combo == True`
 (module docstring above), and which half is actually in play depends on
-*who* plays it (module docstring's own "Who may play it" section, OQ-38):
+*who* plays it (module docstring's own "Who may play it" section, RUL-010):
 the caller plays it as their acting vampire's Action Modifier (the
 Rulebook §2 Card Types default for the acting minion), the non-caller
 plays it under the ordinary Reaction rule instead. `played_card_type` is
@@ -38,7 +38,7 @@ gate, rules-auditor finding: an earlier draft of this module hardcoded
 `"Action Modifier"` for every use, which would have silently hidden the
 non-caller's use from that gate).
 
-Status: implemented (OQ-37, `docs/OPEN_QUESTIONS.md`, resolved --
+Status: implemented (ENG-027, resolved --
 `engine/politics.py::_cast_votes` now also offers `POLLING_STEP_HOOK` under
 `context["phase"] == "mid_cast"`, merged into each player's own
 `"polling_step_cast"` turn, whose own `apply(state)` contract returns the
@@ -57,12 +57,12 @@ entries; the targeted vampire is looked up via that entry's own `player`
 (the cast tuple's first element -- its controller) and the instance id
 parsed out of the source id.
 
-Who may play it (OQ-38, `docs/OPEN_QUESTIONS.md`, resolved -- user ruling):
+Who may play it (RUL-010, resolved -- user ruling):
 asymmetric by role, unlike this module's earlier, uniform "any ready,
 unlocked qualifying vampire of either Methuselah" reading.
 
 - The *caller* (the Methuselah whose political action this is):
-  `rules-auditor`'s OQ-38 finding applies the Rulebook §2 Card Types
+  `rules-auditor`'s RUL-010 finding applies the Rulebook §2 Card Types
   default ("The acting minion can play [action modifier cards]..." absent
   an "other than the acting minion" override phrase, which this card's text
   does not carry) -- so the caller may only play Scalpel Tongue through
@@ -108,7 +108,7 @@ locked, with no toggle, no double-lock bookkeeping, and no special-case
 needed in code.
 
 "The chosen vampire is locked and abstains (this cancels the chosen
-vampire's votes and ballots)": two separate effects, per OQ-37's own
+vampire's votes and ballots)": two separate effects, per ENG-027's own
 docstring -- `_apply_retroactive_vote_cancellation` (generic, engine-side)
 handles "abstains"/cancels the votes once this module's own `apply` returns
 the targeted `source_id`; `apply` itself sets `VampireInPlay.locked = True`
@@ -121,7 +121,7 @@ not itself re-sourced by any on-file ruling for this card).
 
 "Cannot be used during a referendum that is automatically passing": not
 gated in code -- this engine has no automatically-passing mechanism yet
-(`docs/OPEN_QUESTIONS.md` OQ-6's own note, same "unreachable today, not a
+(RUL-005's own note, same "unreachable today, not a
 dropped ruling" precedent `perfect_paragon.py`/`voter_captivation.py`
 already document for their own identical on-file ruling).
 """
@@ -146,7 +146,7 @@ BURN_AMOUNT = 1
 """Printed "[CEL][PRE] ... the chosen vampire burns 1 blood."."""
 CALLER_CARD_TYPE = "Action Modifier"
 NON_CALLER_CARD_TYPE = "Reaction"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): which of
+"""`HookOption.played_card_type` (ENG-023): which of
 this card's two printed types (module docstring) applies depends on who
 plays it -- see `_played_card_type` below."""
 
@@ -154,7 +154,7 @@ plays it -- see `_played_card_type` below."""
 def _played_card_type(player: str, context: Mapping[str, Any]) -> str:
     """The caller plays this card as their acting vampire's Action
     Modifier; the non-caller plays it under the ordinary Reaction rule
-    (module docstring's "Who may play it", OQ-38)."""
+    (module docstring's "Who may play it", RUL-010)."""
     return CALLER_CARD_TYPE if player == context["caller"] else NON_CALLER_CARD_TYPE
 
 
@@ -189,7 +189,7 @@ def _controls_superior_vampire(state: GameState, player: str) -> bool:
 
 
 def _caller_may_play_basic(state: GameState, context: Mapping[str, Any]) -> bool:
-    """OQ-38 (`docs/OPEN_QUESTIONS.md`, resolved): the caller's own use is
+    """RUL-010 (resolved): the caller's own use is
     the Action-Modifier default ("the acting minion"), not the Reaction
     rule -- `zone == "ready"` only, `locked` irrelevant (module docstring's
     "Who may play it")."""

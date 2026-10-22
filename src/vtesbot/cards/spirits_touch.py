@@ -68,7 +68,7 @@ test file takes.
 
 Eligibility mirrors `precognition.py`'s own `_eligible` shape: `player`'s
 own ready, unlocked vampires with `"aus"` or `"AUS"` in `card.disciplines`
-(plain printed stat, not attachment-aware `effective_disciplines` -- OQ-8
+(plain printed stat, not attachment-aware `effective_disciplines` -- ENG-002
 noted, not acted on here, matching every other discipline-gated card in
 this project).
 """
@@ -103,7 +103,7 @@ USED_BY_KEY = "spirits_touch_used_by"
 during a single action" -- shared between both clauses (same physical
 card), mirrors `cards/precognition.py`'s own `USED_BY_KEY`."""
 CARD_TYPE = "Reaction"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Reaction" docstring fact above. The later
 `MANEUVER_HOOK` option (claiming an already-earned grant, not playing a
 card) leaves this at its default `None`, mirroring `cards/precognition.py`'s

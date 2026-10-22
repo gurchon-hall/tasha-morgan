@@ -1,4 +1,4 @@
-"""The "woken" eligibility override (OQ-46, `docs/OPEN_QUESTIONS.md`,
+"""The "woken" eligibility override (ENG-028,
 resolved -- Reading A): On the Qui Vive (krcg id 101321, Reaction), "This
 minion wakes (they ignore the requirement to be unlocked for playing
 reaction cards and attempting to block until the end of the action). If
@@ -11,7 +11,7 @@ clear_woken_vampires`, and `AllyInPlay.skip_next_unlock`/the now-fixed
 unconditional ally-unlock step -- using trivial fake providers standing in
 for a reaction card and for On the Qui Vive itself. On the Qui Vive's own
 card module remains `card-implementer`'s job once this capability exists;
-it stays registered `blocked`/`OQ-46`.
+it stays registered `blocked`/`ENG-028`.
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -292,7 +292,7 @@ def test_woken_flag_is_cleared_even_when_ousted_mid_block_attempt():
 
 def test_unlock_phase_now_unconditionally_unlocks_a_ready_ally():
     """Fixes the previously-dormant gap this entry's own resolution notes:
-    before OQ-46, nothing in the engine ever unlocked a recruited ally
+    before ENG-028, nothing in the engine ever unlocked a recruited ally
     again (`AllyInPlay.locked` stayed `True` forever)."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30)

@@ -19,7 +19,7 @@ Also reports, informational only -- never affects the LEGAL/ILLEGAL verdict
 or exit code (a deck can be legal yet not playable by the bot, SKILL.md):
   - Each crypt/library card's implementation status, looked up by krcg_id
     against `src/vtesbot/cards/registry.py` -- "implemented", "blocked"
-    (with its `OQ-<n>` reason), or "not_implemented". Pass --annotate to
+    (with its `RUL-`/`ENG-` reason), or "not_implemented". Pass --annotate to
     write these back into the deck fixture instead of only printing them.
 
 Usage:

@@ -1,4 +1,4 @@
-"""Pre-combat maneuver grant primitive (OQ-25, `docs/OPEN_QUESTIONS.md`,
+"""Pre-combat maneuver grant primitive (ENG-017,
 resolved): a card's own grant (e.g. Fleetness's superior clause, "This
 acting vampire gets 1 optional maneuver during that combat") must exist at
 *announce time* -- strictly before the block-attempt window opens, i.e.
@@ -200,7 +200,7 @@ def test_perform_minion_action_unblocked_branch_lets_resolve_seed_the_grant_itse
 
 def test_perform_minion_action_blocked_branch_threads_maneuver_grant_into_its_run_combat_call():
     """The blocked branch has no `ActionCardSpec`-shaped field or hook of its
-    own to extend (OQ-25's own analysis): `perform_minion_action`'s new
+    own to extend (ENG-017's own analysis): `perform_minion_action`'s new
     `maneuver_grant` parameter is the only way to reach it. `resolve` is
     never called here (the action goes blocked), proving the grant is
     honored by `perform_minion_action`'s own internal `run_combat` call
@@ -278,7 +278,7 @@ def _fake_fleetness_like_provider(state, context):
     while its own fake card is in hand; its `ActionCardSpec` declares
     `maneuver_grant` (for the blocked path) and its own `resolve()` also
     seeds the same grant on its own direct `run_combat` call (for the
-    unblocked path) -- exactly the two-path shape OQ-25 describes."""
+    unblocked path) -- exactly the two-path shape ENG-017 describes."""
     player = context["player"]
     vampire_id = context["vampire"]
     if not any(c.krcg_id == FAKE_FLEETNESS_KRCG_ID for c in state.players[player].hand):

@@ -96,7 +96,7 @@ def wilson_interval(wins: int, n: int, z: float = 1.96) -> tuple[float, float]:
 def summarize_versus(batch: BatchResult, max_turns: int) -> str:
     """P1 is the HeuristicAgent, P2 the RandomLegalAgent; seats alternate by seed.
 
-    Ties (simultaneous oust, OQ-44) and stuck games count as non-wins for the heuristic."""
+    Ties (simultaneous oust, DES-010) and stuck games count as non-wins for the heuristic."""
     rs = batch.results
     n = len(rs) or 1
     wins = sum(r.winner == "P1" for r in rs)

@@ -25,7 +25,7 @@ Queen Anne's/Diana Iadanza's own trailing "+1 bleed" clause.
 
 Status: blocked overall on clause (2) -- CLAUDE.md "a card is implemented
 only when ... each clause of the text" is covered; per that same precedent
-(Queen Anne's own original stub, before OQ-6/`DIABLERIE_HOOK` existed), a
+(Queen Anne's own original stub, before RUL-005/`DIABLERIE_HOOK` existed), a
 trivially-implementable trailing clause does not get wired ahead of the
 card's primary ability.
 

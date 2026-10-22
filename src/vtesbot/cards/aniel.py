@@ -14,7 +14,7 @@ capacity 6, disciplines `("for", "AUS", "DOM")`. No title. Legal since
 2026-10-03.json`) and in the suggested 2P decklist `data/decks/vekn-2p/
 salubri.json` (2 copies).
 
-Status: implemented (OQ-62 resolved). Wired against `engine/phases/
+Status: implemented (ENG-042 resolved). Wired against `engine/phases/
 minion.py::ACTION_CARD_PLAY_HOOK`: the corruption-counter half burns
 directly off the targeted `VampireInPlay.corruption_counters`
 (`engine/corruption.py`, not an attachment -- see that field's own
@@ -32,7 +32,7 @@ they control." -- the printed Ⓓ marker itself settles that "another ready
 minion" is restricted to the *opponent's* ready minion here (in a 2P duel,
 the sole other Methuselah, CLAUDE.md §3); it cannot be Aniel's own
 controller's other minions, since that would not be a directed action at
-all. No Open Question: this is a direct reading of the glossary definition,
+all. No RUL entry: this is a direct reading of the glossary definition,
 not a guess.
 
 "ready minion": §8 Glossary "Ready Region: Area containing a Methuselah's
@@ -58,7 +58,7 @@ own vampire) -- see `_corruption_counter_placers`'s own docstring.
 
 "or a card requiring a Discipline ... from another ready minion": any
 attachment on that vampire with `zone == "attached"` and `requires_
-discipline` (OQ-62, `engine/cards.py::CardAttachment`) is burned outright --
+discipline` (ENG-042, `engine/cards.py::CardAttachment`) is burned outright --
 `zone = "burned"`, left in `vampire.attachments` (mirrors `engine/
 attachments.py::resolve_one_attachment_contest`'s own "zone=burned, stays in
 the list, other providers filter on `zone == "attached"`" convention, not
@@ -140,7 +140,7 @@ def _counter_burn_option(aniel: VampireInPlay, vampire: VampireInPlay, placer: s
         def resolve(pending: dict[str, Any]) -> None:
             del pending
             if burn_corruption_counters(vampire, placer, 1) <= 0:
-                return  # OQ-21 convention: fizzles if gone by resolve time.
+                return  # RUL-007 convention: fizzles if gone by resolve time.
             aniel.blood -= BLOOD_COST
             s.log.record_event(f"Aniel burns 1 corruption counter on {vampire.card.name}")
 
@@ -164,7 +164,7 @@ def _discipline_card_burn_option(
         def resolve(pending: dict[str, Any]) -> None:
             del pending
             if attachment.zone != "attached":
-                return  # OQ-21 convention: fizzles if gone by resolve time.
+                return  # RUL-007 convention: fizzles if gone by resolve time.
             aniel.blood -= BLOOD_COST
             attachment.zone = "burned"
             s.log.record_event(f"Aniel burns {attachment.name} from {vampire.card.name}")

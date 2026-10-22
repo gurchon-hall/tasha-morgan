@@ -10,7 +10,7 @@ vampire" (either player's, ready or torpor, never uncontrolled -- Rulebook
 "+1 capacity" (via `engine/attachments.py::effective_disciplines`/
 `effective_capacity`), and "Cannot be put on a vampire with superior
 Celerity [CEL]" (checked against the vampire's *effective*, not merely
-printed, discipline levels -- OQ-8).
+printed, discipline levels -- ENG-002).
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -148,7 +148,7 @@ def test_cannot_target_a_vampire_already_at_effective_superior_celerity_via_stac
     """A vampire with printed *basic* Celerity plus one already-attached
     copy is effectively superior (1 printed level + 1 attached level = 2,
     capped) -- a further attach must be excluded exactly like printed
-    superior (OQ-8: the legality check reads *effective*, not printed,
+    superior (ENG-002: the legality check reads *effective*, not printed,
     discipline levels)."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)

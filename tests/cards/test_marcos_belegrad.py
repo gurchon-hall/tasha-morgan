@@ -195,7 +195,7 @@ def test_a_referendum_called_by_a_different_titled_vampire_never_triggers_marcos
 
 
 def test_both_methuselahs_casting_against_at_one_pool_is_a_tie():
-    """OQ-44 (user ruling): both reaching 0 from Marcos's one tally effect is
+    """DES-010 (user ruling): both reaching 0 from Marcos's one tally effect is
     a tie -- no winner -- and swapping `turn_order` does not change it."""
     for order in (["P1", "P2"], ["P2", "P1"]):
         builder = ScenarioBuilder(seed=1)
@@ -266,7 +266,7 @@ def _offered_choices_in_marcos_referendum(defender_pool: int) -> list[str]:
 
 
 def test_voting_against_marcos_is_not_offered_when_it_would_zero_the_voter():
-    """OQ-43 (user ruling 2026-10-13): choices leading the chooser to 0 pool
+    """DES-009 (user ruling 2026-10-13): choices leading the chooser to 0 pool
     are forbidden; the burn happens at tally, but the choice is the cast."""
     seen = _offered_choices_in_marcos_referendum(defender_pool=1)
     assert "for:title:B1" in seen

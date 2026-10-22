@@ -1,12 +1,11 @@
-"""`VampireView.attachments`/`ash_heap` deduplication (OQ-58,
-`docs/OPEN_QUESTIONS.md`): `engine/observation.py::build_observation` now
-exposes every live `CardAttachment` on a vampire via `AttachmentView`, and
-no longer double-lists the same physical card in the player's own
-`ash_heap` once it has also become a live attachment (CLAUDE.md §5:
-attachments are always public once played -- Rulebook §3 "Playing a
-Card": "showing the card" -- so no hidden-identity gate applies beyond the
-host vampire's own `visible_identity`, already proven for `name`/`blood`/
-`capacity`).
+"""`VampireView.attachments`/`ash_heap` deduplication (ENG-038):
+`engine/observation.py::build_observation` now exposes every live
+`CardAttachment` on a vampire via `AttachmentView`, and no longer double-lists
+the same physical card in the player's own `ash_heap` once it has also become a
+live attachment (CLAUDE.md §5: attachments are always public once played --
+Rulebook §3 "Playing a Card": "showing the card" -- so no hidden-identity gate
+applies beyond the host vampire's own `visible_identity`, already proven for
+`name`/`blood`/`capacity`).
 
 Exercised against the three real attachment-playing cards already in this
 pool (Perfectionist krcg 101388, Pulled Fangs krcg 101515, Weighted
@@ -63,7 +62,7 @@ def test_perfectionist_attachment_is_visible_and_not_duplicated_in_ash_heap():
     assert view.attachments[0].krcg_id == PERFECTIONIST_ID
     assert PERFECTIONIST_NAME not in obs.ash_heap["P1"]
 
-    # Visible from the opponent's side too (OQ-58's own "always public" claim).
+    # Visible from the opponent's side too (ENG-038's own "always public" claim).
     obs_opponent = build_observation(game.state, "P2")
     opp_view = next(v for v in obs_opponent.vampires if v.instance_id == "V1")
     assert [a.name for a in opp_view.attachments] == [PERFECTIONIST_NAME]

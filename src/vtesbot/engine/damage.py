@@ -1,12 +1,12 @@
 """Damage resolution: prevent, mend (normal only), wounded->torpor->burn (§4). Aggravated
-wounds+torpors a healthy vampire in one step. OQ-29: round-scoped blood-lost tracking for
-Taste of Vitae. OQ-55: `DAMAGE_PREVENTION_HOOK`'s own context also carries `round_state`
+wounds+torpors a healthy vampire in one step. ENG-020: round-scoped blood-lost tracking for
+Taste of Vitae. ENG-036: `DAMAGE_PREVENTION_HOOK`'s own context also carries `round_state`
 (`ROUND_STATE_CONTEXT_KEY`), for a once-per-round prevention cap (e.g. Soak), and
 `apply_damage` also supports a mandatory, round-scoped "prevent all further damage" effect
 (`MANDATORY_FULL_PREVENTION_KEY`/`mandatory_full_prevention_active`/
 `mark_mandatory_full_prevention_active`), for a once-activated-then-automatic effect (e.g.
 Rolling with the Punches' superior clause) -- distinct from `DAMAGE_PREVENTION_HOOK` itself,
-which only ever offers a freely-declinable choice. OQ-60: `round_state` now also carries a
+which only ever offers a freely-declinable choice. ENG-040: `round_state` now also carries a
 1-indexed `ROUND_NUMBER_KEY`, written by `combat.py::run_combat` at the top of each round
 (`is_round_one` query helper), and `DAMAGE_PREVENTION_HOOK`'s own context also carries the
 combat-scoped `combat_state` (`COMBAT_STATE_CONTEXT_KEY`, canonical home here -- `combat.py`
@@ -29,13 +29,13 @@ DAMAGE_PREVENTION_HOOK = "damage_prevention"
 
 COMBAT_STATE_CONTEXT_KEY = "combat_state"
 """Context key for the shared, combat-scoped (not round-scoped) scratch dict
-`combat.py::run_combat` creates once per combat (OQ-60; canonical definition
+`combat.py::run_combat` creates once per combat (ENG-040; canonical definition
 lives here, not `engine/combat.py`, for the same circular-import reason as
 `ROUND_STATE_CONTEXT_KEY` below -- `combat.py` imports `apply_damage` from
 this module). `combat.py::COMBAT_STATE_CONTEXT_KEY` re-exports this same
 object. Threaded into `MANEUVER_HOOK`'s own context (already, e.g. Saku
 Pihlajamäki's once-per-combat grant), `DAMAGE_PREVENTION_HOOK`'s own
-context (OQ-60 addition, below), and -- as of the same combat-state-plumbing
+context (ENG-040 addition, below), and -- as of the same combat-state-plumbing
 pass -- `BEFORE_RANGE_HOOK`'s and `COMBAT_STRENGTH_MODIFIER_HOOK`'s own
 contexts (`combat.py::_ask_before_range`/`_strike_strength`) so a provider
 can read/write combat-scoped state (e.g. `combat.py`'s block-time combat
@@ -44,7 +44,7 @@ determined and read back on every later strike of the same combat) from any
 of these hooks."""
 
 ROUND_NUMBER_KEY = "round_number"
-"""Key in the round-scoped scratch dict (OQ-60): the 1-indexed round number
+"""Key in the round-scoped scratch dict (ENG-040): the 1-indexed round number
 for the current round, written once by `combat.py::run_combat` at the top of
 each round's own loop iteration -- lets a `DAMAGE_PREVENTION_HOOK` provider
 gate a "round 1 only" effect (e.g. Precognition, krcg 101475, "this vampire
@@ -54,7 +54,7 @@ needing `combat_state`'s own cross-round persistence for that part. See
 
 
 def is_round_one(round_state: Mapping[str, Any] | None) -> bool:
-    """Whether the current round is round 1 of its combat (OQ-60 query
+    """Whether the current round is round 1 of its combat (ENG-040 query
     helper). `round_state is None` (a hook offered outside `run_combat`, or
     before this key existed) degrades to False, same convention as every
     other round-scoped query in this module."""
@@ -65,19 +65,19 @@ def is_round_one(round_state: Mapping[str, Any] | None) -> bool:
 
 ROUND_STATE_CONTEXT_KEY = "round_state"
 """Context key for the shared, round-scoped scratch dict `combat.run_combat`
-creates fresh each round (OQ-18/28); canonical definition lives here (not
+creates fresh each round (ENG-012/ENG-019); canonical definition lives here (not
 `engine/combat.py`, which imports `apply_damage` from this module -- defining
 it there too would be circular) so a `DAMAGE_PREVENTION_HOOK` provider can
-read/write round-scoped state (OQ-55) the same way combat-scoped hooks
+read/write round-scoped state (ENG-036) the same way combat-scoped hooks
 already do. `engine/combat.py::ROUND_STATE_CONTEXT_KEY` re-exports this same
 object; degrades to no entry when a hook is offered directly."""
 VAMPIRE_ENTERS_TORPOR_HOOK = "vampire_enters_torpor"
-"""Mandatory reaction hook, dispatched by `send_to_torpor` (OQ-22, Fame). Passes the live
+"""Mandatory reaction hook, dispatched by `send_to_torpor` (ENG-014, Fame). Passes the live
 `VampireInPlay`, safe since `run_effects` only runs trusted card code."""
 
 
 BLOOD_LOST_TO_DAMAGE_KEY = "blood_lost_to_damage"
-"""Key in the round-scoped scratch dict (OQ-29): per vampire id, blood lost this round
+"""Key in the round-scoped scratch dict (ENG-020): per vampire id, blood lost this round
 to `apply_damage`'s Mend/aggravated-burn steps only. `dict[str, int]`."""
 
 
@@ -93,7 +93,7 @@ def record_blood_lost_to_damage(
 
 
 def blood_lost_to_damage_this_round(round_state: Mapping[str, Any] | None, vampire_id: str) -> int:
-    """Blood `vampire_id` lost to damage this round (OQ-29 query helper, e.g. Taste of
+    """Blood `vampire_id` lost to damage this round (ENG-020 query helper, e.g. Taste of
     Vitae). `round_state` is caller-supplied to avoid a circular import; `None` -> 0."""
     if round_state is None:
         return 0
@@ -142,7 +142,7 @@ def damage_successfully_inflicted_this_round(
 
 
 MANDATORY_FULL_PREVENTION_KEY = "mandatory_full_prevention"
-"""Key in the round-scoped scratch dict (OQ-55): per vampire id, whether a mandatory,
+"""Key in the round-scoped scratch dict (ENG-036): per vampire id, whether a mandatory,
 automatic "prevent all damage (normal and aggravated) this round" effect is active for the
 rest of the round -- not a fresh offered choice. `dict[str, bool]`, same per-vampire-id-dict
 shape as `combat.py`'s `ADDITIONAL_STRIKE_LIMIT_KEY`. Motivating case: Rolling with the
@@ -156,7 +156,7 @@ def mandatory_full_prevention_active(
     round_state: Mapping[str, Any] | None, vampire_id: str
 ) -> bool:
     """Whether `vampire_id` has an active mandatory full-prevention effect this round
-    (OQ-55; see `MANDATORY_FULL_PREVENTION_KEY`). `round_state is None` degrades to False,
+    (ENG-036; see `MANDATORY_FULL_PREVENTION_KEY`). `round_state is None` degrades to False,
     same convention as every other round-scoped cap in this codebase
     (`combat.py::additional_strike_limit_used`)."""
     if round_state is None:
@@ -168,7 +168,7 @@ def mark_mandatory_full_prevention_active(
     round_state: dict[str, Any] | None, vampire_id: str
 ) -> None:
     """Activate a mandatory full-prevention effect for `vampire_id` for the remainder of the
-    round (OQ-55; see `MANDATORY_FULL_PREVENTION_KEY`). Call once, from the activating
+    round (ENG-036; see `MANDATORY_FULL_PREVENTION_KEY`). Call once, from the activating
     option's own `apply` (e.g. Rolling with the Punches' superior clause) -- every later
     `apply_damage` call this round against the same vampire then zeroes its damage
     automatically, with no further decision offered. `round_state is None` is a no-op, same
@@ -179,7 +179,7 @@ def mark_mandatory_full_prevention_active(
 
 
 def add_blood(state: GameState, vampire: VampireInPlay, amount: int) -> int:
-    """Add blood to a vampire, capped at its effective capacity (§1, OQ-8). Returns the
+    """Add blood to a vampire, capped at its effective capacity (§1, ENG-002). Returns the
     amount actually added."""
     if amount <= 0:
         return 0
@@ -195,9 +195,9 @@ def burn_vampire(state: GameState, player: str, vampire: VampireInPlay) -> None:
 
 
 def remove_vampire_from_game(state: GameState, player: str, vampire: VampireInPlay) -> None:
-    """Remove a crypt card from the game (OQ-24; Wider View, 102180). Distinct zone from
+    """Remove a crypt card from the game (ENG-016; Wider View, 102180). Distinct zone from
     `burn_vampire` (see `VampireInPlay`). Guards against removing a contested vampire,
-    unreachable today (OQ-24 addendum)."""
+    unreachable today (ENG-016 addendum)."""
     if vampire.contested_with is not None:
         raise ValueError(
             "remove_vampire_from_game: removing a contested vampire is unhandled -- "
@@ -209,7 +209,7 @@ def remove_vampire_from_game(state: GameState, player: str, vampire: VampireInPl
 
 def send_to_torpor(state: GameState, player: str, vampire: VampireInPlay) -> None:
     """Torpor: controlled but not ready (§4 Torpor). Dispatches
-    `VAMPIRE_ENTERS_TORPOR_HOOK` after the zone transition (OQ-22, Fame)."""
+    `VAMPIRE_ENTERS_TORPOR_HOOK` after the zone transition (ENG-014, Fame)."""
     vampire.zone = "torpor"
     vampire.locked = False
     state.log.record_event(f"{vampire.card.name} ({vampire.instance_id}) enters torpor")
@@ -227,13 +227,13 @@ def apply_damage(
     combat_state: dict[str, Any] | None = None,
 ) -> None:
     """Resolve `normal` + `aggravated` damage (§4). Order: prevent, mend (normal only),
-    normal before aggravated. `round_state` (OQ-29) records blood spent when given;
+    normal before aggravated. `round_state` (ENG-020) records blood spent when given;
     `None` is a no-op. A vampire with an active `MANDATORY_FULL_PREVENTION_KEY` effect
-    (OQ-55) has all damage zeroed unconditionally before `DAMAGE_PREVENTION_HOOK` is even
+    (ENG-036) has all damage zeroed unconditionally before `DAMAGE_PREVENTION_HOOK` is even
     dispatched. `inflicted_by` (the attacking vampire's own instance id, when known) records
     the post-prevention total under `DAMAGE_SUCCESSFULLY_INFLICTED_KEY`, distinct from and
     in addition to `round_state`'s existing `BLOOD_LOST_TO_DAMAGE_KEY` bookkeeping -- see
-    that key's own docstring. `combat_state` (OQ-60), when given by `combat.py::run_combat`'s
+    that key's own docstring. `combat_state` (ENG-040), when given by `combat.py::run_combat`'s
     own strike-resolution call sites, is threaded into `DAMAGE_PREVENTION_HOOK`'s context
     alongside `round_state`, so a provider can also consult combat-scoped state (e.g. a
     block-attempt-time grant, `combat.py::block_time_combat_grant_available`) together with
@@ -253,7 +253,7 @@ def apply_damage(
     # so a registered prevention provider's `apply` can reduce it in place. ---
     damage_box = {"normal": normal, "aggravated": aggravated}
     if mandatory_full_prevention_active(round_state, vampire.instance_id):
-        # OQ-55: a mandatory, already-activated effect (e.g. Rolling with the
+        # ENG-036: a mandatory, already-activated effect (e.g. Rolling with the
         # Punches' superior clause) -- unconditional, no decision offered.
         # `DAMAGE_PREVENTION_HOOK` still dispatches below on the now-zeroed
         # box; every existing provider already gates on "nothing to prevent"

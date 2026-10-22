@@ -1,4 +1,4 @@
-"""`FORCE_BLOCK_ATTEMPT_FAILURE_HOOK` (`engine/action.py`, OQ-65): an
+"""`FORCE_BLOCK_ATTEMPT_FAILURE_HOOK` (`engine/action.py`, ENG-045): an
 acting-side sibling of `INTERCEPT_DECREASE_HOOK`/`STEALTH_INCREASE_HOOK`,
 offered reactively once a block candidate is already fixed, in *both*
 branches of `_duel_stealth_intercept`: merged into the same `Decision` as
@@ -7,7 +7,7 @@ alone, after the defender has declined/exhausted `INTERCEPT_MODIFIER_HOOK`,
 while the attempt is already failing on the raw numbers (rules-auditor
 finding on this file's first landing -- its own non-numeric "cannot attempt
 to block this action again" half has nothing to do with whether the current
-numbers already fail, so "only when needed" (OQ-31/39), which keeps the
+numbers already fail, so "only when needed" (RUL-009/RUL-011), which keeps the
 *numeric* modifiers out of that branch, must not keep this one out too).
 Choosing it from the "succeeds" branch makes `_duel_stealth_intercept`
 return `forced_failure=True`, which `attempt_block` reads *before* comparing
@@ -70,8 +70,8 @@ def _fake_force_fail_provider_factory(*, exclude: bool = True):
 
 def test_zero_regression_no_provider_registered_asks_no_extra_decision():
     """With nothing registered against `FORCE_BLOCK_ATTEMPT_FAILURE_HOOK`
-    (every card and test before OQ-65), the reactive offer point's own
-    `Decision` is byte-for-byte the pre-OQ-65 one."""
+    (every card and test before ENG-045), the reactive offer point's own
+    `Decision` is byte-for-byte the pre-ENG-045 one."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30)
     builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=1)

@@ -27,7 +27,7 @@ both `None` (free). Legal since 2002-09-18; confirmed on the active 2P
 allowed list (`data/formats/2p/2026-10-03.json`) and in
 `data/decks/vekn-2p/toreador.json`.
 
-Status: implemented (OQ-47, `docs/OPEN_QUESTIONS.md`, resolved). Attach
+Status: implemented (ENG-029, resolved). Attach
 clause rides `engine/combat.py::BEFORE_RANGE_HOOK` (offered to both
 combatants' controllers once, round 1 only); "this minion" is read as the
 playing controller's own combatant in the fight (the general equipment
@@ -46,7 +46,7 @@ that hook's own docstring and `engine/combat.py`'s "Before Range" section)
 -- `_apply` computes `strength+1` via `engine/combat.py::hand_strike_
 strength`, the same shared helper `cards/slam.py`/`cards/dust_up.py` call
 (base hand-strike strength plus any live `combat_strength_modifier`,
-including a whole-combat-duration bonus recorded in `combat_state`, OQ-60),
+including a whole-combat-duration bonus recorded in `combat_state`, ENG-040),
 burns `min(amount, counters)` off the attachment and removes it once empty,
 then returns the *full* `amount`
 unreduced: "[f]ull damage is applied if there are any counter left, even
@@ -96,7 +96,7 @@ INITIAL_COUNTERS = 5
 STRIKE_BONUS = 1
 """Verbatim "strength+1 damage"."""
 CARD_TYPE = "Combat"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Combat" docstring fact above -- set only on
 the attach option (the actual card play event); the strike option merely
 claims an effect an already-played, already-attached card grants, exactly

@@ -58,8 +58,8 @@ def _unlock_own_vampires(state: GameState, player: str) -> None:
 
 
 def _unlock_own_allies(state: GameState, player: str) -> None:
-    """Rulebook §4: unlock all cards, not just vampires. OQ-46: skips a
-    ready ally's unlock if `skip_next_unlock` is set (one-shot). OQ-15: a
+    """Rulebook §4: unlock all cards, not just vampires. ENG-028: skips a
+    ready ally's unlock if `skip_next_unlock` is set (one-shot). ENG-009: a
     contested ally whose opponent yielded is restored to ready here."""
     for ally in state.players[player].allies.values():
         if ally.zone == "ready":
@@ -73,7 +73,7 @@ def _unlock_own_allies(state: GameState, player: str) -> None:
 
 
 def _unlock_own_attachments(state: GameState, player: str) -> None:
-    """OQ-22: mirrors `_unlock_own_allies`'s contested-restore, for an
+    """ENG-014: mirrors `_unlock_own_allies`'s contested-restore, for an
     attached master card. Scans via `iter_attachments` since the attachment
     may sit on either player's vampire; filtered by `controller`."""
     for _vampire, attachment in iter_attachments(state):
@@ -86,7 +86,7 @@ def _unlock_own_attachments(state: GameState, player: str) -> None:
 
 
 def _unlock_own_master_cards(state: GameState, player: str) -> None:
-    """OQ-23: unlocks a locked standalone master card, and restores a
+    """ENG-015: unlocks a locked standalone master card, and restores a
     contested card whose opponent yielded, on this player's next unlock
     phase (mirrors `_unlock_own_allies`/`_unlock_own_attachments`)."""
     for card in state.players[player].master_cards.values():

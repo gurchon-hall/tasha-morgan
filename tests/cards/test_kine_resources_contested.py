@@ -141,7 +141,7 @@ def test_a_referendum_that_fails_has_no_effect():
 
 def test_a_blocked_action_never_calls_a_referendum_and_the_card_is_still_burned():
     """Rulebook §4 "Resolve the Action": a blocked action never reaches the
-    referendum at all (OQ-5's verbatim quote, `engine/politics.py`'s own
+    referendum at all (RUL-004's verbatim quote, `engine/politics.py`'s own
     module docstring) -- the card is still burned, same destination as an
     unblocked play either way. A temporary fake `"intercept_modifier"`
     provider stands in for some other intercept-granting card so a
@@ -307,7 +307,7 @@ def _action_choices_for_kine_caller(pool: int) -> list[str]:
 
 
 def test_not_offered_when_no_split_can_leave_the_caller_above_zero_pool():
-    """OQ-42 (user ruling): the caller picks the split, so the caller's own
+    """DES-009 (user ruling): the caller picks the split, so the caller's own
     share must leave them 1+ pool; with pool 1 every split (1/3, 2/2, 3/1)
     would self-oust."""
     assert "kine_resources_contested:play" not in _action_choices_for_kine_caller(1)
@@ -383,7 +383,7 @@ def test_kine_with_oxford_burn_is_capped_by_the_pool_reserve_and_allocation_stay
 def test_kine_under_marcos_never_dead_ends_on_the_callers_own_against_vote():
     """Audit repro: P1 (pool 2) acts with Marcos and plays Kine. Voting
     against their own referendum would cost the Marcos burn (pool -> 1, no
-    legal split left); OQ-43 (choices leading to own 0 are forbidden) means
+    legal split left); DES-009 (choices leading to own 0 are forbidden) means
     that vote is not offered, so the allocation can no longer dead-end."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=2)
@@ -445,7 +445,7 @@ def _marcos_scenario(pool: int, p2_pool: int = 30):
 
 
 def test_allocation_is_locked_before_the_first_vote_and_pre_vote_window():
-    """User ruling 2026-10-13 (OQ-45): the split is locked before the vote,
+    """User ruling 2026-10-13 (RUL-013): the split is locked before the vote,
     then the pre-vote window, then votes, then end-of-tally reactions, then
     the effects. Rulebook §4 "The Referendum" step 1 "Choose the terms"
     precedes step 2 "Polling"."""
@@ -562,7 +562,7 @@ def test_marcos_against_vote_is_offered_when_pool_covers_tally_burn_and_locked_s
 
 
 def test_locked_share_must_be_affordable_when_locked():
-    """Pool 2: only share 1 is lockable (own pool >= share + 1, D-9)."""
+    """Pool 2: only share 1 is lockable (own pool >= share + 1, DES-009)."""
     assert [p for p in _legal_self_points_for(2)] == [1]
     assert [p for p in _legal_self_points_for(4)] == [1, 2, 3]
 

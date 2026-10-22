@@ -1,8 +1,8 @@
-"""`ACTION_SUCCEEDED_HOOK` and `TurnCardInPlay` (OQ-34, `docs/
-OPEN_QUESTIONS.md`): `engine/action.py::perform_minion_action`'s generic
-"this action just succeeded" dispatch, and `engine/turn_cards.py`'s
-"stays in play for the rest of the turn, until burned" entity -- the two
-primitives Loup (krcg id 102273) needs.
+"""`ACTION_SUCCEEDED_HOOK` and `TurnCardInPlay` (ENG-024):
+`engine/action.py::perform_minion_action`'s generic "this action just
+succeeded" dispatch, and `engine/turn_cards.py`'s "stays in play for the rest
+of the turn, until burned" entity -- the two primitives Loup (krcg id 102273)
+needs.
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism*, using trivial fake providers. Loup (krcg id 102273) is now

@@ -1,4 +1,4 @@
-"""Block-attempt-time combat grant primitive (OQ-60, `docs/OPEN_QUESTIONS.md`,
+"""Block-attempt-time combat grant primitive (ENG-040,
 resolved): a reaction played during the block attempt's own stealth/intercept
 resolution (`engine/action.py::_duel_stealth_intercept`, before `run_combat`
 even exists) must be able to hand a one-shot combat-time effect forward into
@@ -240,7 +240,7 @@ def test_perform_minion_action_forwards_the_grant_only_for_the_successful_blocke
     """End-to-end proof through the real `perform_minion_action` entry point:
     the reacting vampire's own grant, recorded mid-block-attempt, survives
     into the resulting combat's round 1 and prevents damage -- exactly the
-    two-primitive composition OQ-60 describes."""
+    two-primitive composition ENG-040 describes."""
     hooks.register(INTERCEPT_MODIFIER_HOOK, _fake_reaction_intercept_and_grant("D1", bonus=2))
     hooks.register("damage_prevention", _fake_round1_prevention_provider)
     game = _combat_scenario()
@@ -354,8 +354,8 @@ def test_perform_minion_action_blocked_branch_without_any_grant_offers_nothing()
 
 
 def test_perform_minion_action_merges_a_block_time_grant_alongside_a_maneuver_grant():
-    """The two `initial_combat_state` seeds (OQ-25's `maneuver_grant`
-    parameter and OQ-60's own pending-forwarded grant) use distinct
+    """The two `initial_combat_state` seeds (ENG-017's `maneuver_grant`
+    parameter and ENG-040's own pending-forwarded grant) use distinct
     top-level keys and must both survive the merge in `perform_minion_
     action` -- neither silently overwrites the other."""
 

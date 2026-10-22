@@ -12,7 +12,7 @@ filter (both the hardcoded candidate list and an injected candidate); the
 superior clause's additional "target Methuselah locks a ready unlocked
 minion" effect (the *defender* chooses among ties, and the clause fizzles
 with no decision when the defender has none at all, without blocking the
-bleed itself); and the OQ-9 bleed-amount composability tag (`ACTION_
+bleed itself); and the ENG-003 bleed-amount composability tag (`ACTION_
 BLEED`).
 """
 

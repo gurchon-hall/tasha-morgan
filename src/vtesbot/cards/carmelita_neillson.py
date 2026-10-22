@@ -17,7 +17,7 @@ title at all), group 7, capacity 5, disciplines `["cel", "pre", "AUS"]`.
 Legal since 2022-05-17; confirmed on the active 2P allowed list
 (`data/formats/2p/2026-10-03.json`).
 
-"Camarilla:" sect-gating -- resolved, not an Open Question: this is the
+"Camarilla:" sect-gating -- resolved, not a RUL entry: this is the
 same bare-sect-colon-preamble shape `engine/cards.py::derive_sect`'s
 docstring names for Ariane ("Anarch: Ariane gets -1 stealth..."), which
 other non-title, sect-conditional abilities already gate on for real

@@ -462,7 +462,7 @@ def test_superior_with_multiple_eligible_targets_raises_a_choice_decision():
 
 
 def test_superior_target_is_chosen_at_announce_time_even_when_the_block_succeeds():
-    """OQ-21: the "which eligible vampire" decision is raised inside
+    """RUL-007: the "which eligible vampire" decision is raised inside
     `apply()`, at announce time, before the block-attempt window opens --
     not deferred to `resolve()`. With multiple eligible targets *and* a
     block that goes on to succeed, the choice must still happen (the
@@ -513,7 +513,7 @@ def test_superior_target_is_chosen_at_announce_time_even_when_the_block_succeeds
 
 
 def test_superior_resolve_fizzles_if_the_announced_target_stops_qualifying():
-    """OQ-21 (`docs/open_questions_archive/002.md`): the target is chosen at
+    """RUL-007: the target is chosen at
     `apply()` time (announce), with `resolve()` only ever re-validating --
     never re-choosing -- that same target, per VTES's general "fizzles"
     ruling. Not reachable through ordinary play today (nothing in this
@@ -620,7 +620,7 @@ def test_superior_blocked_does_not_resolve_but_the_card_is_still_consumed():
 
 
 def test_second_physical_copy_not_offered_this_turn_after_either_clause_is_played():
-    """OQ-57 Finding 2 (`docs/OPEN_QUESTIONS.md`, generic cap proven against
+    """ENG-037 Finding 2 (generic cap proven against
     a worked example in `tests/rules/test_action_card_name_cap.py`): once
     either clause of Scouting Mission has been played this turn, a second
     physical copy is not offered -- the cap is keyed by `NAME`, shared by

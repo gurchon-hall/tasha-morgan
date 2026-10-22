@@ -18,8 +18,8 @@ PASS_VALUE = "pass"
 @dataclass(frozen=True)
 class HookOption:
     """One legal, card-sourced option at a hook point. `apply` runs if chosen.
-    `cost` (OQ-32) pays unconditionally, even if later canceled.
-    `played_card_type` (OQ-33) names what is played, for cancel checks.
+    `cost` (ENG-022) pays unconditionally, even if later canceled.
+    `played_card_type` (ENG-023) names what is played, for cancel checks.
     `block_candidate_instance_id`: required on every option offered under
     `engine/action.py::BLOCK_CANDIDATE_INJECTION_HOOK` -- the instance id of
     the specific vampire that option would unlock and return as a block
@@ -88,7 +88,7 @@ def offer(hook: str, state: GameState, **context: Any) -> list[HookOption]:
 
 def ensure_unique_choice_values(choices: Iterable[Choice], *, decision_kind: str) -> None:
     """Raise if two `Choice`s share a `.value`. Prevents a hook-provided value
-    from silently shadowing a hardcoded one (OQ-24) -- call once on the full
+    from silently shadowing a hardcoded one (ENG-016) -- call once on the full
     choice set before building a `Decision`."""
     seen: set[str] = set()
     duplicates: set[str] = set()
@@ -104,7 +104,7 @@ def ensure_unique_choice_values(choices: Iterable[Choice], *, decision_kind: str
 
 
 PENDING_CONTEXT_KEY = "pending"
-"""Convention key (OQ-11) a hook `context` carries its shared, action-scoped
+"""Convention key (ENG-005) a hook `context` carries its shared, action-scoped
 scratch dict under -- excluded from `Decision.context` by
 `sanitize_decision_context` below."""
 
@@ -112,13 +112,13 @@ scratch dict under -- excluded from `Decision.context` by
 def sanitize_decision_context(context: Mapping[str, Any]) -> dict[str, Any]:
     """Strip `PENDING_CONTEXT_KEY` from a hook `context` before it reaches
     `Decision.context` -- `pending` is live engine-internal scratch (may
-    hold a `Callable`, OQ-30), not for agent reasoning (CLAUDE.md)."""
+    hold a `Callable`, ENG-021), not for agent reasoning (CLAUDE.md)."""
     return {key: value for key, value in context.items() if key != PENDING_CONTEXT_KEY}
 
 
 CANCEL_AS_PLAYED_HOOK = "cancel_as_played"
 """Mirrors `cards/registry.py::Hook.CANCEL_AS_PLAYED`'s own string value --
-see `apply_chosen_option` below for the dispatch this now drives (OQ-32)."""
+see `apply_chosen_option` below for the dispatch this now drives (ENG-022)."""
 
 PENDING_REACTION_PLAYED_KEY = "reaction_played"
 """`pending[...]` key: set `True` the moment a Reaction-type `HookOption`
@@ -167,10 +167,10 @@ def offer_cancel_as_played(
     anything. Caller decides what "canceled" means for `option` itself --
     this only runs the canceling side's own effect.
 
-    Shared by `apply_chosen_option` below (OQ-32: a `HookOption` whose own
+    Shared by `apply_chosen_option` below (ENG-022: a `HookOption` whose own
     `cost` is paid unconditionally first, matching "If a non-action card is
     cancelled, its cost should be paid as normal", `3-playing-the-game.md:
-    103-108`) and `engine/phases/minion.py::_perform_action_card` (OQ-57: an
+    103-108`) and `engine/phases/minion.py::_perform_action_card` (ENG-037: an
     Action card has no such `cost` field to pay at all -- its own printed
     cost lives inside `ActionCardSpec.resolve`, paid only on the unblocked
     branch, so skipping `option.apply`'s caller entirely already matches
@@ -206,7 +206,7 @@ def apply_chosen_option(
     may_cancel: str,
     context: Mapping[str, Any],
 ) -> Any:
-    """Interception point for cancel-as-played (OQ-32). Runs `option.cost`
+    """Interception point for cancel-as-played (ENG-022). Runs `option.cost`
     unconditionally, then offers `may_cancel` `CANCEL_AS_PLAYED_HOOK` via
     `offer_cancel_as_played`; if used, `option.apply` is suppressed, else it
     runs normally. Records a Reaction-type `option` as played

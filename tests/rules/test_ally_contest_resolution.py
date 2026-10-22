@@ -1,5 +1,5 @@
-"""Ally contest *resolution* (OQ-15, `docs/OPEN_QUESTIONS.md`): once two
-allies are flagged as contesting each other (OQ-10,
+"""Ally contest *resolution* (ENG-009): once two
+allies are flagged as contesting each other (ENG-004,
 `engine/allies.py::detect_contest_on_recruit`), each controller must be
 offered the rulebook's own pay-1-pool-or-yield decision during their own
 unlock phases (Rulebook §4 Advanced Rules > Contested Cards), mirroring the

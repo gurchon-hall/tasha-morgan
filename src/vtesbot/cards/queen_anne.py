@@ -17,7 +17,7 @@ Three clauses:
 1. "During the polling step of a referendum called by Anne, she can burn 1
    blood to force a younger Camarilla vampire to abstain." Built against
    the generic `POLLING_STEP_HOOK`/`pending["forced_abstain"]` mechanism
-   (OQ-6, `engine/politics.py::_collect_vote_sources`), proven generically
+   (RUL-005, `engine/politics.py::_collect_vote_sources`), proven generically
    by `tests/rules/test_politics.py::
    test_a_forced_abstain_source_is_excluded_from_casting_end_to_end` --
    that mechanism is this clause's whole blocker-removal; no engine gap

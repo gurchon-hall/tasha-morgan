@@ -19,7 +19,7 @@ bold-text effect -- Rulebook §3 "Discipline symbol within a diamond ... may
 opt to use either the basic (plain text) or the superior (bold) effect ...
 but not both"). `cost is None` (free).
 
-Status: implemented (OQ-11, `docs/OPEN_QUESTIONS.md`, now resolved -- the
+Status: implemented (ENG-005, now resolved -- the
 engine's `pending: dict[str, Any]` per-minion-action scratch container,
 `engine/action.py::perform_minion_action`, closed the gap this card was
 previously blocked on).
@@ -35,7 +35,7 @@ provider, same pattern as `threats.py` -- offered only to the acting
 `context.get("action")` here, unlike the superior clause below:
 `"bleed_amount_modifier"`'s context (`_perform_bleed`'s `resolve()`
 closure) carries no `"action"` key at all (unlike `"stealth_modifier"`/
-`"intercept_modifier"`'s context, OQ-9) -- gating on
+`"intercept_modifier"`'s context, ENG-003) -- gating on
 `context.get("action") == ACTION_BLEED` here would always read
 `None != "bleed"` and silently suppress this clause entirely. The
 restriction is instead satisfied by which hook this card registers
@@ -45,7 +45,7 @@ against: `"bleed_amount_modifier"` is only ever offered from
 "[DOM] +1 stealth and +1 bleed (limited)" (the superior clause): a
 `"stealth_modifier"` provider, requiring superior Dominate (`"DOM"`). Unlike
 the basic clause's hook, `"stealth_modifier"`'s context *does* carry
-`context["action"]` (OQ-9), and that hook is shared with hunt and
+`context["action"]` (ENG-003), and that hook is shared with hunt and
 political-action's own stealth ping-pong (`_perform_hunt`,
 `engine/politics.py::political_action`), so hook selection alone does not
 suffice here: the "[DOM] Cannot be used to increase the stealth of a
@@ -58,11 +58,11 @@ stealth is currently needed (`intercept >= stealth`); the other half offers
 `INTERCEPT_MODIFIER_HOOK` to the defender instead, so this provider is
 simply never invoked while stealth is not needed. This single play must
 also deliver the "+1 bleed" half from the same provider call, read much
-later by `_perform_bleed`'s `resolve()` (OQ-11): `apply()` both returns `1`
+later by `_perform_bleed`'s `resolve()` (ENG-005): `apply()` both returns `1`
 (the hook's `int`-delta contract) *and* stashes
 `pending[PENDING_BLEED_AMOUNT_KEY] += 1`, which `resolve()` folds into
 `base_amount` before the separately-clamped `"bleed_amount_modifier"`
-window runs -- the mechanism OQ-11 built, proved end-to-end by
+window runs -- the mechanism ENG-005 built, proved end-to-end by
 `tests/rules/test_pending_modifier.py`'s fake stand-in provider.
 
 Rulebook §3 "may opt to use either the basic or the superior effect ... but
@@ -117,7 +117,7 @@ STEALTH_MODIFIER_HOOK = "stealth_modifier"
 BASIC = "dom"
 SUPERIOR = "DOM"
 CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action Modifier" docstring fact above."""
 
 
@@ -168,7 +168,7 @@ def _provide_bonding_superior(state: GameState, context: Mapping[str, Any]) -> l
     """ "[DOM] +1 stealth and +1 bleed (limited)" -- see module docstring for
     the `context["action"]` gate (ruling: "[DOM] Cannot be used to increase
     the stealth of a non-bleed action") and the `pending`-stash mechanism
-    (OQ-11) that carries the "+1 bleed" half forward to `_perform_bleed`'s
+    (ENG-005) that carries the "+1 bleed" half forward to `_perform_bleed`'s
     later `resolve()`. The "cannot be used if you do not need the stealth"
     ruling needs no code here at all: `_duel_stealth_intercept` only ever
     calls `hooks.offer("stealth_modifier", ...)` on the half of its ping-pong

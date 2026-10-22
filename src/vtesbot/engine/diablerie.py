@@ -58,7 +58,7 @@ def _move_attachment_to_diablerist(
     diablerist. Deliberately not `engine/attachments.py::
     transfer_attachment_control`: that helper's own "controller unchanged
     -> host must be unchanged, else `ValueError`" guard is a Disputed
-    Territory-specific rule about *locations* ([LSJ 19971002], OQ-35), not
+    Territory-specific rule about *locations* ([LSJ 19971002], ENG-025), not
     diablerie -- diablerie legitimately moves an attachment onto a
     *different* vampire even when the diablerist already controls it
     (diablerizing one's own torpid vampire), which that guard would

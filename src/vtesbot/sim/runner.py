@@ -41,7 +41,7 @@ class MatchResult:
 
     @property
     def tie(self) -> bool:
-        """Simultaneous oust of both Methuselahs (OQ-44): over, no winner."""
+        """Simultaneous oust of both Methuselahs (DES-010): over, no winner."""
         return self.game_over and self.winner is None
 
 

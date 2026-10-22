@@ -1,5 +1,5 @@
 """Dodge and same-round additional strike (`engine/combat.py`; resolves
-`docs/OPEN_QUESTIONS.md` OQ-18 Gap 2): `"combat_dodge_option"` (a card-
+ENG-012 Gap 2): `"combat_dodge_option"` (a card-
 granted dodge, offered alongside `"combat_strike_option"` at the strike
 step) and `"combat_additional_strike"` (a card-granted extra strike this
 round, resolved via the *same* full strike-choice machinery as a normal
@@ -9,16 +9,15 @@ These two mechanics are deliberately exercised independently of each other
 and with fake, test-only providers (`cards/dust_up.py`/`cards/side_strike.py`
 now wire real cards against both, but this file proves the *generic*
 mechanism, independent of any one card's wording) -- per the [LSJ
-20030902-2]/[LSJ 20060808-1] rulings on Dust Up quoted in OQ-18 ("[ani]
+20030902-2]/[LSJ 20060808-1] rulings on Dust Up quoted in ENG-012 ("[ani]
 Does not prevent the opponent from dodging, the dodge just has no effect"),
 dodge is its own real mechanic with a real effect in the general case.
 
-The cross-card "(limited)" additional-strike cap (`docs/OPEN_QUESTIONS.md`
-OQ-19, `engine/combat.py`'s own module docstring "Cross-card '(limited)'
-cap" section) is proven here too, with fake providers standing in for two
-unrelated cards' own "(limited)" clauses -- a real-card version (Dust Up +
-Side Strike actually combined in one round) lives in
-`tests/cards/test_dust_up_side_strike_interaction.py`.
+The cross-card "(limited)" additional-strike cap (ENG-013, `engine/combat.py`'s
+own module docstring "Cross-card '(limited)' cap" section) is proven here too,
+with fake providers standing in for two unrelated cards' own "(limited)"
+clauses -- a real-card version (Dust Up + Side Strike actually combined in one
+round) lives in `tests/cards/test_dust_up_side_strike_interaction.py`.
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -231,7 +230,7 @@ def test_same_round_additional_strike_reuses_the_full_strike_choice_machinery():
 
 def test_additional_strike_limit_resets_every_round_of_the_same_combat():
     """Module docstring's "Cross-card '(limited)' cap" section (`engine/
-    combat.py`, resolving `docs/OPEN_QUESTIONS.md` OQ-19): `run_combat`
+    combat.py`, resolving ENG-013): `run_combat`
     creates `round_state` fresh at the top of *every* round, so a
     "(limited)" additional-strike grant used in round 1 must not block a
     fresh, otherwise-legal grant in round 2 of the *same* combat (distinct
@@ -333,18 +332,17 @@ def test_additional_strike_pair_only_asks_combatants_with_an_available_grant():
 
 
 def test_additional_strike_limit_is_shared_across_two_unrelated_providers():
-    """Module docstring's "Cross-card '(limited)' cap" section (`docs/
-    OPEN_QUESTIONS.md` OQ-19): §8 glossary's "A minion cannot use more than
-    one card or effect to gain additional strikes per round of combat" is a
-    *cross-card* cap. Two fake providers stand in for two unrelated cards'
-    own "(limited)" clauses -- "Card A" grants via the dodge-bundled hook
-    (`COMBAT_DODGE_OPTION_HOOK`, Dust Up's own `[cel]` shape), "Card B"
-    grants directly via `COMBAT_ADDITIONAL_STRIKE_HOOK` (Side Strike's own
-    `[CEL]` shape). Using Card A's grant must make Card B's own offer
-    disappear in the *same* round, even though Card B's own provider has
-    never been played or consulted before -- the real-card version of this
-    (Dust Up + Side Strike actually combined) is proven in `tests/cards/
-    test_dust_up_side_strike_interaction.py`."""
+    """Module docstring's "Cross-card '(limited)' cap" section (ENG-013): §8
+    glossary's "A minion cannot use more than one card or effect to gain
+    additional strikes per round of combat" is a *cross-card* cap. Two fake
+    providers stand in for two unrelated cards' own "(limited)" clauses --
+    "Card A" grants via the dodge-bundled hook (`COMBAT_DODGE_OPTION_HOOK`,
+    Dust Up's own `[cel]` shape), "Card B" grants directly via
+    `COMBAT_ADDITIONAL_STRIKE_HOOK` (Side Strike's own `[CEL]` shape). Using
+    Card A's grant must make Card B's own offer disappear in the *same* round,
+    even though Card B's own provider has never been played or consulted before
+    -- the real-card version of this (Dust Up + Side Strike actually combined)
+    is proven in `tests/cards/test_dust_up_side_strike_interaction.py`."""
 
     def fake_card_a_dodge(state, context):
         if context.get("player") != "P1" or additional_strike_limit_used(context):
@@ -407,7 +405,7 @@ def test_additional_strike_limit_is_shared_across_two_unrelated_providers():
 
 
 def test_additional_strike_limit_is_independent_per_combatant():
-    """`rules-auditor` regression finding on the OQ-19 fix's first landing:
+    """`rules-auditor` regression finding on the ENG-013 fix's first landing:
     `ADDITIONAL_STRIKE_LIMIT_KEY` must be keyed by `context["vampire"]`
     inside the shared `round_state`, not a single flat boolean -- `round_
     state` is one object offered to *both* combatants' hook calls each

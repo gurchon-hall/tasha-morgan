@@ -502,7 +502,7 @@ def test_pot_never_targets_the_acting_players_own_vampire():
 
 
 def test_pot_resolve_fizzles_if_the_announced_target_stops_qualifying():
-    """OQ-21 (`docs/OPEN_QUESTIONS.md`): the target is chosen at `apply()`
+    """RUL-007: the target is chosen at `apply()`
     time (announce), with `resolve()` only ever re-validating -- never
     re-choosing -- that same target, per VTES's general "fizzles" ruling
     (an unblocked action whose target no longer meets its condition at

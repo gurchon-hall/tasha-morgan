@@ -1,10 +1,10 @@
 """Engine-level errors. No-guessing rule (CLAUDE.md §2): an unsettled situation raises
-`UnresolvedRulingError` and is recorded in `docs/OPEN_QUESTIONS.md` under its `OQ-<n>`."""
+`UnresolvedRulingError` and is recorded as a `RUL-<nnn>` entry in `docs/rulings/`."""
 
 
 class UnresolvedRulingError(Exception):
     """Raised instead of guessing a rule the sources don't settle. `oq_id` is the
-    `docs/OPEN_QUESTIONS.md` entry id; `detail` describes the situation."""
+    `RUL-<nnn>` entry id; `detail` describes the situation."""
 
     def __init__(self, oq_id: str, detail: str = "") -> None:
         message = (

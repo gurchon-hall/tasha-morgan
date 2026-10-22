@@ -1,5 +1,5 @@
-"""OQ-42 (user ruling 2026-10-13, 2P-duel project simplification; see
-`docs/DECISIONS.md` D-9): a Methuselah may not bring their own pool to 0
+"""DES-009 (user ruling 2026-10-13, 2P-duel project simplification; see
+DES-009): a Methuselah may not bring their own pool to 0
 through their own voluntary choices. Central helper:
 `engine/pool.py::can_afford_without_ousting` / `max_voluntary_spend`.
 """
@@ -100,7 +100,7 @@ CONTESTS = [
 
 @pytest.mark.parametrize(("kind", "setup"), CONTESTS)
 def test_contest_with_only_yield_left_is_resolved_without_a_decision(kind, setup):
-    """OQ-42: at pool 1 a pool-1 player is forced to yield every contested
+    """DES-009: at pool 1 a pool-1 player is forced to yield every contested
     card; the lone choice is taken without a vacuous `Decision`."""
     assert _contest_choices(kind, 1, setup) == []
 

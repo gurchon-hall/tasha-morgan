@@ -1,4 +1,4 @@
-"""Turn-scoped library cards (OQ-34): stays in play for the rest of the
+"""Turn-scoped library cards (ENG-024): stays in play for the rest of the
 turn played, auto-burned at end of turn unless burned sooner (e.g. Loup).
 Generic primitives; specifics live in the card's module."""
 
@@ -45,7 +45,7 @@ def active_turn_cards(state: GameState, player: str, krcg_id: int) -> list[TurnC
 def clear_turn_cards_at_end_of_turn(state: GameState, player: str) -> None:
     """Burn condition 1: every `is_in_play` turn card `player` controls is
     burned once their turn ends, unconditionally (CLAUDE.md rule 3).
-    Called from `play_turn` right before the turn flips (OQ-34)."""
+    Called from `play_turn` right before the turn flips (ENG-024)."""
     for card in state.players[player].turn_cards.values():
         if card.is_in_play:
             burn_turn_card(card)

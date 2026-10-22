@@ -28,7 +28,7 @@ def test_blocked_reason_cites_the_missing_combat_state_wiring_not_a_ruling():
     reg = registry.get(201598)
     assert reg.blocked_reason is not None
     assert "combat_state" in reg.blocked_reason
-    assert not reg.blocked_reason.startswith("OQ-")  # an engine gap, not a ruling ambiguity.
+    assert not reg.blocked_reason.startswith("RUL-")  # an engine gap, not a ruling ambiguity.
 
 
 def test_kasim_bayar_is_excluded_from_the_implemented_pool():

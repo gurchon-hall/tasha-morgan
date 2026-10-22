@@ -1,4 +1,4 @@
-"""`HeuristicAgent` rules (docs/DECISIONS.md D-8) on hand-built decisions,
+"""`HeuristicAgent` rules (DES-008) on hand-built decisions,
 plus a seeded-sim guard that it never answers outside `decision.choices`."""
 
 from vtesbot.agents import HeuristicAgent, RandomLegalAgent
@@ -123,7 +123,7 @@ def test_bleeds_when_lethal_even_at_low_blood():
 def test_other_action_choice_preferred_over_hunt_when_blood_is_low():
     # e.g. `recruit_47th_street_royals` (`cards/forty_seventh_street_royals.py`)
     # offered alongside bleed/hunt in the same `action_choice` decision
-    # (`engine/phases/minion.py::_choose_and_perform_action`); D-15: a
+    # (`engine/phases/minion.py::_choose_and_perform_action`); DES-015: a
     # card-granted option outranks hunting (a no-damage fallback) but not a
     # bleed with blood to spare.
     obs = _obs([_vamp("V1", "ready", 1)])
@@ -155,10 +155,10 @@ def test_bring_crypt_loses_to_add_blood_when_both_are_legal():
     # crypt cards left, makes `bring_crypt` legal too
     # (engine/phases/influence.py:69-99 gates `bring_crypt` on transfers/
     # pool/crypt-deck only, not on whether an uncontrolled vampire exists).
-    # `_score_bring_crypt`'s own `has_uncontrolled` gate (D-8/D-14) is what
+    # `_score_bring_crypt`'s own `has_uncontrolled` gate (DES-008/DES-014) is what
     # makes it lose here, not an engine-level exclusion between the two --
     # a looser, "compete on the same scale" version of this gate was tried
-    # and reverted (D-14 addendum) after it regressed the benchmark.
+    # and reverted (DES-014 addendum) after it regressed the benchmark.
     obs = _obs([_vamp("V1", "uncontrolled", 4, capacity=5)], pool=6)
     d = _decision("influence_action", "bring_crypt", "add_blood:V1", "end_phase")
     assert _pick(obs, d) == "add_blood:V1"

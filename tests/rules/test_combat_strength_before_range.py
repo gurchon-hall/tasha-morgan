@@ -1,4 +1,4 @@
-"""`combat_state` (OQ-60 primitive, `engine/damage.py::COMBAT_STATE_CONTEXT_KEY`)
+"""`combat_state` (ENG-040 primitive, `engine/damage.py::COMBAT_STATE_CONTEXT_KEY`)
 threaded into `BEFORE_RANGE_HOOK`'s and `COMBAT_STRENGTH_MODIFIER_HOOK`'s own
 contexts (`engine/combat.py::_ask_before_range`/`_strike_strength`, reached
 via `_resolve_one_strike`/`_resolve_strike_pair`) -- the same combat-scoped

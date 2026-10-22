@@ -24,12 +24,12 @@ Rulings (verbatim, via krcg):
 clan requirement -- any Methuselah's own ready [pre]/[PRE] vampire qualifies,
 not only a Toreador's, despite shipping in the suggested Toreador 2P deck).
 
-Status: implemented (OQ-36, `docs/OPEN_QUESTIONS.md`, resolved --
+Status: implemented (ENG-026, resolved --
 `engine/action.py::REFERENDUM_RESOLVED_HOOK`, dispatched via
 `hooks.resolve_impulse_window` right after a passing political action's own
 `resolve(pending)` call returns).
 
-Who may play it (OQ-38, `docs/OPEN_QUESTIONS.md`, resolved -- user ruling,
+Who may play it (RUL-010, resolved -- user ruling,
 Reading A): "this vampire" (both clauses) is the political action's own
 *acting* vampire specifically -- `context["caller_vampire_id"]` -- never a
 free choice among the controller's other ready [pre]/[PRE] vampires, and
@@ -38,13 +38,13 @@ verbatim: "The acting minion can play [action modifier cards]... Some action
 modifier cards are played by minions 'other than the acting minion'. Only
 minions controlled by the same Methuselah can play those cards." Voter
 Captivation carries no such override phrase, so the unqualified default
-applies: only the acting minion, full stop. Unlike Scalpel Tongue (OQ-38's
+applies: only the acting minion, full stop. Unlike Scalpel Tongue (RUL-010's
 other half), this card has no Reaction-typed half to separately justify a
 non-caller use, so the defending Methuselah's own copy of Voter Captivation
 is simply unplayable -- an accepted consequence of this reading, not a gap.
 This replaces this module's earlier, broader reading (any ready [pre]/[PRE]
 vampire of whichever Methuselah played the card) that `rules-auditor`
-flagged as unverified against the Perfect Paragon precedent (OQ-30/31, an
+flagged as unverified against the Perfect Paragon precedent (ENG-021/RUL-009, an
 identical "[pre] This vampire ..." shape immediately after a trigger clause,
 already read there as caller-only).
 
@@ -70,7 +70,7 @@ permanently unplayable). Discipline gating reads the plain printed
 same convention `enchant_kindred.py`/`fleetness.py`/`dust_up.py` already use.
 
 Single, repeatable two-sided window, not a proactive/reactive split (unlike
-OQ-30/31's `INTERCEPT_DECREASE_HOOK` family): Perfect Paragon's own split
+ENG-021/RUL-009's `INTERCEPT_DECREASE_HOOK` family): Perfect Paragon's own split
 exists because that card can be played either before any block candidate is
 fixed or reactively once one is -- two textually and timing-distinct moments
 within one action. Voter Captivation has only one trigger moment ("after
@@ -80,20 +80,20 @@ already satisfied structurally by `hooks.resolve_impulse_window`'s own
 alternating, repeat-until-both-pass loop -- not a second, differently-shaped
 offer point this module would need to build. No further engine gap found.
 
-Basic clause ("This vampire gains 1 blood for each vote by which the
-referendum passed"): `context["margin"]` (`votes_for - votes_against`,
-computed by `perform_minion_action` only once the referendum is confirmed
-passed, so always >= 1 under this engine's current dispatch gate -- see
+Basic clause ("This vampire gains 1 blood for each vote by which the referendum
+passed"): `context["margin"]` (`votes_for - votes_against`, computed by
+`perform_minion_action` only once the referendum is confirmed passed, so always
+>= 1 under this engine's current dispatch gate -- see
 `REFERENDUM_RESOLVED_HOOK`'s own docstring) is added via
 `engine/damage.py::add_blood`, which already floors at 0 and caps at the
-target's `effective_capacity` (OQ-8) -- no extra capacity-check code needed
-here, matching `enchant_kindred.py`'s own use of the same helper. The "0
-votes" automatically-passing ruling needs no special-case: `add_blood`
-already treats a 0 amount as a no-op, and this engine has no automatically-
-passing mechanism yet to ever actually reach that case (`docs/
-OPEN_QUESTIONS.md` OQ-6's own note, `perfect_paragon.py`'s identical
-"unreachable today, not a dropped ruling" precedent) -- not gated out here
-regardless, since the ruling explicitly permits the play even at margin 0.
+target's `effective_capacity` (ENG-002) -- no extra capacity-check code needed
+here, matching `enchant_kindred.py`'s own use of the same helper. The "0 votes"
+automatically-passing ruling needs no special-case: `add_blood` already treats
+a 0 amount as a no-op, and this engine has no automatically- passing mechanism
+yet to ever actually reach that case (RUL-005's own note,
+`perfect_paragon.py`'s identical "unreachable today, not a dropped ruling"
+precedent) -- not gated out here regardless, since the ruling explicitly
+permits the play even at margin 0.
 
 Superior clause ("As above, but move up to 2 of those blood to your pool
 instead of this vampire"): the redirected blood never reaches the vampire at
@@ -109,7 +109,7 @@ decision is raised in that edge case.
 Per-action cap (`rules-auditor` finding): Rulebook §2 Card Types, verbatim:
 "A minion cannot play the same action modifier card more than once during a
 single action (even if using a different Discipline level)." With "this
-vampire" now pinned to the single acting vampire (OQ-38 above), only one
+vampire" now pinned to the single acting vampire (RUL-010 above), only one
 vampire is ever a candidate target -- but a second copy of this card in hand
 could still try to feed that same vampire the option a second time in the
 same `REFERENDUM_RESOLVED_HOOK` window (`hooks.resolve_impulse_window`
@@ -122,19 +122,19 @@ not a plain `bool`, for parity with other per-action caps in this codebase
 that key off an instance id -- only ever holds at most one element now that
 the target can no longer vary.)
 
-Cost paid even if canceled (OQ-38's companion ruling, user ruling): "Action
+Cost paid even if canceled (RUL-010's companion ruling, user ruling): "Action
 modifiers can only be played once [per minion per action]; if [a play is]
 canceled as played, another copy can be played." `apply_chosen_option`
-(`engine/hooks.py`, OQ-32, resolved) already implements the generic half of
+(`engine/hooks.py`, ENG-022, resolved) already implements the generic half of
 this -- "cost is still paid," effect suppressed, and a canceled attempt does
 not itself trigger a once-per-action limit -- but only for a provider that
 actually splits its own card-play `cost` out of `apply`. This module's
 earlier draft played `play_from_hand` unconditionally inside `apply()`, the
-same atomic-cost-and-effect pattern OQ-32's own review flagged (and fixed,
+same atomic-cost-and-effect pattern ENG-022's own review flagged (and fixed,
 for Telepathic Counter) as a landmine: since `REFERENDUM_RESOLVED_HOOK` *is*
 dispatched through `hooks.resolve_impulse_window` (exposed to
 `CANCEL_AS_PLAYED_HOOK`), a future cancellation provider would have left the
-physical card sitting back in hand, unspent, exactly the bug OQ-32 already
+physical card sitting back in hand, unspent, exactly the bug ENG-022 already
 warned about for Organized Resistance/Protection Racket. Both clauses below
 now set `HookOption.cost = play_from_hand(...)`, leaving only the blood/pool
 grant and `GRANTED_KEY` bookkeeping inside `apply` -- so a canceled attempt
@@ -163,7 +163,7 @@ SUPERIOR = "PRE"
 MAX_REDIRECT = 2
 """Printed "move up to 2 of those blood ...."."""
 CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type" docstring fact above."""
 GRANTED_KEY = "voter_captivation_granted_vampires"
 """Module docstring's "Per-action cap": `context["pending"]` key holding the
@@ -180,7 +180,7 @@ def _has_card_in_hand(state: GameState, player: str) -> bool:
 
 
 def _caller_vampire(state: GameState, context: Mapping[str, Any]) -> VampireInPlay | None:
-    """Module docstring's "Who may play it" (OQ-38): "this vampire" is the
+    """Module docstring's "Who may play it" (RUL-010): "this vampire" is the
     political action's own acting vampire, `context["caller_vampire_id"]`,
     never a free choice among the controller's other vampires."""
     vampire = state.players[context["caller"]].vampires.get(context["caller_vampire_id"])

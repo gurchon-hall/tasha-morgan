@@ -42,7 +42,7 @@ Threats (at either level) has been played once in this action, it (and any
 future "(limited)" bleed-increase action modifier, e.g. Bonding's basic/
 superior clause, `vtesbot.cards.bonding`) is not offered again, tracked via
 the per-*action* (not merely per-window) `bleed_bookkeeping` scratch space
-keyed off `pending` (`vtesbot.cards._shared`, OQ-11 `docs/OPEN_QUESTIONS.md`)
+keyed off `pending` (`vtesbot.cards._shared`, ENG-005)
 -- shared with `telepathic_counter.py` and `bonding.py`, so a "(limited)"
 bleed increase played by any of these, in either hook window, correctly
 excludes the others for the rest of this one action.
@@ -62,7 +62,7 @@ KRCG_ID = 101978
 BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
 LIMITED_USED_KEY = "bleed_increase_limited_used"
 CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action Modifier" docstring fact above."""
 
 

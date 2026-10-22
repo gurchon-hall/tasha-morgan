@@ -1,6 +1,6 @@
 """Influence phase (Rulebook §4, 2P §2.3): blood add/remove, bring crypt
-card, free reveal; 3->4 transfer ramp; OQ-8 capacity.
-`INFLUENCE_PHASE_ACTION_HOOK` adds OQ-24 options alongside.
+card, free reveal; 3->4 transfer ramp; ENG-002 capacity.
+`INFLUENCE_PHASE_ACTION_HOOK` adds ENG-016 options alongside.
 """
 
 from typing import TYPE_CHECKING
@@ -21,7 +21,7 @@ STANDARD_TRANSFERS = 4
 """2P variant §2.3: every influence phase thereafter, for both players."""
 
 INFLUENCE_PHASE_ACTION_HOOK = "influence_phase_action"
-"""OQ-24: a card-sourced, transfer-costed influence-phase option, offered
+"""ENG-016: a card-sourced, transfer-costed influence-phase option, offered
 alongside the three hardcoded transfer types. `HookOption.apply(state)`
 must return the `int` number of transfers consumed."""
 
@@ -44,7 +44,7 @@ def influence_phase(state: GameState, player: str) -> None:
         if not choices:
             return
         all_choices = choices + (Choice("end_phase", "End influence phase"),)
-        # Audit-driven guard (OQ-24 addendum, `docs/OPEN_QUESTIONS.md`): a
+        # Audit-driven guard (ENG-016 addendum): a
         # hook-provided choice value colliding with a hardcoded one (or with
         # "end_phase") would otherwise silently take over that action --
         # see `hooks.ensure_unique_choice_values`'s own docstring.

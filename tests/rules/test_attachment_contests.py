@@ -1,7 +1,7 @@
-"""Contested unique attached master cards (OQ-22, `docs/OPEN_QUESTIONS.md`,
+"""Contested unique attached master cards (ENG-014,
 found implementing Fame, 100698): a `CardAttachment` printed "Unique" can
 collide with a same-named opposing attachment, exactly like the crypt-card
-(`engine/contests.py`) and ally (`engine/allies.py`, OQ-10) cases -- except
+(`engine/contests.py`) and ally (`engine/allies.py`, ENG-004) cases -- except
 there is no 2P "stays in play and usable" override for this card type
 either, so an attachment contest follows the *unmodified* Rulebook §4
 Advanced Rules > Contested Cards rule: both copies are "turned face down
@@ -9,7 +9,7 @@ and are out of play" for the contest's duration
 (`engine/attachments.py::detect_contest_on_attach`).
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
-*mechanism*; Fame itself stays `blocked`/OQ-22 and is not touched here
+*mechanism*; Fame itself stays `blocked`/ENG-014 and is not touched here
 (`card-implementer`'s job once this capability exists).
 """
 
@@ -104,7 +104,7 @@ def test_differently_named_attachments_are_not_contested():
 
 
 def test_a_players_own_two_attachments_of_the_same_name_burn_the_incoming_copy():
-    """OQ-16 (resolved), rulebook caution box quoted verbatim in
+    """ENG-010 (resolved), rulebook caution box quoted verbatim in
     `engine/contests.py::detect_contest_on_reveal`: "you cannot voluntarily
     contest cards with yourself (if some effect would force you to contest a
     card with yourself, then you simply burn the incoming copy of the unique

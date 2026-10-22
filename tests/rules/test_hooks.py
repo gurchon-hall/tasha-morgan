@@ -200,9 +200,9 @@ def test_resolve_impulse_window_snaps_back_to_the_acting_player_after_any_use():
 
 
 def test_sanitize_decision_context_strips_pending_but_keeps_everything_else():
-    """Direct unit test of the helper itself (`rules-auditor` finding, OQ-30,
-    `docs/OPEN_QUESTIONS.md`): `"pending"` is removed, every other key is
-    passed through unchanged, and the input `context` is not mutated."""
+    """Direct unit test of the helper itself (`rules-auditor` finding,
+    ENG-021): `"pending"` is removed, every other key is passed through
+    unchanged, and the input `context` is not mutated."""
     context = {"actor": "P1", "pending": {"stashed": object()}, "action": "bleed"}
 
     sanitized = hooks.sanitize_decision_context(context)
@@ -212,7 +212,7 @@ def test_sanitize_decision_context_strips_pending_but_keeps_everything_else():
 
 
 def test_offer_until_pass_never_exposes_pending_in_the_decisions_context():
-    """`rules-auditor` finding (OQ-30): `offer_until_pass` must build
+    """`rules-auditor` finding (ENG-021): `offer_until_pass` must build
     `Decision.context` via `sanitize_decision_context`, not a bare
     `dict(context)` -- the provider itself still receives the full
     `context` (including `pending`), only the agent-visible `Decision`
@@ -248,7 +248,7 @@ def test_offer_until_pass_never_exposes_pending_in_the_decisions_context():
 
 
 def test_resolve_impulse_window_never_exposes_pending_in_the_decisions_context():
-    """Same `rules-auditor` finding (OQ-30) for the two-sided impulse window."""
+    """Same `rules-auditor` finding (ENG-021) for the two-sided impulse window."""
     from vtesbot.engine.decision import Choice
 
     def provider(state, context):
@@ -282,7 +282,7 @@ def test_resolve_impulse_window_never_exposes_pending_in_the_decisions_context()
 
 
 def test_apply_chosen_option_runs_apply_normally_with_no_cancel_provider():
-    """Zero-regression check (`docs/OPEN_QUESTIONS.md` OQ-32, resolved): with
+    """Zero-regression check (ENG-022, resolved): with
     no `CANCEL_AS_PLAYED_HOOK` provider registered (true of every card in
     the pool today), `offer_until_pass` behaves byte-for-byte as before this
     primitive existed -- no extra decision is raised to the other player."""
@@ -313,7 +313,7 @@ def test_apply_chosen_option_runs_apply_normally_with_no_cancel_provider():
 
 
 def test_apply_chosen_option_pays_cost_but_suppresses_apply_when_canceled():
-    """The actual OQ-32 mechanism: the other side cancels a chosen option
+    """The actual ENG-022 mechanism: the other side cancels a chosen option
     *as it is played* -- its `cost` (the generic "cost is still paid") still
     runs, but its `apply` (the actual effect) is suppressed, and the
     canceling option's own `apply` (its own cost, e.g. Diana's "burn 1
@@ -417,7 +417,7 @@ def test_apply_chosen_option_is_offered_to_the_non_acting_side_in_an_impulse_win
     def provider(state, context):
         # One-shot, like a real card: `cost` (below) marks it used the
         # instant it is chosen, regardless of whether it then gets
-        # canceled -- same "still treated as played" semantics the OQ-32
+        # canceled -- same "still treated as played" semantics the ENG-022
         # docstring documents, needed here only so the window terminates.
         if context.get("player") != "P1" or used[0]:
             return []
@@ -454,7 +454,7 @@ def test_apply_chosen_option_is_offered_to_the_non_acting_side_in_an_impulse_win
 
 
 def test_offer_cancel_as_played_returns_false_with_no_provider_registered():
-    """OQ-57 (`docs/OPEN_QUESTIONS.md`): the raw primitive underneath
+    """ENG-037: the raw primitive underneath
     `apply_chosen_option`, usable with no `option.cost` at all (`engine/
     phases/minion.py::_perform_action_card`'s own call site, which has no
     `cost` field in play for an Action card's `HookOption`)."""
@@ -524,7 +524,7 @@ def test_offer_cancel_as_played_passing_returns_false_and_the_caller_may_still_a
 
 
 def test_cancel_context_carries_the_canceled_options_played_card_type():
-    """`docs/OPEN_QUESTIONS.md` OQ-33, resolved: a `CANCEL_AS_PLAYED_HOOK`
+    """ENG-023, resolved: a `CANCEL_AS_PLAYED_HOOK`
     provider that only cancels a specific card type (Diana Iadanza's own
     "cancel a *reaction card* as it is played") can gate on
     `context["canceled_card_type"]` instead of fragile `canceled_choice`
@@ -577,7 +577,7 @@ def test_cancel_context_carries_the_canceled_options_played_card_type():
 
 
 def test_a_reaction_only_canceler_cannot_reach_a_non_card_play_option():
-    """The motivating OQ-33 scenario itself: a `CANCEL_AS_PLAYED_HOOK`
+    """The motivating ENG-023 scenario itself: a `CANCEL_AS_PLAYED_HOOK`
     provider gated to Reaction cards only must offer nothing at all against
     an option that is not a card play (`played_card_type` left at its
     default `None` -- the same shape Modius's "discard a master card to get

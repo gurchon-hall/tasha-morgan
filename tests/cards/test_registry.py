@@ -20,7 +20,7 @@ def _isolate_fake_registrations():
     """Remove only the fake (>= 900_000) registrations a test adds, so a
     real card registration (e.g. from importing `vtesbot.cards`) is never
     wiped out -- this registry is static, process-wide state
-    (`docs/DECISIONS.md` D-5), not per-test state."""
+    (DES-005), not per-test state."""
     yield
     for reg in registry.all_registrations():
         if reg.krcg_id >= _FAKE_ID_FLOOR:
@@ -78,13 +78,13 @@ def test_blocked_card_is_registered_but_not_counted_as_implemented():
             status=registry.Status.BLOCKED,
             hooks=(registry.Hook.POLITICAL_ACTION,),
             source="tests.cards.test_registry",
-            blocked_reason="OQ-6",
+            blocked_reason="RUL-005",
         )
     )
 
     assert 999004 in registry.blocked_ids()
     assert 999004 not in registry.implemented_ids()
-    assert registry.get(999004).blocked_reason == "OQ-6"
+    assert registry.get(999004).blocked_reason == "RUL-005"
 
 
 def test_get_returns_none_for_an_unregistered_card():
@@ -108,7 +108,7 @@ def test_all_registrations_includes_every_registered_card():
             status=registry.Status.BLOCKED,
             hooks=(),
             source="tests.cards.test_registry",
-            blocked_reason="OQ-6",
+            blocked_reason="RUL-005",
         )
     )
 
@@ -122,29 +122,29 @@ def test_the_real_card_modules_import_without_error_and_register_once_each():
     id twice across modules."""
     import vtesbot.cards  # noqa: F401 -- import for its registration side effect
 
-    # Every OQ-6-blocked card documented in the rules-engineer milestone-3
+    # Every RUL-005-blocked card documented in the rules-engineer milestone-3
     # scaffolding report is actually registered, as blocked, with a reason.
     # Kine Resources Contested (101056), Parity Shift (101353) and Oxford
-    # University, England (101341) have since been implemented (OQ-6 and
-    # OQ-23 both resolved; `engine/politics.py::resolve_referendum`,
+    # University, England (101341) have since been implemented (RUL-005 and
+    # ENG-015 both resolved; `engine/politics.py::resolve_referendum`,
     # `src/vtesbot/cards/oxford_university_england.py`) and are checked
     # separately below, not here. Perfect Paragon (101387) and Diana
-    # Iadanza (201694) are also checked separately below: OQ-6/OQ-30/OQ-31
-    # and OQ-32/OQ-33 (respectively) are all resolved, so both are now
+    # Iadanza (201694) are also checked separately below: RUL-005/ENG-021/RUL-009
+    # and ENG-022/ENG-023 (respectively) are all resolved, so both are now
     # `implemented` too (`cards/perfect_paragon.py`, `cards/diana_iadanza.py`).
     # Scalpel Tongue (101686) and Voter Captivation (102131) are likewise
-    # checked separately below: OQ-36/OQ-37 are both resolved, so both are
+    # checked separately below: ENG-026/ENG-027 are both resolved, so both are
     # now `implemented` (`cards/scalpel_tongue.py`, `cards/voter_captivation.py`).
-    # Disputed Territory (100557) is also checked separately below: OQ-6/
-    # OQ-35 are both resolved, so it is now `implemented` too
+    # Disputed Territory (100557) is also checked separately below: RUL-005/
+    # ENG-025 are both resolved, so it is now `implemented` too
     # (`cards/disputed_territory.py`). Fiorenza Savona (201616) is likewise
-    # checked separately below: OQ-6/OQ-49 are both resolved, so it is now
+    # checked separately below: RUL-005/ENG-031 are both resolved, so it is now
     # `implemented` too (`cards/fiorenza_savona.py`). Alexa Draper (201529)
     # is now `implemented` too (`cards/alexa_draper.py`), checked separately
     # below: `engine/cards.py::LibraryCard.discipline_requirement`/
     # `requires_discipline` resolved its own independent gap. Queen Anne
     # (201647) is now `implemented` too (`cards/queen_anne.py`): both its
-    # earlier blockers (OQ-6's own `pending["forced_abstain"]` mechanism and
+    # earlier blockers (RUL-005's own `pending["forced_abstain"]` mechanism and
     # `engine/diablerie.py::DIABLERIE_HOOK`) are resolved, and the earlier
     # stub's belief that a `CryptCard.generation` field was needed for
     # "younger" was simply wrong (see that module's own docstring).

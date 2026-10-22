@@ -1,4 +1,4 @@
-"""Contested unique allies (OQ-10, `docs/OPEN_QUESTIONS.md`): an ally
+"""Contested unique allies (ENG-004): an ally
 printed "Unique" (e.g. 47th Street Royals) can collide with a same-named
 opposing ally, exactly like the crypt-card case `engine/contests.py`
 already handles -- except the 2P variant's "contested crypt cards stay in
@@ -8,7 +8,7 @@ both copies are "turned face down and are out of play" for the contest's
 duration (`engine/allies.py::detect_contest_on_recruit`).
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
-*mechanism*; 47th Street Royals itself stays `blocked`/OQ-14 and is not
+*mechanism*; 47th Street Royals itself stays `blocked`/ENG-008 and is not
 touched here (`card-implementer`'s job once this capability exists).
 """
 
@@ -89,7 +89,7 @@ def test_differently_named_allies_are_not_contested():
 
 
 def test_a_players_own_two_allies_of_the_same_name_burn_the_incoming_copy_instead_of_contesting():
-    """OQ-16 (resolved), rulebook caution box quoted verbatim in
+    """ENG-010 (resolved), rulebook caution box quoted verbatim in
     `engine/contests.py::detect_contest_on_reveal`: "you cannot voluntarily
     contest cards with yourself (if some effect would force you to contest a
     card with yourself, then you simply burn the incoming copy of the unique
@@ -116,7 +116,7 @@ def test_a_players_own_two_allies_of_the_same_name_burn_the_incoming_copy_instea
 
 
 def test_contested_allies_still_show_their_full_identity_to_both_players():
-    """OQ-10's own sourcing: a contested ally's identity is not actually
+    """ENG-004's own sourcing: a contested ally's identity is not actually
     secret from either player -- "Recruit Ally" is played face up (Rulebook
     §4 "Announce the Action"), so both copies were already mutually visible
     the instant the second one was recruited, creating the contest. Unlike
@@ -189,7 +189,7 @@ def _fake_ally_card() -> LibraryCard:
 
 
 def test_recruit_ally_action_end_to_end_detects_the_contest():
-    """Production call site, not just the lower-level helper (same bar OQ-13's
+    """Production call site, not just the lower-level helper (same bar ENG-007's
     own resolution set): recruiting a same-named ally through the real
     `"recruit_ally_play"` minion-phase path (`_perform_recruit_ally`) must
     itself trigger `detect_contest_on_recruit`, not merely a direct

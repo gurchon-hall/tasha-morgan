@@ -1,4 +1,4 @@
-"""Vampire sect (OQ-18 Gap 1, `docs/OPEN_QUESTIONS.md`, resolved by this
+"""Vampire sect (ENG-012 Gap 1, resolved by this
 pass): `Sect` on `engine/cards.py`, and `derive_sect`, the generic helper
 that classifies a vampire's sect from its own printed `card_text` preamble.
 
@@ -29,7 +29,7 @@ from vtesbot.engine import CryptCard, Sect, UnresolvedRulingError, derive_sect
 CAMARILLA_TEXT = "Camarilla."
 
 # Anarch: Aluc Romas de Leon (krcg id 201577), Anita Wainwright (201657),
-# Ariane (200132) -- OQ-18's own three named examples.
+# Ariane (200132) -- ENG-012's own three named examples.
 ANARCH_TEXT_ALUC = "Anarch."
 ANARCH_TEXT_ANITA = "Anarch."
 ANARCH_TEXT_ARIANE = "Anarch: Ariane gets -1 stealth during undirected actions."
@@ -125,12 +125,12 @@ class TestDeriveSect:
         it raises instead, per the no-guessing rule (CLAUDE.md §2)."""
         with pytest.raises(UnresolvedRulingError) as exc_info:
             derive_sect(IMBUED_TEXT)
-        assert exc_info.value.oq_id == "OQ-18"
+        assert exc_info.value.oq_id == "ENG-012"
 
     def test_malformed_or_unrecognised_preamble_raises_rather_than_guesses(self):
         with pytest.raises(UnresolvedRulingError) as exc_info:
             derive_sect("Some future card text with no sect preamble at all.")
-        assert exc_info.value.oq_id == "OQ-18"
+        assert exc_info.value.oq_id == "ENG-012"
 
     def test_empty_text_raises(self):
         with pytest.raises(UnresolvedRulingError):

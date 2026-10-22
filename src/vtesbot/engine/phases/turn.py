@@ -1,6 +1,6 @@
 """Turn sequence (Rulebook §4): Unlock/Master/Minion/Influence/Discard,
 acting Methuselah alternates; stops once `game_over` (Rulebook §5).
-`clear_turn_cards_at_end_of_turn` runs after discard (OQ-34).
+`clear_turn_cards_at_end_of_turn` runs after discard (ENG-024).
 """
 
 from typing import TYPE_CHECKING

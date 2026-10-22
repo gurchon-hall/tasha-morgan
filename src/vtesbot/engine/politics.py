@@ -1,5 +1,5 @@
 """Political actions and referenda: announce, block, polling, tally
-(Rulebook §4). See OQ-6,20,23,37,42,43,45,49."""
+(Rulebook §4). See RUL-005, RUL-006, ENG-015, ENG-027, DES-009, RUL-013, ENG-031."""
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -25,21 +25,21 @@ engine modules never import `cards/registry.py` (CLAUDE.md §5/6)."""
 REFERENDUM_TALLIED_HOOK = "referendum_tallied"
 """String value matches `Hook.REFERENDUM_TALLIED`. Fired via `run_effects`
 once `resolve_referendum`'s tally is known, before pass/fail effects
-(OQ-6)."""
+(RUL-005)."""
 
 REFERENDUM_RESULT_KEY = "referendum_result"
-"""OQ-36: key `resolve_referendum` writes its tally/pass-fail outcome into,
+"""ENG-026: key `resolve_referendum` writes its tally/pass-fail outcome into,
 inside `action_pending`. Mirrors (not imports) `action.py::
 PENDING_REFERENDUM_RESULT_KEY`."""
 
 VOTE_SOURCE_CAST_BONUS_HOOK = "vote_source_cast_bonus"
 """`sum_modifiers` hook: a bonus added to one specific `VoteSource`'s cast,
 dispatched by `_cast_votes` right after cast-time effects, before tally
-(OQ-49)."""
+(ENG-031)."""
 
 VOTE_AGAINST_POOL_COST_HOOK = "vote_against_pool_cost"
 """`sum_modifiers` hook: pool a Methuselah will be forced to lose later for
-casting against this referendum; gates the choice only (OQ-43, D-9)."""
+casting against this referendum; gates the choice only (DES-009, DES-009)."""
 
 POLITICAL_ACTION_CARD_TYPE = "Political Action"
 """`LibraryCard.card_type` value for a political action card, confirmed
@@ -64,7 +64,7 @@ votes for each ready archbishop, 3 votes for each ready cardinal, 4 votes
 for the ready regent." Keys match `CryptCard.title`. `Priscus` is
 deliberately absent: §6's own "Prisci Block" is a 3-vote group/
 sub-referendum mechanism, not a flat per-vampire vote value, and has no
-engine mechanism yet (OQ-53, `docs/OPEN_QUESTIONS.md`)."""
+engine mechanism yet (ENG-035)."""
 
 
 @dataclass
@@ -95,7 +95,7 @@ def variable_pool_burn_vote_options(
     on_burn: Callable[[GameState], None] | None = None,
 ) -> list[HookOption]:
     """Build a `POLLING_STEP_HOOK` option per legal X for a "burn X pool
-    for Y*X votes" ability (OQ-23). X=0 never offered; capped at OQ-42."""
+    for Y*X votes" ability (ENG-015). X=0 never offered; capped at DES-009."""
     options: list[HookOption] = []
     reserve = pending.get("pool_reserve", {}).get(player, 0)
     for x in range(1, max_voluntary_spend(state, player) - reserve + 1):
@@ -133,7 +133,7 @@ def political_action(
 ) -> bool | None:
     """Announce, block, then combat or referendum (Rulebook §4). Returns
     None if blocked/game-over, else pass/fail. Not a card's entry point
-    (OQ-34/36): a real card uses `perform_minion_action` instead."""
+    (ENG-024/ENG-026): a real card uses `perform_minion_action` instead."""
     defender_player = state.other_player(actor_player)
     vampire.locked = True
     blocker = attempt_block(
@@ -169,8 +169,8 @@ def resolve_referendum(
     include_caller_card_vote: bool = True,
 ) -> tuple[int, int, list[tuple[str, str, int, str]]]:
     """Run an unblocked referendum's polling and tally (Rulebook §4 steps
-    2-3, OQ-6). `action_pending` (OQ-36) receives the result;
-    `pool_reserve` (OQ-42/43/45) protects a mandatory post-tally cost.
+    2-3, RUL-005). `action_pending` (ENG-026) receives the result;
+    `pool_reserve` (DES-009/RUL-013) protects a mandatory post-tally cost.
     `include_caller_card_vote` (default True, matching every existing call
     site) gates the "+1 vote for casting a political action card" source
     (Rulebook §4 Politics > Gaining Votes > Political Action Cards clause
@@ -402,9 +402,9 @@ def _cast_votes(
     pending: dict[str, Any],
     caller_vampire: VampireInPlay | None = None,
 ) -> tuple[int, int, list[tuple[str, str, int, str]]]:
-    """Rulebook §4 steps 2-3 (OQ-6/20/37/49): strict two-player
+    """Rulebook §4 steps 2-3 (RUL-005/RUL-006/ENG-027/ENG-031): strict two-player
     alternation, caller first, closing on a full idle lap. Also offers
-    mid-cast cancellation (OQ-37) and sums the cast bonus hook (OQ-49)."""
+    mid-cast cancellation (ENG-027) and sums the cast bonus hook (ENG-031)."""
     votes_for = 0
     votes_against = 0
     casts: list[tuple[str, str, int, str]] = []
@@ -515,7 +515,7 @@ def _apply_retroactive_vote_cancellation(
     votes_for: int,
     votes_against: int,
 ) -> tuple[int, int]:
-    """OQ-37: generic half of a mid-cast `POLLING_STEP_HOOK` cancellation
+    """ENG-027: generic half of a mid-cast `POLLING_STEP_HOOK` cancellation
     -- removes the source from `remaining`/`casts` and reverses its vote
     tally."""
     remaining.pop(source_id, None)

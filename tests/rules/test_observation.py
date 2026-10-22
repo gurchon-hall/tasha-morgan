@@ -67,7 +67,7 @@ def test_ready_and_torpor_vampires_are_public_for_both_players():
 
 
 def test_woken_locked_vampire_exposes_its_real_block_eligibility():
-    """OQ-46 (`docs/OPEN_QUESTIONS.md`, resolved) regression, `rules-auditor`
+    """ENG-028 (resolved) regression, `rules-auditor`
     repro: once `woken` can make `locked=True, is_ready_unlocked=True` true
     at the same time, `locked` alone is no longer a complete proxy for
     block/reaction eligibility -- `VampireView.is_ready_unlocked` must
@@ -88,7 +88,7 @@ def test_woken_locked_vampire_exposes_its_real_block_eligibility():
 def test_corruption_counters_are_public_once_a_vampire_is_in_play():
     """Rules-auditor finding: a corruption counter is always placed by a
     visible card effect, so it is public information for a ready/torpor
-    vampire, same as `attachments` (OQ-58) -- needed by a defender's own
+    vampire, same as `attachments` (ENG-038) -- needed by a defender's own
     agent to see Sergio Bueno's (krcg 201662) block-eligibility gate."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1")

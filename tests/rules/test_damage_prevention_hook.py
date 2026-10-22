@@ -79,7 +79,7 @@ def test_declining_prevention_leaves_damage_unchanged():
 
 
 def test_a_registered_provider_can_read_and_write_round_state():
-    """OQ-55 plumbing: `DAMAGE_PREVENTION_HOOK`'s own context now carries
+    """ENG-036 plumbing: `DAMAGE_PREVENTION_HOOK`'s own context now carries
     `ROUND_STATE_CONTEXT_KEY`, mirroring every other round-scoped cap
     (`engine/combat.py`'s `ADDITIONAL_STRIKE_LIMIT_KEY`,
     `COMMITTED_STRIKE_KEY`). A once-per-round provider gates itself on a
@@ -124,7 +124,7 @@ def test_a_registered_provider_can_read_and_write_round_state():
     assert round_state["fake_prevent_used"] == {"V1"}
 
     # Same round, a second hit on the same vampire (e.g. an additional-strike
-    # pair, OQ-55's own motivating case): the provider's own cap, read back
+    # pair, ENG-036's own motivating case): the provider's own cap, read back
     # from the same `round_state` dict, suppresses the option entirely.
     agent_second = ScriptedAgent("A")
     game.state.agents["A"] = agent_second
@@ -139,7 +139,7 @@ def test_a_registered_provider_can_read_and_write_round_state():
 
 
 def test_mandatory_full_prevention_is_automatic_for_the_rest_of_the_round():
-    """OQ-55's remaining gap (Rolling with the Punches' superior clause): a
+    """ENG-036's remaining gap (Rolling with the Punches' superior clause): a
     provider's own `apply` marks `MANDATORY_FULL_PREVENTION_KEY` active via
     `mark_mandatory_full_prevention_active` on its first (freely chosen) offer;
     every later `apply_damage` call this round against the same vampire then

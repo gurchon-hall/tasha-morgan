@@ -121,7 +121,7 @@ unblocked. Model this as: an action card's `HookOption`/equivalent
 pays its cost only inside the unblocked `resolve()` branch; an Action
 Modifier's `HookOption.cost` pays unconditionally at the moment it is
 chosen (same mechanism `apply_chosen_option` already uses for
-cancel-as-played, OQ-32).
+cancel-as-played, ENG-022).
 
 Three states to model: no current block attempt / ongoing block
 attempt / blocks declined by all.

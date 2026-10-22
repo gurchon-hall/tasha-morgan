@@ -17,7 +17,7 @@ salubri.json` (2 copies).
 This is Sakhar's own printed ability performed as her one minion action for
 the turn (not a library card played from hand), wired against the generic
 `engine/phases/minion.py::ACTION_CARD_PLAY_HOOK`/`ActionCardSpec` entry point
-(OQ-17, `docs/open_questions_archive/002.md`) the same way Lucinde, Alastor's
+(ENG-011) the same way Lucinde, Alastor's
 own crypt-text grant consumer (`cards/lucinde_alastor.py`) rides it with no
 card played at all (`ActionCardSpec.name` stays `None`): no replacement card
 is drawn and the generic "same named action card per turn" cap
@@ -33,13 +33,13 @@ hand": one `HookOption` per `"Equipment"`-typed `LibraryCard` (krcg's own
 `types` value, confirmed live, e.g. ".44 Magnum") currently in the acting
 player's own library -- naming which specific card is searched for and
 revealed at the same moment the ability itself is chosen (Sakhar's own
-printed text names no external target/minion, so there is no OQ-21 "terms
+printed text names no external target/minion, so there is no RUL-007 "terms
 fixed at announce" question to resolve about a later choice; unlike
 Scouting Mission's superior clause, the identity of the found card *is* the
 choice). The actual library removal + hand move is deferred into
 `resolve()`, run only if the action is not blocked (Rulebook §4 "Resolve the
 Action"); it re-validates the named card is still present by krcg id and
-name, folding to a no-op fizzle if not (OQ-21 convention -- not reachable
+name, folding to a no-op fizzle if not (RUL-007 convention -- not reachable
 today, since nothing else in this engine mutates another player's library
 mid-action, but kept for consistency with every other bound-at-announce
 target in this pool). The card text prints no "shuffle your library
@@ -104,7 +104,7 @@ def _provide_sakhar(state: GameState, context: Mapping[str, Any]) -> list[HookOp
                             f"{player} reveals {found.name} (Sakhar's search) and takes it to hand"
                         )
                         return
-                # fizzles (OQ-21 convention): the named card left the library
+                # fizzles (RUL-007 convention): the named card left the library
                 # by resolve time -- not reachable today, kept for consistency.
 
             return ActionCardSpec(base_stealth=SAKHAR_STEALTH, directed=False, resolve=resolve)

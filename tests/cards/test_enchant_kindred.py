@@ -145,7 +145,7 @@ def test_basic_level_blocked_does_not_resolve_but_the_card_is_still_consumed():
 
 
 def test_basic_clause_is_tagged_a_real_bleed_so_bonding_still_fires():
-    """Rules-auditor finding (OQ-17 follow-up), proven against the real card:
+    """Rules-auditor finding (ENG-011 follow-up), proven against the real card:
     because the basic clause's card text literally says "Bleed",
     `ActionCardSpec.action` must be `ACTION_BLEED`, not the generic
     `ACTION_ACTION_CARD` default -- otherwise an existing bleed-gated
@@ -460,7 +460,7 @@ def test_superior_with_multiple_eligible_targets_raises_a_choice_decision():
 
 
 def test_superior_target_is_chosen_at_announce_time_even_when_the_block_succeeds():
-    """Rules-auditor finding (OQ-21, 2026-10-11): the "which eligible
+    """Rules-auditor finding (RUL-007, 2026-10-11): the "which eligible
     vampire" decision is raised inside `apply()`, at announce time, before
     the block-attempt window opens -- not deferred to `resolve()`. With
     multiple eligible targets *and* a block that goes on to succeed, the
@@ -513,7 +513,7 @@ def test_superior_target_is_chosen_at_announce_time_even_when_the_block_succeeds
 
 
 def test_superior_resolve_fizzles_if_the_announced_target_stops_qualifying():
-    """OQ-21 (`docs/OPEN_QUESTIONS.md`): the target is chosen at `apply()`
+    """RUL-007: the target is chosen at `apply()`
     time (announce), with `resolve()` only ever re-validating -- never
     re-choosing -- that same target, per VTES's general "fizzles" ruling
     (an unblocked action whose target no longer meets its condition at

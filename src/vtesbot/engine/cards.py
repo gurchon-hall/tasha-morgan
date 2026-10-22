@@ -24,11 +24,11 @@ _SECT_PREAMBLE_RE = re.compile(r"^(?:Advanced,\s*)?(Camarilla|Anarch|Sabbat|Inde
 
 def derive_sect(card_text: str) -> Sect:
     """Derive sect from the keyword starting `card_text` (krcg has no structured field,
-    OQ-18 Gap 1). Raises `UnresolvedRulingError` on a non-matching or Imbued text."""
+    ENG-012 Gap 1). Raises `UnresolvedRulingError` on a non-matching or Imbued text."""
     match = _SECT_PREAMBLE_RE.match(card_text)
     if match is None:
         raise UnresolvedRulingError(
-            "OQ-18",
+            "ENG-012",
             f"card text does not start with a recognised sect preamble: {card_text[:60]!r}",
         )
     return Sect(match.group(1))
@@ -38,7 +38,7 @@ def derive_sect(card_text: str) -> Sect:
 class CryptCard:
     """A vampire printing (deck-construction identity). `name` is unique (§1), used for
     2P contested-crypt detection. Printed stats, not behaviour. `sect` defaults `None`
-    (OQ-18) until `derive_sect` runs."""
+    (ENG-012) until `derive_sect` runs."""
 
     krcg_id: int
     name: str
@@ -121,7 +121,7 @@ class LibraryCard:
 @dataclass
 class CardAttachment:
     """A card attached to a vampire (§5, e.g. Celerity, Fame). Tracks attachment and
-    controller only; behaviour lives in `cards/`. Not frozen: `zone` mutates (OQ-22);
+    controller only; behaviour lives in `cards/`. Not frozen: `zone` mutates (ENG-014);
     `controller` from `attach_card` (§2)."""
 
     krcg_id: int
@@ -143,7 +143,7 @@ class CardAttachment:
     that offer."""
     requires_discipline: bool = False
     """Whether this attachment's own originating library card carries a
-    nonzero printed Discipline requirement (OQ-62; `LibraryCard.
+    nonzero printed Discipline requirement (ENG-042; `LibraryCard.
     discipline_requirement`/`requires_discipline` free function above), set
     by the attaching card module itself at construction time from its own
     already-fetched krcg data, never inferred by the engine -- same

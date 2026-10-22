@@ -1,6 +1,6 @@
-"""The "recruit ally" minion action (OQ-12, `docs/OPEN_QUESTIONS.md`): the
+"""The "recruit ally" minion action (ENG-006): the
 first real entry point a player's agent can reach to bring an Ally library
-card into play, built on top of OQ-7's `AllyInPlay`/`recruit_ally`
+card into play, built on top of ENG-001's `AllyInPlay`/`recruit_ally`
 (`engine/state.py`, `engine/allies.py`) -- which existed but had nothing
 offering it as a legal choice in a real game.
 
@@ -8,7 +8,7 @@ Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism*, using a trivial fake `"recruit_ally_play"` provider (standing
 in for 47th Street Royals' own future card module, which remains
 `card-implementer`'s job once this capability exists) -- mirrors
-`tests/rules/test_allies.py`'s own disclaimer for OQ-7.
+`tests/rules/test_allies.py`'s own disclaimer for ENG-001.
 """
 
 import pytest
@@ -57,8 +57,8 @@ def _fake_ally_card() -> LibraryCard:
 
 
 def test_recruit_ally_is_not_offered_without_a_registered_provider():
-    """Zero-regression check (OQ-12): with no `"recruit_ally_play"` provider
-    registered at all, `action_choice` degrades to exactly the pre-OQ-12
+    """Zero-regression check (ENG-006): with no `"recruit_ally_play"` provider
+    registered at all, `action_choice` degrades to exactly the pre-ENG-006
     bleed/hunt pair."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30).ready_vampire("V1", capacity=3, blood=1)
@@ -249,7 +249,7 @@ def test_recruit_ally_undirected_blockable_by_the_single_2p_opponent():
 
 
 def test_recruit_ally_play_hook_context_carries_the_acting_vampires_identity():
-    """OQ-13 (`docs/OPEN_QUESTIONS.md`, resolved): `_choose_and_perform_action`
+    """ENG-007 (resolved): `_choose_and_perform_action`
     threads the acting vampire's own identity (`vampire=vampire.instance_id`)
     into the `"recruit_ally_play"` hook context, so a provider can gate on
     *which* ready-unlocked vampire is actually attempting the recruit
@@ -262,7 +262,7 @@ def test_recruit_ally_play_hook_context_carries_the_acting_vampires_identity():
     clans": a stub provider offers its option only when `context["vampire"]`
     matches the specific `instance_id` of the one meeting the (stand-in)
     requirement. Acting with the *other* ready-unlocked vampire first must
-    not see the option at all -- the exact mis-resolution OQ-13 flagged
+    not see the option at all -- the exact mis-resolution ENG-007 flagged
     (silently offering the recruit whenever the player chose to act with an
     unrelated vampire this impulse, merely because some other vampire of
     theirs happens to qualify) -- while acting with the matching vampire

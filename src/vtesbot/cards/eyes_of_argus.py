@@ -46,7 +46,7 @@ Methuselah or a card the defender controls -- CLAUDE.md §3's 2P structural
 fact (there is only ever one other Methuselah to be `defender` at all)
 rules out a third party the restriction could otherwise mean. So
 `context["directed"] is True` is read directly as "directed at you (or a
-card you control)", no Open Question needed. Eligibility otherwise mirrors
+card you control)", no RUL entry needed. Eligibility otherwise mirrors
 `precognition.py`'s own `_eligible` shape: `player`'s own ready, unlocked
 vampires with `"aus"` or `"AUS"` in `card.disciplines`.
 
@@ -100,7 +100,7 @@ USED_BY_KEY = "eyes_of_argus_used_by"
 already played either clause of this card this action (module docstring,
 mirrors `cards/precognition.py`'s own `USED_BY_KEY`)."""
 CARD_TYPE = "Reaction"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Reaction" docstring fact above."""
 
 

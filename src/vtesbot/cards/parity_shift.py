@@ -26,11 +26,11 @@ Card type: Political Action (`types == ["Political Action"]`).
 card at all (Rulebook §2 Card Types > "Requirements for Playing Cards"
 binds a minion card's requirement to the specific acting minion, the same
 reading `engine/phases/minion.py`'s own docstring already settled for
-Allies/Action cards, OQ-13) -- checked against `CryptCard.title`, using the
+Allies/Action cards, ENG-007) -- checked against `CryptCard.title`, using the
 same plain-capitalized-keyword convention `engine/politics.py::TITLE_VOTES`
 already relies on (`title in {"Prince", "Justicar"}`).
 
-Status: implemented (OQ-6, `docs/OPEN_QUESTIONS.md`, now resolved).
+Status: implemented (RUL-005, now resolved).
 
 Engine wiring: mirrors `kine_resources_contested.py`'s own use of
 `engine/phases/minion.py::ACTION_CARD_PLAY_HOOK`/`ActionCardSpec` (see that
@@ -85,15 +85,14 @@ pool-loss) -- `lose_pool` on the target plus `gain_pool` on the caller.
 oust": consistent with a genuine `gain_pool`; Life Boon is a separate,
 unimplemented card and needs no code here.
 
-`resolve_referendum`'s own `action_pending=pending` argument (OQ-36,
-`docs/OPEN_QUESTIONS.md`) is this `resolve()` closure's own `pending`
-argument, forwarded through unchanged -- lets `perform_minion_action`
-dispatch `REFERENDUM_RESOLVED_HOOK` (Voter Captivation's own trigger
-moment) once this whole `resolve()` closure, including the transfer
-above, returns. No provider is registered against that hook by this
-module (Voter Captivation's own card module is a separate pass).
+`resolve_referendum`'s own `action_pending=pending` argument (ENG-026) is this
+`resolve()` closure's own `pending` argument, forwarded through unchanged --
+lets `perform_minion_action` dispatch `REFERENDUM_RESOLVED_HOOK` (Voter
+Captivation's own trigger moment) once this whole `resolve()` closure,
+including the transfer above, returns. No provider is registered against that
+hook by this module (Voter Captivation's own card module is a separate pass).
 
-OQ-57 (`docs/OPEN_QUESTIONS.md`): calls `remove_from_hand` (not
+ENG-037: calls `remove_from_hand` (not
 `play_from_hand`) and sets `ActionCardSpec.name=NAME`, so `_perform_
 action_card` can interleave a future Reflex card's own cancel-as-played
 window before drawing the replacement (Finding 1), and so a second
@@ -121,15 +120,14 @@ from vtesbot.engine.state import GameState
 
 KRCG_ID = 101353
 NAME = "Parity Shift"
-"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
-OPEN_QUESTIONS.md`): backs the generic "same named action card at most
-once per turn" cap."""
+"""`ActionCardSpec.name`/`CardRegistration.name` (ENG-037): backs the generic
+"same named action card at most once per turn" cap."""
 REQUIRED_TITLES = frozenset({"Prince", "Justicar"})
 """Verbatim "Requires a prince or justicar."."""
 MAX_ALLOCATION = 3
 """Printed "allocate 3 of their pool ...."."""
 CARD_TYPE = "Political Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Political Action" docstring fact above."""
 
 
@@ -149,7 +147,7 @@ def _provide_parity_shift(state: GameState, context: Mapping[str, Any]) -> list[
         # No legal target: "cannot be used or played if the conditions ... cannot be met".
         return []
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)

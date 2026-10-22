@@ -302,7 +302,7 @@ def test_superior_not_offered_when_the_opponent_controls_no_vampire():
 
 
 def test_superior_single_eligible_target_enters_combat_and_maneuver_is_claimable_unblocked():
-    """Also proves the OQ-25 pre-combat maneuver grant is actually claimable
+    """Also proves the ENG-017 pre-combat maneuver grant is actually claimable
     during a real combat round, not merely seeded: the acting vampire's
     controller is offered (and uses) a `"maneuver_choice"` during Determine
     Range, before the strike step. The target has no other opposing vampire
@@ -383,7 +383,7 @@ def test_superior_blocked_cost_is_not_paid_but_the_grant_still_threads_into_the_
     generic block-attempt path's own internal `run_combat` call supersedes
     `resolve()` entirely. The `maneuver_choice` still fires inside that
     combat, proving `ActionCardSpec.maneuver_grant` threads all the way into
-    `perform_minion_action`'s own blocked-branch `run_combat` call (OQ-25).
+    `perform_minion_action`'s own blocked-branch `run_combat` call (ENG-017).
     """
     provider = _match_action(ACTION_ACTION_CARD)
     hooks.register("intercept_modifier", provider)
@@ -426,7 +426,7 @@ def test_superior_blocked_cost_is_not_paid_but_the_grant_still_threads_into_the_
 
 
 def test_superior_resolve_fizzles_if_the_target_unlocks_before_resolve_but_cost_is_still_paid():
-    """OQ-21/the card's own on-file ruling: an unblocked action whose target
+    """RUL-007/the card's own on-file ruling: an unblocked action whose target
     no longer meets the printed condition at resolve time fizzles -- "cost,
     if any, is paid, and it is considered successful, but has no effect."
     Not reachable through ordinary play today (nothing in this engine's

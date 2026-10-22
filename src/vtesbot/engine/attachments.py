@@ -1,5 +1,5 @@
-"""Effective capacity/disciplines with attachments folded in (OQ-8); attachment Contested
-Cards (OQ-22, §4, mirrors `allies.py`). `CardAttachment` nests in host's list, controller
+"""Effective capacity/disciplines with attachments folded in (ENG-002); attachment Contested
+Cards (ENG-014, §4, mirrors `allies.py`). `CardAttachment` nests in host's list, controller
 may differ (§2)."""
 
 from collections.abc import Iterator
@@ -24,14 +24,14 @@ DISCIPLINE_LEVEL_MODIFIER_HOOK = "discipline_level_modifier"
 
 def effective_capacity(state: GameState, vampire: VampireInPlay) -> int:
     """Printed capacity (Rulebook §1 Vampires) plus every attached card's own capacity bonus
-    (OQ-8). Use instead of a bare `vampire.card.capacity` read."""
+    (ENG-002). Use instead of a bare `vampire.card.capacity` read."""
     return vampire.card.capacity + hooks.sum_modifiers(
         CAPACITY_MODIFIER_HOOK, state, vampire=vampire.instance_id
     )
 
 
 def effective_disciplines(state: GameState, vampire: VampireInPlay) -> tuple[str, ...]:
-    """Printed disciplines unioned with every level an attachment currently grants (OQ-8).
+    """Printed disciplines unioned with every level an attachment currently grants (ENG-002).
     Sorted tuple, not a `frozenset` (CLAUDE.md §5 determinism; see `hooks.union_modifiers`)."""
     return tuple(
         sorted(
@@ -46,7 +46,7 @@ def effective_disciplines(state: GameState, vampire: VampireInPlay) -> tuple[str
 
 
 def iter_attachments(state: GameState) -> Iterator[tuple[VampireInPlay, CardAttachment]]:
-    """Yield every `(vampire, attachment)` pair in play across both players (OQ-22) -- a
+    """Yield every `(vampire, attachment)` pair in play across both players (ENG-014) -- a
     `CardAttachment` has no top-level dict of its own, unlike `PlayerState.vampires`/`.allies`."""
     for player_state in state.players.values():
         for vampire in player_state.vampires.values():
@@ -57,7 +57,7 @@ def iter_attachments(state: GameState) -> Iterator[tuple[VampireInPlay, CardAtta
 def find_attachment_by_instance_id(
     state: GameState, instance_id: str | None
 ) -> CardAttachment | None:
-    """Locate a `CardAttachment` by `instance_id` across either player's vampires (OQ-22) --
+    """Locate a `CardAttachment` by `instance_id` across either player's vampires (ENG-014) --
     attachment-side analogue of `engine/allies.py::_find_ally_instance` (see `iter_attachments`)."""
     if instance_id is None:
         return None
@@ -78,8 +78,8 @@ def attach_card(
     is_equipment: bool = False,
     requires_discipline: bool = False,
 ) -> CardAttachment:
-    """Put a new, contest-trackable attachment onto `vampire` (OQ-22). `controller` is
-    caller-supplied (§2), unchecked (OQ-22 addendum). Only for Unique cards; else
+    """Put a new, contest-trackable attachment onto `vampire` (ENG-014). `controller` is
+    caller-supplied (§2), unchecked (ENG-014 addendum). Only for Unique cards; else
     construct `CardAttachment` directly. `is_equipment`/`requires_discipline` are the
     caller's own printed-card-type facts (see `CardAttachment.is_equipment`/
     `.requires_discipline`'s own docstrings), not inferred here."""
@@ -98,9 +98,9 @@ def attach_card(
 
 
 def detect_contest_on_attach(state: GameState, attachment: CardAttachment) -> None:
-    """Flag `attachment` and a same-named opposing attachment as contested (§4, OQ-22;
+    """Flag `attachment` and a same-named opposing attachment as contested (§4, ENG-014;
     not 2P-overridden). Matched by `name` vs. its controller's opponent. Checked first
-    (OQ-16, quoted verbatim in `engine/contests.py::detect_contest_on_reveal`):
+    (ENG-010, quoted verbatim in `engine/contests.py::detect_contest_on_reveal`):
     `attachment`'s own controller's other live same-named attachment burns the incoming
     copy immediately instead of contesting."""
     if attachment.controller is None:
@@ -138,7 +138,7 @@ def transfer_attachment_control(
     new_controller: str,
     new_host: VampireInPlay,
 ) -> None:
-    """Change controller, re-host `attachment` onto `new_host` (OQ-35; Disputed Territory
+    """Change controller, re-host `attachment` onto `new_host` (ENG-025; Disputed Territory
     rulings). Unchanged controller requires `new_host` be current host or `ValueError`;
     else caller-chosen, unverified."""
     current_host: VampireInPlay | None = None
@@ -163,9 +163,9 @@ def transfer_attachment_control(
 def resolve_one_attachment_contest(
     state: GameState, player: str, attachment: CardAttachment
 ) -> None:
-    """Rulebook §4 Unlock + Contested Cards (OQ-22): pay 1 pool to keep contesting, or yield
+    """Rulebook §4 Unlock + Contested Cards (ENG-014): pay 1 pool to keep contesting, or yield
     (burn own copy). No 2P override: survivor's `zone` restores only on its next unlock phase."""
-    # OQ-42: paying must not leave the payer at 0 pool; yielding stays.
+    # DES-009: paying must not leave the payer at 0 pool; yielding stays.
     pay = (Choice("pay", "Pay 1 pool to keep contesting"),)
     choices = (
         *(pay if can_afford_without_ousting(state, player, 1) else ()),

@@ -21,22 +21,22 @@ action; unlike `life_in_the_city.py`, this card's `apply()` always returns
 Timing window: master phase action (`"master_phase_play"` hook, wired in
 `engine/phases/master.py`, same pattern as `life_in_the_city.py`).
 
-Reading "a younger vampire" (unlike Enchant Kindred's OQ-17, this card's own
-sentence names an explicit comparison referent, so no Open Question is
+Reading "a younger vampire" (unlike Enchant Kindred's ENG-011, this card's own
+sentence names an explicit comparison referent, so no RUL entry is
 needed here): the clause is "a ready vampire you control" ... "to a younger
 vampire ... in your uncontrolled region" -- both vampires are named in the
 same sentence, so "younger" is unambiguously relative to the first-named,
 ready, source vampire (not some other unnamed reference point, which was
-OQ-17's concern for Enchant Kindred's differently-structured sentence, where
+ENG-011's concern for Enchant Kindred's differently-structured sentence, where
 no "ready vampire" was named at all). The rulebook glossary states capacity
 "is also a relative measure of the vampire's age"
-(`data/sources/rulebook/2026-10-09/8-glossaries.md:47-48`, cited by OQ-17),
+(`data/sources/rulebook/2026-10-09/8-glossaries.md:47-48`, cited by ENG-011),
 so "younger" is read here as strictly lower *printed* capacity
-(`vampire.card.capacity`, the plain printed stat -- OQ-8's attachment-aware
+(`vampire.card.capacity`, the plain printed stat -- ENG-002's attachment-aware
 `effective_capacity` is deliberately not used for this age comparison, which
 is about the vampire's identity, not how much blood it can currently hold;
 `effective_capacity` is still used below for the blood-capacity cap on the
-destination, which is the correct use per OQ-8's own resolution).
+destination, which is the correct use per ENG-002's own resolution).
 
 Source: "a ready vampire you control" -- `zone == "ready"` and
 `controller == player`, independent of the `locked` flag (mirrors
@@ -84,7 +84,7 @@ KRCG_ID = 100860
 MASTER_PHASE_PLAY_HOOK = "master_phase_play"
 MAX_BLOOD = 3
 CARD_TYPE = "Master"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Master" docstring fact above."""
 
 

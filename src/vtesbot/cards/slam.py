@@ -33,9 +33,9 @@ resolution step. `burn_option is False`, `trifle is False`. Legal since
 
 No Ⓓ marker, no prey/predator/"other Methuselahs" wording, no political
 vote -- a plain Combat card played during an already-resolving combat, so
-OQ-1 (CLAUDE.md §3) does not apply.
+RUL-001 (CLAUDE.md §3) does not apply.
 
-Status: implemented. Previously `blocked` (OQ-28, `docs/OPEN_QUESTIONS.md`,
+Status: implemented. Previously `blocked` (ENG-019,
 now resolved) for want of a way to let a `MANEUVER_HOOK` grant pre-commit a
 combatant's strike choice for the round. `rules-engineer`'s fix:
 `engine/combat.py` gained `commit_strike_for_round(context, strike)` /
@@ -83,7 +83,7 @@ from the value at maneuver time).
 this project, and no mechanism in this engine currently makes a combatant's
 strike "unusable" (every combatant can always choose a plain hand strike at
 minimum) -- vacuously always satisfied today, same "not reachable today,
-but correctly modeled either way" status as `dust_up.py`'s OQ-21 citation
+but correctly modeled either way" status as `dust_up.py`'s RUL-007 citation
 for Daring the Dawn. A future pass implementing such an effect will need
 its own "can this combatant currently choose a strike" hook.
 
@@ -120,7 +120,7 @@ POT_SUPERIOR = "POT"
 BLOOD_COST = 1
 STRIKE_BONUS = 2
 CARD_TYPE = "Combat"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Combat" docstring fact above -- set on both
 outer options (the card actually being played), never on the nested,
 already-paid-for `strike_option` wrapper `commit_strike_for_round` defers to
@@ -146,7 +146,7 @@ def _base_hand_strike_damage(state: GameState, context: Mapping[str, Any]) -> in
     combat.py::hand_strike_strength`'s own shared computation, also used by
     `_strike_strength` internally): base strength plus any live
     `combat_strength_modifier` contribution, including a whole-combat-
-    duration bonus recorded in `combat_state` (OQ-60; now threaded into
+    duration bonus recorded in `combat_state` (ENG-040; now threaded into
     this hook's own context by `engine/combat.py::_ask_strike`) -- so this
     card's own "+2 damage" stacks with, rather than replaces, any other
     strength bonus already in play, per "[a]dditional damage inherits all
@@ -206,7 +206,7 @@ def _provide_superior_maneuver(state: GameState, context: Mapping[str, Any]) -> 
     if vampire.blood < BLOOD_COST:
         return []  # printed blood cost: must have enough blood to play at all.
     if strike_committed_this_round(context):
-        return []  # "cannot use a second strike card or weapon to maneuver again" (OQ-28).
+        return []  # "cannot use a second strike card or weapon to maneuver again" (ENG-019).
     if state.combat_range != LONG_RANGE:
         return []  # "only usable to get to close range": only offered while at long range.
 

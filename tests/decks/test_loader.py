@@ -1,7 +1,7 @@
 """End-to-end deck import: parse -> resolve -> legality -> `DeckSpec`
 (`vtesbot.decks.loader`).
 
-Closes `docs/OPEN_QUESTIONS.md` OQ-18 Gap 1's own long-standing gap ("no
+Closes ENG-012 Gap 1's own long-standing gap ("no
 path, even a manual one, by which a real vampire's sect would reach a
 `CryptCard` instance") -- `test_legal_deck_expands_to_a_deck_spec_with_sect`
 below is the first production-code path that actually exercises it.

@@ -17,7 +17,7 @@ only on the unblocked branch -- Rulebook §4 step 3, "If blocked ->
 action card burned, cost not paid", `dominate_kine.py`'s own
 convention). Legal since 1996-11-27; on the active 2P allowed list
 (`data/formats/2p/2026-10-03.json`). Both clauses carry "Ⓓ": collapses
-to the single 2P opponent (CLAUDE.md §3), not OQ-1.
+to the single 2P opponent (CLAUDE.md §3), not RUL-001.
 
 Status: implemented, against two primitives built this session: `engine/
 action.py::attempt_block`/`perform_minion_action`'s `block_candidate_
@@ -34,7 +34,7 @@ control" ruling).
 Bleed amount (both clauses): default (1) + this card's own printed "+1
 bleed" = 2, baked into the baseline the same way `enchant_kindred.py`/
 `dominate_kine.py` do -- composable with any other bleed-amount hook
-since `ActionCardSpec.action=ACTION_BLEED` is set (OQ-17 follow-up
+since `ActionCardSpec.action=ACTION_BLEED` is set (ENG-011 follow-up
 requirement).
 
 Superior clause's forced lock happens only on the unblocked resolution
@@ -43,7 +43,7 @@ has no ready unlocked vampire at all, `force_lock_ready_unlocked_minion`
 fizzles with no decision raised ("cannot do the impossible" convention)
 -- the bleed itself still goes through regardless.
 
-OQ-57 (`docs/OPEN_QUESTIONS.md`): both clauses call `remove_from_hand`
+ENG-037: both clauses call `remove_from_hand`
 (not `play_from_hand`) and set `ActionCardSpec.name=NAME`, so `engine/
 phases/minion.py::_perform_action_card` can interleave a future Reflex
 card's own cancel-as-played window before drawing the replacement
@@ -74,10 +74,9 @@ from vtesbot.engine.state import GameState, VampireInPlay
 
 KRCG_ID = 101495
 NAME = "Propaganda"
-"""`ActionCardSpec.name`/`CardRegistration.name` (OQ-57, `docs/
-OPEN_QUESTIONS.md`): the generic "same named action card at most once per
-turn" cap is keyed by this exact string for both clauses -- they are the
-same physical card."""
+"""`ActionCardSpec.name`/`CardRegistration.name` (ENG-037): the generic "same
+named action card at most once per turn" cap is keyed by this exact string for
+both clauses -- they are the same physical card."""
 BASIC = "pre"
 SUPERIOR = "PRE"
 BLEED_BASE_AMOUNT = 2
@@ -88,7 +87,7 @@ BLOOD_COST = 2
 """Printed blood-cost box: burned from the acting vampire, only on the
 unblocked branch (module docstring)."""
 CARD_TYPE = "Action"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Action" docstring fact above."""
 
 
@@ -120,7 +119,7 @@ def _provide_propaganda_basic(state: GameState, context: Mapping[str, Any]) -> l
     if acting_vampire.blood < BLOOD_COST:
         return []  # printed blood cost: must have enough blood to play at all.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)
@@ -190,7 +189,7 @@ def _provide_propaganda_superior(state: GameState, context: Mapping[str, Any]) -
     if acting_vampire.blood < BLOOD_COST:
         return []  # printed blood cost: must have enough blood to play at all.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     def _apply(s: GameState) -> ActionCardSpec:
         remove_from_hand(s, player, KRCG_ID)

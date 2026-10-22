@@ -53,15 +53,15 @@ minion" here, despite carrying no "you control" qualifier in the printed
 text, reads as "a minion you control" -- a direct, symmetric consequence of
 the glossary definition already relied on elsewhere in this pool, not a
 guess. Mirrors `seraphina.py`'s nearly identical "add 2 blood or life to a
-minion you control ... not to exceed starting life" (krcg 201686, OQ-61):
+minion you control ... not to exceed starting life" (krcg 201686, ENG-041):
 one option per eligible controlled vampire (`zone in ("ready", "torpor")`)
 or ready, uncontested ally, blood capped via `engine/damage.py::add_blood`
-(OQ-8) or life capped via `engine/allies.py::add_life` (OQ-61) -- "3"
+(ENG-002) or life capped via `engine/allies.py::add_life` (ENG-041) -- "3"
 replaces Seraphina's "2", otherwise identical shape, including the
 self-targeting case (the acting vampire is never excluded as a target).
 "+1 stealth action" bare: undirected, baseline stealth 1 (`RECRUIT_ALLY_
 STEALTH`/`seraphina.py` convention). Wired against `ACTION_CARD_PLAY_HOOK`;
-`remove_from_hand` + `ActionCardSpec.name=NAME` per OQ-57 Finding 1/2 (the
+`remove_from_hand` + `ActionCardSpec.name=NAME` per ENG-037 Finding 1/2 (the
 generic "same named action card once per turn" cap, reused even though this
 card prints only one Action-mode clause).
 
@@ -72,7 +72,7 @@ own `_prevent_all` shape (zeroes both `normal` and `aggravated`) with no
 `mark_mandatory_full_prevention_active` persistence, since the text covers
 only the one strike already in flight. Gated like `opikun.py`'s own
 identical "from the opposing minion's strike" wording: `combat_state is not
-None` (this damage really is strike damage from an active combat, OQ-60) and
+None` (this damage really is strike damage from an active combat, ENG-040) and
 some damage present [LSJ 20001114]. Played by the damaged vampire itself
 (`context["vampire"]`), basic-or-superior Fortitude.
 
@@ -99,7 +99,7 @@ combat" at this dispatch point is `context["vampire"]` itself. No new
 engine primitive is needed:
 this reads off the existing `DAMAGE_PREVENTION_HOOK` context exactly as
 `opikun.py`/`organized_resistance.py` already do -- both fully implemented,
-not gated behind an Open Question. Candidate gates: `zone == "ready"`, clan
+not gated behind a RUL entry. Candidate gates: `zone == "ready"`, clan
 Salubri, superior `"FOR"`, the card in hand, and enough blood for the
 printed cost -- paid by the candidate (the vampire actually playing the
 card), never the protected one (Rulebook §2 "costs are paid from own
@@ -234,7 +234,7 @@ def _provide_touch_of_valeren_action(
     if acting_vampire.blood < BLOOD_COST:
         return []  # printed blood cost: must have enough blood to play at all.
     if action_card_already_played_this_turn(state, acting_vampire, NAME):
-        return []  # OQ-57 Finding 2: same named action card, once per turn.
+        return []  # ENG-037 Finding 2: same named action card, once per turn.
 
     options: list[HookOption] = []
     for vampire in _controlled_vampires_in_play(state, player):

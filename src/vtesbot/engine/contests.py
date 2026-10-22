@@ -1,6 +1,5 @@
 """2P contested crypt cards: stay in play, 1 pool/unlock or yield (burn);
-same-named titles not contested. OQ-4 (resolved, `docs/
-open_questions_archive/001.md`): contest triggers on reveal into play."""
+same-named titles not contested. RUL-003 (resolved): contest triggers on reveal into play."""
 
 from typing import TYPE_CHECKING
 
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
 
 def detect_contest_on_reveal(state: GameState, revealed: VampireInPlay) -> None:
     """Rulebook §4 Advanced Rules > Contested Cards, plus the caution box's own "cannot
-    contest yourself" clause (OQ-16), quoted verbatim: "You cannot control more than one
+    contest yourself" clause (ENG-010), quoted verbatim: "You cannot control more than one
     of the same unique card at a time, and you cannot voluntarily contest cards with
     yourself (if some effect would force you to contest a card with yourself, then you
     simply burn the incoming copy of the unique card)." Checked first, against
@@ -39,7 +38,7 @@ def detect_contest_on_reveal(state: GameState, revealed: VampireInPlay) -> None:
 def resolve_one_contest(state: GameState, player: str, vampire: VampireInPlay) -> None:
     """Rulebook §4 Unlock Phase + 2P variant: pay 1 pool to keep contesting
     `vampire`, or yield (burn it, clearing the opposing copy's contest too)."""
-    # OQ-42: paying must not leave the payer at 0 pool; yielding stays.
+    # DES-009: paying must not leave the payer at 0 pool; yielding stays.
     pay = (Choice("pay", "Pay 1 pool to keep contesting"),)
     choices = (
         *(pay if can_afford_without_ousting(state, player, 1) else ()),

@@ -1,10 +1,10 @@
-"""Mid-polling-step retroactive vote cancellation (OQ-37, `docs/
-OPEN_QUESTIONS.md`): `engine/politics.py::_cast_votes` now also offers any
-`POLLING_STEP_HOOK` option with `context["phase"] == "mid_cast"`, merged
-into each player's own per-turn `"polling_step_cast"` `Decision` -- Scalpel
-Tongue (krcg id 101686, "Choose a vampire who has cast votes or ballots in
-this referendum. The chosen vampire is locked and abstains (this cancels
-the chosen vampire's votes and ballots)") needs exactly this.
+"""Mid-polling-step retroactive vote cancellation (ENG-027):
+`engine/politics.py::_cast_votes` now also offers any `POLLING_STEP_HOOK`
+option with `context["phase"] == "mid_cast"`, merged into each player's own
+per-turn `"polling_step_cast"` `Decision` -- Scalpel Tongue (krcg id 101686,
+"Choose a vampire who has cast votes or ballots in this referendum. The chosen
+vampire is locked and abstains (this cancels the chosen vampire's votes and
+ballots)") needs exactly this.
 
 Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism*, using a trivial fake `POLLING_STEP_HOOK` provider -- Scalpel
@@ -151,7 +151,7 @@ def test_a_canceled_source_cannot_cast_again_this_referendum():
 def test_canceling_a_source_resets_the_consecutive_pass_counter():
     """A cancellation is treated exactly like a cast for the
     alternation/closing logic -- it must not, by itself, let the window
-    close prematurely (OQ-20's own "a fresh full lap with nobody casting
+    close prematurely (RUL-006's own "a fresh full lap with nobody casting
     anything" closing condition)."""
     provider, _locked = _fake_scalpel_tongue("title:B1")
     hooks.register(POLLING_STEP_HOOK, provider)
@@ -209,7 +209,7 @@ def test_mid_cast_hook_context_carries_the_caster_identity_and_casts_log():
 
 def test_no_mid_cast_provider_registered_is_a_zero_regression_no_op():
     """With nothing registered against `POLLING_STEP_HOOK` at all, the
-    merged offer contributes nothing -- byte-for-byte the pre-OQ-37
+    merged offer contributes nothing -- byte-for-byte the pre-ENG-027
     `"polling_step_cast"` choice set (mirrors every existing `test_politics.
     py` scenario, none of which registers this hook for the cast step)."""
     builder = ScenarioBuilder(seed=1)

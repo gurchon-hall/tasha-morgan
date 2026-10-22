@@ -35,7 +35,7 @@ confirmed on the active 2P allowed list (`data/formats/2p/2026-10-03.json`)
 and in `data/decks/vekn-2p/toreador.json`.
 
 Status: implemented. Structurally identical to Organized Resistance
-(krcg id 102230, `cards/organized_resistance.py`, OQ-26) -- "Requires a
+(krcg id 102230, `cards/organized_resistance.py`, ENG-018) -- "Requires a
 baron"/"an Anarch you control gets +1 intercept"/"unlock a locked Anarch
 ... attempts to block with +1 intercept, even if intercept is not yet
 needed" -- except both clauses here name the *same* vampire (the playing
@@ -65,7 +65,7 @@ Clause 2 ("Only usable by a locked prince or justicar. This vampire burns
 intercept is not yet needed."): mirrors Organized Resistance's clause 2
 exactly, with the "named recipient" and the "unlocking" vampire collapsed
 into one and the same candidate (never two roles). Built against
-`BLOCK_CANDIDATE_INJECTION_HOOK` (OQ-26): a chosen option pays the 1-blood
+`BLOCK_CANDIDATE_INJECTION_HOOK` (ENG-018): a chosen option pays the 1-blood
 cost, unlocks the vampire, and is returned as an unconditional successful
 blocker, per that hook's own contract and the cited rulings ("the block
 attempt still happens ... if the block is successful"; "even if intercept
@@ -119,7 +119,7 @@ BLOOD_COST = 1
 INTERCEPT_BONUS = 2
 """Verbatim "+2 intercept"."""
 CARD_TYPE = "Reaction"
-"""`HookOption.played_card_type` (OQ-33, `docs/OPEN_QUESTIONS.md`): matches
+"""`HookOption.played_card_type` (ENG-023): matches
 this module's own "Card type: Reaction" docstring fact above."""
 
 

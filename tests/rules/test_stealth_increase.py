@@ -1,15 +1,14 @@
-"""Acting-side stealth-increase Action Modifiers (OQ-39,
-`docs/OPEN_QUESTIONS.md`, resolved): `engine/action.py::attempt_block`
-offers `STEALTH_INCREASE_HOOK` to the *actor* (never the defender), at the
-top of its own retry loop -- before any blocking candidate is even chosen,
-and again on every retry (OQ-11) -- independent of the `"stealth_modifier"`/
-`"intercept_modifier"` "only when needed" ping-pong. `INTERCEPT_DECREASE_
-HOOK`'s own sibling (OQ-30/31): a provider's `apply` appends a persistent,
-action-scoped `ActiveStealthIncrease` (a bare `delta`, never candidate-
-dependent -- unlike `ActiveInterceptDecrease`, there is no blocking
-candidate for a stealth value to qualify against) to `pending[PENDING_
-STEALTH_INCREASE_KEY]`; `_duel_stealth_intercept` folds every recorded
-delta into its own `stealth` baseline fresh, every time it runs.
+"""Acting-side stealth-increase Action Modifiers (RUL-011, resolved):
+`engine/action.py::attempt_block` offers `STEALTH_INCREASE_HOOK` to the *actor*
+(never the defender), at the top of its own retry loop -- before any blocking
+candidate is even chosen, and again on every retry (ENG-005) -- independent of
+the `"stealth_modifier"`/`"intercept_modifier"` "only when needed" ping-pong.
+`INTERCEPT_DECREASE_HOOK`'s own sibling (ENG-021/RUL-009): a provider's `apply`
+appends a persistent, action-scoped `ActiveStealthIncrease` (a bare `delta`,
+never candidate- dependent -- unlike `ActiveInterceptDecrease`, there is no
+blocking candidate for a stealth value to qualify against) to
+`pending[PENDING_STEALTH_INCREASE_KEY]`; `_duel_stealth_intercept` folds every
+recorded delta into its own `stealth` baseline fresh, every time it runs.
 
 The same hook is *also* offered reactively, inside `_duel_stealth_
 intercept`'s own `else` branch, merged into the same `Decision` as
@@ -36,7 +35,7 @@ from vtesbot.engine.decision import Choice
 
 
 def _fake_increase_provider_factory(*, delta: int = 1):
-    """Generic stand-in for the OQ-39 shape ("get +N stealth"): a one-shot
+    """Generic stand-in for the RUL-011 shape ("get +N stealth"): a one-shot
     play (mirrors a real card going to the ash heap, or a standing grant
     being activated, once) offered to the actor, whose `apply` stashes a
     persistent `ActiveStealthIncrease` into `pending` rather than returning
@@ -67,7 +66,7 @@ def test_zero_regression_no_provider_registered_asks_no_extra_decision():
     """With nothing registered against `STEALTH_INCREASE_HOOK` (every
     existing test and every other card today), `attempt_block`'s new
     top-of-loop `offer_until_pass` call returns instantly with no decision
-    raised -- byte-for-byte the pre-OQ-39 behaviour."""
+    raised -- byte-for-byte the pre-RUL-011 behaviour."""
     builder = ScenarioBuilder(seed=1)
     builder.player("P1", pool=30)
     builder.player("P2", pool=30).ready_vampire("B1", capacity=3, blood=1)
@@ -109,7 +108,7 @@ def test_actor_can_activate_the_modifier_before_any_block_candidate_is_chosen():
 
 
 def test_persistent_modifier_applies_identically_across_a_retried_blocks_different_candidate():
-    """OQ-11: a modifier activated once, before any candidate exists, is
+    """ENG-005: a modifier activated once, before any candidate exists, is
     never candidate-dependent (unlike `ActiveInterceptDecrease`) -- it must
     keep applying identically across a retried block attempt with a
     *different* candidate within the same action. Both B1 and B2 fail to
@@ -317,8 +316,8 @@ def test_reactive_offer_is_merged_with_stealth_modifier_and_intercept_decrease_i
 
 def test_zero_regression_reactive_point_unaffected_when_no_increase_provider_registered():
     """With no `STEALTH_INCREASE_HOOK` provider registered (every card and
-    test before OQ-39), the reactive point's `Decision` is byte-for-byte the
-    pre-OQ-39 `"stealth_modifier"` one: same kind, same single option, same
+    test before RUL-011), the reactive point's `Decision` is byte-for-byte the
+    pre-RUL-011 `"stealth_modifier"` one: same kind, same single option, same
     outcome."""
 
     def stealth_provider(state, context):

@@ -29,7 +29,7 @@ action is announced". The target pool is the defender's *current block
 candidates* (`state.ready_unlocked_vampires`, minus any already
 excluded): a vampire that could not block anyway makes excluding it a
 vacuous choice (enchant_kindred.py's "never offer a play that cannot
-resolve" convention). "Younger" (basic clause) uses the OQ-17 convention
+resolve" convention). "Younger" (basic clause) uses the ENG-011 convention
 (archived, resolved): strictly lower printed `capacity` than the acting
 vampire. Both on-file rulings describe play-order sequencing among
 different cards' own windows, already satisfied by construction (this
@@ -56,15 +56,15 @@ shared between the basic and superior clauses per the rulebook's own
 "even if using a different Discipline level" clause -- one play of
 either trips both.
 
-Cost paid even if canceled (OQ-38's companion ruling, `voter_captivation.py`'s
+Cost paid even if canceled (RUL-010's companion ruling, `voter_captivation.py`'s
 own precedent): `play_from_hand` is `HookOption.cost` (paid unconditionally
-by `apply_chosen_option`, OQ-32), not inside `apply` -- so a play canceled
+by `apply_chosen_option`, ENG-022), not inside `apply` -- so a play canceled
 via `CANCEL_AS_PLAYED_HOOK` still discards the physical card but leaves
 `SEDUCTION_PLAYED_KEY`/the exclusion set untouched (both live only in
 `apply`, which a cancellation suppresses), matching the ruling that a
 canceled attempt does not itself trigger the once-per-action limit. No
 provider in this pool currently cancels this hook; this keeps the same
-landmine `voter_captivation.py`'s own docstring already names (OQ-32) from
+landmine `voter_captivation.py`'s own docstring already names (ENG-022) from
 reopening here.
 """
 
@@ -86,7 +86,7 @@ KRCG_ID = 101712
 BASIC = "dom"
 SUPERIOR = "DOM"
 CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (OQ-33): matches this module's own "Card
+"""`HookOption.played_card_type` (ENG-023): matches this module's own "Card
 type: Action Modifier" docstring fact above."""
 SEDUCTION_PLAYED_KEY = "seduction_played"
 """Module docstring's "Per-action cap": `context["pending"]` key set once
@@ -125,7 +125,7 @@ def _eligible_targets(
 ) -> list[VampireInPlay]:
     """The defender's current block candidates (module docstring), minus
     any already excluded; "younger" (basic clause) additionally filters to
-    strictly lower printed capacity (OQ-17 convention)."""
+    strictly lower printed capacity (ENG-011 convention)."""
     excluded = _already_excluded(pending)
     candidates = [
         v for v in state.ready_unlocked_vampires(defender) if v.instance_id not in excluded

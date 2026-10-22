@@ -16,8 +16,8 @@ not drawn from, the action count, with the choice of ordering between the
 two left to the acting Methuselah. Both hooks are therefore offered every
 iteration of the same loop below, merged into one `Decision`, so the
 acting Methuselah keeps that same free ordering choice (also Rulebook §2
-Sequencing / CLAUDE.md rule 4) -- not a card-text ambiguity needing an
-Open Question, the rulebook settles it directly.
+Sequencing / CLAUDE.md rule 4) -- not a card-text ambiguity needing a
+RUL entry, the rulebook settles it directly.
 """
 
 from typing import TYPE_CHECKING

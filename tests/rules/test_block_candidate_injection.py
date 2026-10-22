@@ -1,4 +1,4 @@
-"""Forced block from a locked vampire (OQ-26, `docs/OPEN_QUESTIONS.md`,
+"""Forced block from a locked vampire (ENG-018,
 resolved): `engine/action.py::attempt_block` offers `BLOCK_CANDIDATE_
 INJECTION_HOOK` to the defender, alongside its own hardcoded
 `state.ready_unlocked_vampires(defender)` candidates, so a registered
@@ -12,7 +12,7 @@ Per the `rules-scenario-test` skill: these are scenario tests for the
 *mechanism*, using a trivial fake `BLOCK_CANDIDATE_INJECTION_HOOK`
 provider (not Organized Resistance, krcg 102230, itself -- that remains
 `card-implementer`'s job once this capability exists; it stays registered
-`blocked`/`OQ-26` until then).
+`blocked`/`ENG-018` until then).
 """
 
 from helpers import ScenarioBuilder, ScriptedAgent
@@ -26,7 +26,7 @@ from vtesbot.engine.decision import Choice
 
 
 def _fake_forced_block_provider(state, context):
-    """Generic stand-in for OQ-26's "unlock a locked minion you control; it
+    """Generic stand-in for ENG-018's "unlock a locked minion you control; it
     attempts to block, even if intercept is not yet needed" shape: offers
     every one of the defender's own currently-locked, ready vampires as a
     forced-block candidate. `apply` unlocks the chosen one and returns it,
