@@ -47,13 +47,17 @@ Range)."""
 # already imports it from here (`seed_pre_combat_maneuver_grant`'s own
 # siblings below, `cards/saku_pihlajamaki.py`, `tests/rules/test_pre_combat_
 # maneuver_grant.py`). Besides `MANEUVER_HOOK`/`DAMAGE_PREVENTION_HOOK`, also
-# threaded into `BEFORE_RANGE_HOOK`'s context (`_ask_before_range`) and
-# `COMBAT_STRENGTH_MODIFIER_HOOK`'s context (`_strike_strength`, reached via
-# `_resolve_one_strike`/`_resolve_strike_pair`) -- lets a provider activated
-# before range is determined record a flag/bonus in `combat_state` that a
-# later strike's own strength computation, in any round of the *same*
-# combat, reads back (e.g. Kasim Bayar, krcg 201598). A fresh `run_combat`
-# call creates a new `combat_state` dict, so nothing here ever leaks into a
+# threaded into `BEFORE_RANGE_HOOK`'s context (`_ask_before_range`),
+# `COMBAT_STRENGTH_MODIFIER_HOOK`'s context (`hand_strike_strength`/
+# `_strike_strength`, reached via `_resolve_one_strike`/`_resolve_strike_
+# pair`), and `COMBAT_STRIKE_OPTION_HOOK`'s context (`_ask_strike`, so a
+# card-sourced strike-substitute provider's own `hand_strike_strength` call
+# sees the same bonus a plain hand strike does -- rules-auditor finding,
+# see that function's own docstring) -- lets a provider activated before
+# range is determined record a flag/bonus in `combat_state` that a later
+# strike's own strength computation, in any round of the *same* combat,
+# reads back (e.g. Kasim Bayar, krcg 201598). A fresh `run_combat` call
+# creates a new `combat_state` dict, so nothing here ever leaks into a
 # separate, later combat for the same vampire in the same turn.
 
 PRE_COMBAT_MANEUVER_GRANT_KEY = "pre_combat_maneuver_grants"
@@ -218,6 +222,47 @@ def _is_ready(vampire: VampireInPlay) -> bool:
     return vampire.zone == "ready"
 
 
+def hand_strike_strength(
+    state: GameState,
+    player: str,
+    vampire: str,
+    opponent: str,
+    combat_state: Mapping[str, Any] | None = None,
+) -> int:
+    """The damage a plain hand strike deals right now (Rulebook §4): base
+    strength (`HAND_STRIKE_STRENGTH`) plus any live `COMBAT_STRENGTH_
+    MODIFIER_HOOK` contribution. `combat_state` (OQ-60, same combat-scoped
+    scratch dict `MANEUVER_HOOK`/`DAMAGE_PREVENTION_HOOK` already receive)
+    is threaded into the hook's context so a provider can read back a
+    whole-combat-duration bonus activated earlier in the same combat (e.g.
+    a `BEFORE_RANGE_HOOK` option granting "+N strength that combat").
+
+    Takes instance ids, not `VampireInPlay` objects, since that is the
+    shape every card module already has on hand from its own hook
+    `context` -- the single shared implementation every call site computing
+    "what a plain hand strike would deal right now" to add a card-printed
+    bonus on top of (`_strike_strength` below, plus `cards/dust_up.py`,
+    `cards/slam.py`, `cards/weighted_walking_stick.py`) must go through,
+    rather than each re-deriving the sum independently: that previously let
+    `combat_state` reach `_strike_strength` without reaching the three card
+    modules' own copies, so a `COMBAT_STRENGTH_MODIFIER_HOOK` provider
+    reading `combat_state` (e.g. the prospective Kasim Bayar, krcg 201598)
+    would have silently contributed 0 whenever the bonused vampire struck
+    via one of those cards instead of a plain hand strike (rules-auditor
+    finding). `combat_state` defaults to `None` for a call site that
+    genuinely has none to forward (e.g. a hook offered directly in a test,
+    bypassing `run_combat`); every production call site should still pass
+    its own context's value through."""
+    return HAND_STRIKE_STRENGTH + hooks.sum_modifiers(
+        COMBAT_STRENGTH_MODIFIER_HOOK,
+        state,
+        player=player,
+        vampire=vampire,
+        opponent=opponent,
+        combat_state=combat_state,
+    )
+
+
 def _strike_strength(
     state: GameState,
     player: str,
@@ -225,20 +270,10 @@ def _strike_strength(
     opponent: VampireInPlay,
     combat_state: dict[str, Any],
 ) -> int:
-    """Hand strike = base strength (default 1, Rulebook §4) plus any
-    passive `combat_strength_modifier` contribution. `combat_state`
-    (OQ-60, same combat-scoped scratch dict `MANEUVER_HOOK`/
-    `DAMAGE_PREVENTION_HOOK` already receive) is threaded into the hook's
-    context so a provider can read back a whole-combat-duration bonus
-    activated earlier in the same combat (e.g. a `BEFORE_RANGE_HOOK`
-    option granting "+N strength that combat")."""
-    return HAND_STRIKE_STRENGTH + hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK,
-        state,
-        player=player,
-        vampire=vampire.instance_id,
-        opponent=opponent.instance_id,
-        combat_state=combat_state,
+    """Thin adapter over `hand_strike_strength` for this module's own call
+    sites, which hold `VampireInPlay` objects rather than instance ids."""
+    return hand_strike_strength(
+        state, player, vampire.instance_id, opponent.instance_id, combat_state
     )
 
 
@@ -248,10 +283,17 @@ def _ask_strike(
     vampire: VampireInPlay,
     opponent: VampireInPlay,
     round_state: dict[str, Any],
+    combat_state: dict[str, Any],
 ) -> tuple[str, dict[str, hooks.HookOption], frozenset[str]]:
     """Offer every legal strike: the two built-ins, `combat_strike_option`,
     `combat_dodge_option`. Pops a maneuver-committed strike first (OQ-28).
-    Returns `(chosen_value, options_by_value, dodge_values)`."""
+    Returns `(chosen_value, options_by_value, dodge_values)`. `combat_state`
+    (OQ-60) is threaded into `COMBAT_STRIKE_OPTION_HOOK`'s own context --
+    not just into `_strike_strength`'s separate call below -- so a card-sourced
+    strike-substitute provider computing its own "+N damage over a plain
+    hand strike" (e.g. `cards/dust_up.py`, `cards/slam.py`, `cards/
+    weighted_walking_stick.py`, via `hand_strike_strength`) can read back the
+    same whole-combat-duration bonus a plain hand strike sees."""
     # Relies on this being the first _ask_strike call for vampire since
     # Determine Range always finishes before the strike step begins.
     committed = round_state.get(COMMITTED_STRIKE_KEY, {}).pop(vampire.instance_id, None)
@@ -263,6 +305,7 @@ def _ask_strike(
         player=player,
         vampire=vampire.instance_id,
         opponent=opponent.instance_id,
+        combat_state=combat_state,
     )
     dodge_options = hooks.offer(
         COMBAT_DODGE_OPTION_HOOK,
@@ -307,7 +350,9 @@ def _resolve_one_strike(
     ignore_opponent_dodge)`; dodge zeroes damage unless dodge-proof."""
     if not participates:
         return 0, False, False
-    choice, by_value, dodge_values = _ask_strike(state, player, vampire, opponent, round_state)
+    choice, by_value, dodge_values = _ask_strike(
+        state, player, vampire, opponent, round_state, combat_state
+    )
     if choice in dodge_values:
         by_value[choice].apply(state)  # dodge's own side effect, if any
         return 0, True, False

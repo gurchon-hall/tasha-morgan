@@ -1,0 +1,100 @@
+{
+  "id": 201598,
+  "printed_name": "Kasim Bayar",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Kasim Bayar"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Kasim Bayar (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300034,
+        "code": "V5A"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBh",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition-anarch/kasimbayarg6.jpg"
+    },
+    {
+      "set": {
+        "id": 300039,
+        "code": "NB2"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PBH",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood-ii/kasimbayarg6.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Kasim Bayar",
+      "text": "Justicar Camarilla Banu Haqim: Una vez por combate, Kasim puede descartarse de una carta de acción política antes de determinar la distancia para obtener +2 de fuerza en ese combate. +1 de sangrado.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/kasimbayarg6.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Kasim Bayar",
+      "text": "Camarilla. Justicar Banu Haqim : Une fois par combat, Kasim peut défausser une carte d'action politique avant l'étape de manœuvre pour recevoir +2 en force ce combat. +1 en morsure.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/kasimbayarg6.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/kasimbayarg6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Ginés Quiñonero-Santiago"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Camarilla Banu Haqim Justicar: Once each combat, Kasim can discard a political action card [POLITICAL ACTION] before range is determined to get +2 strength that combat. +1 bleed.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2021-12-31",
+  "banned": null,
+  "clan": "Banu Haqim",
+  "path": "",
+  "advanced": false,
+  "capacity": 9,
+  "group": "G6",
+  "disciplines": [
+    "aus",
+    "pot",
+    "CEL",
+    "OBF",
+    "THA"
+  ],
+  "title": "Justicar"
+}

@@ -10,7 +10,8 @@
       "capacity": 9,
       "group": 6,
       "krcg_id": 201598,
-      "implementation_status": "not_implemented"
+      "implementation_status": "blocked",
+      "blocked_reason": "missing hook: BEFORE_RANGE_HOOK/COMBAT_STRENGTH_MODIFIER_HOOK do not carry combat_state in their context (engine/combat.py::_ask_before_range, _strike_strength/_resolve_one_strike) -- needed for a once-per-combat activated, whole-combat-duration strength bonus; see rules-engineer"
     },
     {
       "name": "Oluwafunmilayo",

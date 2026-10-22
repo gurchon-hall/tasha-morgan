@@ -125,11 +125,11 @@ from vtesbot.engine.cards import Sect
 from vtesbot.engine.combat import (
     COMBAT_ADDITIONAL_STRIKE_HOOK,
     COMBAT_DODGE_OPTION_HOOK,
-    COMBAT_STRENGTH_MODIFIER_HOOK,
+    COMBAT_STATE_CONTEXT_KEY,
     COMBAT_STRIKE_OPTION_HOOK,
-    HAND_STRIKE_STRENGTH,
     StrikeDamage,
     additional_strike_limit_used,
+    hand_strike_strength,
     mark_additional_strike_limit_used,
 )
 from vtesbot.engine.decision import Choice
@@ -220,17 +220,23 @@ def _requires_an_anarch(vampire: VampireInPlay | None) -> bool:
 
 def _base_hand_strike_damage(state: GameState, context: Mapping[str, Any]) -> int:
     """The damage a plain hand strike would deal right now (`engine/
-    combat.py::_strike_strength`'s own computation): base strength plus any
-    live `"combat_strength_modifier"` contribution -- so this card's own
-    "+1"/"+2 damage" stacks with, rather than replaces, any other strength
-    bonus already in play, per "[ani] [pot] Additional damage inherits all
-    of the properties of the base damage" [TOM 19960225]."""
-    return HAND_STRIKE_STRENGTH + hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK,
+    combat.py::hand_strike_strength`'s own shared computation, also used by
+    `_strike_strength` internally): base strength plus any live
+    `"combat_strength_modifier"` contribution, including a whole-combat-
+    duration bonus recorded in `combat_state` (OQ-60; now threaded into
+    this hook's own context by `engine/combat.py::_ask_strike` -- see that
+    function's own docstring and `hand_strike_strength`'s own "Takes
+    instance ids" paragraph for why calling the shared helper here, rather
+    than re-deriving the sum, matters) -- so this card's own "+1"/"+2
+    damage" stacks with, rather than replaces, any other strength bonus
+    already in play, per "[ani] [pot] Additional damage inherits all of the
+    properties of the base damage" [TOM 19960225]."""
+    return hand_strike_strength(
         state,
-        player=context["player"],
-        vampire=context["vampire"],
-        opponent=context["opponent"],
+        context["player"],
+        context["vampire"],
+        context["opponent"],
+        context.get(COMBAT_STATE_CONTEXT_KEY),
     )
 
 

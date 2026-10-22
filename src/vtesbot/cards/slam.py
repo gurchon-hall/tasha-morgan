@@ -101,13 +101,13 @@ from vtesbot.cards._shared import play_from_hand
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
 from vtesbot.engine import hooks
 from vtesbot.engine.combat import (
-    COMBAT_STRENGTH_MODIFIER_HOOK,
+    COMBAT_STATE_CONTEXT_KEY,
     COMBAT_STRIKE_OPTION_HOOK,
-    HAND_STRIKE_STRENGTH,
     LONG_RANGE,
     MANEUVER_HOOK,
     StrikeDamage,
     commit_strike_for_round,
+    hand_strike_strength,
     strike_committed_this_round,
 )
 from vtesbot.engine.decision import Choice
@@ -143,17 +143,20 @@ def _has_card_in_hand(state: GameState, player: str) -> bool:
 
 def _base_hand_strike_damage(state: GameState, context: Mapping[str, Any]) -> int:
     """The damage a plain hand strike would deal right now (`engine/
-    combat.py::_strike_strength`'s own computation): base strength plus any
-    live `combat_strength_modifier` contribution -- so this card's own "+2
-    damage" stacks with, rather than replaces, any other strength bonus
-    already in play, per "[a]dditional damage inherits all of the
-    properties of the base damage" [TOM 19960225]."""
-    return HAND_STRIKE_STRENGTH + hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK,
+    combat.py::hand_strike_strength`'s own shared computation, also used by
+    `_strike_strength` internally): base strength plus any live
+    `combat_strength_modifier` contribution, including a whole-combat-
+    duration bonus recorded in `combat_state` (OQ-60; now threaded into
+    this hook's own context by `engine/combat.py::_ask_strike`) -- so this
+    card's own "+2 damage" stacks with, rather than replaces, any other
+    strength bonus already in play, per "[a]dditional damage inherits all
+    of the properties of the base damage" [TOM 19960225]."""
+    return hand_strike_strength(
         state,
-        player=context["player"],
-        vampire=context["vampire"],
-        opponent=context["opponent"],
+        context["player"],
+        context["vampire"],
+        context["opponent"],
+        context.get(COMBAT_STATE_CONTEXT_KEY),
     )
 
 

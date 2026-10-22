@@ -17,10 +17,23 @@ per block attempt it is involved in). These are scenario tests for the
 *mechanism* only, using a fake `BEFORE_RANGE_HOOK`/`COMBAT_STRENGTH_MODIFIER_
 HOOK` pair shaped like that clause -- Kasim Bayar itself stays a follow-up
 `card-implementer` pass.
-"""
+
+Also covers the rules-auditor finding on that same mechanism (`cards/
+kasim_bayar.py`'s own "Engine gap closed" docstring section, 2026-10-22):
+`engine/combat.py::hand_strike_strength`, the shared helper every call site
+computing "what a plain hand strike deals right now" now goes through
+(`_strike_strength` internally, plus `cards/dust_up.py`, `cards/slam.py`,
+`cards/weighted_walking_stick.py`), and `_ask_strike`'s own `COMBAT_STRIKE_
+OPTION_HOOK` offer, which now forwards `combat_state` too -- so the fake
+bonus below still applies when the bonused vampire strikes via one of
+those three cards instead of a plain hand strike, not just via `hand_
+strike`."""
 
 from helpers import ScenarioBuilder, ScriptedAgent
-from vtesbot.engine import hooks
+from vtesbot.cards.dust_up import KRCG_ID as DUST_UP_ID
+from vtesbot.cards.slam import KRCG_ID as SLAM_ID
+from vtesbot.cards.weighted_walking_stick import KRCG_ID as WWS_ID
+from vtesbot.engine import CryptCard, LibraryCard, Sect, hooks
 from vtesbot.engine.combat import (
     BEFORE_RANGE_HOOK,
     COMBAT_STATE_CONTEXT_KEY,
@@ -179,3 +192,134 @@ def test_bonus_does_not_leak_into_a_separate_later_combat_same_turn():
     assert calls == [3, 1]  # combat 2's strike is base strength only: no leaked bonus
     actor2.assert_exhausted()
     defender2.assert_exhausted()
+
+
+# --- rules-auditor finding: the bonus must also reach a card-sourced strike
+# substitute (not just a plain hand strike), since those independently
+# compute "what a plain hand strike deals right now" via the same shared
+# `hand_strike_strength` helper (`engine/combat.py`). ------------------------
+
+
+def _set_sect(builder_player, instance_id: str, sect: Sect) -> None:
+    """`ready_vampire` has no `sect=` parameter and `CryptCard` is frozen, so a
+    fresh instance is swapped in, preserving every other field (mirrors
+    `tests/cards/test_dust_up.py::_set_sect`)."""
+    vampire = next(v for v in builder_player.vampires if v.instance_id == instance_id)
+    old = vampire.card
+    vampire.card = CryptCard(
+        krcg_id=old.krcg_id,
+        name=old.name,
+        capacity=old.capacity,
+        group=old.group,
+        clan=old.clan,
+        title=old.title,
+        disciplines=old.disciplines,
+        sect=sect,
+    )
+
+
+def test_bonus_applies_when_striking_via_dust_up_instead_of_a_plain_hand_strike():
+    """Dust Up's `[pot]` clause (`cards/dust_up.py::_provide_pot`) computes
+    "+2 damage" over `hand_strike_strength`'s own value -- which must include
+    this once-activated, whole-combat-duration bonus just like a plain hand
+    strike does (rules-auditor finding: previously it silently did not, since
+    neither `_ask_strike`'s own `COMBAT_STRIKE_OPTION_HOOK` offer nor Dust
+    Up's own recompute forwarded `combat_state`)."""
+    _register_fake_kasim_bayar_pair()
+    calls: list[int] = []
+    _register_damage_logger(calls)
+
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=5, blood=0, disciplines=("pot",)
+    )
+    _set_sect(p1, "V1", Sect.ANARCH)
+    p1.hand.append(LibraryCard(krcg_id=DUST_UP_ID, name="Dust Up", card_type="combat"))
+    builder.player("P2", pool=30).ready_vampire("B1", capacity=10, blood=10)
+    game = builder.build()
+
+    actor = ScriptedAgent("P1")
+    actor.expect("before_range", "activate_bonus")
+    actor.expect("strike_choice", "dust_up:pot")
+    actor.expect("press", "end_combat")
+    defender = ScriptedAgent("P2")
+    defender.expect("strike_choice", "no_strike")
+    defender.expect("mend_damage", "5")
+    defender.expect("press", "end_combat")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    run_combat(game.state, "P1", game.vampire("V1"), "P2", game.vampire("B1"))
+
+    assert calls == [5]  # base(1) + fake Kasim-style bonus(2) + Dust Up [pot] (+2)
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
+def test_bonus_applies_when_striking_via_slam_instead_of_a_plain_hand_strike():
+    """Slam's basic `[pot]` clause (`cards/slam.py::_provide_basic`) computes
+    "+2 damage" the same shared way Dust Up does."""
+    _register_fake_kasim_bayar_pair()
+    calls: list[int] = []
+    _register_damage_logger(calls)
+
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=5, blood=1, disciplines=("pot",)
+    ).hand.append(LibraryCard(krcg_id=SLAM_ID, name="Slam", card_type="combat"))
+    builder.player("P2", pool=30).ready_vampire("B1", capacity=10, blood=10)
+    game = builder.build()
+
+    actor = ScriptedAgent("P1")
+    actor.expect("before_range", "activate_bonus")
+    actor.expect("strike_choice", "slam:basic")
+    actor.expect("press", "end_combat")
+    defender = ScriptedAgent("P2")
+    defender.expect("strike_choice", "no_strike")
+    defender.expect("mend_damage", "5")
+    defender.expect("press", "end_combat")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    run_combat(game.state, "P1", game.vampire("V1"), "P2", game.vampire("B1"))
+
+    assert calls == [5]  # base(1) + fake Kasim-style bonus(2) + Slam [pot] (+2)
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
+def test_bonus_applies_when_striking_via_weighted_walking_stick():
+    """Weighted Walking Stick's strike clause (`cards/weighted_walking_
+    stick.py::_provide_strike`) computes "strength+1" the same shared way.
+    Both the attach option and the fake bonus's own activation are offered in
+    the same `BEFORE_RANGE_HOOK` window (round 1, before Determine Range) --
+    the acting Methuselah's impulse plays both in sequence before the window
+    closes (CLAUDE.md rule 4)."""
+    _register_fake_kasim_bayar_pair()
+    calls: list[int] = []
+    _register_damage_logger(calls)
+
+    builder = ScenarioBuilder(seed=1)
+    builder.player("P1", pool=30).ready_vampire("V1", capacity=5, blood=0).hand.append(
+        LibraryCard(krcg_id=WWS_ID, name="Weighted Walking Stick", card_type="combat")
+    )
+    builder.player("P2", pool=30).ready_vampire("B1", capacity=10, blood=10)
+    game = builder.build()
+
+    actor = ScriptedAgent("P1")
+    actor.expect("before_range", "activate_bonus")
+    actor.expect("before_range", "weighted_walking_stick:attach:V1")
+    actor.expect("strike_choice", "weighted_walking_stick:strike:V1")
+    actor.expect("press", "end_combat")
+    defender = ScriptedAgent("P2")
+    defender.expect("strike_choice", "no_strike")
+    defender.expect("mend_damage", "4")
+    defender.expect("press", "end_combat")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    run_combat(game.state, "P1", game.vampire("V1"), "P2", game.vampire("B1"))
+
+    assert calls == [4]  # base(1) + fake Kasim-style bonus(2) + Weighted Walking Stick (+1)
+    actor.assert_exhausted()
+    defender.assert_exhausted()

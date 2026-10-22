@@ -43,10 +43,12 @@ the victim") gates on.
 Strike clause rides `COMBAT_STRIKE_OPTION_HOOK` with no change to its
 existing provider contract (pre-prevention, post-reduction damage, per
 that hook's own docstring and `engine/combat.py`'s "Before Range" section)
--- `_apply` computes `strength+1` the same non-hardcoded way `cards/
-slam.py`/`cards/dust_up.py` do (base hand-strike strength plus any live
-`combat_strength_modifier`), burns `min(amount, counters)` off the
-attachment and removes it once empty, then returns the *full* `amount`
+-- `_apply` computes `strength+1` via `engine/combat.py::hand_strike_
+strength`, the same shared helper `cards/slam.py`/`cards/dust_up.py` call
+(base hand-strike strength plus any live `combat_strength_modifier`,
+including a whole-combat-duration bonus recorded in `combat_state`, OQ-60),
+burns `min(amount, counters)` off the attachment and removes it once empty,
+then returns the *full* `amount`
 unreduced: "[f]ull damage is applied if there are any counter left, even
 just 1" [ANK 20201229-2] is thereby a direct consequence of returning the
 full amount regardless of how many counters are actually burned, not a
@@ -79,9 +81,9 @@ from vtesbot.engine.attachments import attach_card
 from vtesbot.engine.cards import CardAttachment
 from vtesbot.engine.combat import (
     BEFORE_RANGE_HOOK,
-    COMBAT_STRENGTH_MODIFIER_HOOK,
+    COMBAT_STATE_CONTEXT_KEY,
     COMBAT_STRIKE_OPTION_HOOK,
-    HAND_STRIKE_STRENGTH,
+    hand_strike_strength,
 )
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
@@ -167,12 +169,12 @@ def _provide_strike(state: GameState, context: Mapping[str, Any]) -> list[HookOp
     wws = _find_attachment(vampire)
     if wws is None or (wws.counters or 0) <= 0:
         return []
-    base = HAND_STRIKE_STRENGTH + hooks.sum_modifiers(
-        COMBAT_STRENGTH_MODIFIER_HOOK,
+    base = hand_strike_strength(
         state,
-        player=player,
-        vampire=context["vampire"],
-        opponent=context["opponent"],
+        player,
+        context["vampire"],
+        context["opponent"],
+        context.get(COMBAT_STATE_CONTEXT_KEY),
     )
     amount = base + STRIKE_BONUS
 
