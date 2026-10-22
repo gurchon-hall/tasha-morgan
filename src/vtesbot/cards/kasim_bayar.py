@@ -29,34 +29,11 @@ only when ... each clause of the text" is covered; per that same precedent
 trivially-implementable trailing clause does not get wired ahead of the
 card's primary ability.
 
-Engine gap closed (updated 2026-10-22, follow-up to the rules-auditor review
-of commit "feat(engine): thread combat_state into BEFORE_RANGE_HOOK/
-COMBAT_STRENGTH_MODIFIER_HOOK"): `engine/combat.py` now exposes a shared
-`hand_strike_strength(state, player, vampire, opponent, combat_state=None)`
-helper -- the single computation every call site that needs "what a plain
-hand strike deals right now" uses, instead of each re-deriving
-`HAND_STRIKE_STRENGTH + hooks.sum_modifiers(COMBAT_STRENGTH_MODIFIER_HOOK,
-...)` independently. `_strike_strength` (the engine's own plain-hand-strike
-path) is now a thin wrapper over it, and `cards/dust_up.py`/`cards/slam.py`'s
-own `_base_hand_strike_damage` and `cards/weighted_walking_stick.py`'s
-`_provide_strike` all call it too, forwarding `combat_state` from their own
-hook `context`. `_ask_strike` (`engine/combat.py`) also now threads
-`combat_state` into `COMBAT_STRIKE_OPTION_HOOK`'s own context itself (it
-previously carried only `player`/`vampire`/`opponent`), which those three
-card modules' hook providers need in order to have anything to forward at
-all. Proven by `tests/rules/test_combat_strength_before_range.py`'s added
-cases (a fake once-per-combat `BEFORE_RANGE_HOOK`/`COMBAT_STRENGTH_
-MODIFIER_HOOK` bonus, shaped like this card's clause (2), still applies when
-the bonused vampire strikes via Dust Up/Slam/Weighted Walking Stick instead
-of a plain hand strike).
-
-Status remains `blocked`: clause (2) itself ("Once each combat, Kasim can
-discard a political action card ... before range is determined to get +2
-strength that combat") is not yet wired to this now-working primitive --
-that is ordinary follow-up card-implementation work (a `BEFORE_RANGE_HOOK`
-provider checking "discard a political action card from hand" plus a
-`COMBAT_STRENGTH_MODIFIER_HOOK` provider reading the recorded flag, same
-shape as this module's own `tests/rules/` fake pair), not an engine gap.
+Engine support for clause (2) exists (ENG-046): `combat_state` reaches
+`BEFORE_RANGE_HOOK`/`COMBAT_STRENGTH_MODIFIER_HOOK` and every strike path
+via `engine/combat.py::hand_strike_strength`. What remains is card work: a
+`BEFORE_RANGE_HOOK` provider discarding a political action card from hand,
+plus a `COMBAT_STRENGTH_MODIFIER_HOOK` provider reading the recorded flag.
 """
 
 from vtesbot.cards.registry import CardRegistration, Hook, Status, register
@@ -69,11 +46,8 @@ register(
         hooks=(Hook.BEFORE_RANGE, Hook.COMBAT_STRENGTH_MODIFIER, Hook.BLEED_AMOUNT_FIXED_MODIFIER),
         source=__name__,
         blocked_reason=(
-            "the combat_state plumbing gap is now closed (engine/combat.py::hand_strike_strength, "
-            "a +2-that-combat bonus now applies through Dust Up/Slam/Weighted Walking Stick too) "
-            "-- clause (2) itself (discard a political action card before range is determined for "
-            "+2 strength that combat) still needs its own BEFORE_RANGE_HOOK/"
-            "COMBAT_STRENGTH_MODIFIER_HOOK provider pair wired up; see card-implementer"
+            "not yet implemented: clause (2) needs its BEFORE_RANGE_HOOK/"
+            "COMBAT_STRENGTH_MODIFIER_HOOK provider pair; engine support exists (ENG-046)"
         ),
     )
 )
