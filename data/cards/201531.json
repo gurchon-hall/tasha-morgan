@@ -1,0 +1,99 @@
+{
+  "id": 201531,
+  "printed_name": "Alice Chen",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Alice Chen"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Alice Chen (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/alicecheng6.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PV",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/alicecheng6.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Alice Chen",
+      "text": "Príncipe Camarilla de Nairobi.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/alicecheng6.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Alice Chen",
+      "text": "Camarilla. Prince de Nairobi.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/alicecheng6.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/alicecheng6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Amy Wilkins"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Camarilla Prince of Nairobi.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2020-12-30",
+  "banned": null,
+  "clan": "Ventrue",
+  "path": "",
+  "advanced": false,
+  "capacity": 7,
+  "group": "G6",
+  "disciplines": [
+    "dom",
+    "obf",
+    "FOR",
+    "PRE"
+  ],
+  "title": "Prince"
+}

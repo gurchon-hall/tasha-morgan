@@ -1,0 +1,99 @@
+{
+  "id": 201561,
+  "printed_name": "Mkhokheli",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Mkhokheli"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Mkhokheli (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 300033,
+        "code": "V5"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 2,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/fifth-edition/mkhokhelig6.jpg"
+    },
+    {
+      "set": {
+        "id": 300035,
+        "code": "NB"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "PTo",
+          "copies": 1,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/new-blood/mkhokhelig6.jpg"
+    }
+  ],
+  "i18n": {
+    "es": {
+      "name": "Mkhokheli",
+      "text": "Príncipe Camarilla de Ciudad del Cabo.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/es/mkhokhelig6.jpg",
+      "cards": []
+    },
+    "fr": {
+      "name": "Mkhokheli",
+      "text": "Camarilla. Prince du Cap.",
+      "flavor": "",
+      "draft": "",
+      "url": "https://static.krcg.org/card/fr/mkhokhelig6.jpg",
+      "cards": []
+    }
+  },
+  "url": "https://static.krcg.org/card/mkhokhelig6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [],
+  "artists": [
+    "Samuel Araya"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Camarilla Prince of Cape Town.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2020-12-30",
+  "banned": null,
+  "clan": "Toreador",
+  "path": "",
+  "advanced": false,
+  "capacity": 6,
+  "group": "G6",
+  "disciplines": [
+    "aus",
+    "cel",
+    "for",
+    "PRE"
+  ],
+  "title": "Prince"
+}

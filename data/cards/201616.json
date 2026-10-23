@@ -1,0 +1,84 @@
+{
+  "id": 201616,
+  "printed_name": "Fiorenza Savona",
+  "unicity_suffix": "",
+  "suffix": "G6",
+  "kind": "Crypt",
+  "name_variants": [
+    {
+      "type": "Lexicographical",
+      "name": "Fiorenza Savona"
+    },
+    {
+      "type": "Lexicographical",
+      "name": "Fiorenza Savona (G6)"
+    }
+  ],
+  "prints": [
+    {
+      "set": {
+        "id": 0,
+        "code": "Promo"
+      },
+      "occurrences": [
+        {
+          "type": "Single",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 0,
+          "date": "2021-10-15"
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/promo/fiorenzasavonag6.jpg"
+    },
+    {
+      "set": {
+        "id": 320006,
+        "code": "PP3"
+      },
+      "occurrences": [
+        {
+          "type": "Precon",
+          "frequency": null,
+          "multiplier": 0.0,
+          "bundle": "",
+          "copies": 10,
+          "date": null
+        }
+      ],
+      "url": "https://static.krcg.org/card/set/promo-pack-3-icons/fiorenzasavonag6.jpg"
+    }
+  ],
+  "i18n": {},
+  "url": "https://static.krcg.org/card/fiorenzasavonag6.jpg",
+  "types": [
+    "Vampire"
+  ],
+  "formats": [
+    "V5"
+  ],
+  "artists": [
+    "Ginés Quiñonero-Santiago"
+  ],
+  "variants": [],
+  "rulings": [],
+  "cards": [],
+  "text": "Camarilla: If you burn the Edge for a vote, you get +1 vote. If you burn a political action card for a vote, you get +1 vote.",
+  "draft": "",
+  "flavor": "",
+  "legal": "2021-10-15",
+  "banned": null,
+  "clan": "Ventrue",
+  "path": "",
+  "advanced": false,
+  "capacity": 7,
+  "group": "G6",
+  "disciplines": [
+    "aus",
+    "for",
+    "DOM",
+    "PRE"
+  ],
+  "title": null
+}

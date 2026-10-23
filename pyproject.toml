@@ -31,12 +31,25 @@ pythonpath = ["src", "tests"]
 [tool.basedpyright]
 # Modules on the `Card` API (CLAUDE.md §10); add each card module as it migrates.
 include = [
+    "src/vtesbot/cards/alice_chen.py",
+    "src/vtesbot/cards/atiena.py",
     "src/vtesbot/cards/card.py",
+    "src/vtesbot/cards/carmelita_neillson.py",
     "src/vtesbot/cards/celerity.py",
     "src/vtesbot/cards/common.py",
     "src/vtesbot/cards/dust_up.py",
+    "src/vtesbot/cards/fiorenza_savona.py",
+    "src/vtesbot/cards/horst_von_bruhl.py",
+    "src/vtesbot/cards/kasim_bayar.py",
+    "src/vtesbot/cards/kevin_jackson.py",
+    "src/vtesbot/cards/leumeah.py",
     "src/vtesbot/cards/madison.py",
+    "src/vtesbot/cards/malachi.py",
+    "src/vtesbot/cards/mkhokheli.py",
+    "src/vtesbot/cards/octane.py",
     "src/vtesbot/cards/registry.py",
+    "src/vtesbot/cards/siarhei_levchenko.py",
+    "src/vtesbot/cards/valeriya_zinovieva.py",
     "src/vtesbot/engine/hook_contexts.py",
 ]
 typeCheckingMode = "basic"
