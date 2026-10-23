@@ -1,20 +1,6 @@
 """Celerity (Master: Discipline). krcg 100312. Snapshot: data/cards/100312.json
-
-Text: "Discipline.
-Put this card on a vampire. This vampire gets +1 level of Celerity [cel]
-and +1 capacity. Cannot be put on a vampire with superior Celerity [CEL]."
-
-Rulings: none.
-
-Notes:
-- Target: either player's vampire in play (ready or torpor), never an
-  uncontrolled one (Rulebook §8 glossary "Target").
-- "Superior" is checked on effective disciplines, so a copy already
-  attached counts (ENG-002). Copies stack: each adds one level, capped at
-  superior (Rulebook §2 Card Types > Disciplines: "increasing the level
-  ... from basic to superior"), and +1 capacity.
-- Not a trifle: playing it uses the master phase action.
-"""
+Either player's ready or torpid vampire. "Superior" reads effective disciplines,
+so copies stack up to superior (ENG-002). Not a trifle."""
 
 from vtesbot.cards.card import Card
 from vtesbot.cards.common import find_vampire
@@ -78,6 +64,7 @@ def _capacity(state: GameState, ctx: CapacityModifierContext) -> int:
 
 @card.on(Hook.DISCIPLINE_LEVEL_MODIFIER)
 def _discipline_level(state: GameState, ctx: DisciplineLevelModifierContext) -> tuple[str, ...]:
+    """Printed levels only: `effective_disciplines` folds this provider in (ENG-047)."""
     vampire = find_vampire(state, ctx["vampire"])
     copies = 0 if vampire is None else _attached_copies(vampire)
     if vampire is None or copies == 0:
