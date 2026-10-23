@@ -313,6 +313,10 @@ class GameState:
         """`ask`, except a lone legal choice is taken without a `Decision`
         (decision.py: "only when needed"; no agent call). The taken choice is
         logged as a `"forced"` entry (engine/log.py), not a `"decision"`."""
+        if self.game_over:  # same guard as `ask` (ENG-058)
+            raise GameOverError(
+                f"decision {decision.kind!r} for {decision.player} requested after game over"
+            )
         if len(decision.choices) == 1:
             self.log.record_forced(decision, decision.choices[0])
             return decision.choices[0]

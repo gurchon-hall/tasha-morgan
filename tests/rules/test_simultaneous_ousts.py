@@ -82,6 +82,21 @@ def test_state_asks_nothing_after_a_tie():
         game.state.ask(Decision(player="P1", kind="x", choices=(Choice("a", "a"),)))
 
 
+def test_state_forces_nothing_after_a_tie():
+    """A lone legal choice is still a decision point: none after game over (ENG-058)."""
+    game = ScenarioBuilder(seed=1).player("P1", pool=1).player("P2", pool=1).build()
+    lose_pool_simultaneously(game.state, {"P1": 1, "P2": 1})
+    entries_before = len(game.state.log.entries)
+
+    from vtesbot.engine.decision import Choice, Decision
+
+    with pytest.raises(GameOverError):
+        game.state.ask_unless_forced(
+            Decision(player="P1", kind="x", choices=(Choice("only", "only"),))
+        )
+    assert len(game.state.log.entries) == entries_before
+
+
 def test_ask_unless_forced_logs_a_forced_entry_without_calling_the_agent():
     from vtesbot.engine.decision import Choice, Decision
 
