@@ -33,8 +33,10 @@ referendum, card still burned).
 
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards.disputed_territory import KRCG_ID, LOCATION_KRCG_IDS
+from vtesbot.cards.marcos_belegrad import KRCG_ID as MARCOS_KRCG_ID
+from vtesbot.cards.oxford_university_england import KRCG_ID as OXFORD_KRCG_ID
 from vtesbot.cards.registry import Status, get
-from vtesbot.engine import LibraryCard, hooks
+from vtesbot.engine import CryptCard, LibraryCard, hooks
 from vtesbot.engine.action import ACTION_POLITICAL
 from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
@@ -305,6 +307,50 @@ def test_a_referendum_that_fails_has_no_effect():
     assert location.controller == "P2"  # unchanged
     assert game.state.players["P1"].hand == []  # the card is still consumed either way
     assert [c.name for c in game.state.players["P1"].ash_heap] == [NAME]
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
+def test_an_oust_at_tally_asks_no_terms():
+    """Rulebook §5: "If you are ousted, all the cards you control are removed
+    from the game." Marcos Belegrad's tally burn ousts P2, who voted against
+    and then burned pool for Oxford votes (ENG-052)."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30).ready_vampire("Marcos1", capacity=8, blood=1)
+    marcos = next(v for v in p1.vampires if v.instance_id == "Marcos1")
+    marcos.card = CryptCard(
+        krcg_id=MARCOS_KRCG_ID,
+        name="Marcos Belegrad",
+        capacity=8,
+        group=7,
+        clan="Toreador",
+        title="Prince",
+        disciplines=("PRE",),
+    )
+    p1.hand.append(_disputed_territory_card())
+    builder.player("P2", pool=2).ready_vampire("B1", capacity=3, blood=1, title="Primogen")
+    game = builder.build()
+    oxford = bring_master_card_into_play(
+        game.state, "P2", krcg_id=OXFORD_KRCG_ID, name="Oxford University, England"
+    )
+    actor = ScriptedAgent("P1")
+    actor.expect("minion_phase_choice", "act_with:Marcos1")
+    actor.expect("action_choice", "disputed_territory:play")
+    actor.expect("polling_step_cast", "for:political_action_card:P1")
+    actor.expect("polling_step_cast", "for:title:Marcos1")  # no terms decision after this
+    defender = ScriptedAgent("P2")
+    defender.expect("block_attempt", "decline")
+    defender.expect("polling_step", "pass")
+    defender.expect("polling_step_cast", "against:title:B1")
+    defender.expect("polling_step_cast", f"oxford:{oxford.instance_id}:1")
+    defender.expect("polling_step_cast", "pass")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    minion_phase(game.state, "P1")
+
+    assert game.state.winner == "P1"
+    assert oxford.controller == "P2"  # no terms were chosen
     actor.assert_exhausted()
     defender.assert_exhausted()
 

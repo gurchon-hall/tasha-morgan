@@ -224,6 +224,8 @@ def _provide_propaganda_superior(state: GameState, context: Mapping[str, Any]) -
             lose_pool(s, other, amount)
             if amount >= 1:
                 s.edge_holder = player
+            if s.game_over:
+                return  # the bleed ousted the target: nothing left to lock (ENG-052).
             # "the target Methuselah locks a ready unlocked minion they
             # control": fizzles with no decision raised if `other` has none
             # at all (force_lock_ready_unlocked_minion's own "cannot do the

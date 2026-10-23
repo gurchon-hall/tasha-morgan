@@ -172,6 +172,8 @@ def _provide_the_platinum_protocol(
             lose_pool(s, other, amount)
             if amount >= 1:
                 s.edge_holder = player
+            if s.game_over:
+                return  # the bleed ousted the target: no corruption to place (ENG-052).
             if has_pro and amount >= 1:
                 targets = _eligible_pro_targets(s, other)
                 if targets:

@@ -152,6 +152,52 @@ def test_known_random_agent_stall_still_stalls(brujah_deck, seed):
     assert not result.stuck
 
 
+SUGGESTED_DECKS = sorted(
+    p.stem for p in (Path(__file__).resolve().parents[2] / "data/decks/vekn-2p").glob("*.json")
+)
+
+
+@pytest.mark.parametrize("deck", SUGGESTED_DECKS)
+def test_every_suggested_deck_mirror_is_clean(deck):
+    """Smoke test: a mirror match per suggested deck, so both sides of every
+    card get played; the oust regressions below guard ENG-052 itself."""
+    from vtesbot.sim.benchmark import load_suggested_deck, run_alternating
+
+    spec = load_suggested_deck(deck)
+    batch = run_alternating({"P1": spec, "P2": spec}, range(2))
+
+    assert batch.crashes == []
+    assert batch.stuck_seeds == []
+
+
+@pytest.mark.parametrize(
+    ("deck", "seed", "last_action"),
+    [
+        ("ventrue", 49, "propaganda:superior"),
+        ("ventrue", 61, "propaganda:superior"),
+        ("ventrue", 84, "propaganda:superior"),
+        ("ministry", 52, "platinum_protocol"),
+        ("ministry", 96, "platinum_protocol"),
+    ],
+)
+def test_action_card_bleed_oust_seeds_do_not_crash(deck, seed, last_action):
+    """Regression (ENG-052): a mirror match where Propaganda [PRE] (Ventrue) or
+    The Platinum Protocol [pro] (Ministry) bleeds the target out."""
+    from vtesbot.sim.benchmark import load_suggested_deck, run_alternating
+
+    spec = load_suggested_deck(deck)
+    batch = run_alternating({"P1": spec, "P2": spec}, [seed])
+
+    assert batch.crashes == []
+    assert batch.results[0].game_over
+    actions = [
+        e.data["choice"]
+        for e in batch.results[0].log.entries
+        if e.kind == "decision" and e.data["decision_kind"] == "action_choice"
+    ]
+    assert actions[-1].startswith(last_action)  # the game still ends on that card
+
+
 @pytest.mark.parametrize("seed", [270, 942])
 def test_fame_oust_mid_combat_seeds_do_not_crash(brujah_deck, seed):
     """Regression: GameOverError 'mend_damage' requested after game over."""

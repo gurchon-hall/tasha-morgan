@@ -1,5 +1,6 @@
 """Seat-alternated batch benchmark: `python -m vtesbot.sim.benchmark [N]`."""
 
+import functools
 import json
 import math
 import sys
@@ -18,13 +19,14 @@ from .invariants import ACTION_NAMES, ECONOMIC_FIELDS
 from .runner import AgentFactory, BatchResult, run_match
 
 _ROOT = Path(__file__).resolve().parents[3]
+_krcg_cards = functools.cache(krcg.load)  # ~0.8s per load; read-only after
 
 
 def load_suggested_deck(name: str = "brujah") -> DeckSpec:
     allowed = load_allowed_list(_ROOT / "data" / "formats" / "2p" / "2026-10-03.json")
     fixture = json.loads((_ROOT / "data" / "decks" / "vekn-2p" / f"{name}.json").read_text("utf-8"))
     result = check_and_build(
-        load_resolved_fixture(fixture), allowed, krcg.load(), name=fixture["name"]
+        load_resolved_fixture(fixture), allowed, _krcg_cards(), name=fixture["name"]
     )
     assert result.legal and result.deck_spec is not None, result.violations
     return result.deck_spec

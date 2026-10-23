@@ -404,6 +404,37 @@ def test_pro_offers_a_decision_with_multiple_eligible_targets():
     defender.assert_exhausted()
 
 
+def test_pro_asks_no_target_once_the_bleed_ousts_the_defender():
+    """Rulebook §5: an ousted Methuselah leaves the game, with nothing left to
+    resolve against (ENG-052)."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=3, blood=1, disciplines=("pro",)
+    )
+    _set_sect(p1, "V1", Sect.ANARCH)
+    p1.hand.append(_card())
+    p2 = builder.player("P2", pool=1).ready_vampire("W1", capacity=3)
+    p2.ready_vampire("W2", capacity=3)
+    game = builder.build()
+
+    (option,) = hooks.offer(ACTION_CARD_PLAY_HOOK, game.state, player="P1", vampire="V1")
+    actor = ScriptedAgent("P1")
+    actor.expect("minion_phase_choice", "act_with:V1")
+    actor.expect("action_choice", option.choice.value)  # no platinum_protocol_target after
+    defender = ScriptedAgent("P2")
+    defender.expect("block_attempt", "decline")
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    minion_phase(game.state, "P1")
+
+    assert game.state.winner == "P1"
+    assert game.vampire("W1").corruption_counters == {}
+    assert game.vampire("W2").corruption_counters == {}
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
 # --- blocked attempt ---------------------------------------------------------
 
 

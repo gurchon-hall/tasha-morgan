@@ -351,6 +351,33 @@ def test_superior_fizzles_the_lock_with_no_decision_when_defender_has_no_ready_v
     actor.assert_exhausted()
 
 
+def test_superior_bleed_that_ousts_the_target_asks_no_lock():
+    """Rulebook §5: an ousted Methuselah leaves the game, so the lock
+    clause has no one left to act (ENG-052)."""
+    builder = ScenarioBuilder(seed=1)
+    p1 = builder.player("P1", pool=30).ready_vampire(
+        "V1", capacity=5, blood=5, disciplines=("PRE",)
+    )
+    p1.hand.append(_propaganda_card())
+    builder.player("P2", pool=2).ready_vampire("B1", capacity=5, blood=0)
+    game = builder.build()
+    actor = ScriptedAgent("P1")
+    actor.expect("minion_phase_choice", "act_with:V1")
+    actor.expect("action_choice", "propaganda:superior")
+    defender = ScriptedAgent("P2")
+    defender.expect("block_attempt", "decline")  # no forced_lock_own_minion after this
+    game.state.agents["P1"] = actor
+    game.state.agents["P2"] = defender
+
+    minion_phase(game.state, "P1")
+
+    assert game.state.game_over is True
+    assert game.state.winner == "P1"
+    assert game.vampire("B1").locked is False
+    actor.assert_exhausted()
+    defender.assert_exhausted()
+
+
 def test_superior_titled_defender_also_excluded_from_blocking():
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(

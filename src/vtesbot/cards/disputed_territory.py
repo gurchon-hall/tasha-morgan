@@ -172,8 +172,8 @@ def _provide_disputed_territory(state: GameState, context: Mapping[str, Any]) ->
             votes_for, votes_against, _casts = resolve_referendum(
                 s, player, other, acting_vampire, action_pending=pending
             )
-            if votes_for <= votes_against:
-                return  # referendum fails ("tied referendums fail"): no effect at all.
+            if s.game_over or votes_for <= votes_against:
+                return  # oust at tally (ENG-052), or fails ("tied referendums fail").
 
             locations = _in_play_locations(s)
             if not locations:
