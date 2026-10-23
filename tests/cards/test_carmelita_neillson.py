@@ -1,24 +1,6 @@
-"""Carmelita Neillson (krcg id 201625, `src/vtesbot/cards/carmelita_neillson.py`).
-
-Card text: "Camarilla: While Carmelita is ready, you get +1 hand size."
-
-Rulings: none on file.
-
-Per the `rules-scenario-test` skill: these are scenario tests against the
-real `HAND_SIZE_MODIFIER_HOOK` machinery (`engine/hand.py`), not a fake
-provider -- Carmelita's own module is what is under test here.
-
-One assertion per clause/condition: "Camarilla" (the sect-conditional gate,
-`vampire.card.sect is Sect.CAMARILLA`, treating `sect is None` as "does not
-qualify"); "While Carmelita is ready" (both `zone == "ready"` and `not
-locked`, each checked independently -- locked and torpor/uncontrolled are
-each their own negative case); "you get +1 hand size" (the actual numeric
-contribution, proven both via `effective_hand_size` directly and via
-`reconcile_hand_size` forcing an immediate discard/draw when her ready/locked
-state changes mid-test, mirroring `tests/rules/test_hand_size.py`'s own
-integration-style assertions); scoped to her own controller only (the other
-Methuselah gets no bonus from an opponent's Carmelita).
-"""
+"""Carmelita Neillson (201625): one test per condition of "Camarilla: While
+Carmelita is ready, you get +1 hand size" (sect, ready region locked or not per
+RUL-019, controller only), against the real `HAND_SIZE_MODIFIER` hook."""
 
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards import registry
@@ -65,10 +47,9 @@ def test_plus_1_hand_size_while_ready_unlocked_camarilla_and_controlled():
     assert effective_hand_size(game.state, "P1") == 8
 
 
-def test_no_bonus_while_carmelita_is_locked():
-    """ "While Carmelita is ready" -- `locked` is checked independently of
-    `zone`: a locked (tapped) Carmelita, even though her zone is still
-    "ready" (in the ready region, not torpor), grants nothing."""
+def test_bonus_while_carmelita_is_locked():
+    """ "While Carmelita is ready": a locked Carmelita is still in the ready
+    region, so the bonus applies (RUL-019)."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)
     p1.ready_vampire("Carmelita1", capacity=5, blood=1, locked=True)
@@ -76,7 +57,7 @@ def test_no_bonus_while_carmelita_is_locked():
     builder.player("P2", pool=30)
     game = builder.build()
 
-    assert effective_hand_size(game.state, "P1") == 7
+    assert effective_hand_size(game.state, "P1") == 8
 
 
 def test_no_bonus_while_carmelita_is_in_torpor():
@@ -141,14 +122,14 @@ def test_bonus_is_scoped_to_carmelitas_own_controller():
     assert effective_hand_size(game.state, "P2") == 8
 
 
-def test_reconcile_draws_up_immediately_when_carmelita_becomes_ready():
+def test_reconcile_draws_up_immediately_when_carmelita_leaves_torpor():
     """Integration: `reconcile_hand_size` reflects the bonus the instant it
     starts applying -- her controller draws one extra card up to the new
     effective hand size of 8, no `Decision` needed (drawing up is
     automatic)."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)
-    p1.ready_vampire("Carmelita1", capacity=5, blood=1, locked=True)
+    p1.torpid_vampire("Carmelita1", capacity=5, blood=0)
     _make_carmelita(p1, "Carmelita1")
     p1.hand_cards(["Alpha"] * 7)
     p1.library_cards(["Bonus"])
@@ -156,8 +137,8 @@ def test_reconcile_draws_up_immediately_when_carmelita_becomes_ready():
     game = builder.build()
     game.state.agents["P1"] = ScriptedAgent("P1")  # would fail loudly if asked anything
 
-    assert effective_hand_size(game.state, "P1") == 7  # locked: no bonus yet
-    game.vampire("Carmelita1").locked = False  # she unlocks mid-turn
+    assert effective_hand_size(game.state, "P1") == 7  # in torpor: no bonus yet
+    game.vampire("Carmelita1").zone = "ready"  # she is rescued mid-turn
 
     reconcile_hand_size(game.state, "P1")
 
@@ -166,11 +147,9 @@ def test_reconcile_draws_up_immediately_when_carmelita_becomes_ready():
     assert game.state.players["P1"].library == []
 
 
-def test_reconcile_forces_an_immediate_discard_when_carmelita_locks():
-    """Integration: the opposite transition -- Carmelita locking mid-turn
-    immediately costs the +1 hand size, and `reconcile_hand_size` forces a
-    real discard `Decision` (which card is a free choice) down to the new,
-    lower effective hand size of 7."""
+def test_reconcile_forces_an_immediate_discard_when_carmelita_enters_torpor():
+    """Carmelita going to torpor mid-turn costs the +1 at once: a real discard
+    `Decision` brings the hand down to 7."""
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30)
     p1.ready_vampire("Carmelita1", capacity=5, blood=1)
@@ -182,7 +161,7 @@ def test_reconcile_forces_an_immediate_discard_when_carmelita_locks():
     game.state.agents["P1"] = agent
 
     assert effective_hand_size(game.state, "P1") == 8  # ready: +1 bonus active
-    game.vampire("Carmelita1").locked = True  # she locks mid-turn
+    game.vampire("Carmelita1").zone = "torpor"  # she goes to torpor mid-turn
 
     reconcile_hand_size(game.state, "P1")
 
