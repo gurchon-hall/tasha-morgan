@@ -1,29 +1,6 @@
 """Dust Up (Combat). krcg 100597. Snapshot: data/cards/100597.json
-
-Text: "Requires an Anarch.
-[ani] Strike: hand strike at +1 damage. This strike cannot be dodged.
-[cel] Strike: dodge, with 1 additional strike (limited).
-[pot] Strike: hand strike at +2 damage."
-
-Rulings:
-- [TOM 19960225] "[ani] [pot] Additional damage inherits all of the
-  properties of the base damage." Both strikes are built from
-  `hand_strike_damage` with `dataclasses.replace` (ENG-048).
-- [ANK 20220204] [cel] the additional strike is not optional, so the
-  "(limited)" cap gates the dodge itself.
-- [LSJ 20011204-3] [PIB 20130704] when played, the card requires the
-  discipline being used; in hand, library or ash heap it requires any and
-  all of [ani] [cel] [pot].
-- [LSJ 20030902-2] [LSJ 20060808-1] [ani] the opponent may still dodge; the
-  dodge has no effect (`StrikeDamage.ignore_dodge`).
-
-Notes:
-- "Requires an Anarch": `vampire.card.sect is Sect.ANARCH`; an unknown sect
-  (`None`) does not qualify (ENG-012).
-- [cel] is a dodge option recording a per-vampire grant in `round_state`,
-  claimed through `COMBAT_ADDITIONAL_STRIKE`; the "(limited)" cap is shared
-  across cards and resets each round (ENG-013).
-"""
+"Requires an Anarch": an unknown sect does not qualify (ENG-012). [cel] is one
+choice [ANK 20220204]: the dodge records a grant (ENG-013); damage per ENG-048."""
 
 from collections.abc import Mapping
 from dataclasses import replace
@@ -55,6 +32,7 @@ card = Card(KRCG_ID, "Dust Up", "Combat")
 
 
 def _playable(state: GameState, ctx: Mapping[str, Any], discipline: str) -> bool:
+    """Played, it requires only the discipline used [LSJ 20011204-3]."""
     vampire = context_vampire(state, ctx)
     return (
         vampire is not None
@@ -82,6 +60,7 @@ def _set_grant(round_state: dict[str, Any] | None, vampire_id: str, value: bool)
 
 @card.on(Hook.COMBAT_STRIKE_OPTION)
 def _ani_strike(state: GameState, ctx: CombatStrikeOptionContext) -> list[HookOption]:
+    """A dodge does not stop it [LSJ 20030902-2]."""
     if not _playable(state, ctx, "ani"):
         return []
     player, base = ctx["player"], _base_damage(state, ctx)

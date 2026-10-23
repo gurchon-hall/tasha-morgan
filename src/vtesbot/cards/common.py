@@ -25,6 +25,14 @@ def context_vampire(state: GameState, ctx: Mapping[str, Any]) -> VampireInPlay |
     return state.players[ctx["player"]].vampires.get(ctx["vampire"])
 
 
+def window_sides(ctx: Mapping[str, Any]) -> tuple[str, str, str]:
+    """`(own vampire, opposing player, opposing vampire)` for `ctx["player"]`
+    in a two-sided combat window (`BEFORE_RANGE`, `END_OF_ROUND`)."""
+    if ctx["player"] == ctx["acting_player"]:
+        return ctx["acting_vampire"], ctx["blocking_player"], ctx["blocking_vampire"]
+    return ctx["blocking_vampire"], ctx["acting_player"], ctx["acting_vampire"]
+
+
 def discipline_level(state: GameState, vampire: VampireInPlay, code: str) -> int:
     """Effective level of a discipline, printed or granted by an attachment
     (ENG-047): 0 none, 1 basic, 2 superior. `code` is the lowercase trigram."""
