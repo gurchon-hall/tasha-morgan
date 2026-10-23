@@ -30,6 +30,7 @@ from vtesbot.cards import bonding as bonding_module
 from vtesbot.cards.line_brawl import KRCG_ID
 from vtesbot.cards.registry import Status, get
 from vtesbot.engine import CryptCard, LibraryCard, Sect, hooks
+from vtesbot.engine.hooks import Hook
 from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, minion_phase
 
 NAME = "Line Brawl"
@@ -603,10 +604,8 @@ def test_pre_clause_is_tagged_a_real_bleed_so_bonding_still_fires():
     wrongly suppressed. Mirrors `test_enchant_kindred.py`'s own proof for
     its basic `[pre]` clause."""
     with contextlib.suppress(ValueError):
-        hooks.unregister(
-            bonding_module.STEALTH_MODIFIER_HOOK, bonding_module._provide_bonding_superior
-        )
-    hooks.register(bonding_module.STEALTH_MODIFIER_HOOK, bonding_module._provide_bonding_superior)
+        hooks.unregister(Hook.STEALTH_MODIFIER, bonding_module._provide_bonding_superior)
+    hooks.register(Hook.STEALTH_MODIFIER, bonding_module._provide_bonding_superior)
 
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(

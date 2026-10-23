@@ -27,7 +27,7 @@ from vtesbot.cards.scouting_mission import KRCG_ID
 from vtesbot.engine import LibraryCard, hooks
 from vtesbot.engine.action import ACTION_ACTION_CARD
 from vtesbot.engine.decision import Choice
-from vtesbot.engine.hooks import HookOption
+from vtesbot.engine.hooks import Hook, HookOption
 from vtesbot.engine.observation import Observation
 from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, minion_phase
 
@@ -155,10 +155,8 @@ def test_basic_clause_is_tagged_a_real_bleed_so_bonding_still_fires():
     superior clause, gated on `context.get("action") == ACTION_BLEED`) would
     be silently and wrongly suppressed."""
     with contextlib.suppress(ValueError):
-        hooks.unregister(
-            bonding_module.STEALTH_MODIFIER_HOOK, bonding_module._provide_bonding_superior
-        )
-    hooks.register(bonding_module.STEALTH_MODIFIER_HOOK, bonding_module._provide_bonding_superior)
+        hooks.unregister(Hook.STEALTH_MODIFIER, bonding_module._provide_bonding_superior)
+    hooks.register(Hook.STEALTH_MODIFIER, bonding_module._provide_bonding_superior)
 
     builder = ScenarioBuilder(seed=1)
     p1 = builder.player("P1", pool=30).ready_vampire(

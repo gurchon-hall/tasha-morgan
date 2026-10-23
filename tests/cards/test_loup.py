@@ -26,7 +26,7 @@ Methuselah's own in-play Loup.
 
 from helpers import ScenarioBuilder, ScriptedAgent
 from vtesbot.cards import registry
-from vtesbot.cards.loup import CARD_TYPE, KRCG_ID, LOUP_STEALTH_GRANTED_KEY, NAME
+from vtesbot.cards.loup import KRCG_ID, LOUP_STEALTH_GRANTED_KEY, NAME, card
 from vtesbot.engine import LibraryCard, hooks
 from vtesbot.engine.action import (
     ACTION_BLEED,
@@ -38,6 +38,8 @@ from vtesbot.engine.decision import Choice
 from vtesbot.engine.hooks import HookOption
 from vtesbot.engine.phases.minion import minion_phase
 from vtesbot.engine.turn_cards import bring_turn_card_into_play, clear_turn_cards_at_end_of_turn
+
+CARD_TYPE = card.card_type
 
 
 def _loup_card() -> LibraryCard:

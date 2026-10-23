@@ -1,221 +1,69 @@
-"""Bonding (Action Modifier). krcg id 100236.
+"""Bonding (Action Modifier). krcg 100236. Snapshot: data/cards/100236.json
+[DOM] plays in the stealth window of a bleed only [LSJ 19980824]; its +1 bleed
+waits in `pending` (ENG-005). "(limited)" is shared with Threats."""
 
-Card text (verified live via `krcg.load()[100236]`, 2026-10-09, matching the
-raw snapshot `data/cards/100236.json`):
-    "Only usable during a bleed action.
-    [dom] +1 bleed (limited).
-    [DOM] +1 stealth and +1 bleed (limited)."
-
-Rulings (verbatim, via krcg):
-    - "[DOM] Cannot be used if you do not need the stealth at the time you
-      play it." [TOM 19951109]
-    - "[DOM] Cannot be used to increase the stealth of a non-bleed action."
-      [LSJ 19980824] [RTR 19941109]
-
-Card type: Action Modifier. `discipline_requirement.disciplines == ["dom"]`
-(basic Dominate required to play the card at all; superior Dominate,
-printed uppercase `"DOM"` on a `CryptCard`, additionally unlocks the
-bold-text effect -- Rulebook §3 "Discipline symbol within a diamond ... may
-opt to use either the basic (plain text) or the superior (bold) effect ...
-but not both"). `cost is None` (free).
-
-Status: implemented (ENG-005, now resolved -- the
-engine's `pending: dict[str, Any]` per-minion-action scratch container,
-`engine/action.py::perform_minion_action`, closed the gap this card was
-previously blocked on).
-
-Two clauses, two different hooks (one physical card, choose a level when you
-play it, exactly the "basic vs superior" shape already used by
-`threats.py`/`telepathic_counter.py`/`celerity.py`):
-
-"[dom] +1 bleed (limited)" (the basic clause): a clean `"bleed_amount_modifier"`
-provider, same pattern as `threats.py` -- offered only to the acting
-(bleeding) player, requiring at least basic Dominate (`"dom"` or `"DOM"`).
-"Only usable during a bleed action" is *not* re-checked via
-`context.get("action")` here, unlike the superior clause below:
-`"bleed_amount_modifier"`'s context (`_perform_bleed`'s `resolve()`
-closure) carries no `"action"` key at all (unlike `"stealth_modifier"`/
-`"intercept_modifier"`'s context, ENG-003) -- gating on
-`context.get("action") == ACTION_BLEED` here would always read
-`None != "bleed"` and silently suppress this clause entirely. The
-restriction is instead satisfied by which hook this card registers
-against: `"bleed_amount_modifier"` is only ever offered from
-`_perform_bleed`, never `_perform_hunt`.
-
-"[DOM] +1 stealth and +1 bleed (limited)" (the superior clause): a
-`"stealth_modifier"` provider, requiring superior Dominate (`"DOM"`). Unlike
-the basic clause's hook, `"stealth_modifier"`'s context *does* carry
-`context["action"]` (ENG-003), and that hook is shared with hunt and
-political-action's own stealth ping-pong (`_perform_hunt`,
-`engine/politics.py::political_action`), so hook selection alone does not
-suffice here: the "[DOM] Cannot be used to increase the stealth of a
-non-bleed action" ruling is enforced with an explicit
-`context.get("action") != ACTION_BLEED: return []` gate. The other ruling,
-"[DOM] Cannot be used if you do not need the stealth at the time you play
-it", needs no extra code: `_duel_stealth_intercept`'s "only when needed"
-ping-pong only ever calls `hooks.offer(STEALTH_MODIFIER_HOOK, ...)` while
-stealth is currently needed (`intercept >= stealth`); the other half offers
-`INTERCEPT_MODIFIER_HOOK` to the defender instead, so this provider is
-simply never invoked while stealth is not needed. This single play must
-also deliver the "+1 bleed" half from the same provider call, read much
-later by `_perform_bleed`'s `resolve()` (ENG-005): `apply()` both returns `1`
-(the hook's `int`-delta contract) *and* stashes
-`pending[PENDING_BLEED_AMOUNT_KEY] += 1`, which `resolve()` folds into
-`base_amount` before the separately-clamped `"bleed_amount_modifier"`
-window runs -- the mechanism ENG-005 built, proved end-to-end by
-`tests/rules/test_pending_modifier.py`'s fake stand-in provider.
-
-Rulebook §3 "may opt to use either the basic or the superior effect ... but
-not both": a superior-Dominate vampire is eligible for *both* providers
-above, but they fire in different hook windows at different times within
-the same minion action. The superior clause can only be legally offered
-while a block attempt is in progress and stealth is currently needed; if
-the defender never attempts a block, the superior clause is never offered,
-and the basic clause (always satisfied by a superior-Dominate vampire too)
-remains available in the later `"bleed_amount_modifier"` window -- the
-vampire ends up using "only" the basic effect, exactly §3's "may opt to
-use either effect" (`tests/cards/test_bonding.py::
-test_superior_vampire_may_opt_to_use_the_basic_effect_instead_when_no_
-block_is_attempted`). Conversely, if a block *is* attempted, declining the
-superior clause's offer does not fall back to the basic effect: declining
-ends the stealth/intercept ping-pong immediately with the block
-succeeding at the current intercept (bleed's base stealth is 0, so
-`intercept(0) >= stealth(0)` already holds once any blocker is chosen), so
-the action is blocked and the later bleed-amount window is never reached.
-Both branches are tested.
-
-"(limited)" (§8 glossary: "an action modifier card cannot be played to
-increase the bleed if the bleed amount is already being increased by
-another action modifier card"; §2: "A minion cannot play the same action
-modifier card more than once during a single action (even if using a
-different Discipline level)"): tracked via the per-*action*
-`bleed_bookkeeping` scratch space keyed off `pending` (`vtesbot.cards.
-_shared`) rather than the per-window `amount_box`, which could not see a
-"(limited)" increase played earlier in the same action from the stealth
-window (see `_shared.py`'s docstring). `LIMITED_USED_KEY` is imported
-directly from `threats.py` (the same shared flag) rather than redefined,
-so Bonding's two clauses and Threats correctly exclude one another for the
-rest of one action regardless of which hook window fires first.
-"""
-
-from collections.abc import Mapping
-from typing import Any
-
-from vtesbot.cards._shared import bleed_bookkeeping, play_from_hand
-from vtesbot.cards.registry import CardRegistration, Hook, Status, register
+from vtesbot.cards.card import Card
+from vtesbot.cards.common import (
+    acting_vampire,
+    bleed_bookkeeping,
+    context_vampire,
+    discipline_level,
+    has_discipline,
+)
 from vtesbot.cards.threats import LIMITED_USED_KEY
-from vtesbot.engine import hooks
 from vtesbot.engine.action import ACTION_BLEED
-from vtesbot.engine.attachments import effective_disciplines
-from vtesbot.engine.decision import Choice
-from vtesbot.engine.hooks import HookOption
+from vtesbot.engine.hook_contexts import BleedAmountModifierContext, StealthModifierContext
+from vtesbot.engine.hooks import Hook, HookOption
 from vtesbot.engine.phases.minion import PENDING_BLEED_AMOUNT_KEY
-from vtesbot.engine.state import GameState, VampireInPlay
+from vtesbot.engine.state import GameState
 
 KRCG_ID = 100236
-BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
-STEALTH_MODIFIER_HOOK = "stealth_modifier"
-BASIC = "dom"
-SUPERIOR = "DOM"
-CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (ENG-023): matches
-this module's own "Card type: Action Modifier" docstring fact above."""
+
+card = Card(KRCG_ID, "Bonding", "Action Modifier")
 
 
-def _find_vampire(state: GameState, player: str, vampire_id: str | None) -> VampireInPlay | None:
-    if vampire_id is None:
-        return None
-    return state.players[player].vampires.get(vampire_id)
-
-
-def _provide_bonding_basic(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
-    """ "[dom] +1 bleed (limited)" -- see module docstring for why this clause
-    needs no `context["action"]` check: the hook it registers against is
-    only ever offered from a bleed action's own resolution step."""
-    player = context["player"]
-    acting_vampire_id = context["vampire"]
-    acting_vampire = state.players[player].vampires.get(acting_vampire_id)
-    if acting_vampire is None:
-        return []  # `player` is the defender this turn of the impulse window, not the bleeder.
-
-    disciplines = effective_disciplines(state, acting_vampire)
-    if BASIC not in disciplines and SUPERIOR not in disciplines:
+@card.on(Hook.BLEED_AMOUNT_MODIFIER)
+def _provide_bonding_basic(state: GameState, ctx: BleedAmountModifierContext) -> list[HookOption]:
+    player, vampire = ctx["player"], context_vampire(state, ctx)
+    if vampire is None or not has_discipline(state, vampire, "dom"):
+        return []  # no vampire: `player` is the defender in this window
+    if not card.in_hand(state, player):
         return []
-    if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
-        return []
-
-    pending = context["pending"]
-    book = bleed_bookkeeping(pending)
+    book = bleed_bookkeeping(ctx["pending"])
     if book.get(LIMITED_USED_KEY):
         return []
-
-    amount_box = context["amount"]
+    amount_box = ctx["amount"]
 
     def _apply(s: GameState) -> None:
-        play_from_hand(s, player, KRCG_ID)
+        card.play_from_hand(s, player)
         amount_box[0] += 1
         book[LIMITED_USED_KEY] = True
 
-    return [
-        HookOption(
-            choice=Choice("bonding:basic", "Bonding [dom]: +1 bleed (limited)"),
-            apply=_apply,
-            played_card_type=CARD_TYPE,
-        )
-    ]
+    return [card.option("bonding:basic", "Bonding [dom]: +1 bleed (limited)", _apply)]
 
 
-def _provide_bonding_superior(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
-    """ "[DOM] +1 stealth and +1 bleed (limited)" -- see module docstring for
-    the `context["action"]` gate (ruling: "[DOM] Cannot be used to increase
-    the stealth of a non-bleed action") and the `pending`-stash mechanism
-    (ENG-005) that carries the "+1 bleed" half forward to `_perform_bleed`'s
-    later `resolve()`. The "cannot be used if you do not need the stealth"
-    ruling needs no code here at all: `_duel_stealth_intercept` only ever
-    calls `hooks.offer("stealth_modifier", ...)` on the half of its ping-pong
-    where stealth is currently needed (module docstring)."""
-    if context.get("action") != ACTION_BLEED:
+@card.on(Hook.STEALTH_MODIFIER)
+def _provide_bonding_superior(state: GameState, ctx: StealthModifierContext) -> list[HookOption]:
+    """Only offered while stealth is needed [TOM 19951109]: the engine asks for
+    stealth only then."""
+    if ctx["action"] != ACTION_BLEED:
         return []
-
-    player = context["player"]  # this hook is only ever offered to the acting player.
-    acting_vampire = _find_vampire(state, player, context.get("acting_vampire"))
-    if acting_vampire is None:
+    player, vampire = ctx["player"], acting_vampire(state, ctx)
+    if vampire is None or discipline_level(state, vampire, "dom") < 2:
         return []
-
-    if SUPERIOR not in effective_disciplines(state, acting_vampire):
+    if not card.in_hand(state, player):
         return []
-    if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
-        return []
-
-    pending = context["pending"]
+    pending = ctx["pending"]
     book = bleed_bookkeeping(pending)
     if book.get(LIMITED_USED_KEY):
         return []
 
     def _apply(s: GameState) -> int:
-        play_from_hand(s, player, KRCG_ID)
+        card.play_from_hand(s, player)
         book[LIMITED_USED_KEY] = True
         pending[PENDING_BLEED_AMOUNT_KEY] = pending.get(PENDING_BLEED_AMOUNT_KEY, 0) + 1
-        return 1  # +1 stealth, delivered from the very same play as the stashed +1 bleed.
+        return 1  # the +1 stealth
 
     return [
-        HookOption(
-            choice=Choice("bonding:superior", "Bonding [DOM]: +1 stealth and +1 bleed (limited)"),
-            apply=_apply,
-            played_card_type=CARD_TYPE,
-        )
+        card.option("bonding:superior", "Bonding [DOM]: +1 stealth and +1 bleed (limited)", _apply)
     ]
-
-
-hooks.register(BLEED_AMOUNT_MODIFIER_HOOK, _provide_bonding_basic)
-hooks.register(STEALTH_MODIFIER_HOOK, _provide_bonding_superior)
-
-register(
-    CardRegistration(
-        krcg_id=KRCG_ID,
-        name="Bonding",
-        status=Status.IMPLEMENTED,
-        hooks=(Hook.BLEED_AMOUNT_MODIFIER, Hook.STEALTH_MODIFIER),
-        source=__name__,
-    )
-)

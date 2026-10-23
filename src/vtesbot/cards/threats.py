@@ -1,124 +1,44 @@
-"""Threats (Action Modifier). krcg id 101978.
+"""Threats (Action Modifier). krcg 101978. Snapshot: data/cards/101978.json
+Offered to the bleeder only. "(limited)" is one flag per action, shared with
+Bonding (ENG-005)."""
 
-Card text (fetched via krcg 5.14+, `krcg.load()["Threats"].text`,
-2026-10-09; raw snapshot `data/cards/101978.json`):
-    "Only usable during a bleed action.
-    [dom] +1 bleed (limited).
-    [DOM] +2 bleed (limited)."
-
-Rulings: none on file -- `krcg.load()["Threats"].rulings == []`,
-cross-checked against `https://api.krcg.org/card/101978` (2026-10-09, same
-empty list).
-
-Card type: Action Modifier. `discipline_requirement.disciplines == ["dom"]`
-(basic Dominate required; superior Dominate, printed uppercase `"DOM"` on a
-`CryptCard`, additionally unlocks the bold-text effect -- Rulebook §3
-"Discipline symbol within a diamond ... may opt to use either the basic
-(plain text) or the superior (bold) effect ... but not both"). `cost is
-None` (free).
-
-"Only usable during a bleed action": trivially satisfied by which hook this
-card registers against -- `"bleed_amount_modifier"` is only ever offered
-from `engine/phases/minion.py::_perform_bleed`'s `resolve()`, never from
-`_perform_hunt`, so this restriction needs no extra check here.
-
-"Action modifier card": per Rulebook §2 Cards in general, "The acting
-minion can play these cards to modify their action at any time before
-action resolution." -- played only by the *acting* (bleeding) minion, never
-by the defender. Within the two-sided `"bleed_amount_modifier"` impulse
-window the hook shares with reducing reaction cards (e.g. Telepathic
-Counter), this provider only offers anything when the window's current
-`context["player"]` is in fact that acting minion's own controller (checked
-by looking the acting vampire up in `context["player"]`'s own `vampires`
-dict).
-
-"(limited)" (§8 glossary): "an action modifier card cannot be played to
-increase the bleed if the bleed amount is already being increased by
-another action modifier card" -- and §2 "A minion cannot play the same
-action modifier card more than once during a single action (even if using a
-different Discipline level)". Since there is only one acting minion per
-bleed action, both rules collapse to the same enforcement here: once
-Threats (at either level) has been played once in this action, it (and any
-future "(limited)" bleed-increase action modifier, e.g. Bonding's basic/
-superior clause, `vtesbot.cards.bonding`) is not offered again, tracked via
-the per-*action* (not merely per-window) `bleed_bookkeeping` scratch space
-keyed off `pending` (`vtesbot.cards._shared`, ENG-005)
--- shared with `telepathic_counter.py` and `bonding.py`, so a "(limited)"
-bleed increase played by any of these, in either hook window, correctly
-excludes the others for the rest of this one action.
-"""
-
-from collections.abc import Mapping
-from typing import Any
-
-from vtesbot.cards._shared import bleed_bookkeeping, play_from_hand
-from vtesbot.cards.registry import CardRegistration, Hook, Status, register
-from vtesbot.engine import hooks
-from vtesbot.engine.attachments import effective_disciplines
-from vtesbot.engine.decision import Choice
-from vtesbot.engine.hooks import HookOption
+from vtesbot.cards.card import Card
+from vtesbot.cards.common import (
+    bleed_bookkeeping,
+    context_vampire,
+    discipline_level,
+    has_discipline,
+)
+from vtesbot.engine.hook_contexts import BleedAmountModifierContext
+from vtesbot.engine.hooks import Hook, HookOption
 from vtesbot.engine.state import GameState
 
 KRCG_ID = 101978
-BLEED_AMOUNT_MODIFIER_HOOK = "bleed_amount_modifier"
 LIMITED_USED_KEY = "bleed_increase_limited_used"
-CARD_TYPE = "Action Modifier"
-"""`HookOption.played_card_type` (ENG-023): matches
-this module's own "Card type: Action Modifier" docstring fact above."""
+
+card = Card(KRCG_ID, "Threats", "Action Modifier")
 
 
-def _provide_threats(state: GameState, context: Mapping[str, Any]) -> list[HookOption]:
-    player = context["player"]
-    acting_vampire_id = context["vampire"]
-    acting_vampire = state.players[player].vampires.get(acting_vampire_id)
-    if acting_vampire is None:
-        return []  # `player` is the defender this turn of the impulse window, not the bleeder.
-
-    disciplines = effective_disciplines(state, acting_vampire)
-    if "dom" not in disciplines and "DOM" not in disciplines:
+@card.on(Hook.BLEED_AMOUNT_MODIFIER)
+def _play(state: GameState, ctx: BleedAmountModifierContext) -> list[HookOption]:
+    player, vampire = ctx["player"], context_vampire(state, ctx)
+    if vampire is None or not has_discipline(state, vampire, "dom"):
+        return []  # no vampire: `player` is the defender in this window
+    if not card.in_hand(state, player):
         return []
-    if not any(card.krcg_id == KRCG_ID for card in state.players[player].hand):
-        return []
-
-    amount_box = context["amount"]
-    book = bleed_bookkeeping(context["pending"])
+    amount_box, book = ctx["amount"], bleed_bookkeeping(ctx["pending"])
     if book.get(LIMITED_USED_KEY):
         return []
 
-    def _make_apply(delta: int) -> Any:
+    def _option(value: str, label: str, delta: int) -> HookOption:
         def _apply(s: GameState) -> None:
-            play_from_hand(s, player, KRCG_ID)
+            card.play_from_hand(s, player)
             amount_box[0] += delta
             book[LIMITED_USED_KEY] = True
 
-        return _apply
+        return card.option(value, label, _apply)
 
-    options = [
-        HookOption(
-            choice=Choice("threats:basic", "Threats [dom]: +1 bleed (limited)"),
-            apply=_make_apply(1),
-            played_card_type=CARD_TYPE,
-        )
-    ]
-    if "DOM" in disciplines:
-        options.append(
-            HookOption(
-                choice=Choice("threats:superior", "Threats [DOM]: +2 bleed (limited)"),
-                apply=_make_apply(2),
-                played_card_type=CARD_TYPE,
-            )
-        )
+    options = [_option("threats:basic", "Threats [dom]: +1 bleed (limited)", 1)]
+    if discipline_level(state, vampire, "dom") == 2:
+        options.append(_option("threats:superior", "Threats [DOM]: +2 bleed (limited)", 2))
     return options
-
-
-hooks.register(BLEED_AMOUNT_MODIFIER_HOOK, _provide_threats)
-
-register(
-    CardRegistration(
-        krcg_id=KRCG_ID,
-        name="Threats",
-        status=Status.IMPLEMENTED,
-        hooks=(Hook.BLEED_AMOUNT_MODIFIER,),
-        source=__name__,
-    )
-)

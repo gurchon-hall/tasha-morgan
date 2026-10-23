@@ -25,6 +25,15 @@ def context_vampire(state: GameState, ctx: Mapping[str, Any]) -> VampireInPlay |
     return state.players[ctx["player"]].vampires.get(ctx["vampire"])
 
 
+def acting_vampire(state: GameState, ctx: Mapping[str, Any]) -> VampireInPlay | None:
+    """`ctx["acting_vampire"]` among `ctx["player"]`'s own vampires, for the
+    block-attempt hooks offered to the actor; `None` when unset."""
+    vampire_id = ctx["acting_vampire"]
+    if vampire_id is None:
+        return None
+    return state.players[ctx["player"]].vampires.get(vampire_id)
+
+
 def window_sides(ctx: Mapping[str, Any]) -> tuple[str, str, str]:
     """`(own vampire, opposing player, opposing vampire)` for `ctx["player"]`
     in a two-sided combat window (`BEFORE_RANGE`, `END_OF_ROUND`)."""

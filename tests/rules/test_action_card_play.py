@@ -22,6 +22,7 @@ from vtesbot.cards._shared import play_from_hand, play_from_hand_pending
 from vtesbot.engine import LibraryCard, hooks
 from vtesbot.engine.action import ACTION_ACTION_CARD, ACTION_BLEED
 from vtesbot.engine.decision import Choice, Decision
+from vtesbot.engine.hooks import Hook
 from vtesbot.engine.observation import Observation
 from vtesbot.engine.phases.minion import ACTION_CARD_PLAY_HOOK, ActionCardSpec, minion_phase
 from vtesbot.engine.pool import lose_pool
@@ -448,10 +449,8 @@ def _run_bonding_integration_scenario(declared_action: str | None) -> list[str]:
     Bonding's real, unmodified card logic (not a test-local reimplementation
     of its gate)."""
     with contextlib.suppress(ValueError):
-        hooks.unregister(
-            bonding_module.STEALTH_MODIFIER_HOOK, bonding_module._provide_bonding_superior
-        )
-    hooks.register(bonding_module.STEALTH_MODIFIER_HOOK, bonding_module._provide_bonding_superior)
+        hooks.unregister(Hook.STEALTH_MODIFIER, bonding_module._provide_bonding_superior)
+    hooks.register(Hook.STEALTH_MODIFIER, bonding_module._provide_bonding_superior)
     # This helper is called twice per test (once per `declared_action`
     # value) -- drop any fake provider a previous call within this same
     # test already registered, so the two runs never offer a duplicate
