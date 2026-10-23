@@ -347,30 +347,44 @@ def _choose_and_perform_action(
         _perform_action_card(state, player, other, vampire, action_card_by_value[action])
 
 
+def resolve_bleed(
+    state: GameState,
+    player: str,
+    vampire: VampireInPlay,
+    base_amount: int,
+    pending: dict[str, Any],
+) -> int:
+    """Rulebook §4 Bleed, once unblocked: fixed bonuses, the bleed-amount window
+    (ENG-005), pool loss and the 2P Edge. Shared by every bleeding action card;
+    returns the pool lost."""
+    other = state.other_player(player)
+    amount_box = [
+        base_amount
+        + hooks.sum_modifiers(
+            BLEED_AMOUNT_FIXED_MODIFIER_HOOK, state, player=player, vampire=vampire.instance_id
+        )
+        + pending.get(PENDING_BLEED_AMOUNT_KEY, 0)
+    ]
+    hooks.resolve_impulse_window(
+        state,
+        BLEED_AMOUNT_MODIFIER_HOOK,
+        player,
+        other,
+        context={"vampire": vampire.instance_id, "amount": amount_box, "pending": pending},
+    )
+    amount = max(0, amount_box[0])
+    lose_pool(state, other, amount)
+    if amount >= 1:
+        state.edge_holder = player
+    return amount
+
+
 def _perform_bleed(state: GameState, player: str, other: str, vampire: VampireInPlay) -> None:
     """Rulebook §4 default bleed; 2P Edge mechanic. Directed at prey; in 2P
     only one target exists so no target decision is offered."""
 
     def resolve(pending: dict[str, Any]) -> None:
-        base_amount = (
-            BLEED_AMOUNT
-            + hooks.sum_modifiers(
-                BLEED_AMOUNT_FIXED_MODIFIER_HOOK, state, player=player, vampire=vampire.instance_id
-            )
-            + pending.get(PENDING_BLEED_AMOUNT_KEY, 0)
-        )
-        amount_box = [base_amount]
-        hooks.resolve_impulse_window(
-            state,
-            BLEED_AMOUNT_MODIFIER_HOOK,
-            player,
-            other,
-            context={"vampire": vampire.instance_id, "amount": amount_box, "pending": pending},
-        )
-        amount = max(0, amount_box[0])
-        lose_pool(state, other, amount)
-        if amount >= 1:
-            state.edge_holder = player
+        resolve_bleed(state, player, vampire, BLEED_AMOUNT, pending)
 
     perform_minion_action(
         state, player, other, vampire, BLEED_STEALTH, resolve, action=ACTION_BLEED, directed=True
