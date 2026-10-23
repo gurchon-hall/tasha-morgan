@@ -1,6 +1,6 @@
 """Sakhar (Vampire). krcg 201685. Snapshot: data/cards/201685.json
 Her own action, no card played (ENG-011): the found card is named at announce
-and moved on success. The text prints no shuffle, so none is done."""
+and moved on success. The rulebook's search shuffle is missing (ENG-061)."""
 
 from typing import Any
 
