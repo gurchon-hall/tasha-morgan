@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.14"
 
 [[package]]
@@ -256,7 +256,7 @@ wheels = [
 
 [[package]]
 name = "krcg"
-version = "5.14"
+version = "5.16"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -266,9 +266,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "unidecode" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/40/4f/6a69279c3c2945d848d29261d5e00e3876b2accb6b9ad56fd34f223306cc/krcg-5.14.tar.gz", hash = "sha256:a34554560ca6a6411144eb86f5eed66a432c7b334fc218fa6ad272ce00d9e4a3", size = 1951711, upload-time = "2026-10-03T07:48:11.226Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/62/9108a58c524f8c4871456383b28a2e3f7c36a917ca93fd7f7ac3170164f1/krcg-5.16.tar.gz", hash = "sha256:6170793d55799142de206f23f4aa79d14b0437f24ba5320f3611a3de2396cb8f", size = 2138226, upload-time = "2026-11-20T21:46:42.301Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/20/0168061f3626f02414339c4d4c078526c3e133597adf0f3614f6a380bd30/krcg-5.14-py3-none-any.whl", hash = "sha256:6f2610fdb379ddad5013ec591e8bed73f3481d249b31f4c6887e4e4f4e922c66", size = 1901809, upload-time = "2026-10-03T07:48:09.811Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/9c/f30fe5254f2e9c3de28fc7d892b90202489429d5605d5b3d0144c4b9222e/krcg-5.16-py3-none-any.whl", hash = "sha256:94998fb89dcfb3f1830b05ebc9f976406721289d474fc81f6247a67c20c121c0", size = 2090636, upload-time = "2026-11-20T21:46:40.507Z" },
 ]
 
 [[package]]
